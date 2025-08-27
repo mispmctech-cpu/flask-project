@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Principal Verified Workdone</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+</head>
+<body class="bg-pmcBg min-h-screen">
+  <header class="bg-purple-800 text-white shadow-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+      <a href="principal.html" class="flex items-center">
+        <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 mr-4 rounded shadow" />
+      </a>
+      <h1 class="text-2xl font-bold">Verified Workdone</h1>
+      <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+        </svg>
+      </button>
+    </div>
+  </header>
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+      <input id="verifiedWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-green-700" placeholder="Search by Portfolio or Member" oninput="filterTable('verifiedWorkdoneTable', 'verifiedWorkdoneSearch')" />
+      <button onclick="exportTableToExcel('verifiedWorkdoneTable', 'Verified_Workdone')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+        Export to Excel
+      </button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white shadow-lg text-sm border border-gray-300">
+        <thead class="bg-gradient-to-r from-green-700 to-green-500 text-white">
+          <tr>
+            <th class="p-3 border-b border-gray-300">Department</th>
+            <th class="p-3 border-b border-gray-300">Portfolio Name</th>
+            <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
+            <th class="p-3 border-b border-gray-300">Status</th>
+            <th class="p-3 border-b border-gray-300">Verified By</th>
+            <th class="p-3 border-b border-gray-300">Verified At</th>
+          </tr>
+        </thead>
+        <tbody id="verifiedWorkdoneTable" class="divide-y divide-gray-200"></tbody>
+      </table>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    // Export to Excel for any table by id
+    function exportTableToExcel(tbodyId, filenamePrefix) {
+      const tbody = document.getElementById(tbodyId);
+      if (!tbody) return;
+      const table = tbody.closest('table');
+      const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => row.style.display !== 'none');
+      if (rows.length === 0) {
+        alert('No data to export!');
+        return;
+      }
+      // Get headers
+      const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
+      // Build data array
+      const data = [headers];
+      rows.forEach(row => {
+        const cells = Array.from(row.querySelectorAll('td')).map(td => td.innerText.trim());
+        data.push(cells);
+      });
+      // Create worksheet and workbook
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
+      XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+    }
+    // Supabase client
+    const supabaseClient = window.supabase.createClient(
+      "https://cbhodgwaazmjszkujrti.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+    // Render verified workdone table
+    function renderVerifiedWorkdoneTable(rows) {
+      const tbody = document.getElementById('verifiedWorkdoneTable');
+      tbody.innerHTML = rows.length > 0 ? rows.map((r) => `
+        <tr class="hover:bg-green-50 transition border-b border-gray-200">
+          <td class='p-3 border-r border-gray-200'>${r.department}</td>
+          <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
+          <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
+          <td class='p-3 border-r border-gray-200'>${r.status}</td>
+          <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
+          <td class='p-3 border-r border-gray-200'>${r.verified_at ? new Date(r.verified_at).toLocaleString() : ''}</td>
+        </tr>
+      `).join('') : `<tr><td colspan='6' class='text-center text-gray-400 p-4'>No verified records found.</td></tr>`;
+    }
+    // Fetch verified workdone from hod-workdone table
+    async function loadVerifiedWorkdone() {
+      const { data, error } = await supabaseClient
+        .from('hod-workdone')
+        .select('*');
+      if (error) {
+        document.getElementById('verifiedWorkdoneTable').innerHTML = `<tr><td colspan='6' class='text-center text-red-500 p-4'>Failed to load verified workdone: ${error.message}</td></tr>`;
+        return;
+      }
+      renderVerifiedWorkdoneTable(data || []);
+    }
+    // Generic table filter function for search bar
+    function filterTable(tbodyId, searchInputId) {
+      const search = document.getElementById(searchInputId).value.toLowerCase();
+      const rows = Array.from(document.getElementById(tbodyId).querySelectorAll('tr'));
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(search) ? '' : 'none';
+      });
+    }
+    loadVerifiedWorkdone();
+  </script>
+</body>
+</html>

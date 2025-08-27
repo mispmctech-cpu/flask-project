@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IQAC Workdone Overview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+</head>
+<body class="bg-pmcBg min-h-screen">
+  <header class="bg-purple-700 text-white shadow-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+      <a href="iqac.html" class="flex items-center">
+        <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 mr-4 rounded shadow" />
+      </a>
+      <h1 class="text-2xl font-bold">IQAC Workdone Overview</h1>
+      <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+        </svg>
+      </button>
+    </div>
+  </header>
+  <main class="max-w-7xl mx-auto px-4 py-8">
+  <!-- Removed department display/filter section -->
+    <div id="errorBox" class="hidden mb-4 p-3 rounded bg-red-100 text-red-700 font-semibold"></div>
+    <div id="loadingBox" class="mb-4 p-3 rounded bg-blue-100 text-blue-800 font-semibold">Loading data, please wait...</div>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
+      <script>
+        // Generic table filter function for search bars
+    function filterTable(tbodyId, searchInputId) {
+      const search = document.getElementById(searchInputId).value.toLowerCase();
+      const rows = Array.from(document.getElementById(tbodyId).querySelectorAll('tr'));
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(search) ? '' : 'none';
+      });
+    }
+    </script>
+      <input id="iqacWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-green-700" placeholder="Search by Portfolio or Member" oninput="filterTable('iqacWorkdoneTable', 'iqacWorkdoneSearch')" />
+      <button onclick="exportTableToExcel('iqacWorkdoneTable', 'IQAC_Workdone')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+        Export to Excel
+      </button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white shadow-lg text-sm border border-gray-300">
+        <thead class="bg-gradient-to-r from-green-700 to-green-500 text-white">
+          <tr>
+            <th class="p-3 border-b border-gray-300">Department</th>
+            <th class="p-3 border-b border-gray-300">Portfolio Name</th>
+            <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
+            <th class="p-3 border-b border-gray-300">Status</th>
+            <th class="p-3 border-b border-gray-300">Verified By</th>
+            <th class="p-3 border-b border-gray-300">Verified At</th>
+            <th class="p-3 border-b border-gray-300">Acceptance</th>
+          </tr>
+        </thead>
+        <tbody id="iqacWorkdoneTable" class="divide-y divide-gray-200"></tbody>
+      </table>
+    </div>
+    <div class="mt-10">
+      <h2 class="text-lg font-bold mb-2 text-green-700">Accepted Workdone</h2>
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
+        <input id="acceptedWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-blue-700" placeholder="Search by Portfolio or Member" oninput="filterTable('acceptedWorkdoneTable', 'acceptedWorkdoneSearch')" />
+        <button onclick="exportTableToExcel('acceptedWorkdoneTable', 'Accepted_Workdone')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+          Export to Excel
+        </button>
+      </div>
+    
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white shadow-lg text-sm border border-gray-300">
+          <thead class="bg-gradient-to-r from-blue-700 to-blue-500 text-white">
+            <tr>
+              <th class="p-3 border-b border-gray-300">Department</th>
+              <th class="p-3 border-b border-gray-300">Portfolio Name</th>
+              <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
+              <th class="p-3 border-b border-gray-300">Status</th>
+              <th class="p-3 border-b border-gray-300">Verified By</th>
+              <th class="p-3 border-b border-gray-300">Verified At</th>
+              <th class="p-3 border-b border-gray-300">Accepted By</th>
+              <th class="p-3 border-b border-gray-300">Accepted At</th>
+            </tr>
+          </thead>
+          <tbody id="acceptedWorkdoneTable" class="divide-y divide-gray-200"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+  <script>
+    // Supabase client
+    const supabaseClient = window.supabase.createClient(
+      "https://cbhodgwaazmjszkujrti.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+
+  // Removed department-specific logic and display
+
+    // Fetch all workdone from hod-workdone table, cross-check with accepted table, and handle daily form 12hr logic
+    async function loadIQACWorkdone() {
+      document.getElementById('loadingBox').style.display = '';
+      // Fetch accepted workdone first
+      let acceptedRows = [];
+      try {
+        const { data: acceptedData, error: acceptedError } = await supabaseClient
+          .from('iqac-workdone')
+          .select('*');
+        if (acceptedError) {
+          acceptedRows = [];
+        } else {
+          acceptedRows = acceptedData || [];
+        }
+      } catch (e) {
+        acceptedRows = [];
+      }
+
+      let { data, error } = await supabaseClient
+        .from('hod-workdone')
+        .select('*')
+        .order('verified_at', { ascending: false });
+      document.getElementById('loadingBox').style.display = 'none';
+      if (error) {
+        const errorBox = document.getElementById('errorBox');
+        errorBox.textContent = error.message || error;
+        errorBox.classList.remove('hidden');
+        return;
+      } else {
+        document.getElementById('errorBox').classList.add('hidden');
+      }
+
+      // Helper to check if a row is already accepted (with 12hr logic for daily forms)
+      function isRowAccepted(rowDept, portfolio, rowName) {
+        const isDaily = portfolio.toLowerCase().includes('daily');
+        const now = Date.now();
+        for (const v of acceptedRows) {
+          if (
+            (v.department || '').toLowerCase() === (rowDept || '').toLowerCase() &&
+            (v.portfolio_name || '').toLowerCase() === (portfolio || '').toLowerCase() &&
+            (v.portfolio_member_name || '').toLowerCase() === (rowName || '').toLowerCase()
+          ) {
+            if (isDaily && v.accepted_at) {
+              const acceptedTime = new Date(v.accepted_at).getTime();
+              if (now - acceptedTime > 12 * 60 * 60 * 1000) {
+                // More than 12 hours ago, allow again
+                continue;
+              } else {
+                // Less than 12 hours, skip
+                return true;
+              }
+            } else {
+              // Not daily, skip if found
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      // Filter out rows that are already accepted (with 12hr logic for daily forms)
+      const filtered = (data || []).filter(row => {
+        const rowDept = row.department || '';
+        const portfolio = row.portfolio_name || '';
+        const rowName = row.portfolio_member_name || '';
+        return !isRowAccepted(rowDept, portfolio, rowName);
+      });
+      renderIQACWorkdoneTable(filtered);
+    }
+
+    function renderIQACWorkdoneTable(rows) {
+      const tbody = document.getElementById('iqacWorkdoneTable');
+      tbody.innerHTML = rows.length > 0 ? rows.map((r, idx) => `
+        <tr class="hover:bg-green-50 transition border-b border-gray-200">
+          <td class='p-3 border-r border-gray-200'>${r.department}</td>
+          <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
+          <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
+          <td class='p-3 border-r border-gray-200'>${r.status}</td>
+          <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
+          <td class='p-3 border-r border-gray-200'>${r.verified_at ? new Date(r.verified_at).toLocaleString() : ''}</td>
+          <td class='p-3 text-center'><button class="accept-btn bg-blue-600 hover:bg-blue-800 text-white px-3 py-1 rounded" data-row='${JSON.stringify(r).replace(/'/g, "&#39;")}' onclick="acceptRow(this)">Accept</button></td>
+        </tr>
+      `).join('') : `<tr><td colspan='7' class='text-center text-gray-400 p-4'>No records found.</td></tr>`;
+    }
+
+    // Render accepted workdone table
+    function renderAcceptedWorkdoneTable(rows) {
+      const tbody = document.getElementById('acceptedWorkdoneTable');
+      tbody.innerHTML = rows.length > 0 ? rows.map((r) => `
+        <tr class="hover:bg-blue-50 transition border-b border-gray-200">
+          <td class='p-3 border-r border-gray-200'>${r.department}</td>
+          <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
+          <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
+          <td class='p-3 border-r border-gray-200'>${r.status}</td>
+          <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
+          <td class='p-3 border-r border-gray-200'>${r.verified_at ? new Date(r.verified_at).toLocaleString() : ''}</td>
+          <td class='p-3 border-r border-gray-200'>${r.accepted_by}</td>
+          <td class='p-3 border-r border-gray-200'>${r.accepted_at ? new Date(r.accepted_at).toLocaleString() : ''}</td>
+        </tr>
+      `).join('') : `<tr><td colspan='8' class='text-center text-gray-400 p-4'>No accepted records found.</td></tr>`;
+    }
+
+    // Fetch accepted workdone from iqac-workdone table
+    async function loadAcceptedWorkdone() {
+      const { data, error } = await supabaseClient
+        .from('iqac-workdone')
+        .select('*')
+        .order('accepted_at', { ascending: false });
+      if (error) {
+        document.getElementById('acceptedWorkdoneTable').innerHTML = `<tr><td colspan='8' class='text-center text-red-500 p-4'>Failed to load accepted workdone: ${error.message}</td></tr>`;
+        return;
+      }
+      renderAcceptedWorkdoneTable(data || []);
+    }
+
+    // Accept button logic (restored)
+    async function acceptRow(btn) {
+      btn.disabled = true;
+      btn.textContent = 'Accepted...';
+      let row;
+      try {
+        row = JSON.parse(btn.getAttribute('data-row').replace(/&#39;/g, "'"));
+      } catch (e) {
+        alert('Failed to parse row data.');
+        btn.disabled = false;
+        btn.textContent = 'Accept';
+        return;
+      }
+      // Get accepted_by (from localStorage or fallback)
+      const accepted_by = localStorage.getItem('Name') || localStorage.getItem('name') || 'IQAC';
+      // Insert into iqac-workdone table
+      const { error } = await supabaseClient
+        .from('iqac-workdone')
+        .insert([{
+          department: row.department,
+          portfolio_name: row.portfolio_name,
+          portfolio_member_name: row.portfolio_member_name,
+          status: row.status,
+          verified_by: row.verified_by,
+          verified_at: row.verified_at,
+          accepted_by
+        }]);
+      if (error) {
+        alert('Failed to record acceptance: ' + (error.message || error));
+        btn.disabled = false;
+        btn.textContent = 'Accept';
+      } else {
+        // Remove the row from the table
+        btn.closest('tr').remove();
+        // Reload accepted workdone table
+        loadAcceptedWorkdone();
+      }
+    }
+
+    // Export to Excel for any table by id
+    function exportTableToExcel(tbodyId, filenamePrefix) {
+      const tbody = document.getElementById(tbodyId);
+      if (!tbody) return;
+      const table = tbody.closest('table');
+      const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => row.style.display !== 'none');
+      if (rows.length === 0) {
+        alert('No data to export!');
+        return;
+      }
+      // Get headers
+      const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
+      // Build data array
+      const data = [headers];
+      rows.forEach(row => {
+        const cells = Array.from(row.querySelectorAll('td')).map(td => td.innerText.trim());
+        data.push(cells);
+      });
+      // Create worksheet and workbook
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
+      XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+    }
+
+    // Initial load
+    loadIQACWorkdone();
+    loadAcceptedWorkdone();
+  </script>
+</body>
+</html>
