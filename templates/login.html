@@ -104,7 +104,10 @@
             <option value="MCA">MCA</option>
             <option value="MCO">MCO</option>
             <option value="MECH">MECH</option>
-            <option value="S&H">S&H</option>
+            <option value="S&H V1">S&H V1</option>
+            <option value="S&H V2">S&H V2</option>
+            <option value="S&H V3">S&H V3</option>
+            <option value="S&H V4">S&H V4</option>
           </select>
         </div>
         <button
@@ -197,6 +200,7 @@
       try {
         if (selectedRole === 'HOD' || selectedRole === 'FACULTY') {
           const table = selectedRole === 'HOD' ? TABLE_HOD : TABLE_FACULTY;
+          // For S&H V1-V4, match department exactly
           const { data, error } = await supabaseClient
             .from(table)
             .select('*')
@@ -330,5 +334,12 @@
       }
     });
   </script>
+
+  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm">
+      © 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
+    </p>
+  </footer>
 </body>
 </html>

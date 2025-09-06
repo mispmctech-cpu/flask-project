@@ -1,0 +1,434 @@
+<!-- Navigation Buttons -->
+<div class="fixed bottom-6 right-6 flex gap-3 z-50">
+  <button
+    onclick="history.back()"
+    aria-label="Back"
+    class="bg-pmcPurple hover:bg-pmcPurpleDark text-white rounded-full shadow-lg p-3 flex items-center justify-center text-2xl transition"
+  >
+    &#8592;
+  </button>
+  <button
+    onclick="history.forward()"
+    aria-label="Forward"
+    class="bg-pmcPurple hover:bg-pmcPurpleDark text-white rounded-full shadow-lg p-3 flex items-center justify-center text-2xl transition"
+  >
+    &#8594;
+  </button>
+</div>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PMC Tech HOD</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              pmcPurple: "#6a2c91",
+              pmcPurpleDark: "#501e73",
+              pmcBg: "#f6f4f8",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .navbar {
+        overflow: hidden;
+        background-color: rgba(128, 0, 128, 0.412);
+        font-family: Arial;
+        background-color: #6a2c91;
+      }
+
+      /* Links inside the navbar */
+      .navbar a {
+        float: left;
+        font-size: 16px;
+        color: white;
+        padding: 14px 16px;
+        text-decoration: none;
+      }
+
+      /* The dropdown container */
+      .dropdown {
+        float: left;
+        overflow: hidden;
+      }
+
+      /* Dropdown button */
+      .dropdown .dropbtn {
+        font-size: 16px;
+        border: none;
+        outline: none;
+        color: #fff;
+        padding: 14px 32px 14px 16px;
+        background-color: #6a2c91;
+        font-family: inherit;
+        margin: 0;
+        border-radius: 8px 8px 0 0;
+        box-shadow: 0 2px 8px 0 rgba(106, 44, 145, 0.08);
+        position: relative;
+        transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+      }
+      .dropdown .dropbtn::after {
+        content: "\25BC";
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        color: #fff;
+        pointer-events: none;
+      }
+      .dropdown .dropbtn:focus,
+      .dropdown .dropbtn:hover {
+        background-color: #6a2c91;
+        color: #fff;
+        box-shadow: 0 4px 16px 0 rgba(164, 80, 139, 0.15);
+      }
+
+      /* Add a red background color to navbar links on hover */
+      /* Add a modern hover effect to navbar links and dropdown button */
+      .navbar a:hover,
+      .dropdown:hover .dropbtn {
+        background: linear-gradient(90deg, #a4508b 0%, #6a2c91 100%);
+        color: #fff;
+        box-shadow: 0 4px 16px 0 rgba(164, 80, 139, 0.15);
+      }
+
+      /* Dropdown content (hidden by default) */
+      .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f9f9f9;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+        z-index: 1;
+      }
+
+      /* Links inside the dropdown */
+      .dropdown-content a {
+        float: none;
+        color: purple;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+        text-align: left;
+      }
+
+      /* Add a grey background color to dropdown links on hover */
+      .dropdown-content a:hover {
+        background-color: #ddd;
+      }
+
+      /* Show the dropdown menu on hover */
+      .dropdown:hover .dropdown-content {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+  <!-- Removed redirect to hod-role.html to prevent redirect loop -->
+    <!-- Navbar -->
+    <nav class="bg-pmcPurple text-white shadow-md">
+      <div
+        class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3"
+      >
+        <a href="#" class="flex items-center">
+          <img
+            src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3"
+            alt="PMC Logo"
+            class="h-12 mr-4 rounded shadow"
+          />
+        </a>
+
+        <ul class="flex items-center gap-6 text-base font-medium">
+          <li>
+              <a href="#" class="border-b-2 border-white pb-1">Faculty List</a>
+            </li>
+            <li>
+              <a href="workdone.html?role=HOD&department=" class="hover:underline" id="workdoneLink">Workdone</a>
+    <script>
+      // Set department in Workdone link, always prefer query param and update localStorage
+      document.addEventListener('DOMContentLoaded', function() {
+        function getQueryParam(name) {
+          const url = new URL(window.location.href);
+          return url.searchParams.get(name);
+        }
+        var dept = getQueryParam('department');
+        if (dept) {
+          localStorage.setItem('department', dept);
+        } else {
+          dept = localStorage.getItem('department') || '';
+        }
+        var link = document.getElementById('workdoneLink');
+        if (link) {
+          link.href = `workdone.html?role=HOD&department=${encodeURIComponent(dept)}`;
+        }
+      });
+    </script>
+          </li>
+          <li><span id="hodUsername" class="font-bold cursor-pointer" onclick="goToHodProfile()">&nbsp;</span></li>
+    <script>
+      // Navigate to hod-profile.html with department query param
+      function goToHodProfile() {
+        const department = localStorage.getItem('department') || '';
+        if (department) {
+          window.location.href = `hod-profile.html?department=${encodeURIComponent(department)}`;
+        } else {
+          window.location.href = 'hod-profile.html';
+        }
+      }
+    </script>
+          <li><img id="hodProfileImg" src="" alt="Profile" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow" style="min-width:2rem;min-height:2rem;" /></li>
+          <!-- Modern Notification Bell Icon for Messaging -->
+          <li>
+            <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+              </svg>
+            </button>
+          </li>
+          <li>
+            <button
+              onclick="openMessagingModal()"
+              aria-label="Messages"
+              class="relative focus:outline-none"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-8 h-8 text-white hover:text-blue-400 transition"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z"
+                />
+              </svg>
+            </button>
+          </li>
+        </ul>
+    <script>
+      // Set department and role in Workdone link for correct filtering
+      document.addEventListener('DOMContentLoaded', function() {
+        const dept = localStorage.getItem('department') || '';
+        const link = document.getElementById('workdoneLink');
+        if (link) {
+          link.href = `workdone.html?role=hod&department=${encodeURIComponent(dept)}`;
+        }
+      });
+    </script>
+  </div>
+    </nav>
+
+    <!-- Messaging Modal -->
+    <div
+      id="messagingModal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden"
+    >
+      <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+        <button
+          onclick="closeMessagingModal()"
+          class="absolute top-2 right-2 text-gray-400 hover:text-pmcPurple text-2xl font-bold"
+        >
+          &times;
+        </button>
+        <h2
+          class="text-xl font-bold text-pmcPurple mb-4 flex items-center gap-2"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="w-6 h-6 inline-block"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M14.857 17.082a2.25 2.25 0 01-4.07 0M21 19.5a1.5 1.5 0 01-1.5-1.5V11a7.5 7.5 0 10-15 0v7a1.5 1.5 0 01-1.5 1.5h18z"
+            />
+          </svg>
+          Messages
+        </h2>
+        <div
+          id="messageList"
+          class="h-48 overflow-y-auto border rounded p-2 mb-4 bg-gray-50"
+        ></div>
+        <div class="flex gap-2">
+          <input
+            id="messageInput"
+            type="text"
+            class="flex-1 border border-pmcPurple rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pmcPurple text-black"
+            placeholder="Type your message..."
+            onkeydown="if(event.key==='Enter'){sendMessage()}"
+          />
+          <button
+            onclick="sendMessage()"
+            class="bg-pmcPurple hover:bg-pmcPurpleDark text-white px-4 py-2 rounded font-semibold"
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Faculty List Content (inline, from faculty-list.html) -->
+    <div class="max-w-6xl mx-auto mt-8 px-4">
+      <!-- Department Display -->
+      <h5 id="departmentName" class="text-lg font-semibold text-pmcPurple mb-4">
+  Department: <span id="deptDisplay"></span>
+      </h5>
+      <!-- Export Button -->
+      <!-- View All Tables Button -->
+      <!-- Search and Add Button -->
+      <div
+        class="flex flex-col md:flex-row items-center justify-between gap-4 mb-6"
+      >
+        <input
+          id="facultySearch"
+          type="text"
+          class="p-3 border border-gray-300 rounded-md w-full max-w-md focus:outline-none focus:ring-2 focus:ring-pmcPurple"
+          placeholder="Search faculty"
+          oninput="filterFaculties()"
+        />
+        <script>
+          function filterFaculties() {
+            const search = document
+              .getElementById("facultySearch")
+              .value.toLowerCase();
+            document.querySelectorAll(".faculty-card").forEach((card) => {
+              const name = card
+                .querySelector(".faculty-name")
+                .textContent.toLowerCase();
+              card.style.display = name.includes(search) ? "" : "none";
+            });
+          }
+        </script>
+      </div>
+      <!-- Faculty Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6" id="facultyGrid">
+        <!-- Faculty cards will be injected here by JS -->
+      </div>
+      <script src="https://unpkg.com/@supabase/supabase-js"></script>
+      <script>
+        // Only show HOD dashboard if ?as=hod is present, else redirect to hod-role.html
+        function isHodAccess() {
+          const params = new URLSearchParams(window.location.search);
+          const asHod = params.get('as');
+          const department = localStorage.getItem('department');
+          const role = localStorage.getItem('role');
+          return asHod === 'hod' && role === 'HOD' && department;
+        }
+  // Removed: if (!isHodAccess()) { window.location.replace('hod-role.html'); }
+        // Get department from URL query parameter if present, else fallback to localStorage
+        function getQueryParam(name) {
+          const url = new URL(window.location.href);
+          return url.searchParams.get(name);
+        }
+        const departmentParam = getQueryParam('department');
+        const department = departmentParam || localStorage.getItem('department') || '';
+        // Set department name in heading
+        document.getElementById('deptDisplay').textContent = department;
+        // Supabase client
+        const supabaseClient = window.supabase.createClient(
+          "https://cbhodgwaazmjszkujrti.supabase.co",
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+        );
+        async function loadFacultyList() {
+          if (!department) {
+            document.getElementById('facultyGrid').innerHTML = '<div class="col-span-4 text-gray-500">No department selected.</div>';
+            return;
+          }
+          const { data, error } = await supabaseClient
+            .from('Faculty')
+            .select('*')
+            .eq('department', department);
+          if (error) {
+            document.getElementById('facultyGrid').innerHTML = '<div class="col-span-4 text-red-500">Failed to load faculty list.</div>';
+            return;
+          }
+          if (!data || data.length === 0) {
+            document.getElementById('facultyGrid').innerHTML = '<div class="col-span-4 text-gray-500">No faculty found for this department.</div>';
+            return;
+          }
+          document.getElementById('facultyGrid').innerHTML = data.map(faculty => `
+            <div class="flex flex-col items-center bg-white rounded-xl shadow p-4 faculty-card">
+              <a href="principal-view-faculty.html?email=${encodeURIComponent(faculty['email'])}">
+                <img src="${faculty['Upload Image'] || 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80'}" alt="Faculty" class="w-28 h-28 object-cover rounded-full shadow hover:scale-105 transition" />
+              </a>
+              <div class="faculty-name mt-3 font-medium text-pmcPurple">
+                ${faculty['Name'] || 'Faculty'}
+              </div>
+              <div class="text-sm text-gray-500">${faculty['Designation'] || ''}</div>
+            </div>
+          `).join('');
+        }
+        loadFacultyList();
+      </script>
+      <script>
+        // Fetch and display HOD name and profile image from HOD table for the current department
+        async function setHodUsername() {
+        // Get department from query param or localStorage
+        function getQueryParam(name) {
+          const url = new URL(window.location.href);
+          return url.searchParams.get(name);
+        }
+        const departmentParam = getQueryParam('department');
+        const department = departmentParam || localStorage.getItem('department') || '';
+        const usernameSpan = document.getElementById('hodUsername');
+        const profileImg = document.getElementById('hodProfileImg');
+        if (!department) {
+          usernameSpan.textContent = 'Username';
+          profileImg.src = 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
+          console.log('[HOD DEBUG] No department found in query param or localStorage.');
+          return;
+        }
+        // Fetch Name and Upload Image from HOD table by department
+        try {
+          const { data, error } = await supabaseClient
+            .from('HOD')
+            .select('Name, "Upload Image"')
+            .eq('department', department)
+            .maybeSingle();
+          console.log('[HOD DEBUG] Querying HOD table for department:', department);
+          if (error) {
+            console.error('[HOD DEBUG] Supabase error:', error);
+          }
+          console.log('[HOD DEBUG] HOD data:', data);
+          if (data && data.Name) {
+            usernameSpan.textContent = data.Name.trim() || 'Username';
+            profileImg.src = data["Upload Image"] || 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
+          } else {
+            usernameSpan.textContent = 'Username';
+            profileImg.src = 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
+            console.warn('[HOD DEBUG] No HOD found for department:', department);
+          }
+        } catch (e) {
+          console.error('[HOD DEBUG] Exception while fetching HOD:', e);
+          usernameSpan.textContent = 'Username';
+          profileImg.src = 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
+        }
+      }
+      document.addEventListener('DOMContentLoaded', setHodUsername);
+      </script>
+    </div>
+    <!-- SheetJS (xlsx) CDN for Excel export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="/static/javascript/messaging.js"></script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
+    </p>
+  </footer>
+
+  </body>
+</html>

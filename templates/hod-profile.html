@@ -95,24 +95,29 @@
   </main>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <script>
-    // Get email from localStorage (HOD)
-    const email = localStorage.getItem('email');
+    // Get department from query param or localStorage
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+    const departmentParam = getQueryParam('department');
+    const department = departmentParam || localStorage.getItem('department') || '';
     const supabaseClient = window.supabase.createClient(
       "https://cbhodgwaazmjszkujrti.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
     );
     async function loadHodProfile() {
-      if (!email) {
-        document.body.innerHTML = '<div class="text-center mt-20 text-red-500">No HOD selected.</div>';
+      if (!department) {
+        document.body.innerHTML = '<div class="text-center mt-20 text-red-500">No department specified.</div>';
         return;
       }
       const { data, error } = await supabaseClient
         .from('HOD')
         .select('*')
-        .eq('email', email)
+        .eq('department', department)
         .single();
       if (error || !data) {
-        document.body.innerHTML = '<div class="text-center mt-20 text-red-500">HOD not found.</div>';
+        document.body.innerHTML = `<div class="text-center mt-20 text-red-500">HOD not found for department: <b>${department}</b></div>`;
         return;
       }
       document.getElementById('hodImage').src = data['Upload Image'] || 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
@@ -189,6 +194,11 @@
       document.getElementById('hodForms').innerHTML = formsHtml || '<tr><td colspan="3" class="text-gray-400 text-center p-4">No roles assigned.</td></tr>';
     }
     loadHodProfile();
-  </script>
+  </script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
+    </p>
+  </footer>
+
 </body>
 </html>

@@ -1,96 +1,59 @@
 </main>
-<!-- Navigation Buttons -->
-<div class="fixed bottom-6 right-6 flex gap-3 z-50">
-  <button onclick="history.back()" aria-label="Back"
-    class="bg-purple-700 hover:bg-purple-900 text-white rounded-full shadow-lg p-3 flex items-center justify-center text-2xl transition">
-    &#8592;
-  </button>
-  <button onclick="history.forward()" aria-label="Forward"
-    class="bg-purple-700 hover:bg-purple-900 text-white rounded-full shadow-lg p-3 flex items-center justify-center text-2xl transition">
-    &#8594;
-  </button>
-</div>
-<!DOCTYPE html>
-<html lang="en">
+        // --- Begin: Compliance column from ap_compliance table ---
+        // Fetch compliance details from ap_compliance for this faculty
+        async function getAPComplianceDetails() {
+          const { data: complianceRows, error } = await supabaseClient
+            .from('ap_compliance')
+            .select('*')
+            .eq('department', data["department"])
+            .eq('faculty_email', data["email"])
+            .eq('faculty_name', data["Name"]);
+          if (error || !complianceRows || complianceRows.length === 0) {
+            return [null, 'No compliance data'];
+          }
+          // Use the latest row (by created_at or id)
+          let row = complianceRows[0];
+          if (complianceRows.length > 1) {
+            row = complianceRows.reduce((a, b) => (a.created_at > b.created_at ? a : b));
+          }
+          return [row, null];
+        }
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>IQAC Work Done</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .profile-size {
-      width: 150px;
-      height: 150px;
-    }
-
-    .card-shadow {
-      box-shadow: 0 6px 18px rgba(16, 24, 40, 0.08);
-    }
-  </style>
-</head>
-
-<body class="bg-gray-100 text-gray-800">
-  <!-- Header -->
-  <header class="bg-purple-700 text-white">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <img
-          src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3"
-          alt="PMC Tech Logo" class="h-12 mr-4 rounded shadow bg-white p-1" />
-        <nav class="hidden sm:flex gap-6 ml-6 text-sm font-medium">
-          <a href="iqac.html" class="opacity-90 hover:opacity-100">HOD List</a>
-          <a class="underline decoration-2 underline-offset-4">Work done</a>
-        </nav>
-      </div>
-      <div class="flex items-center gap-3">
-        <span class="font-semibold">Username</span>
-        <svg class="w-7 h-7 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-            d="M2.458 20C3.732 16.943 6.737 15 12 15s8.268 1.943 9.542 5" />
-        </svg>
-        <!-- Bell Icon for Messaging -->
-        <button onclick="openMessagingModal()" aria-label="Messages" class="relative focus:outline-none">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-            stroke="currentColor" class="w-8 h-8 text-white hover:text-blue-400 transition">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z" />
-          </svg>
-        </button>
-        <!-- Messaging Modal -->
-        <div id="messagingModal"
-          class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
-          <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-            <button onclick="closeMessagingModal()"
-              class="absolute top-2 right-2 text-gray-400 hover:text-pmcPurple text-2xl font-bold">&times;</button>
-            <h2 class="text-xl font-bold text-pmcPurple mb-4 flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                stroke="currentColor" class="w-6 h-6 inline-block">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M14.857 17.082a2.25 2.25 0 01-4.07 0M21 19.5a1.5 1.5 0 01-1.5-1.5V11a7.5 7.5 0 10-15 0v7a1.5 1.5 0 01-1.5 1.5h18z" />
-              </svg>
-              Messages
-            </h2>
-            <div id="messageList" class="h-48 overflow-y-auto border rounded p-2 mb-4 bg-gray-50"></div>
-            <div class="flex gap-2">
-              <input id="messageInput" type="text"
-                class="flex-1 border border-pmcPurple rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pmcPurple text-black"
-                placeholder="Type your message..." onkeydown="if(event.key==='Enter'){sendMessage()}" />
-              <button onclick="sendMessage()"
-                class="bg-pmcPurple hover:bg-pmcPurpleDark text-white px-4 py-2 rounded font-semibold">Send</button>
-            </div>
-          </div>
-        </div>
-        <script src="/static/javascript/messaging.js"></script>
-        <!-- Modern Notification Bell Icon for Messaging -->
-        <button onclick="openMessagingModal()" aria-label="Messages" class="relative focus:outline-none group ml-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white group-hover:text-yellow-400 transition"
-            fill="currentColor" viewBox="0 0 24 24">
-            <path
-              d="M12 2C8.13 2 5 5.13 5 9v5.586l-1.707 1.707A1 1 0 0 0 4 18h16a1 1 0 0 0 .707-1.707L19 14.586V9c0-3.87-3.13-7-7-7zm0 20a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22z" />
+        (async function renderDetailsTable() {
+          let [apCompliance, complianceError] = await getAPComplianceDetails();
+          let detailsTableHtml = "";
+          if (Array.isArray(detailsTableArr) && detailsTableArr.length > 0) {
+            detailsTableHtml =
+              `<div class="overflow-x-auto"><table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white">
+            <thead class='bg-purple-700 text-white'>
+              <tr><th class="px-4 py-2">S. NO</th><th class="px-4 py-2">PARTICULAR</th><th class="px-4 py-2">TARGET</th><th class="px-4 py-2">TAT</th><th class="px-4 py-2">Compliance</th></tr>
+            </thead>
+            <tbody>` +
+                detailsTableArr
+                  .map(
+                    (row, idx) => {
+                      let complianceVal = '';
+                      if (apCompliance) {
+                        // Map idx 0-6 to compliance_1 ... compliance_7
+                        let compField = `compliance_${idx + 1}`;
+                        complianceVal = apCompliance[compField] || '<span class="text-gray-400">-</span>';
+                      } else if (complianceError) {
+                        complianceVal = `<span class='text-gray-400'>${complianceError}</span>`;
+                      } else {
+                        complianceVal = '<span class="text-gray-400">-</span>';
+                      }
+                      return `<tr class="${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}"><td class="px-2 py-2">${idx + 1}</td><td class="px-2 py-2">${row.particular || ""}</td><td class="px-2 py-2">${row.target || ""}</td><td class="px-2 py-2">${row.tat || ""}</td><td class="px-2 py-2">${complianceVal}</td></tr>`;
+                    }
+                  )
+                  .join("") +
+                `</tbody></table></div>`;
+          } else {
+            detailsTableHtml = '<div class="text-gray-400">No data</div>';
+          }
+          document.getElementById("facultyDetailsTable").innerHTML =
+            detailsTableHtml;
+        })();
+        // --- End: Compliance column from ap_compliance table ---
           </svg>
         </button>
       </div>
@@ -431,7 +394,12 @@
         }
       });
     });
-  </script>
+  </script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
+    </p>
+  </footer>
+
 </body>
 
 </html>

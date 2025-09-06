@@ -1,3 +1,53 @@
+</script>
+<script>
+// Auto-fill Department, Portfolio Name, and Portfolio Member Name from localStorage
+document.addEventListener('DOMContentLoaded', function() {
+    // Robust Department fetch (query param, then localStorage)
+    let deptFromQuery = new URLSearchParams(window.location.search).get('department');
+    if (deptFromQuery) {
+        localStorage.setItem('selectedDepartment', deptFromQuery);
+    }
+    let dept = deptFromQuery || localStorage.getItem('selectedDepartment') || '';
+    let deptFields = document.querySelectorAll("input[name='Department'], input[name='Department:'], select[name='Department'], select[name='Department:']");
+    deptFields.forEach(function(field) {
+        if (dept) field.value = dept;
+        field.required = true;
+        // Make department mutable (not readOnly, not disabled)
+        field.readOnly = false;
+        field.disabled = false;
+        if (field.tagName === 'SELECT') {
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    });
+    // Portfolio Name
+    let portfolio = localStorage.getItem('selectedPortfolio') || new URLSearchParams(window.location.search).get('portfolio') || '';
+    let portfolioFields = document.querySelectorAll("input[name='Portfolio Name'], input[name='Portfolio Name:']");
+    portfolioFields.forEach(function(field) {
+        field.value = portfolio;
+        field.readOnly = true;
+        field.required = true;
+        field.disabled = false;
+    });
+    // Portfolio Member Name
+    let member = localStorage.getItem('selectedMemberName') || new URLSearchParams(window.location.search).get('name') || '';
+    let memberFields = document.querySelectorAll("input[name='Portfolio Member Name'], input[name='Portfolio Memeber Name']");
+    memberFields.forEach(function(field) {
+        field.value = member;
+        field.readOnly = true;
+        field.required = true;
+        field.disabled = false;
+    });
+    // On submit, forcibly set these values in the form data
+    let form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            deptFields.forEach(function(field) { field.value = dept; });
+            portfolioFields.forEach(function(field) { field.value = portfolio; });
+            memberFields.forEach(function(field) { field.value = member; });
+        });
+    }
+});
+</script>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -32,8 +82,7 @@
 
                 <!-- Direct DB Entry: form2-weekly (now replaces header and daily section) -->
                 <section style="margin: 2rem 0;">
-                    <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">2. Class Advisor Form:
-                        Daily</h2>
+                    <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">2. Class Advisor Form: DAILY</h2>
                     <form id="directDbForm"
                         class="bg-white shadow-lg rounded-xl max-w-5xl mx-auto px-6 py-8 mb-10 border border-purple-200">
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -52,8 +101,14 @@
                                     <option value="ECE">ECE</option>
                                     <option value="EEE">EEE</option>
                                     <option value="IT">IT</option>
+                                    <option value="MBA">MBA</option>
+                                    <option value="MCA">MCA</option>
                                     <option value="MCO">MCO</option>
                                     <option value="MECH">MECH</option>
+                                    <option value="S&H V1">S&H V1</option>
+                                    <option value="S&H V2">S&H V1</option>
+                                    <option value="S&H V3">S&H V3</option>
+                                    <option value="S&H V4">S&H V4</option>
                                 </select>
                             </div>
                             <div class="flex flex-col">
@@ -180,8 +235,7 @@
                         <button type="submit"
                             class="mt-8 bg-purple-800 hover:from-purple-400 hover:to-orange-500 text-white font-bold py-3 px-10 rounded-xl shadow-lg text-lg tracking-wide transition-all duration-200 mx-auto block">Submit</button>
                     </form>
-                    <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">2. Class Advisor Form:
-                        Weekly</h2>
+                    <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">2. Class Advisor Form: WEEKLY</h2>
                     <form id="weeklyDbForm"
                         class="bg-white shadow-lg rounded-xl max-w-5xl mx-auto px-6 py-8 mb-10 border border-purple-200">
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -332,8 +386,7 @@
         </section>
 
         <!-- NEW: Direct DB Entry: form2-once in a month -->
-        <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">2. Class Advisor Form: Once in a
-            Month</h2>
+    <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">2. Class Advisor Form: ONCE IN A MONTH</h2>
         <form id="monthDbForm"
             class="bg-white shadow-lg rounded-xl max-w-5xl mx-auto px-6 py-8 mb-10 border border-orange-200">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -412,8 +465,7 @@
         <!-- ONCE IN A MONTH Section -->
 
         <!-- ONCE IN A SEMESTER Section -->
-        <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">2. Class Advisor Form: Once in a
-            Semester</h2>
+    <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">2. Class Advisor Form: ONCE IN A SEMESTER</h2>
         <form id="semesterDbForm"
             class="bg-white shadow-lg rounded-xl max-w-5xl mx-auto px-6 py-8 mb-10 border border-purple-200">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -504,7 +556,12 @@
                 class="mt-8 bg-purple-800 hover:bg-orange-700 text-white font-bold py-3 px-10 rounded-xl shadow-lg text-lg tracking-wide transition-all duration-200 mx-auto block">Submit</button>
         </form>
     </div>
-    </main>
+    </main>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
+    </p>
+  </footer>
+
 
 </body>
 
@@ -661,14 +718,14 @@
             if (monthStatusBlocks) {
                 let html = '';
                 const fileNames = [
-                    'Students Performence in Traning & Placement Member',
-                    'Class Advisor',
-                    'Faculty Information & Contribution Member',
-                    'Course Outcome & Program Outcome Member(Exam Cell)',
-                    'Continuous Improment Member(Program Member)',
-                    'Teaching & Learning Process member(IQAC)',
-                    'Student Support System Member(Discipline & Extra Curricular)',
-                    'Facilities & Technical Support Member(Lab Member)'
+                    'Master Attendence',
+                    'Attendence Report To Parents',
+                    'ERP Attendence Entry',
+                    'Test Report to Parents',
+                    'Class Committee Meeting File',
+                    'Scholarship file',
+                    'Project File',
+                    'Student Publications File'
                 ];
                 for (let i = 1; i <= 8; i++) {
                     html += `
@@ -897,7 +954,12 @@ window.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
-<script src="/javascript/faculty-form.js"></script>
+<script src="/javascript/faculty-form.js"></script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
+    </p>
+  </footer>
+
 
 </body>
 

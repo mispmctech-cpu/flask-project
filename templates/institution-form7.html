@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EXECUTIVE DEAN : MONTHLY</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+</head>
+<body class="bg-[#f7f5f7] min-h-screen">
+    <div class="bg-[#7d4c9e] py-3 px-0">
+        <img src="../static/img/pmc.jpg" alt="PMC Tech Logo" class="h-12 ml-8">
+    </div>
+    <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-2xl mt-14 p-14">
+        <h2 class="text-center text-3xl font-extrabold text-[#7d4c9e] tracking-wide mb-12">EXECUTIVE DEAN : MONTHLY</h2>
+        <form id="institution-form7-monthly" autocomplete="off">
+            <div class="flex flex-col md:flex-row gap-10 mb-10">
+                <div class="flex-1">
+                    <label class="block font-semibold mb-3 text-gray-700">Portfolio Name:</label>
+                    <input type="text" name="Portfolio Name:" required class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#7d4c9e] bg-gray-50">
+                </div>
+                <div class="flex-1">
+                    <label class="block font-semibold mb-3 text-gray-700">Portfolio Person Name:</label>
+                    <input type="text" name="Portfolio Member Name:" required class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#7d4c9e] bg-gray-50">
+                </div>
+                <div class="flex-1 flex flex-col">
+                    <label class="font-semibold text-gray-700 mb-3">Month:</label>
+                    <select name="Month:" required class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-3 bg-gray-50">
+                        <option value="" disabled selected>Select</option>
+                        <option value="January">January</option>
+                        <option value="February">February</option>
+                        <option value="March">March</option>
+                        <option value="April">April</option>
+                        <option value="May">May</option>
+                        <option value="June">June</option>
+                        <option value="July">July</option>
+                        <option value="August">August</option>
+                        <option value="September">September</option>
+                        <option value="October">October</option>
+                        <option value="November">November</option>
+                        <option value="December">December</option>
+                    </select>
+                </div>
+            </div>
+            <div class="overflow-x-auto rounded-xl">
+                <table class="w-full min-w-[1200px] text-base border-separate border-spacing-y-2">
+                    <thead>
+                        <tr>
+                            <th class="bg-[#f7a440] text-white font-bold py-4 px-3 text-center rounded-l-xl">S.No</th>
+                            <th class="bg-[#f7a440] text-white font-bold py-4 px-3">Name of the file</th>
+                            <th class="bg-[#f7a440] text-white font-bold py-4 px-3 text-center">Status</th>
+                            <th class="bg-[#f7a440] text-white font-bold py-4 px-3">Description</th>
+                            <th class="bg-[#f7a440] text-white font-bold py-4 px-3 text-center rounded-r-xl">Upload the scanned file</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-[#faf7ff]">
+                            <td class="text-center font-semibold">1.</td>
+                            <td class="px-3">Roadmap for internalization and its Progress File</td>
+                            <td class="text-center">
+                                <select name="Status_1" required class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white">
+                                    <option value="" disabled selected>Select</option>
+                                    <option>Completed and Updated</option>
+                                    <option>Yet to be Completed</option>
+                                    <option>Under Process</option>
+                                    <option>Not Applicable</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" name="Description_1" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
+                            </td>
+                            <td class="text-center">
+                                <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
+                                    <input type="file" name="Upload the scanned file_1" accept=".pdf,.jpg,.jpeg,.png" class="hidden">
+                                </label>
+                            </td>
+                        </tr>
+                        <tr class="bg-[#faf7ff]">
+                            <td class="text-center font-semibold">2.</td>
+                            <td class="px-3">Policy for International Partnership with University & Research Centers</td>
+                            <td class="text-center">
+                                <select name="Status_2" required class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white">
+                                    <option value="" disabled selected>Select</option>
+                                    <option>Completed and Updated</option>
+                                    <option>Yet to be Completed</option>
+                                    <option>Under Process</option>
+                                    <option>Not Applicable</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" name="Description_2" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
+                            </td>
+                            <td class="text-center">
+                                <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
+                                    <input type="file" name="Upload the scanned file_2" accept=".pdf,.jpg,.jpeg,.png" class="hidden">
+                                </label>
+                            </td>
+                        </tr>
+                        <tr class="bg-[#faf7ff]">
+                            <td class="text-center font-semibold">3.</td>
+                            <td class="px-3">Global Partnership MOU File</td>
+                            <td class="text-center">
+                                <select name="Status_3" required class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white">
+                                    <option value="" disabled selected>Select</option>
+                                    <option>Completed and Updated</option>
+                                    <option>Yet to be Completed</option>
+                                    <option>Under Process</option>
+                                    <option>Not Applicable</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" name="Description_3" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
+                            </td>
+                            <td class="text-center">
+                                <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
+                                    <input type="file" name="Upload the scanned file_3" accept=".pdf,.jpg,.jpeg,.png" class="hidden">
+                                </label>
+                            </td>
+                        </tr>
+                        <tr class="bg-[#faf7ff]">
+                            <td class="text-center font-semibold">4.</td>
+                            <td class="px-3">Students Mobility Programs File</td>
+                            <td class="text-center">
+                                <select name="Status_4" required class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white">
+                                    <option value="" disabled selected>Select</option>
+                                    <option>Completed and Updated</option>
+                                    <option>Yet to be Completed</option>
+                                    <option>Under Process</option>
+                                    <option>Not Applicable</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" name="Description_4" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
+                            </td>
+                            <td class="text-center">
+                                <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
+                                    <input type="file" name="Upload the scanned file_4" accept=".pdf,.jpg,.jpeg,.png" class="hidden">
+                                </label>
+                            </td>
+                        </tr>
+                        <tr class="bg-[#faf7ff]">
+                            <td class="text-center font-semibold">5.</td>
+                            <td class="px-3">International Students Admission File</td>
+                            <td class="text-center">
+                                <select name="Status_5" required class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white">
+                                    <option value="" disabled selected>Select</option>
+                                    <option>Completed and Updated</option>
+                                    <option>Yet to be Completed</option>
+                                    <option>Under Process</option>
+                                    <option>Not Applicable</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" name="Description_5" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
+                            </td>
+                            <td class="text-center">
+                                <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
+                                    <input type="file" name="Upload the scanned file_5" accept=".pdf,.jpg,.jpeg,.png" class="hidden">
+                                </label>
+                            </td>
+                        </tr>
+                        <tr class="bg-[#faf7ff]">
+                            <td class="text-center font-semibold">6.</td>
+                            <td class="px-3">Global Ranking Applications File</td>
+                            <td class="text-center">
+                                <select name="Status_6" required class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white">
+                                    <option value="" disabled selected>Select</option>
+                                    <option>Completed and Updated</option>
+                                    <option>Yet to be Completed</option>
+                                    <option>Under Process</option>
+                                    <option>Not Applicable</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" name="Description_6" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
+                            </td>
+                            <td class="text-center">
+                                <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
+                                    <input type="file" name="Upload the scanned file_6" accept=".pdf,.jpg,.jpeg,.png" class="hidden">
+                                </label>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button type="submit" class="mt-12 bg-[#7d4c9e] hover:bg-[#5e357a] text-white font-bold py-4 px-24 rounded-full text-xl tracking-wide transition-all duration-200 mx-auto block shadow-lg">Submit</button>
+        </form>
+    </div>
+    <script>
+    // Supabase config
+    const supabaseUrl = "https://cbhodgwaazmjszkujrti.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU";
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    // Upload file to Supabase Storage
+    async function uploadFileToStorage(file, path) {
+        if (!file) return null;
+        const { data, error } = await supabaseClient.storage.from('Institution-f7-files').upload(path, file, { upsert: true });
+        if (error) throw error;
+        const { data: urlData } = supabaseClient.storage.from('Institution-f7-files').getPublicUrl(path);
+        return urlData.publicUrl;
+    }
+
+    document.getElementById('institution-form7-monthly').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+
+        // Prepare row for DB
+        let row = {
+            "Portfolio Name:": formData.get('Portfolio Name:'),
+            "Portfolio Member Name:": formData.get('Portfolio Member Name:'),
+            "Month:": formData.get('Month:')
+        };
+
+
+        // For each file row
+        for (let i = 1; i <= 6; i++) {
+            row[`Status_${i}`] = formData.get(`Status_${i}`) || null;
+            if (i <= 5) {
+                row[`Description_${i}`] = formData.get(`Description_${i}`) || null;
+            } else if (i === 6) {
+                row[`Description_6`] = formData.get('Description_6') || null;
+            }
+            const file = formData.get(`Upload the scanned file_${i}`);
+            if (file && file.size > 0) {
+                const ts = Date.now();
+                const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+                const path = `form7_${i}_${ts}_${safeName}`;
+                try {
+                    row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
+                } catch (err) {
+                    window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(err.message);
+                    return;
+                }
+            } else {
+                row[`Upload the scanned file_${i}`] = null;
+            }
+        }
+
+        // Insert into Supabase
+        const { data, error } = await supabaseClient
+            .from('Institution-form7-monthly')
+            .insert([row]);
+        if (error) {
+            window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
+        } else {
+            window.location.href = 'notification.html?status=success';
+            form.reset();
+        }
+    });
+    </script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
+    </p>
+  </footer>
+
+</body>
+</html>

@@ -6,6 +6,9 @@
   <title>IQAC Workdone Overview</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <!-- SheetJS (xlsx) for Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="../static/javascript/form-modal-mapper.js"></script>
 </head>
 <body class="bg-pmcBg min-h-screen">
   <header class="bg-purple-700 text-white shadow-md">
@@ -54,10 +57,12 @@
             <th class="p-3 border-b border-gray-300">Verified By</th>
             <th class="p-3 border-b border-gray-300">Verified At</th>
             <th class="p-3 border-b border-gray-300">Acceptance</th>
+            <th class="p-3 border-b border-gray-300">View</th>
           </tr>
         </thead>
         <tbody id="iqacWorkdoneTable" class="divide-y divide-gray-200"></tbody>
       </table>
+      <div class="flex justify-center items-center mt-4" id="iqacWorkdonePagination"></div>
     </div>
     <div class="mt-10">
       <h2 class="text-lg font-bold mb-2 text-green-700">Accepted Workdone</h2>
@@ -68,7 +73,6 @@
           Export to Excel
         </button>
       </div>
-    
       <div class="overflow-x-auto">
         <table class="min-w-full bg-white shadow-lg text-sm border border-gray-300">
           <thead class="bg-gradient-to-r from-blue-700 to-blue-500 text-white">
@@ -81,10 +85,12 @@
               <th class="p-3 border-b border-gray-300">Verified At</th>
               <th class="p-3 border-b border-gray-300">Accepted By</th>
               <th class="p-3 border-b border-gray-300">Accepted At</th>
+              <th class="p-3 border-b border-gray-300">View</th>
             </tr>
           </thead>
           <tbody id="acceptedWorkdoneTable" class="divide-y divide-gray-200"></tbody>
         </table>
+        <div class="flex justify-center items-center mt-4" id="acceptedWorkdonePagination"></div>
       </div>
     </div>
   </main>
@@ -165,38 +171,371 @@
         return !isRowAccepted(rowDept, portfolio, rowName);
       });
       renderIQACWorkdoneTable(filtered);
+
+      // Render the verified workdone table with color-coded status
+      renderVerifiedWorkdoneTable(data || []);
     }
 
+    // Pagination for IQAC Workdone table
+    let iqacCurrentPage = 1;
+    let iqacRowsPerPage = 10;
+    let _iqacRowsAll = [];
     function renderIQACWorkdoneTable(rows) {
+      _iqacRowsAll = rows;
+      window._iqacRows = rows;
+      renderIQACWorkdoneTablePage(iqacCurrentPage);
+      renderIQACWorkdonePagination();
+    }
+    function renderIQACWorkdoneTablePage(page) {
       const tbody = document.getElementById('iqacWorkdoneTable');
-      tbody.innerHTML = rows.length > 0 ? rows.map((r, idx) => `
-        <tr class="hover:bg-green-50 transition border-b border-gray-200">
+      let start = (page - 1) * iqacRowsPerPage;
+      let end = start + iqacRowsPerPage;
+      let pageRows = _iqacRowsAll.slice(start, end);
+      tbody.innerHTML = pageRows.length > 0 ? pageRows.map((r, idx) => {
+        let globalIdx = start + idx;
+        let statusText = (r.status || '').toString().toUpperCase();
+        let statusClass = '';
+        if (statusText === 'COMPLETED') {
+          statusClass = 'text-green-600 font-bold uppercase';
+        } else if (statusText === 'PENDING') {
+          statusClass = 'text-red-600 font-bold uppercase';
+        } else {
+          statusClass = 'font-bold uppercase';
+        }
+        return `
+        <tr class="hover:bg-green-50 transition border-b border-gray-200" data-iqac-idx="${globalIdx}">
           <td class='p-3 border-r border-gray-200'>${r.department}</td>
           <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
           <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
-          <td class='p-3 border-r border-gray-200'>${r.status}</td>
+          <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
           <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
           <td class='p-3 border-r border-gray-200'>${r.verified_at ? new Date(r.verified_at).toLocaleString() : ''}</td>
           <td class='p-3 text-center'><button class="accept-btn bg-blue-600 hover:bg-blue-800 text-white px-3 py-1 rounded" data-row='${JSON.stringify(r).replace(/'/g, "&#39;")}' onclick="acceptRow(this)">Accept</button></td>
+          <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewIQACRowDetails(${globalIdx})">View</button></td>
         </tr>
-      `).join('') : `<tr><td colspan='7' class='text-center text-gray-400 p-4'>No records found.</td></tr>`;
+      `;
+      }).join('') : `<tr><td colspan='8' class='text-center text-gray-400 p-4'>No records found.</td></tr>`;
+    }
+    function renderIQACWorkdonePagination() {
+      const totalRows = _iqacRowsAll.length;
+      const totalPages = Math.ceil(totalRows / iqacRowsPerPage);
+      const container = document.getElementById('iqacWorkdonePagination');
+      if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+      let html = `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${iqacCurrentPage === 1 ? 'disabled' : ''} onclick='changeIQACPage(${iqacCurrentPage - 1})'>Prev</button>`;
+      for (let i = 1; i <= totalPages; i++) {
+        html += `<button class='px-3 py-1 mx-1 rounded ${i === iqacCurrentPage ? 'bg-green-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}' onclick='changeIQACPage(${i})'>${i}</button>`;
+      }
+      html += `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${iqacCurrentPage === totalPages ? 'disabled' : ''} onclick='changeIQACPage(${iqacCurrentPage + 1})'>Next</button>`;
+      container.innerHTML = html;
+    }
+    function changeIQACPage(page) {
+      const totalRows = _iqacRowsAll.length;
+      const totalPages = Math.ceil(totalRows / iqacRowsPerPage);
+      if (page < 1 || page > totalPages) return;
+      iqacCurrentPage = page;
+      renderIQACWorkdoneTablePage(page);
+      renderIQACWorkdonePagination();
     }
 
     // Render accepted workdone table
     function renderAcceptedWorkdoneTable(rows) {
-      const tbody = document.getElementById('acceptedWorkdoneTable');
-      tbody.innerHTML = rows.length > 0 ? rows.map((r) => `
-        <tr class="hover:bg-blue-50 transition border-b border-gray-200">
+      // Pagination for Accepted Workdone table
+      let acceptedCurrentPage = 1;
+      let acceptedRowsPerPage = 10;
+      let _acceptedRowsAll = [];
+      window._acceptedRowsAll = rows;
+      window._acceptedRows = rows;
+      renderAcceptedWorkdoneTablePage(acceptedCurrentPage);
+      renderAcceptedWorkdonePagination();
+      window.changeAcceptedPage = function(page) {
+        const totalRows = window._acceptedRowsAll.length;
+        const totalPages = Math.ceil(totalRows / acceptedRowsPerPage);
+        if (page < 1 || page > totalPages) return;
+        acceptedCurrentPage = page;
+        renderAcceptedWorkdoneTablePage(page);
+        renderAcceptedWorkdonePagination();
+      }
+      function renderAcceptedWorkdoneTablePage(page) {
+        const tbody = document.getElementById('acceptedWorkdoneTable');
+        let start = (page - 1) * acceptedRowsPerPage;
+        let end = start + acceptedRowsPerPage;
+        let pageRows = window._acceptedRowsAll.slice(start, end);
+        tbody.innerHTML = pageRows.length > 0 ? pageRows.map((r, idx) => {
+          let globalIdx = start + idx;
+          let statusText = (r.status || '').toString().toUpperCase();
+          let statusClass = '';
+          if (statusText === 'COMPLETED') {
+            statusClass = 'text-green-600 font-bold uppercase';
+          } else if (statusText === 'PENDING') {
+            statusClass = 'text-red-600 font-bold uppercase';
+          } else {
+            statusClass = 'font-bold uppercase';
+          }
+          return `
+          <tr class="hover:bg-blue-50 transition border-b border-gray-200" data-accepted-idx="${globalIdx}">
+            <td class='p-3 border-r border-gray-200'>${r.department}</td>
+            <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
+            <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
+            <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
+            <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
+            <td class='p-3 border-r border-gray-200'>${r.verified_at ? new Date(r.verified_at).toLocaleString() : ''}</td>
+            <td class='p-3 border-r border-gray-200'>${r.accepted_by}</td>
+            <td class='p-3 border-r border-gray-200'>${r.accepted_at ? new Date(r.accepted_at).toLocaleString() : ''}</td>
+            <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewAcceptedRowDetails(${globalIdx})">View</button></td>
+          </tr>
+          `;
+        }).join('') : `<tr><td colspan='9' class='text-center text-gray-400 p-4'>No accepted records found.</td></tr>`;
+      }
+      function renderAcceptedWorkdonePagination() {
+        const totalRows = window._acceptedRowsAll.length;
+        const totalPages = Math.ceil(totalRows / acceptedRowsPerPage);
+        const container = document.getElementById('acceptedWorkdonePagination');
+        if (totalPages <= 1) {
+          container.innerHTML = '';
+          return;
+        }
+        let html = `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${acceptedCurrentPage === 1 ? 'disabled' : ''} onclick='changeAcceptedPage(${acceptedCurrentPage - 1})'>Prev</button>`;
+        for (let i = 1; i <= totalPages; i++) {
+          html += `<button class='px-3 py-1 mx-1 rounded ${i === acceptedCurrentPage ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}' onclick='changeAcceptedPage(${i})'>${i}</button>`;
+        }
+        html += `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${acceptedCurrentPage === totalPages ? 'disabled' : ''} onclick='changeAcceptedPage(${acceptedCurrentPage + 1})'>Next</button>`;
+        container.innerHTML = html;
+      }
+    }
+    // Modal logic for viewing IQAC Workdone row details
+    function viewIQACRowDetails(idx) {
+      const row = window._iqacRows && window._iqacRows[idx];
+      if (!row) return;
+      // Lookup form table for portfolio
+      const formTables = [
+        {table: 'form1-once in a year', portfolio: 'Students Performance in Training & Placement Member (Yearly)'},
+        {table: 'form1-Weekly', portfolio: 'Students Performance in Training & Placement Member (Weekly)'},
+        {table: 'form1-once in 15 days', portfolio: 'Students Performance in Training & Placement Member (Bi-weekly)'},
+        {table: 'form1-once in a semester', portfolio: 'Students Performance in Training & Placement Member (Semester)'},
+        {table: 'form2-daily', portfolio: 'Class Advisor (Daily)'},
+        {table: 'form2-weekly', portfolio: 'Class Advisor (Weekly)'},
+        {table: 'form2-once in a month', portfolio: 'Class Advisor (Monthly)'},
+        {table: 'form2-once in a semester', portfolio: 'Class Advisor (Semester)'},
+        {table: 'form3-Weekly', portfolio: 'Faculty Information & Contribution Member (Weekly)'},
+        {table: 'form3- once in 15 days', portfolio: 'Faculty Information & Contribution Member (Bi-weekly)'},
+        {table: 'form3-once in a semester', portfolio: 'Faculty Information & Contribution Member (Semester)'},
+        {table: 'form4-Weekly', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell) (Weekly)'},
+        {table: 'form4-once in a month', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell) (Monthly)'},
+        {table: 'form4-once in a semester', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell) (Semester)'},
+        {table: 'form5-weekly', portfolio: 'Continuous Improvement Member (Program Member) (Weekly)'},
+        {table: 'form5-Once in a 3 Months', portfolio: 'Continuous Improvement Member (Program Member) (Quarterly)'},
+        {table: 'form5-once in a semester', portfolio: 'Continuous Improvement Member (Program Member) (Semester)'},
+        {table: 'form6-once in a semester', portfolio: 'Teaching & Learning Process Member (IQAC) (Semester)'},
+        {table: 'form7-Once in a Semester', portfolio: 'Student Support System Member (Discipline & Extra Curricular) (Semester)'},
+        {table: 'form7-Once in 2 Months', portfolio: 'Student Support System Member (Discipline & Extra Curricular) (Bi-monthly)'},
+        {table: 'form7-Weekly', portfolio: 'Student Support System Member (Discipline & Extra Curricular) (Weekly)'},
+        {table: 'form8-weekly', portfolio: 'Facilities & Technical Support Member (Lab Member) (Weekly)'},
+        {table: 'form8-once in 3 Months', portfolio: 'Facilities & Technical Support Member (Lab Member) (Quarterly)'},
+        {table: 'form8-Once in Semester', portfolio: 'Facilities & Technical Support Member (Lab Member) (Semester)'},
+        {table: 'ASP', portfolio: 'ASP Core Scope Form'},
+        {table: 'AP', portfolio: 'AP Core Scope Form'},
+        {table: 'Prof', portfolio: 'Professor Core Scope Form'}
+      ];
+      let matchTable = null;
+      let matchPortfolio = (row.portfolio_name || '').toLowerCase();
+      let portfolioLabel = row.portfolio_name || '';
+      for (const ft of formTables) {
+        if ((ft.portfolio || '').toLowerCase() === matchPortfolio) {
+          matchTable = ft.table;
+          portfolioLabel = ft.portfolio;
+          break;
+        }
+      }
+      if (!matchTable) {
+        for (const ft of formTables) {
+          if (matchPortfolio.includes((ft.portfolio || '').toLowerCase().split('(')[0].trim())) {
+            matchTable = ft.table;
+            portfolioLabel = ft.portfolio;
+            break;
+          }
+        }
+      }
+      if (matchTable) {
+        supabaseClient
+          .from(matchTable)
+          .select('*')
+          .eq('Department', row.department)
+          .eq('Portfolio Member Name', row.portfolio_member_name)
+          .then(({ data: origRows }) => {
+            let orig = origRows && origRows.length > 0 ? origRows[0] : row;
+            const modalContext = {
+              portfolio: portfolioLabel,
+              table: matchTable,
+              department: row.department,
+              member: row.portfolio_member_name
+            };
+            let html = getFormModalContent(modalContext, orig);
+            showModal(html);
+          });
+      } else {
+        // fallback: show raw
+        let html = '<table class="min-w-full text-left">';
+        for (const [key, value] of Object.entries(row)) {
+          let cellContent = '';
+          if (typeof value === 'string' && value.startsWith('http')) {
+            cellContent = `<a href='${value}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow' style='text-decoration:none;'>View File</a>`;
+          } else if (value === '') {
+            cellContent = "<span class='text-gray-400'>-</span>";
+          } else {
+            cellContent = value;
+          }
+          html += `<tr><th class="pr-4 py-2 text-gray-700 font-semibold align-top">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</th><td class="py-2">${cellContent}</td></tr>`;
+        }
+        html += '</table>';
+        showModal(html);
+      }
+    }
+
+    // Modal logic for viewing Accepted Workdone row details
+    function viewAcceptedRowDetails(idx) {
+      const row = window._acceptedRows && window._acceptedRows[idx];
+      if (!row) return;
+      // Lookup form table for portfolio
+      const formTables = [
+        {table: 'form1-once in a year', portfolio: 'Students Performance in Training & Placement Member (Yearly)'},
+        {table: 'form1-Weekly', portfolio: 'Students Performance in Training & Placement Member (Weekly)'},
+        {table: 'form1-once in 15 days', portfolio: 'Students Performance in Training & Placement Member (Bi-weekly)'},
+        {table: 'form1-once in a semester', portfolio: 'Students Performance in Training & Placement Member (Semester)'},
+        {table: 'form2-daily', portfolio: 'Class Advisor (Daily)'},
+        {table: 'form2-weekly', portfolio: 'Class Advisor (Weekly)'},
+        {table: 'form2-once in a month', portfolio: 'Class Advisor (Monthly)'},
+        {table: 'form2-once in a semester', portfolio: 'Class Advisor (Semester)'},
+        {table: 'form3-Weekly', portfolio: 'Faculty Information & Contribution Member (Weekly)'},
+        {table: 'form3- once in 15 days', portfolio: 'Faculty Information & Contribution Member (Bi-weekly)'},
+        {table: 'form3-once in a semester', portfolio: 'Faculty Information & Contribution Member (Semester)'},
+        {table: 'form4-Weekly', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell) (Weekly)'},
+        {table: 'form4-once in a month', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell) (Monthly)'},
+        {table: 'form4-once in a semester', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell) (Semester)'},
+        {table: 'form5-weekly', portfolio: 'Continuous Improvement Member (Program Member) (Weekly)'},
+        {table: 'form5-Once in a 3 Months', portfolio: 'Continuous Improvement Member (Program Member) (Quarterly)'},
+        {table: 'form5-once in a semester', portfolio: 'Continuous Improvement Member (Program Member) (Semester)'},
+        {table: 'form6-once in a semester', portfolio: 'Teaching & Learning Process Member (IQAC) (Semester)'},
+        {table: 'form7-Once in a Semester', portfolio: 'Student Support System Member (Discipline & Extra Curricular) (Semester)'},
+        {table: 'form7-Once in 2 Months', portfolio: 'Student Support System Member (Discipline & Extra Curricular) (Bi-monthly)'},
+        {table: 'form7-Weekly', portfolio: 'Student Support System Member (Discipline & Extra Curricular) (Weekly)'},
+        {table: 'form8-weekly', portfolio: 'Facilities & Technical Support Member (Lab Member) (Weekly)'},
+        {table: 'form8-once in 3 Months', portfolio: 'Facilities & Technical Support Member (Lab Member) (Quarterly)'},
+        {table: 'form8-Once in Semester', portfolio: 'Facilities & Technical Support Member (Lab Member) (Semester)'},
+        {table: 'ASP', portfolio: 'ASP Core Scope Form'},
+        {table: 'AP', portfolio: 'AP Core Scope Form'},
+        {table: 'Prof', portfolio: 'Professor Core Scope Form'}
+      ];
+      let matchTable = null;
+      let matchPortfolio = (row.portfolio_name || '').toLowerCase();
+      let portfolioLabel = row.portfolio_name || '';
+      for (const ft of formTables) {
+        if ((ft.portfolio || '').toLowerCase() === matchPortfolio) {
+          matchTable = ft.table;
+          portfolioLabel = ft.portfolio;
+          break;
+        }
+      }
+      if (!matchTable) {
+        for (const ft of formTables) {
+          if (matchPortfolio.includes((ft.portfolio || '').toLowerCase().split('(')[0].trim())) {
+            matchTable = ft.table;
+            portfolioLabel = ft.portfolio;
+            break;
+          }
+        }
+      }
+      if (matchTable) {
+        supabaseClient
+          .from(matchTable)
+          .select('*')
+          .eq('Department', row.department)
+          .eq('Portfolio Member Name', row.portfolio_member_name)
+          .then(({ data: origRows }) => {
+            let orig = origRows && origRows.length > 0 ? origRows[0] : row;
+            const modalContext = {
+              portfolio: portfolioLabel,
+              table: matchTable,
+              department: row.department,
+              member: row.portfolio_member_name
+            };
+            let html = getFormModalContent(modalContext, orig);
+            showModal(html);
+          });
+      } else {
+        // fallback: show raw
+        let html = '<table class="min-w-full text-left">';
+        for (const [key, value] of Object.entries(row)) {
+          let cellContent = '';
+          if (typeof value === 'string' && value.startsWith('http')) {
+            cellContent = `<a href='${value}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow' style='text-decoration:none;'>View File</a>`;
+          } else if (value === '') {
+            cellContent = "<span class='text-gray-400'>-</span>";
+          } else {
+            cellContent = value;
+          }
+          html += `<tr><th class="pr-4 py-2 text-gray-700 font-semibold align-top">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</th><td class="py-2">${cellContent}</td></tr>`;
+        }
+        html += '</table>';
+        showModal(html);
+      }
+    }
+
+    // Modal display logic (shared)
+    function showModal(html) {
+      let modal = document.getElementById('viewModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'viewModal';
+        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40';
+        modal.innerHTML = `
+          <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
+            <button onclick="closeViewModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+            <h3 class="text-xl font-bold mb-4 text-blue-700">Workdone Details</h3>
+            <div id="viewModalContent" class="overflow-y-auto max-h-[60vh] text-sm"></div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      }
+      document.getElementById('viewModalContent').innerHTML = html;
+      modal.classList.remove('hidden');
+    }
+    function closeViewModal() {
+      const modal = document.getElementById('viewModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        document.getElementById('viewModalContent').innerHTML = '';
+      }
+    }
+
+    // Render verified workdone table (with status color)
+    function renderVerifiedWorkdoneTable(rows) {
+      const tbody = document.getElementById('verifiedWorkdoneTable');
+      tbody.innerHTML = rows.length > 0 ? rows.map((r) => {
+        let statusText = (r.status || '').toString().toUpperCase();
+        let statusClass = '';
+        if (statusText === 'COMPLETED') {
+          statusClass = 'text-green-600 font-bold uppercase';
+        } else if (statusText === 'PENDING') {
+          statusClass = 'text-red-600 font-bold uppercase';
+        } else {
+          statusClass = 'font-bold uppercase';
+        }
+        return `
+        <tr class="hover:bg-green-50 transition border-b border-gray-200">
           <td class='p-3 border-r border-gray-200'>${r.department}</td>
           <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
           <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
-          <td class='p-3 border-r border-gray-200'>${r.status}</td>
+          <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
+          <td class='p-3 border-r border-gray-200'>${r.documents ? r.documents : '<span class="text-gray-400">No documents</span>'}</td>
           <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
           <td class='p-3 border-r border-gray-200'>${r.verified_at ? new Date(r.verified_at).toLocaleString() : ''}</td>
-          <td class='p-3 border-r border-gray-200'>${r.accepted_by}</td>
-          <td class='p-3 border-r border-gray-200'>${r.accepted_at ? new Date(r.accepted_at).toLocaleString() : ''}</td>
+          <td class='p-3 border-r border-gray-200'></td>
         </tr>
-      `).join('') : `<tr><td colspan='8' class='text-center text-gray-400 p-4'>No accepted records found.</td></tr>`;
+      `;
+      }).join('') : `<tr><td colspan='8' class='text-center text-gray-400 p-4'>No verified records found.</td></tr>`;
     }
 
     // Fetch accepted workdone from iqac-workdone table
@@ -261,12 +600,22 @@
         alert('No data to export!');
         return;
       }
-      // Get headers
-      const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
-      // Build data array
+      // Get headers, but skip Accept and View columns (last 2 columns)
+      let headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
+      if (headers.length > 2) {
+        headers = headers.slice(0, -2); // Remove last 2 columns (Accept/View)
+      }
       const data = [headers];
       rows.forEach(row => {
-        const cells = Array.from(row.querySelectorAll('td')).map(td => td.innerText.trim());
+        // Only take the first N-2 cells (ignore Accept/View buttons)
+        const tds = Array.from(row.querySelectorAll('td'));
+        let cells = tds.slice(0, tds.length - 2).map(td => {
+          if (td.querySelectorAll && td.querySelectorAll('a').length > 0) {
+            return Array.from(td.querySelectorAll('a')).map(a => a.href).join(', ');
+          } else {
+            return td.innerText.trim();
+          }
+        });
         data.push(cells);
       });
       // Create worksheet and workbook
@@ -279,6 +628,11 @@
     // Initial load
     loadIQACWorkdone();
     loadAcceptedWorkdone();
-  </script>
+  </script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
+    </p>
+  </footer>
+
 </body>
 </html>

@@ -1,0 +1,259 @@
+</script>
+<script>
+// Auto-fill Department, Portfolio Name, and Portfolio Member Name from localStorage
+document.addEventListener('DOMContentLoaded', function() {
+    let deptFromQuery = new URLSearchParams(window.location.search).get('department');
+    if (deptFromQuery) {
+        localStorage.setItem('selectedDepartment', deptFromQuery);
+    }
+    let dept = deptFromQuery || localStorage.getItem('selectedDepartment') || '';
+    let deptFields = document.querySelectorAll("input[name='Department'], input[name='Department:'], select[name='Department'], select[name='Department:']");
+    deptFields.forEach(function(field) {
+        if (dept) field.value = dept;
+        field.required = true;
+        field.readOnly = false;
+        field.disabled = false;
+        if (field.tagName === 'SELECT') {
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    });
+    let portfolio = localStorage.getItem('selectedPortfolio') || new URLSearchParams(window.location.search).get('portfolio') || '';
+    let portfolioFields = document.querySelectorAll("input[name='Portfolio Name'], input[name='Portfolio Name:']");
+    portfolioFields.forEach(function(field) {
+        if (portfolio) field.value = portfolio;
+        field.required = true;
+        field.readOnly = false;
+        field.disabled = false;
+    });
+    let member = localStorage.getItem('selectedMemberName') || new URLSearchParams(window.location.search).get('name') || '';
+    let memberFields = document.querySelectorAll("input[name='Portfolio Member Name'], input[name='Portfolio Memeber Name']");
+    memberFields.forEach(function(field) {
+        if (member) field.value = member;
+        field.required = true;
+        field.readOnly = false;
+        field.disabled = false;
+    });
+    // On submit, forcibly set these values in the form data (never null)
+    let form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            deptFields.forEach(function(field) { if (!field.value) field.value = dept; });
+            portfolioFields.forEach(function(field) { if (!field.value) field.value = portfolio; });
+            memberFields.forEach(function(field) { if (!field.value) field.value = member; });
+        });
+    }
+});
+</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Core Scope - AP Form</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="w-full max-w-[98vw] mx-auto my-10 bg-white rounded-2xl shadow-2xl p-0 border border-purple-300 overflow-x-auto">
+        <div class="bg-purple-800 py-8 px-6 text-white text-center w-full">
+            <h1 class="text-4xl font-extrabold tracking-wide mb-2 drop-shadow">FACULTY CORE SCOPE - AP FORM</h1>
+            <p class="text-lg font-medium opacity-90">Academic Year: <span class="font-bold">2025-2026</span></p>
+        </div>
+        <form id="apForm" class="p-4 md:p-8 space-y-8 w-full">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 bg-purple-50 rounded-xl p-6 shadow mb-4">
+                <div>
+                    <label class="block font-semibold text-purple-900 mb-1">Department:</label>
+                    <input type="text" name="Department" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
+                </div>
+                <div>
+                    <label class="block font-semibold text-purple-900 mb-1">Portfolio Name:</label>
+                    <input type="text" name="Portfolio Name" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
+                </div>
+                <div>
+                    <label class="block font-semibold text-purple-900 mb-1">Portfolio Member Name:</label>
+                    <input type="text" name="Portfolio Member Name" class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
+                </div>
+            </div>
+            <div class="overflow-x-auto rounded-xl shadow border border-purple-100 bg-white w-full">
+                <table class="w-full min-w-[1200px] text-xs md:text-sm table-fixed">
+                    <colgroup>
+                        <col style="width: 3%">
+                        <col style="width: 36%">
+                        <col style="width: 10%">
+                        <col style="width: 10%">
+                        <col style="width: 10%">
+                        <col style="width: 18%">
+                        <col style="width: 13%">
+                    </colgroup>
+                    <thead class="bg-orange-400">
+                        <tr>
+                            <th class="border px-2 py-2 font-bold text-white">S. NO</th>
+                            <th class="border px-2 py-2 font-bold text-white">SCOPE</th>
+                            <th class="border px-2 py-2 font-bold text-white">TARGET</th>
+                            <th class="border px-2 py-2 font-bold text-white">TAT</th>
+                            <th class="border px-2 py-2 font-bold text-white">Status</th>
+                            <th class="border px-2 py-2 font-bold text-white">Description</th>
+                            <th class="border px-2 py-2 font-bold text-white">Upload File</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ap-table-body">
+                        <!-- JS will render 21 rows here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-center mt-8">
+                <button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
+            </div>
+        </form>
+    </div>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script>
+    // SCOPE/TARGET/TAT data for 21 rows (from image)
+    const apRows = [
+        { scope: 'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.', target: '', tat: 'END OF THE DAY' },
+        { scope: 'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.', target: '', tat: 'BEFORE 15 DAY OF START OF SEM' },
+        { scope: 'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.', target: '', tat: 'END OF THE DAY' },
+        { scope: 'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.', target: '', tat: '25TH OF MONTH' },
+        { scope: 'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.', target: '', tat: '' },
+        { scope: 'Student Mentorship and Support: Monitor student attendance, performance, and well-being.', target: '', tat: 'END OF THE DAY' },
+        { scope: 'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.', target: '', tat: 'END OF FRIDAY' },
+        { scope: 'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.', target: '', tat: 'END OF FRIDAY' },
+        { scope: 'Student Mentorship and Support: Consolidate innovative course material, Lab manuals', target: '2 Theory 1 Lab', tat: '31ST DEC' },
+        { scope: 'Research and Development: Present at conferences.', target: '1', tat: '31ST MAY' },
+        { scope: 'Research and Development: Guide student research and final-year projects', target: '2 Batch', tat: '31ST MAY' },
+        { scope: 'Institutional Development: Participate in curriculum development and revision through Boards of Studies.', target: '2', tat: 'BEFORE 45 DAY OF START OF SEM' },
+        { scope: 'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.', target: '', tat: 'END OF FRIDAY' },
+        { scope: 'Institutional Development: Serve on academic and administrative committees.', target: '1', tat: 'AS PER SCHEDULE' },
+        { scope: 'Professional Development: Attend FDP/ workshops/ seminar.', target: '2 PER YEAR', tat: '31ST MAY' },
+        { scope: 'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.', target: '2 PER SEM 1 MEMBERSHIP', tat: '31ST MAY' },
+        { scope: 'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.', target: '1/SEM', tat: '31ST DEC' },
+        { scope: 'Community and Industry Engagement: Engage in extension activities, and social outreach Programs.', target: '1/SEM', tat: '31ST DEC' },
+        { scope: 'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.', target: '', tat: 'END OF THE DAY' },
+        { scope: 'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.', target: '', tat: 'AS PER SCHEDULE' },
+        { scope: 'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.', target: '', tat: '31ST MAY' },
+    ];
+    // Render table rows
+    const tbody = document.getElementById('ap-table-body');
+    apRows.forEach((row, i) => {
+        const idx = i + 1;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="border px-2 py-1 text-center">${idx}</td>
+            <td class="border px-2 py-1">${row.scope}</td>
+            <td class="border px-2 py-1 text-center">${row.target}</td>
+            <td class="border px-2 py-1 text-center">${row.tat}</td>
+            <td class="border px-2 py-1"><select name="Status_${idx}" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
+            <td class="border px-2 py-1"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+            <td class="border px-2 py-1"><input type="file" name="Upload The Scanned File_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="w-full" /></td>
+        `;
+        tbody.appendChild(tr);
+    });
+    // Supabase setup
+    const supabase = window.supabase.createClient(
+        "https://cbhodgwaazmjszkujrti.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+    async function uploadFileToStorage(file, path) {
+        if (!file) return null;
+        const { data, error } = await supabase.storage.from('Ap').upload(path, file, { upsert: true });
+        if (error) throw error;
+        // Get public URL
+        const { data: urlData } = supabase.storage.from('Ap').getPublicUrl(path);
+        return urlData.publicUrl;
+    }
+    document.getElementById('apForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        // Prepare row object for 21 rows
+        const row = {
+            "Department": formData.get('Department'),
+            "Portfolio Name": formData.get('Portfolio Name'),
+            "Portfolio Member Name": formData.get('Portfolio Member Name'),
+        };
+        for (let i = 1; i <= 21; i++) {
+            row[`Status_${i}`] = formData.get(`Status_${i}`);
+            row[`Description_${i}`] = formData.get(`Description_${i}`);
+            const file = formData.get(`Upload The Scanned File_${i}`);
+            if (file && file.size > 0) {
+                const ts = Date.now();
+                const path = `apfile${i}_${ts}_${file.name}`;
+                try {
+                    row[`Upload The Scanned File_${i}`] = await uploadFileToStorage(file, path);
+                } catch (err) {
+                    window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
+                    return;
+                }
+            } else {
+                row[`Upload The Scanned File_${i}`] = null;
+            }
+        }
+        // Insert into ap_compliance table
+        // SCOPE index mapping for compliance fields:
+        // 1. Present at Conferences. (idx 10)
+        // 2. Guide student research and final-year projects. (idx 11)
+        // 3. Attend FDPs / workshop/Seminars (idx 15)
+        // 4. NPTEL/ MOOC certifications (idx 16)
+        // 5. Facilitate industry-institute interaction through guest lectures, internships. (idx 17)
+        // 6. Engage in extension activities, and social outreach programs. (idx 18)
+        // 7. Membership in professional body (idx 21)
+        const complianceMap = [10, 11, 15, 16, 17, 18, 21];
+        let faculty_email = '';
+        try {
+            const { data: facultyRows } = await supabase
+                .from('Faculty')
+                .select('email')
+                .eq('department', row["Department"])
+                .eq('Name', row["Portfolio Member Name"])
+                .limit(1)
+                .single();
+            if (facultyRows && facultyRows.email) faculty_email = facultyRows.email;
+        } catch (e) {}
+        const complianceRow = {
+            department: row["Department"],
+            faculty_email: faculty_email,
+            faculty_name: row["Portfolio Member Name"],
+            compliance_1: row[`Status_${complianceMap[0]}`] || '',
+            compliance_2: row[`Status_${complianceMap[1]}`] || '',
+            compliance_3: row[`Status_${complianceMap[2]}`] || '',
+            compliance_4: row[`Status_${complianceMap[3]}`] || '',
+            compliance_5: row[`Status_${complianceMap[4]}`] || '',
+            compliance_6: row[`Status_${complianceMap[5]}`] || '',
+            compliance_7: row[`Status_${complianceMap[6]}`] || ''
+        };
+        await supabase.from('ap_compliance').insert([complianceRow]);
+        // Insert into Supabase
+        const { data, error } = await supabase.from('AP').insert([row]);
+        // --- Compliance logic and Faculty table update ---
+        async function updateFacultyComplianceAP() {
+            let allCompleted = true;
+            let anyFilled = false;
+            for (let i = 1; i <= 21; i++) {
+                let status = row[`Status_${i}`] || "";
+                if (status) anyFilled = true;
+                let s = status.toLowerCase();
+                if (s !== "completed" && s !== "updated" && s !== "not applicable") {
+                    allCompleted = false;
+                }
+            }
+            let compliance = "NOT FILLED";
+            if (anyFilled) compliance = allCompleted ? "COMPLETED" : "PENDING";
+            // Update Faculty table (by department and member name) in new compliance column
+            await supabase.from('Faculty').update({ compliance: compliance })
+                .eq('department', row["Department"])
+                .eq('Name', row["Portfolio Member Name"]);
+        }
+        if (!error) {
+            await updateFacultyComplianceAP();
+            window.location.href = 'notification.html?status=success';
+        } else {
+            window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
+        }
+    });
+    </script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
+    </p>
+  </footer>
+
+</body>
+</html>

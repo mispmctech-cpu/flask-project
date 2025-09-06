@@ -71,94 +71,55 @@
 </head>
 
 <body class="bg-pmcBg min-h-screen">
-  <!-- Navbar -->
-  <nav class="bg-pmcPurple text-white shadow-md">
+  <header class="bg-pmcPurple text-white w-full">
     <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
-      <a href="#" class="flex items-center">
-        <img
-          src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3"
-          alt="PMC Logo" class="h-12 mr-4 rounded shadow" />
-      </a>
-      <ul class="flex items-center gap-6 text-base font-medium">
-        <li>
-          <a href="#" class="border-b-2 border-white pb-1">Department List</a>
-        </li>
-        <li>
-          <a href="iqac-workdone.html" class="hover:underline">Work Done</a>
-        </li>
-        <div class="navbar">
-          <div class="dropdown">
-            <button class="dropbtn">
-              Forms
-              <i class="fa fa-caret-down"></i>
-            </button>
-            <div class="dropdown-content">
-              <a href="form1-db.html" class="hover:underline">Form 1</a>
-              <a href="form2-db.html" class="hover:underline">Form 2</a>
-              <a href="form3-db.html" class="hover:underline">Form 3</a>
-              <a href="form4-db.html" class="hover:underline">Form 4</a>
-              <a href="form5-db.html" class="hover:underline">Form 5</a>
-              <a href="form6-db.html" class="hover:underline">Form 6</a>
-              <a href="form7-db.html" class="hover:underline">Form 7</a>
-              <a href="form8-db.html" class="hover:underline">Form 8</a>
-            </div>
-          </div>
-        </div>
-        <li><a href="add-hod.html" class="hover:underline">Add HOD</a></li>
-        <li><span class="font-bold">Username</span></li>
-        <li><span class="text-2xl">👤</span></li>
-        <!-- Bell Icon for Messaging -->
-        <li>
-          <button onclick="openMessagingModal()" aria-label="Messages" class="relative focus:outline-none">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-              stroke="currentColor" class="w-8 h-8 text-white hover:text-blue-400 transition">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z" />
-            </svg>
-          </button>
-        </li>
-        <!-- Messaging Modal -->
-        <div id="messagingModal"
-          class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
-          <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-            <button onclick="closeMessagingModal()"
-              class="absolute top-2 right-2 text-gray-400 hover:text-pmcPurple text-2xl font-bold">
-              &times;
-            </button>
-            <h2 class="text-xl font-bold text-pmcPurple mb-4 flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                stroke="currentColor" class="w-6 h-6 inline-block">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M14.857 17.082a2.25 2.25 0 01-4.07 0M21 19.5a1.5 1.5 0 01-1.5-1.5V11a7.5 7.5 0 10-15 0v7a1.5 1.5 0 01-1.5 1.5h18z" />
-              </svg>
-              Messages
-            </h2>
-            <div id="messageList" class="h-48 overflow-y-auto border rounded p-2 mb-4 bg-gray-50"></div>
-            <div class="flex gap-2">
-              <input id="messageInput" type="text"
-                class="flex-1 border border-pmcPurple rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pmcPurple text-black"
-                placeholder="Type your message..." onkeydown="if(event.key==='Enter'){sendMessage()}" />
-              <button onclick="sendMessage()"
-                class="bg-pmcPurple hover:bg-pmcPurpleDark text-white px-4 py-2 rounded font-semibold">
-                Send
-              </button>
-            </div>
-          </div>
-        </div>
-        <script src="/static/javascript/messaging.js"></script>
-        <!-- Modern Notification Bell Icon for Messaging -->
-        <li>
-          <button onclick="openMessagingModal()" aria-label="Messages" class="relative focus:outline-none group">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white group-hover:text-yellow-400 transition"
-              fill="currentColor" viewBox="0 0 24 24">
-              <path
-                d="M12 2C8.13 2 5 5.13 5 9v5.586l-1.707 1.707A1 1 0 0 0 4 18h16a1 1 0 0 0 .707-1.707L19 14.586V9c0-3.87-3.13-7-7-7zm0 20a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22z" />
-            </svg>
-          </button>
-        </li>
-      </ul>
+      <!-- Logo -->
+      <div class="flex items-center">
+        <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 rounded shadow bg-white p-1" />
+      </div>
+      <!-- Hamburger menu button (mobile only) -->
+      <button id="menuBtn" class="sm:hidden ml-2 p-2 rounded focus:outline-none focus:ring-2 focus:ring-white" aria-label="Open Menu">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      </button>
+      <!-- Nav links -->
+      <nav id="mainNav" class="hidden sm:flex gap-6 text-base font-medium items-center">
+        <a href="#" class="border-b-2 border-white pb-1">Department List</a>
+        <a href="iqac-workdone.html" class="hover:underline">Work Done</a>
+        <a href="add-hod.html" class="hover:underline">Add HOD</a>
+        <button onclick="openMessagingModal()" aria-label="Messages" class="relative focus:outline-none">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-blue-400 transition">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z" />
+          </svg>
+        </button>
+      </nav>
     </div>
-  </nav>
+    <!-- Mobile nav links -->
+    <div id="mobileNav" class="sm:hidden hidden px-4 pb-4">
+      <nav class="flex flex-col gap-3 text-base font-medium bg-pmcPurple rounded shadow">
+        <a href="#" class="border-b-2 border-white pb-1">Department List</a>
+        <a href="iqac-workdone.html" class="hover:underline">Work Done</a>
+        <a href="add-hod.html" class="hover:underline">Add HOD</a>
+        <button onclick="openMessagingModal()" aria-label="Messages" class="relative focus:outline-none py-2 text-left">
+          <span class="inline-flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-blue-400 transition">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z" />
+            </svg>
+            Messages
+          </span>
+        </button>
+      </nav>
+    </div>
+    <script>
+      // Toggle mobile nav
+      document.addEventListener('DOMContentLoaded', function() {
+        const menuBtn = document.getElementById('menuBtn');
+        const mobileNav = document.getElementById('mobileNav');
+        menuBtn.addEventListener('click', function() {
+          mobileNav.classList.toggle('hidden');
+        });
+      });
+    </script>
+  </header>
   <!-- HOD List Content (same as faculty-list, but for HODs) -->
   <div class="max-w-6xl mx-auto mt-8 px-4">
     <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
@@ -184,7 +145,7 @@
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
       <!-- Department Cards -->
-      <a href="hod.html?as=hod&department=AERO"
+      <a href="iqac-viewhod.html?department=AERO"
         class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
         <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
           <img src="../static/img/AERO.PNG" alt="AERO"
@@ -194,7 +155,7 @@
           AERO
         </div>
       </a>
-      <a href="hod.html?as=hod&department=AIDS"
+      <a href="iqac-viewhod.html?department=AIDS"
         class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
         <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
           <img src="../static/img/AIDS.PNG" alt="AIDS"
@@ -204,7 +165,7 @@
           AIDS
         </div>
       </a>
-      <a href="hod.html?as=hod&department=AIML"
+      <a href="iqac-viewhod.html?department=AIML"
         class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
         <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
           <img src="../static/img/AIML.PNG" alt="AIML"
@@ -214,7 +175,7 @@
           AIML
         </div>
       </a>
-      <a href="hod.html?as=hod&department=CHEM"
+      <a href="iqac-viewhod.html?department=CHEM"
         class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
         <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
           <img src="../static/img/CHEM.PNG" alt="CHEM"
@@ -224,7 +185,7 @@
           CHEM
         </div>
       </a>
-      <a href="hod.html?as=hod&department=CIVIL"
+      <a href="iqac-viewhod.html?department=CIVIL"
         class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
         <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
           <img src="../static/img/CIVIL.PNG" alt="CIVIL"
@@ -234,7 +195,7 @@
           CIVIL
         </div>
       </a>
-      <a href="hod.html?as=hod&department=CSBS"
+      <a href="iqac-viewhod.html?department=CSBS"
         class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
         <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
           <img src="../static/img/CSBS.PNG" alt="CSBS"
@@ -244,7 +205,7 @@
           CSBS
         </div>
       </a>
-      <a href="hod.html?as=hod&department=CSE"
+      <a href="iqac-viewhod.html?department=CSE"
         class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
         <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
           <img src="../static/img/CSE.PNG" alt="CSE"
@@ -252,7 +213,7 @@
         </div>
         <div class="department-name mt-2 font-medium text-pmcPurple">CSE</div>
       </a>
-      <a href="hod.html?as=hod&department=ECE"
+      <a href="iqac-viewhod.html?department=ECE"
         class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
         <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
           <img src="../static/img/ECE.PNG" alt="ECE"
@@ -260,7 +221,7 @@
         </div>
         <div class="department-name mt-2 font-medium text-pmcPurple">ECE</div>
       </a>
-      <a href="hod.html?as=hod&department=EEE"
+      <a href="iqac-viewhod.html?department=EEE"
         class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
         <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
           <img src="../static/img/EEE.PNG" alt="EEE"
@@ -268,7 +229,7 @@
         </div>
         <div class="department-name mt-2 font-medium text-pmcPurple">EEE</div>
       </a>
-      <a href="hod.html?as=hod&department=IT"
+      <a href="iqac-viewhod.html?department=IT"
         class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
         <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
           <img src="../static/img/IT.PNG" alt="IT"
@@ -276,7 +237,7 @@
         </div>
         <div class="department-name mt-2 font-medium text-pmcPurple">IT</div>
       </a>
-      <a href="hod.html?as=hod&department=MBA"
+      <a href="iqac-viewhod.html?department=MBA"
         class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
         <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
           <img src="../static/img/MBA.PNG" alt="MBA"
@@ -284,7 +245,7 @@
         </div>
         <div class="department-name mt-2 font-medium text-pmcPurple">MBA</div>
       </a>
-      <a href="hod.html?as=hod&department=MCO"
+      <a href="iqac-viewhod.html?department=MCO"
         class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
         <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
           <img src="../static/img/MCO.PNG" alt="MCO"
@@ -292,7 +253,7 @@
         </div>
         <div class="department-name mt-2 font-medium text-pmcPurple">MCO</div>
       </a>
-      <a href="hod.html?as=hod&department=MCA"
+      <a href="iqac-viewhod.html?department=MCA"
         class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
         <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
           <img src="../static/img/MCA.PNG" alt="MCA"
@@ -300,7 +261,7 @@
         </div>
         <div class="department-name mt-2 font-medium text-pmcPurple">MCA</div>
       </a>
-      <a href="hod.html?as=hod&department=MECH"
+      <a href="iqac-viewhod.html?department=MECH"
         class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
         <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
           <img src="../static/img/MECH.PNG" alt="MECH"
@@ -310,14 +271,44 @@
           MECH
         </div>
       </a>
-      <a href="hod.html?as=hod&department=S%26H"
+      <a href="iqac-viewhod.html?department=S%26H"
         class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
         <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
           <img src="../static/img/S&H.PNG" alt="S&H"
             class="w-24 h-24 object-cover rounded-full shadow hover:scale-105 transition" />
         </div>
         <div class="department-name mt-2 font-medium text-pmcPurple">
-          S&amp;H
+          S&H V1
+        </div>
+      </a>
+      <a href="iqac-viewhod.html?department=S%26H"
+        class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
+        <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
+          <img src="../static/img/S&H.PNG" alt="S&H"
+            class="w-24 h-24 object-cover rounded-full shadow hover:scale-105 transition" />
+        </div>
+        <div class="department-name mt-2 font-medium text-pmcPurple">
+          S&H V2
+        </div>
+      </a>
+      <a href="iqac-viewhod.html?department=S%26H"
+        class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
+        <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
+          <img src="../static/img/S&H.PNG" alt="S&H"
+            class="w-24 h-24 object-cover rounded-full shadow hover:scale-105 transition" />
+        </div>
+        <div class="department-name mt-2 font-medium text-pmcPurple">
+          S&H V3
+        </div>
+      </a>
+      <a href="iqac-viewhod.html?department=S%26H"
+        class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
+        <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
+          <img src="../static/img/S&H.PNG" alt="S&H"
+            class="w-24 h-24 object-cover rounded-full shadow hover:scale-105 transition" />
+        </div>
+        <div class="department-name mt-2 font-medium text-pmcPurple">
+          S&H V4
         </div>
       </a>
     </div>
@@ -332,7 +323,12 @@
       class="bg-pmcPurple hover:bg-pmcPurpleDark text-white rounded-full shadow-lg p-3 flex items-center justify-center text-2xl transition">
       &#8594;
     </button>
-  </div>
+  </div>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
+    </p>
+  </footer>
+
 </body>
 
 </html>

@@ -1,3 +1,49 @@
+</script>
+<script>
+// Auto-fill Department, Portfolio Name, and Portfolio Member Name from localStorage
+document.addEventListener('DOMContentLoaded', function() {
+    let deptFromQuery = new URLSearchParams(window.location.search).get('department');
+    if (deptFromQuery) {
+        localStorage.setItem('selectedDepartment', deptFromQuery);
+    }
+    let dept = deptFromQuery || localStorage.getItem('selectedDepartment') || '';
+    let deptFields = document.querySelectorAll("input[name='Department'], input[name='Department:'], select[name='Department'], select[name='Department:']");
+    deptFields.forEach(function(field) {
+        if (dept) field.value = dept;
+        field.required = true;
+        field.readOnly = false;
+        field.disabled = false;
+        if (field.tagName === 'SELECT') {
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    });
+    let portfolio = localStorage.getItem('selectedPortfolio') || new URLSearchParams(window.location.search).get('portfolio') || '';
+    let portfolioFields = document.querySelectorAll("input[name='Portfolio Name'], input[name='Portfolio Name:']");
+    portfolioFields.forEach(function(field) {
+        if (portfolio) field.value = portfolio;
+        field.required = true;
+        field.readOnly = false;
+        field.disabled = false;
+    });
+    let member = localStorage.getItem('selectedMemberName') || new URLSearchParams(window.location.search).get('name') || '';
+    let memberFields = document.querySelectorAll("input[name='Portfolio Member Name'], input[name='Portfolio Memeber Name']");
+    memberFields.forEach(function(field) {
+        if (member) field.value = member;
+        field.required = true;
+        field.readOnly = false;
+        field.disabled = false;
+    });
+    // On submit, forcibly set these values in the form data (never null)
+    let form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            deptFields.forEach(function(field) { if (!field.value) field.value = dept; });
+            portfolioFields.forEach(function(field) { if (!field.value) field.value = portfolio; });
+            memberFields.forEach(function(field) { if (!field.value) field.value = member; });
+        });
+    }
+});
+</script>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -758,7 +804,12 @@
         <!-- ONCE IN A SEMESTER Section -->
         <!-- Removed: 2. Class Advisor Form: Once in a Semester -->
     </div>
-    </main>
+    </main>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
+    </p>
+  </footer>
+
 
 </body>
 
@@ -1158,7 +1209,12 @@ window.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
-<script src="/javascript/faculty-form.js"></script>
+<script src="/javascript/faculty-form.js"></script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
+    </p>
+  </footer>
+
 
 </body>
 

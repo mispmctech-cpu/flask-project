@@ -134,111 +134,74 @@
   </head>
   <body>
   <!-- Removed redirect to hod-role.html to prevent redirect loop -->
-    <!-- Navbar -->
-    <nav class="bg-pmcPurple text-white shadow-md">
-      <div
-        class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3"
-      >
-        <a href="#" class="flex items-center">
-          <img
-            src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3"
-            alt="PMC Logo"
-            class="h-12 mr-4 rounded shadow"
-          />
-        </a>
-
-        <ul class="flex items-center gap-6 text-base font-medium">
-          <li>
-              <a href="#" class="border-b-2 border-white pb-1">Faculty List</a>
-            </li>
-            <li>
-              <a href="workdone.html?role=HOD&department=" class="hover:underline" id="workdoneLink">Workdone</a>
-    <script>
-      // Set department in Workdone link, always prefer query param and update localStorage
-      document.addEventListener('DOMContentLoaded', function() {
-        function getQueryParam(name) {
-          const url = new URL(window.location.href);
-          return url.searchParams.get(name);
-        }
-        var dept = getQueryParam('department');
-        if (dept) {
-          localStorage.setItem('department', dept);
-        } else {
-          dept = localStorage.getItem('department') || '';
-        }
-        var link = document.getElementById('workdoneLink');
-        if (link) {
-          link.href = `workdone.html?role=HOD&department=${encodeURIComponent(dept)}`;
-        }
-      });
-    </script>
-          </li>
-          <div class="navbar">
-            <div class="dropdown">
-              <button class="dropbtn">
-                Forms
-                <i class="fa fa-caret-down"></i>
-              </button>
-              <div class="dropdown-content">
-                <a href="form1-db.html" class="hover:underline">Form 1</a>
-                <a href="form2-db.html" class="hover:underline">Form 2</a>
-                <a href="form3-db.html" class="hover:underline">Form 3</a>
-                <a href="form4-db.html" class="hover:underline">Form 4</a>
-                <a href="form5-db.html" class="hover:underline">Form 5</a>
-                <a href="form6-db.html" class="hover:underline">Form 6</a>
-                <a href="form7-db.html" class="hover:underline">Form 7</a>
-                <a href="form8-db.html" class="hover:underline">Form 8</a>
-              </div>
-            </div>
-          </div>
-          <li>
-            <a href="add-faculty.html" class="hover:underline">Add Faculty</a>
-          </li>
-          <li><span id="hodUsername" class="font-bold cursor-pointer" onclick="window.location.href='hod-profile.html'">Username</span></li>
-          <li><img id="hodProfileImg" src="https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80" alt="Profile" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow" style="min-width:2rem;min-height:2rem;" /></li>
-          <!-- Modern Notification Bell Icon for Messaging -->
-          <li>
-            <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
+    <header class="bg-pmcPurple text-white w-full">
+      <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+        <!-- Logo -->
+        <div class="flex items-center">
+          <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 rounded shadow bg-white p-1" />
+        </div>
+        <!-- Hamburger menu button (mobile only) -->
+        <button id="menuBtn" class="sm:hidden ml-2 p-2 rounded focus:outline-none focus:ring-2 focus:ring-white" aria-label="Open Menu">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+        <!-- Nav links -->
+        <nav id="mainNav" class="hidden sm:flex gap-6 text-base font-medium items-center">
+          <a href="#" class="border-b-2 border-white pb-1">Faculty List</a>
+          <a href="workdone.html?role=HOD&department=" class="hover:underline" id="workdoneLink">Workdone</a>
+          <a href="add-faculty.html" class="hover:underline">Add Faculty</a>
+          <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+            </svg>
+          </button>
+        </nav>
+      </div>
+      <!-- Mobile nav links -->
+      <div id="mobileNav" class="sm:hidden hidden px-4 pb-4">
+        <nav class="flex flex-col gap-3 text-base font-medium bg-pmcPurple rounded shadow">
+          <a href="#" class="border-b-2 border-white pb-1">Faculty List</a>
+          <a href="workdone.html?role=HOD&department=" class="hover:underline" id="workdoneLinkMobile">Workdone</a>
+          <a href="add-faculty.html" class="hover:underline">Add Faculty</a>
+          <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none py-2 text-left">
+            <span class="inline-flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
               </svg>
-            </button>
-          </li>
-          <li>
-            <button
-              onclick="openMessagingModal()"
-              aria-label="Messages"
-              class="relative focus:outline-none"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-                class="w-8 h-8 text-white hover:text-blue-400 transition"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z"
-                />
-              </svg>
-            </button>
-          </li>
-        </ul>
-    <script>
-      // Set department and role in Workdone link for correct filtering
-      document.addEventListener('DOMContentLoaded', function() {
-        const dept = localStorage.getItem('department') || '';
-        const link = document.getElementById('workdoneLink');
-        if (link) {
-          link.href = `workdone.html?role=hod&department=${encodeURIComponent(dept)}`;
-        }
-      });
-    </script>
-  </div>
-    </nav>
+              Logout
+            </span>
+          </button>
+        </nav>
+      </div>
+      <script>
+        // Toggle mobile nav
+        document.addEventListener('DOMContentLoaded', function() {
+          const menuBtn = document.getElementById('menuBtn');
+          const mobileNav = document.getElementById('mobileNav');
+          menuBtn.addEventListener('click', function() {
+            mobileNav.classList.toggle('hidden');
+          });
+          // Set department in Workdone link for both desktop and mobile
+          function getQueryParam(name) {
+            const url = new URL(window.location.href);
+            return url.searchParams.get(name);
+          }
+          var dept = getQueryParam('department');
+          if (dept) {
+            localStorage.setItem('department', dept);
+          } else {
+            dept = localStorage.getItem('department') || '';
+          }
+          var link = document.getElementById('workdoneLink');
+          var linkMobile = document.getElementById('workdoneLinkMobile');
+          if (link) {
+            link.href = `workdone.html?role=HOD&department=${encodeURIComponent(dept)}`;
+          }
+          if (linkMobile) {
+            linkMobile.href = `workdone.html?role=HOD&department=${encodeURIComponent(dept)}`;
+          }
+        });
+      </script>
+    </header>
 
     <!-- Messaging Modal -->
     <div
@@ -379,7 +342,7 @@
           }
           document.getElementById('facultyGrid').innerHTML = data.map(faculty => `
             <div class="flex flex-col items-center bg-white rounded-xl shadow p-4 faculty-card">
-              <a href="faculty-profile.html?email=${encodeURIComponent(faculty['email'])}">
+              <a href="hod-viewfaculty-details.html?email=${encodeURIComponent(faculty['email'])}">
                 <img src="${faculty['Upload Image'] || 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80'}" alt="Faculty" class="w-28 h-28 object-cover rounded-full shadow hover:scale-105 transition" />
               </a>
               <div class="faculty-name mt-3 font-medium text-pmcPurple">
@@ -392,29 +355,60 @@
         loadFacultyList();
       </script>
       <script>
-        // Fetch and display HOD username in navbar
+        // Fetch and display HOD name and profile image from HOD table for the current department
         async function setHodUsername() {
-          const email = localStorage.getItem('email');
-          if (!email) return;
-          const { data, error } = await supabaseClient
-            .from('Faculty')
-            .select('Name, "Upload Image"')
-            .eq('email', email)
-            .single();
-          if (data) {
-            if (data.Name) {
-              document.getElementById('hodUsername').textContent = data.Name;
-            }
-            if (data['Upload Image']) {
-              document.getElementById('hodProfileImg').src = data['Upload Image'];
-            }
-          }
+        // Get department from query param or localStorage
+        function getQueryParam(name) {
+          const url = new URL(window.location.href);
+          return url.searchParams.get(name);
         }
-        setHodUsername();
+        const departmentParam = getQueryParam('department');
+        const department = departmentParam || localStorage.getItem('department') || '';
+        const usernameSpan = document.getElementById('hodUsername');
+        const profileImg = document.getElementById('hodProfileImg');
+        if (!department) {
+          usernameSpan.textContent = 'Username';
+          profileImg.src = 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
+          console.log('[HOD DEBUG] No department found in query param or localStorage.');
+          return;
+        }
+        // Fetch Name and Upload Image from HOD table by department
+        try {
+          const { data, error } = await supabaseClient
+            .from('HOD')
+            .select('Name, "Upload Image"')
+            .eq('department', department)
+            .maybeSingle();
+          console.log('[HOD DEBUG] Querying HOD table for department:', department);
+          if (error) {
+            console.error('[HOD DEBUG] Supabase error:', error);
+          }
+          console.log('[HOD DEBUG] HOD data:', data);
+          if (data && data.Name) {
+            usernameSpan.textContent = data.Name.trim() || 'Username';
+            profileImg.src = data["Upload Image"] || 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
+          } else {
+            usernameSpan.textContent = 'Username';
+            profileImg.src = 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
+            console.warn('[HOD DEBUG] No HOD found for department:', department);
+          }
+        } catch (e) {
+          console.error('[HOD DEBUG] Exception while fetching HOD:', e);
+          usernameSpan.textContent = 'Username';
+          profileImg.src = 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
+        }
+      }
+      // Ensure HOD info loads as soon as DOM is ready
+      document.addEventListener('DOMContentLoaded', setHodUsername);
       </script>
     </div>
     <!-- SheetJS (xlsx) CDN for Excel export -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="/static/javascript/messaging.js"></script>
+    <script src="/static/javascript/messaging.js"></script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
+    </p>
+  </footer>
+
   </body>
 </html>

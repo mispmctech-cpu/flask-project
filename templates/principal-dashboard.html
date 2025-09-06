@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+</head>
+<body class="bg-pmcBg min-h-screen">
+  <header class="bg-purple-700 text-white shadow-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+      <h1 class="text-2xl font-bold">Dashboard</h1>
+      <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+        </svg>
+      </button>
+    </div>
+  </header>
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Top: Department Status Distribution (large) -->
+    <div class="mb-8">
+      <h2 class="text-xl font-bold mb-2 text-purple-700">Department Status Distribution</h2>
+      <div class="w-full md:w-3/4 mx-auto" style="min-height:360px;max-height:360px;">
+        <canvas id="deptStatusBarChart" style="height:340px;min-height:340px;max-height:340px;"></canvas>
+      </div>
+    </div>
+    <!-- Below: Overall Submission Status (large) -->
+    <div class="mb-8">
+      <h2 class="text-xl font-bold mb-2 text-purple-700">Overall Submission Status</h2>
+      <div class="w-full md:w-3/4 mx-auto" style="min-height:360px;max-height:360px;">
+        <canvas id="overallChart" style="height:340px;min-height:340px;max-height:340px;"></canvas>
+      </div>
+    </div>
+    <!-- Filters -->
+    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex flex-col md:flex-row gap-4 items-center">
+        <label class="font-semibold text-black">Department:</label>
+        <select id="departmentDropdown" class="p-2 border border-gray-300 rounded-md w-64"></select>
+        <label class="font-semibold text-black">Portfolio Name:</label>
+        <select id="portfolioDropdown" class="p-2 border border-gray-300 rounded-md w-64"></select>
+      </div>
+    </div>
+    <!-- Bottom: Two small bar charts in a row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div>
+        <h2 class="text-base font-bold mb-2 text-purple-700">Department-wise Submission Status</h2>
+        <div class="w-full">
+          <canvas id="departmentChart" style="height:200px;"></canvas>
+        </div>
+      </div>
+      <div>
+        <h2 class="text-base font-bold mb-2 text-purple-700">Portfolio Name-wise Submission Status</h2>
+        <div class="w-full">
+          <canvas id="portfolioChart" style="height:200px;"></canvas>
+        </div>
+      </div>
+    </div>
+    <div id="loadingBox" class="mt-8 p-3 rounded bg-blue-100 text-blue-800 font-semibold">Loading data, please wait...</div>
+    <div id="errorBox" class="hidden mt-4 p-3 rounded bg-red-100 text-red-700 font-semibold"></div>
+  </main>
+  <script>
+    // Supabase client (anon key from your forms)
+    const supabaseClient = window.supabase.createClient(
+      "https://cbhodgwaazmjszkujrti.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+    // All form tables
+    const FORM_TABLES = [
+      'form1-Weekly', 'form1-once in 15 days', 'form1-once in a semester', 'form1-once in a year',
+      'form2-daily', 'form2-weekly', 'form2-once in a month', 'form2-once in a semester',
+      'form3-Weekly', 'form3- once in 15 days', 'form3-once in a semester',
+      'form4-Weekly', 'form4-once in a month', 'form4-once in a semester',
+      'form5-weekly', 'form5-Once in a 3 Months', 'form5-once in a semester',
+      'form6-weekly', 'form6-once in 2 month', 'form6-once in a semester',
+      'form7-Weekly', 'form7-Once in 2 Months', 'form7-Once in a Semester',
+      'form8-weekly', 'form8-once in 3 Months', 'form8-Once in Semester'
+    ];
+    // Status categories
+    const STATUS_CATEGORIES = {
+      completed: ['completed', 'uploaded'],
+      notcompleted: ['yet to be completed'],
+      process: ['under process']
+    };
+    // Data holders
+    let allRows = [];
+    let departments = new Set();
+    let portfolios = new Set();
+    // Helper: classify status
+    function classifyStatus(row) {
+      let statusFields = Object.keys(row).filter(key => key.toLowerCase().includes('status'));
+      let hasNotCompleted = false;
+      let hasProcess = false;
+      let allCompleted = true;
+      for (const key of statusFields) {
+        const val = (row[key] || '').toLowerCase();
+        if (STATUS_CATEGORIES.notcompleted.some(s => val.includes(s))) {
+          hasNotCompleted = true;
+          allCompleted = false;
+        } else if (STATUS_CATEGORIES.process.some(s => val.includes(s))) {
+          hasProcess = true;
+          allCompleted = false;
+        } else if (!STATUS_CATEGORIES.completed.some(s => val.includes(s))) {
+          allCompleted = false;
+        }
+      }
+      if (hasNotCompleted) return 'Not Completed';
+      if (allCompleted && statusFields.length > 0) return 'Completed/Uploaded';
+      if (hasProcess) return 'Under Process';
+      return 'Not Completed';
+    }
+    // Fetch all data
+    async function fetchAllData() {
+      document.getElementById('loadingBox').style.display = '';
+      document.getElementById('errorBox').classList.add('hidden');
+      allRows = [];
+      departments.clear();
+      portfolios.clear();
+      for (const table of FORM_TABLES) {
+        let { data, error } = await supabaseClient.from(table).select('*');
+        if (error) {
+          document.getElementById('errorBox').textContent = `Error fetching ${table}: ${error.message}`;
+          document.getElementById('errorBox').classList.remove('hidden');
+          continue;
+        }
+        for (const row of data) {
+          // Try to get department and portfolio name fields
+          let dept = row['Department'] || row['department'] || row['Department:'] || row['department:'] || '';
+          let portfolio = row['Portfolio Name'] || row['portfolio_name'] || '';
+          let status = classifyStatus(row);
+          allRows.push({ ...row, department: dept, portfolio, status });
+          if (dept) departments.add(dept);
+          if (portfolio) portfolios.add(portfolio);
+        }
+      }
+      document.getElementById('loadingBox').style.display = 'none';
+      updateDropdowns();
+      renderCharts();
+    }
+    // Populate dropdowns
+    function updateDropdowns() {
+      const deptSel = document.getElementById('departmentDropdown');
+      deptSel.innerHTML = '<option value="">All Departments</option>' + Array.from(departments).map(d => `<option value="${d}">${d}</option>`).join('');
+      const portSel = document.getElementById('portfolioDropdown');
+      portSel.innerHTML = '<option value="">All Portfolios</option>' + Array.from(portfolios).map(p => `<option value="${p}">${p}</option>`).join('');
+    }
+    // Chart rendering
+    let overallChart, departmentChart, portfolioChart, deptStatusBarChart;
+    function renderCharts() {
+      // Overall
+      const overallCounts = { 'Completed/Uploaded': 0, 'Not Completed': 0, 'Under Process': 0 };
+      allRows.forEach(r => { if (overallCounts[r.status] !== undefined) overallCounts[r.status]++; });
+      renderBarChart('overallChart', overallCounts, 'Overall Submission Status');
+      // Department-wise
+      const dept = document.getElementById('departmentDropdown').value;
+      const deptCounts = { 'Completed/Uploaded': 0, 'Not Completed': 0, 'Under Process': 0 };
+      allRows.filter(r => !dept || r.department === dept).forEach(r => { if (deptCounts[r.status] !== undefined) deptCounts[r.status]++; });
+      renderBarChart('departmentChart', deptCounts, 'Department-wise Submission Status');
+      // Portfolio-wise
+      const port = document.getElementById('portfolioDropdown').value;
+      const portCounts = { 'Completed/Uploaded': 0, 'Not Completed': 0, 'Under Process': 0 };
+      allRows.filter(r => !port || r.portfolio === port).forEach(r => { if (portCounts[r.status] !== undefined) portCounts[r.status]++; });
+      renderBarChart('portfolioChart', portCounts, 'Portfolio Name-wise Submission Status');
+
+      // Department Status Distribution (grouped bar)
+      renderDeptStatusBarChart();
+    }
+
+    function renderDeptStatusBarChart() {
+      const labels = Array.from(departments);
+  const statusTypes = ['Completed/Uploaded', 'Not Completed', 'Under Process'];
+      // Build data for each status
+      const dataByStatus = statusTypes.map(status =>
+        labels.map(dept => allRows.filter(r => r.department === dept && r.status === status).length)
+      );
+      const ctx = document.getElementById('deptStatusBarChart').getContext('2d');
+      if (deptStatusBarChart) deptStatusBarChart.destroy();
+      deptStatusBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Completed/Uploaded',
+              data: dataByStatus[0],
+              backgroundColor: 'rgba(34,197,94,0.7)',
+              borderColor: 'rgba(34,197,94,1)',
+              borderWidth: 1
+            },
+            {
+              label: 'Not Completed',
+              data: dataByStatus[1],
+              backgroundColor: 'rgba(239,68,68,0.7)', // red
+              borderColor: 'rgba(239,68,68,1)',
+              borderWidth: 1
+            },
+            {
+              label: 'Under Process',
+              data: dataByStatus[2],
+              backgroundColor: 'rgba(59,130,246,0.7)',
+              borderColor: 'rgba(59,130,246,1)',
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: true } },
+          scales: {
+            x: { stacked: false },
+            y: { beginAtZero: true, precision: 0 }
+          }
+        }
+      });
+    }
+    function renderBarChart(canvasId, counts, label) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      if (window[canvasId + '_instance']) window[canvasId + '_instance'].destroy();
+      window[canvasId + '_instance'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(counts),
+          datasets: [{
+            label: label,
+            data: Object.values(counts),
+            backgroundColor: [
+              'rgba(34,197,94,0.7)', // green
+              'rgba(239,68,68,0.7)', // red
+              'rgba(59,130,246,0.7)' // blue
+            ],
+            borderColor: [
+              'rgba(34,197,94,1)',
+              'rgba(239,68,68,1)',
+              'rgba(59,130,246,1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, precision: 0 } }
+        }
+      });
+    }
+    document.getElementById('departmentDropdown').addEventListener('change', renderCharts);
+    document.getElementById('portfolioDropdown').addEventListener('change', renderCharts);
+    fetchAllData();
+  </script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
+    </p>
+  </footer>
+
+</body>
+</html>

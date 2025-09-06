@@ -7,7 +7,8 @@ import csv
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.secret_key = 'your_secret_key_here'  # Change this to a secure random value!
+# Use environment variable for secret key in production, fallback for development
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-key-change-in-production-please')
 os.makedirs(os.path.join(app.root_path, app.config['UPLOAD_FOLDER']), exist_ok=True)
 
 # --- Session-based login check ---
@@ -160,4 +161,8 @@ def render_page(page):
         return 'Page not found', 404
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # For production, use environment variable for debug mode
+    import os
+    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=debug_mode, host='0.0.0.0', port=port)
