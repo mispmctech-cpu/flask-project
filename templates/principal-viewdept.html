@@ -134,28 +134,129 @@
   </head>
   <body>
   <!-- Removed redirect to hod-role.html to prevent redirect loop -->
-    <!-- Navbar -->
-    <nav class="bg-pmcPurple text-white shadow-md">
-      <div
-        class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3"
-      >
-        <a href="#" class="flex items-center">
+    <!-- Responsive Navbar -->
+    <header class="bg-pmcPurple text-white shadow-md relative">
+      <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+        <!-- Logo -->
+        <div class="flex items-center">
           <img
             src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3"
             alt="PMC Logo"
             class="h-12 mr-4 rounded shadow"
           />
-        </a>
+        </div>
 
-        <ul class="flex items-center gap-6 text-base font-medium">
-          <li>
-              <a href="#" class="border-b-2 border-white pb-1">Faculty List</a>
-            </li>
-            <li>
-              <a href="workdone.html?role=HOD&department=" class="hover:underline" id="workdoneLink">Workdone</a>
+        <!-- Hamburger Menu Button (Mobile) -->
+        <button id="menuBtn" class="sm:hidden focus:outline-none">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+          </svg>
+        </button>
+
+        <!-- Desktop Navigation -->
+        <nav id="mainNav" class="hidden sm:flex items-center gap-6 text-base font-medium">
+          <a href="#" class="border-b-2 border-white pb-1">Faculty List</a>
+          <a href="workdone.html?role=HOD&department=" class="hover:underline" id="workdoneLink">Workdone</a>
+          <span id="hodUsername" class="font-bold cursor-pointer" onclick="goToHodProfile()">&nbsp;</span>
+          <img id="hodProfileImg" src="" alt="Profile" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow" style="min-width:2rem;min-height:2rem;" />
+          <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+            </svg>
+          </button>
+          <button
+            onclick="openMessagingModal()"
+            aria-label="Messages"
+            class="relative focus:outline-none"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-8 h-8 text-white hover:text-blue-400 transition"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z"
+              />
+            </svg>
+          </button>
+        </nav>
+
+        <!-- Mobile Navigation Dropdown -->
+        <nav id="mobileNav" class="absolute top-full left-0 right-0 bg-pmcPurple border-t border-purple-400 sm:hidden hidden z-50">
+          <div class="px-4 py-4 space-y-4">
+            <a href="#" class="block text-white font-medium border-b border-purple-400 pb-2">Faculty List</a>
+            <a href="workdone.html?role=HOD&department=" class="block text-white hover:text-purple-200" id="workdoneLinkMobile">Workdone</a>
+            <div class="flex items-center gap-3 py-2 border-b border-purple-400">
+              <img id="hodProfileImgMobile" src="" alt="Profile" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow" style="min-width:2rem;min-height:2rem;" />
+              <span id="hodUsernameMobile" class="font-bold cursor-pointer text-white" onclick="goToHodProfile()">&nbsp;</span>
+            </div>
+            <div class="flex items-center gap-4 pt-2">
+              <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+                </svg>
+              </button>
+              <button
+                onclick="openMessagingModal()"
+                aria-label="Messages"
+                class="relative focus:outline-none"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="w-8 h-8 text-white hover:text-blue-400 transition"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <!-- JavaScript for mobile navigation toggle -->
     <script>
-      // Set department in Workdone link, always prefer query param and update localStorage
       document.addEventListener('DOMContentLoaded', function() {
+        console.log('Mobile nav script loaded');
+        const menuBtn = document.getElementById('menuBtn');
+        const mobileNav = document.getElementById('mobileNav');
+
+        console.log('menuBtn:', menuBtn);
+        console.log('mobileNav:', mobileNav);
+
+        if (menuBtn && mobileNav) {
+          console.log('Setting up mobile nav event listeners');
+          menuBtn.addEventListener('click', function(e) {
+            console.log('Menu button clicked');
+            e.preventDefault();
+            mobileNav.classList.toggle('hidden');
+            console.log('Mobile nav classes:', mobileNav.className);
+          });
+
+          // Close mobile menu when clicking outside
+          document.addEventListener('click', function(event) {
+            if (!menuBtn.contains(event.target) && !mobileNav.contains(event.target)) {
+              mobileNav.classList.add('hidden');
+            }
+          });
+        } else {
+          console.log('Menu button or mobile nav not found');
+        }
+
+        // Set department in Workdone link, always prefer query param and update localStorage
         function getQueryParam(name) {
           const url = new URL(window.location.href);
           return url.searchParams.get(name);
@@ -167,14 +268,25 @@
           dept = localStorage.getItem('department') || '';
         }
         var link = document.getElementById('workdoneLink');
+        var linkMobile = document.getElementById('workdoneLinkMobile');
         if (link) {
           link.href = `workdone.html?role=HOD&department=${encodeURIComponent(dept)}`;
         }
+        if (linkMobile) {
+          linkMobile.href = `workdone.html?role=HOD&department=${encodeURIComponent(dept)}`;
+        }
+
+        // Set department and role in Workdone link for correct filtering
+        const linkHod = document.getElementById('workdoneLink');
+        const linkHodMobile = document.getElementById('workdoneLinkMobile');
+        if (linkHod) {
+          linkHod.href = `workdone.html?role=hod&department=${encodeURIComponent(dept)}`;
+        }
+        if (linkHodMobile) {
+          linkHodMobile.href = `workdone.html?role=hod&department=${encodeURIComponent(dept)}`;
+        }
       });
-    </script>
-          </li>
-          <li><span id="hodUsername" class="font-bold cursor-pointer" onclick="goToHodProfile()">&nbsp;</span></li>
-    <script>
+
       // Navigate to hod-profile.html with department query param
       function goToHodProfile() {
         const department = localStorage.getItem('department') || '';
@@ -185,50 +297,6 @@
         }
       }
     </script>
-          <li><img id="hodProfileImg" src="" alt="Profile" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow" style="min-width:2rem;min-height:2rem;" /></li>
-          <!-- Modern Notification Bell Icon for Messaging -->
-          <li>
-            <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
-              </svg>
-            </button>
-          </li>
-          <li>
-            <button
-              onclick="openMessagingModal()"
-              aria-label="Messages"
-              class="relative focus:outline-none"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-                class="w-8 h-8 text-white hover:text-blue-400 transition"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z"
-                />
-              </svg>
-            </button>
-          </li>
-        </ul>
-    <script>
-      // Set department and role in Workdone link for correct filtering
-      document.addEventListener('DOMContentLoaded', function() {
-        const dept = localStorage.getItem('department') || '';
-        const link = document.getElementById('workdoneLink');
-        if (link) {
-          link.href = `workdone.html?role=hod&department=${encodeURIComponent(dept)}`;
-        }
-      });
-    </script>
-  </div>
-    </nav>
 
     <!-- Messaging Modal -->
     <div
@@ -387,9 +455,14 @@
         const department = departmentParam || localStorage.getItem('department') || '';
         const usernameSpan = document.getElementById('hodUsername');
         const profileImg = document.getElementById('hodProfileImg');
+        const usernameSpanMobile = document.getElementById('hodUsernameMobile');
+        const profileImgMobile = document.getElementById('hodProfileImgMobile');
+        
         if (!department) {
           usernameSpan.textContent = 'Username';
           profileImg.src = 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
+          if (usernameSpanMobile) usernameSpanMobile.textContent = 'Username';
+          if (profileImgMobile) profileImgMobile.src = 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
           console.log('[HOD DEBUG] No department found in query param or localStorage.');
           return;
         }
@@ -406,17 +479,26 @@
           }
           console.log('[HOD DEBUG] HOD data:', data);
           if (data && data.Name) {
-            usernameSpan.textContent = data.Name.trim() || 'Username';
-            profileImg.src = data["Upload Image"] || 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
+            const name = data.Name.trim() || 'Username';
+            const imageSrc = data["Upload Image"] || 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
+            
+            usernameSpan.textContent = name;
+            profileImg.src = imageSrc;
+            if (usernameSpanMobile) usernameSpanMobile.textContent = name;
+            if (profileImgMobile) profileImgMobile.src = imageSrc;
           } else {
             usernameSpan.textContent = 'Username';
             profileImg.src = 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
+            if (usernameSpanMobile) usernameSpanMobile.textContent = 'Username';
+            if (profileImgMobile) profileImgMobile.src = 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
             console.warn('[HOD DEBUG] No HOD found for department:', department);
           }
         } catch (e) {
           console.error('[HOD DEBUG] Exception while fetching HOD:', e);
           usernameSpan.textContent = 'Username';
           profileImg.src = 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
+          if (usernameSpanMobile) usernameSpanMobile.textContent = 'Username';
+          if (profileImgMobile) profileImgMobile.src = 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
         }
       }
       document.addEventListener('DOMContentLoaded', setHodUsername);
@@ -426,7 +508,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="/static/javascript/messaging.js"></script>  <!-- Footer -->
   <footer class="text-center py-4 mt-8">
-    <p class="text-gray-400 text-sm"> 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
+    <p class="text-gray-400 text-sm"> © All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>.<br/>Developed by <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>
     </p>
   </footer>
 
