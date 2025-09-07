@@ -62,14 +62,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3"
                 alt="PMC Logo" class="h-12 rounded shadow-md">
         </div>
-        <div class="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-lg shadow">
-            <span class="font-bold text-lg text-purple-800">Username</span>
-            <span
-                class="user-icon flex items-center justify-center bg-purple-100 rounded-full p-1 shadow border border-purple-700">
-                <img src="/static/img/person-circle.svg" alt="person-circle" height="28" width="28"
-                    class="min-w-[28px] min-h-[28px]" />
-            </span>
-        </div>
     </header>
     <div class="form-container mx-auto max-w-6xl px-4">
         <!-- Main Form -->
@@ -177,14 +169,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <label for="db-upload1" class="font-semibold text-gray-700 mb-1">Upload The Scanned
                                     File:</label>
                                 <div class="flex items-center gap-2 w-full">
-                                    <label
+                                    <label id="upload-btn-weekly-1"
                                         class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
                                         <span class="inline-flex items-center gap-1">Upload <img
                                                 src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                 class="inline-block align-middle" /></span>
                                         <input id="db-upload1" name="Upload The Scanned File" type="file"
-                                            class="ml-2 hidden" />
+                                            class="ml-2 hidden" onchange="handleFileUpload('weekly-1', this)" />
                                     </label>
+                                    <span id="upload-status-weekly-1" class="text-green-600 font-medium hidden">✓ Uploaded</span>
+                                    <button type="button" id="cancel-btn-weekly-1" class="text-red-600 hover:text-red-800 font-medium hidden" onclick="cancelFileUpload('weekly-1')">✕ Cancel</button>
                                 </div>
                             </div>
                         </div>
@@ -293,13 +287,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="flex flex-col">
                                     <label class="font-semibold text-gray-700 mb-1">Upload The Scanned File-1:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
+                                        <label id="upload-btn-fifteen-1"
                                             class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
                                             <span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
-                                            <input name="file1" type="file" class="ml-2 hidden" />
+                                            <input name="file1" type="file" class="ml-2 hidden" onchange="handleFileUpload('fifteen-1', this)" />
                                         </label>
+                                        <span id="upload-status-fifteen-1" class="text-green-600 font-medium hidden">✓ Uploaded</span>
+                                        <button type="button" id="cancel-btn-fifteen-1" class="text-red-600 hover:text-red-800 font-medium hidden" onclick="cancelFileUpload('fifteen-1')">✕ Cancel</button>
                                     </div>
                                 </div>
                             </div>
@@ -327,13 +323,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="flex flex-col">
                                     <label class="font-semibold text-gray-700 mb-1">Upload The Scanned File-2:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
+                                        <label id="upload-btn-fifteen-2"
                                             class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
                                             <span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
-                                            <input name="file2" type="file" class="ml-2 hidden" />
+                                            <input name="file2" type="file" class="ml-2 hidden" onchange="handleFileUpload('fifteen-2', this)" />
                                         </label>
+                                        <span id="upload-status-fifteen-2" class="text-green-600 font-medium hidden">✓ Uploaded</span>
+                                        <button type="button" id="cancel-btn-fifteen-2" class="text-red-600 hover:text-red-800 font-medium hidden" onclick="cancelFileUpload('fifteen-2')">✕ Cancel</button>
                                     </div>
                                 </div>
                             </div>
@@ -361,13 +359,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="flex flex-col">
                                     <label class="font-semibold text-gray-700 mb-1">Upload The Scanned File-3:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
+                                        <label id="upload-btn-fifteen-3"
                                             class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
                                             <span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
-                                            <input name="file3" type="file" class="ml-2 hidden" />
+                                            <input name="file3" type="file" class="ml-2 hidden" onchange="handleFileUpload('fifteen-3', this)" />
                                         </label>
+                                        <span id="upload-status-fifteen-3" class="text-green-600 font-medium hidden">✓ Uploaded</span>
+                                        <button type="button" id="cancel-btn-fifteen-3" class="text-red-600 hover:text-red-800 font-medium hidden" onclick="cancelFileUpload('fifteen-3')">✕ Cancel</button>
                                     </div>
                                 </div>
                             </div>
@@ -395,13 +395,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="flex flex-col">
                                     <label class="font-semibold text-gray-700 mb-1">Upload The Scanned File-4:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
+                                        <label id="upload-btn-fifteen-4"
                                             class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
                                             <span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
-                                            <input name="file4" type="file" class="ml-2 hidden" />
+                                            <input name="file4" type="file" class="ml-2 hidden" onchange="handleFileUpload('fifteen-4', this)" />
                                         </label>
+                                        <span id="upload-status-fifteen-4" class="text-green-600 font-medium hidden">✓ Uploaded</span>
+                                        <button type="button" id="cancel-btn-fifteen-4" class="text-red-600 hover:text-red-800 font-medium hidden" onclick="cancelFileUpload('fifteen-4')">✕ Cancel</button>
                                     </div>
                                 </div>
                             </div>
@@ -429,13 +431,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="flex flex-col">
                                     <label class="font-semibold text-gray-700 mb-1">Upload The Scanned File-5:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
+                                        <label id="upload-btn-fifteen-5"
                                             class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
                                             <span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
-                                            <input name="file5" type="file" class="ml-2 hidden" />
+                                            <input name="file5" type="file" class="ml-2 hidden" onchange="handleFileUpload('fifteen-5', this)" />
                                         </label>
+                                        <span id="upload-status-fifteen-5" class="text-green-600 font-medium hidden">✓ Uploaded</span>
+                                        <button type="button" id="cancel-btn-fifteen-5" class="text-red-600 hover:text-red-800 font-medium hidden" onclick="cancelFileUpload('fifteen-5')">✕ Cancel</button>
                                     </div>
                                 </div>
                             </div>
@@ -463,13 +467,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="flex flex-col">
                                     <label class="font-semibold text-gray-700 mb-1">Upload The Scanned File-6:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
+                                        <label id="upload-btn-fifteen-6"
                                             class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
                                             <span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
-                                            <input name="file6" type="file" class="ml-2 hidden" />
+                                            <input name="file6" type="file" class="ml-2 hidden" onchange="handleFileUpload('fifteen-6', this)" />
                                         </label>
+                                        <span id="upload-status-fifteen-6" class="text-green-600 font-medium hidden">✓ Uploaded</span>
+                                        <button type="button" id="cancel-btn-fifteen-6" class="text-red-600 hover:text-red-800 font-medium hidden" onclick="cancelFileUpload('fifteen-6')">✕ Cancel</button>
                                     </div>
                                 </div>
                             </div>
@@ -497,13 +503,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="flex flex-col">
                                     <label class="font-semibold text-gray-700 mb-1">Upload The Scanned File-7:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
+                                        <label id="upload-btn-fifteen-7"
                                             class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
                                             <span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
-                                            <input name="file7" type="file" class="ml-2 hidden" />
+                                            <input name="file7" type="file" class="ml-2 hidden" onchange="handleFileUpload('fifteen-7', this)" />
                                         </label>
+                                        <span id="upload-status-fifteen-7" class="text-green-600 font-medium hidden">✓ Uploaded</span>
+                                        <button type="button" id="cancel-btn-fifteen-7" class="text-red-600 hover:text-red-800 font-medium hidden" onclick="cancelFileUpload('fifteen-7')">✕ Cancel</button>
                                     </div>
                                 </div>
                             </div>
@@ -531,13 +539,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="flex flex-col">
                                     <label class="font-semibold text-gray-700 mb-1">Upload The Scanned File-8:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
+                                        <label id="upload-btn-fifteen-8"
                                             class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
                                             <span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
-                                            <input name="file8" type="file" class="ml-2 hidden" />
+                                            <input name="file8" type="file" class="ml-2 hidden" onchange="handleFileUpload('fifteen-8', this)" />
                                         </label>
+                                        <span id="upload-status-fifteen-8" class="text-green-600 font-medium hidden">✓ Uploaded</span>
+                                        <button type="button" id="cancel-btn-fifteen-8" class="text-red-600 hover:text-red-800 font-medium hidden" onclick="cancelFileUpload('fifteen-8')">✕ Cancel</button>
                                     </div>
                                 </div>
                             </div>
@@ -641,13 +651,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="flex flex-col">
                                     <label class="font-semibold text-gray-700 mb-1">Upload The Scanned File-1:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
+                                        <label id="upload-btn-semester-1"
                                             class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
                                             <span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
-                                            <input name="file1" type="file" class="ml-2 hidden" />
+                                            <input name="file1" type="file" class="ml-2 hidden" onchange="handleFileUpload('semester-1', this)" />
                                         </label>
+                                        <span id="upload-status-semester-1" class="text-green-600 font-medium hidden">✓ Uploaded</span>
+                                        <button type="button" id="cancel-btn-semester-1" class="text-red-600 hover:text-red-800 font-medium hidden" onclick="cancelFileUpload('semester-1')">✕ Cancel</button>
                                     </div>
                                 </div>
                             </div>
@@ -675,13 +687,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="flex flex-col">
                                     <label class="font-semibold text-gray-700 mb-1">Upload The Scanned File-2:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
+                                        <label id="upload-btn-semester-2"
                                             class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
                                             <span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
-                                            <input name="file2" type="file" class="ml-2 hidden" />
+                                            <input name="file2" type="file" class="ml-2 hidden" onchange="handleFileUpload('semester-2', this)" />
                                         </label>
+                                        <span id="upload-status-semester-2" class="text-green-600 font-medium hidden">✓ Uploaded</span>
+                                        <button type="button" id="cancel-btn-semester-2" class="text-red-600 hover:text-red-800 font-medium hidden" onclick="cancelFileUpload('semester-2')">✕ Cancel</button>
                                     </div>
                                 </div>
                             </div>
@@ -709,13 +723,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="flex flex-col">
                                     <label class="font-semibold text-gray-700 mb-1">Upload The Scanned File-3:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
+                                        <label id="upload-btn-semester-3"
                                             class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
                                             <span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
-                                            <input name="file3" type="file" class="ml-2 hidden" />
+                                            <input name="file3" type="file" class="ml-2 hidden" onchange="handleFileUpload('semester-3', this)" />
                                         </label>
+                                        <span id="upload-status-semester-3" class="text-green-600 font-medium hidden">✓ Uploaded</span>
+                                        <button type="button" id="cancel-btn-semester-3" class="text-red-600 hover:text-red-800 font-medium hidden" onclick="cancelFileUpload('semester-3')">✕ Cancel</button>
                                     </div>
                                 </div>
                             </div>
@@ -743,13 +759,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="flex flex-col">
                                     <label class="font-semibold text-gray-700 mb-1">Upload The Scanned File-4:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
+                                        <label id="upload-btn-semester-4"
                                             class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
                                             <span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
-                                            <input name="file4" type="file" class="ml-2 hidden" />
+                                            <input name="file4" type="file" class="ml-2 hidden" onchange="handleFileUpload('semester-4', this)" />
                                         </label>
+                                        <span id="upload-status-semester-4" class="text-green-600 font-medium hidden">✓ Uploaded</span>
+                                        <button type="button" id="cancel-btn-semester-4" class="text-red-600 hover:text-red-800 font-medium hidden" onclick="cancelFileUpload('semester-4')">✕ Cancel</button>
                                     </div>
                                 </div>
                             </div>
@@ -777,13 +795,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="flex flex-col">
                                     <label class="font-semibold text-gray-700 mb-1">Upload The Scanned File-5:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
+                                        <label id="upload-btn-semester-5"
                                             class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
                                             <span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
-                                            <input name="file5" type="file" class="ml-2 hidden" />
+                                            <input name="file5" type="file" class="ml-2 hidden" onchange="handleFileUpload('semester-5', this)" />
                                         </label>
+                                        <span id="upload-status-semester-5" class="text-green-600 font-medium hidden">✓ Uploaded</span>
+                                        <button type="button" id="cancel-btn-semester-5" class="text-red-600 hover:text-red-800 font-medium hidden" onclick="cancelFileUpload('semester-5')">✕ Cancel</button>
                                     </div>
                                 </div>
                             </div>
@@ -804,12 +824,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <!-- ONCE IN A SEMESTER Section -->
         <!-- Removed: 2. Class Advisor Form: Once in a Semester -->
     </div>
-    </main>  <!-- Footer -->
-  <footer class="text-center py-4 mt-8">
-    <p class="text-gray-400 text-sm"> 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
-    </p>
-  </footer>
-
+    </main>
 
 </body>
 
@@ -1209,7 +1224,33 @@ window.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
-<script src="/javascript/faculty-form.js"></script>  <!-- Footer -->
+<script src="/javascript/faculty-form.js"></script>
+<script>
+// File Upload Handler Functions
+function handleFileUpload(id, input) {
+    if (input.files.length > 0) {
+        // Hide upload button
+        document.getElementById('upload-btn-' + id).style.display = 'none';
+        // Show status and cancel button
+        document.getElementById('upload-status-' + id).classList.remove('hidden');
+        document.getElementById('cancel-btn-' + id).classList.remove('hidden');
+    }
+}
+
+function cancelFileUpload(id) {
+    // Get the file input and clear it
+    const uploadBtn = document.getElementById('upload-btn-' + id);
+    const fileInput = uploadBtn.querySelector('input[type="file"]');
+    fileInput.value = '';
+    
+    // Show upload button
+    uploadBtn.style.display = 'flex';
+    // Hide status and cancel button
+    document.getElementById('upload-status-' + id).classList.add('hidden');
+    document.getElementById('cancel-btn-' + id).classList.add('hidden');
+}
+</script>
+  <!-- Footer -->
   <footer class="text-center py-4 mt-8">
     <p class="text-gray-400 text-sm"> 2025 <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>. All Rights Reserved
     </p>
