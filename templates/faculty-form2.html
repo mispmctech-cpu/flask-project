@@ -1273,10 +1273,10 @@ window.addEventListener('DOMContentLoaded', function () {
 
 <script>
 // File upload handling functions
-function handleFileUpload(input, statusId, cancelId) {
+function handleFileUpload(uniqueId, input) {
     const file = input.files[0];
-    const statusElement = document.getElementById(statusId);
-    const cancelElement = document.getElementById(cancelId);
+    const statusElement = document.getElementById(`upload-status-${uniqueId}`);
+    const cancelElement = document.getElementById(`cancel-btn-${uniqueId}`);
     const uploadLabel = input.closest('label');
     
     if (file) {
@@ -1286,13 +1286,13 @@ function handleFileUpload(input, statusId, cancelId) {
         }
         
         // Show uploaded status and cancel button
-        statusElement.classList.remove('hidden');
-        cancelElement.classList.remove('hidden');
+        if (statusElement) statusElement.classList.remove('hidden');
+        if (cancelElement) cancelElement.classList.remove('hidden');
         
         // Update status text to show filename
-        statusElement.innerHTML = `✓ ${file.name}`;
+        if (statusElement) statusElement.innerHTML = `✓ ${file.name}`;
         
-        console.log(`File uploaded: ${file.name}`);
+        console.log(`File uploaded: ${file.name} for ${uniqueId}`);
     } else {
         // Show upload button again
         if (uploadLabel) {
@@ -1300,24 +1300,29 @@ function handleFileUpload(input, statusId, cancelId) {
         }
         
         // Hide status and cancel button if no file
-        statusElement.classList.add('hidden');
-        cancelElement.classList.add('hidden');
+        if (statusElement) statusElement.classList.add('hidden');
+        if (cancelElement) cancelElement.classList.add('hidden');
     }
 }
 
-function cancelFileUpload(inputName, statusId, cancelId) {
-    // Find the input element by name or id
-    let inputElement;
-    if (inputName.startsWith('file') && /^\d+$/.test(inputName.replace('file', ''))) {
-        // For semester form files (file1, file2, etc.)
-        inputElement = document.querySelector(`input[name="${inputName}"]`);
-    } else {
-        // For other inputs, try by id first, then by name
-        inputElement = document.getElementById(inputName) || document.querySelector(`input[name="${inputName}"]`);
+function cancelFileUpload(uniqueId) {
+    // Find elements using the consistent naming pattern
+    const statusElement = document.getElementById(`upload-status-${uniqueId}`);
+    const cancelElement = document.getElementById(`cancel-btn-${uniqueId}`);
+    
+    // Find the input element more flexibly
+    let inputElement = null;
+    const allInputs = document.querySelectorAll('input[type="file"]');
+    
+    for (let input of allInputs) {
+        const onchangeAttr = input.getAttribute('onchange');
+        if (onchangeAttr && onchangeAttr.includes(`'${uniqueId}'`)) {
+            inputElement = input;
+            break;
+        }
     }
     
-    const statusElement = document.getElementById(statusId);
-    const cancelElement = document.getElementById(cancelId);
+    // Find the upload label (parent of the input)
     const uploadLabel = inputElement ? inputElement.closest('label') : null;
     
     if (inputElement) {
@@ -1333,9 +1338,9 @@ function cancelFileUpload(inputName, statusId, cancelId) {
         if (statusElement) statusElement.classList.add('hidden');
         if (cancelElement) cancelElement.classList.add('hidden');
         
-        console.log(`File upload cancelled for: ${inputName}`);
+        console.log(`File upload cancelled for: ${uniqueId}`);
     } else {
-        console.error(`Could not find input element: ${inputName}`);
+        console.error(`Could not find input element for: ${uniqueId}`);
     }
 }
 

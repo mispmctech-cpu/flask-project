@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <label for="fd-upload2" class="font-semibold text-gray-700 mb-1">Upload The Scanned
                                     File_2:</label>
                                 <div class="flex items-center gap-2 w-full">
-                                    <label
+                                    <label id="upload-btn-fd-2"
                                         class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
                                         <span class="inline-flex items-center gap-1">Upload <img
                                                 src="/static/img/upload.svg" alt="upload" height="20" width="24"
@@ -246,9 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <label for="db-upload3" class="font-semibold text-gray-700 mb-1">Upload the scanned
                                     file_3:</label>
                                 <div class="flex items-center gap-2 w-full">
-                                    <label
-                                        class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
-                                        <span class="inline-flex items-center gap-1">Upload <img
+                                    <label id="upload-btn-temp" class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700"><span class="inline-flex items-center gap-1">Upload <img
                                                 src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                 class="inline-block align-middle" /></span>
                                         <input id="db-upload3" name="Upload the scanned file_3" type="file"
@@ -284,9 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <label for="db-upload4" class="font-semibold text-gray-700 mb-1">Upload the scanned
                                     file_4:</label>
                                 <div class="flex items-center gap-2 w-full">
-                                    <label
-                                        class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
-                                        <span class="inline-flex items-center gap-1">Upload <img
+                                    <label id="upload-btn-temp" class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700"><span class="inline-flex items-center gap-1">Upload <img
                                                 src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                 class="inline-block align-middle" /></span>
                                         <input id="db-upload4" name="Upload the scanned file_4" type="file"
@@ -401,9 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <label for="fd-upload1" class="font-semibold text-gray-700 mb-1">Upload the scanned
                                         file:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
-                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
-                                            <span class="inline-flex items-center gap-1">Upload <img
+                                        <label id="upload-btn-temp" class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700"><span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
                                             <input id="fd-upload1" name="Upload the scanned file" type="file"
@@ -440,9 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <label for="fd-upload2" class="font-semibold text-gray-700 mb-1">Upload the scanned
                                         file_2:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
-                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
-                                            <span class="inline-flex items-center gap-1">Upload <img
+                                        <label id="upload-btn-temp" class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700"><span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
                                             <input id="fd-upload2" name="Upload the scanned file_2" type="file"
@@ -553,9 +545,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="flex flex-col">
                                     <label class="font-semibold text-gray-700 mb-1">Upload Scanned File_1:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
-                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
-                                            <span class="inline-flex items-center gap-1">Upload <img
+                                        <label id="upload-btn-temp" class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700"><span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
                                             <input name="file1" type="file" class="ml-2 hidden" onchange="handleFileUpload('year-1', this)" />
@@ -589,9 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="flex flex-col">
                                     <label class="font-semibold text-gray-700 mb-1">Upload Scanned File_2:</label>
                                     <div class="flex items-center gap-2 w-full">
-                                        <label
-                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
-                                            <span class="inline-flex items-center gap-1">Upload <img
+                                        <label id="upload-btn-temp" class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700"><span class="inline-flex items-center gap-1">Upload <img
                                                     src="/static/img/upload.svg" alt="upload" height="20" width="24"
                                                     class="inline-block align-middle" /></span>
                                             <input name="file2" type="file" class="ml-2 hidden" onchange="handleFileUpload('year-2', this)" />
@@ -991,8 +979,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="flex flex-col">
                                 <label class="font-semibold text-gray-700 mb-1">Upload The Scanned File-${i}:</label>
                                 <div class="flex items-center gap-2 w-full">
-                                    <label class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
-                                        <span class="inline-flex items-center gap-1">Upload <img src="/static/img/upload.svg" alt="upload" height="20" width="24" class="inline-block align-middle" /></span>
+                                    <label id="upload-btn-temp" class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700"><span class="inline-flex items-center gap-1">Upload <img src="/static/img/upload.svg" alt="upload" height="20" width="24" class="inline-block align-middle" /></span>
                                         <input name="file${i}" type="file" class="ml-2 hidden" onchange="handleFileUpload('semester-${i}', this)" />
                                     </label>
                                     <span id="upload-status-semester-${i}" class="text-green-600 font-medium hidden">✓ Uploaded</span>
@@ -1237,10 +1224,10 @@ window.addEventListener('DOMContentLoaded', function () {
 
 <script>
 // File upload handling functions
-function handleFileUpload(input, statusId, cancelId) {
+function handleFileUpload(uniqueId, input) {
     const file = input.files[0];
-    const statusElement = document.getElementById(statusId);
-    const cancelElement = document.getElementById(cancelId);
+    const statusElement = document.getElementById(`upload-status-${uniqueId}`);
+    const cancelElement = document.getElementById(`cancel-btn-${uniqueId}`);
     const uploadLabel = input.closest('label');
     
     if (file) {
@@ -1269,19 +1256,24 @@ function handleFileUpload(input, statusId, cancelId) {
     }
 }
 
-function cancelFileUpload(inputName, statusId, cancelId) {
-    // Find the input element by name or id
-    let inputElement;
-    if (inputName.startsWith('file') && /^\d+$/.test(inputName.replace('file', ''))) {
-        // For semester form files (file1, file2, etc.)
-        inputElement = document.querySelector(`input[name="${inputName}"]`);
-    } else {
-        // For other inputs, try by id first, then by name
-        inputElement = document.getElementById(inputName) || document.querySelector(`input[name="${inputName}"]`);
+function cancelFileUpload(uniqueId) {
+    // Find elements using the consistent naming pattern
+    const statusElement = document.getElementById(`upload-status-${uniqueId}`);
+    const cancelElement = document.getElementById(`cancel-btn-${uniqueId}`);
+    
+    // Find the input element more flexibly
+    let inputElement = null;
+    const allInputs = document.querySelectorAll('input[type="file"]');
+    
+    for (let input of allInputs) {
+        const onchangeAttr = input.getAttribute('onchange');
+        if (onchangeAttr && onchangeAttr.includes(`'${uniqueId}'`)) {
+            inputElement = input;
+            break;
+        }
     }
     
-    const statusElement = document.getElementById(statusId);
-    const cancelElement = document.getElementById(cancelId);
+    // Find the upload label (parent of the input)
     const uploadLabel = inputElement ? inputElement.closest('label') : null;
     
     if (inputElement) {
@@ -1297,9 +1289,9 @@ function cancelFileUpload(inputName, statusId, cancelId) {
         if (statusElement) statusElement.classList.add('hidden');
         if (cancelElement) cancelElement.classList.add('hidden');
         
-        console.log(`File upload cancelled for: ${inputName}`);
+        console.log(`File upload cancelled for: ${uniqueId}`);
     } else {
-        console.error(`Could not find input element: ${inputName}`);
+        console.error(`Could not find input element for: ${uniqueId}`);
     }
 }
 
