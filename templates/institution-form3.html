@@ -173,6 +173,7 @@
                     Upload
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
                 </button>
+                <span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">✓</span>
                 <input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
             </td>
         `;
@@ -191,9 +192,17 @@
         const { data: urlData } = supabase.storage.from('Institution form3').getPublicUrl(path);
         // Change the upload button to 'Uploaded' after successful upload
         if (uploadBtn) {
+            const row = uploadBtn.getAttribute('data-row');
+            const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
+            
             uploadBtn.textContent = 'Uploaded';
             uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
             uploadBtn.disabled = true;
+            
+            // Show checkmark
+            if (checkMark) {
+                checkMark.classList.remove('hidden');
+            }
         }
         return urlData.publicUrl;
     }

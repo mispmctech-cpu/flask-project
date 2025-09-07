@@ -143,10 +143,27 @@ document.addEventListener('DOMContentLoaded', function() {
             <td class="border px-2 py-1 text-center">${row.tat}</td>
             <td class="border px-2 py-1"><select name="Status_${idx}" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
             <td class="border px-2 py-1"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
-            <td class="border px-2 py-1"><input type="file" name="Upload The Scanned File_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="w-full" /></td>
+            <td class="border px-2 py-1">
+                <input type="file" name="Upload The Scanned File_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="${idx}" />
+                <span class="file-check hidden text-green-600 font-bold" data-row="${idx}">✓ Uploaded</span>
+            </td>
         `;
         tbody.appendChild(tr);
     });
+    
+    // Simple file upload indicator
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.classList.contains('file-input')) {
+            const row = e.target.getAttribute('data-row');
+            const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
+            if (e.target.files && e.target.files.length > 0 && checkMark) {
+                checkMark.classList.remove('hidden');
+            } else if (checkMark) {
+                checkMark.classList.add('hidden');
+            }
+        }
+    });
+    
     // Supabase setup
     const supabase = window.supabase.createClient(
         "https://cbhodgwaazmjszkujrti.supabase.co",

@@ -195,6 +195,7 @@
 			<td class="border px-2 py-1"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
 			<td class="border px-2 py-1">
 				<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
+				<span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">✓</span>
 				<input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
 			</td>
 		`;
@@ -212,6 +213,7 @@
 			<td class="border px-2 py-1"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
 			<td class="border px-2 py-1">
 				<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
+				<span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">✓</span>
 				<input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
 			</td>
 		`;
@@ -230,9 +232,17 @@
 		const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
 		// Change the upload button to 'Uploaded' after successful upload
 		if (uploadBtn) {
+			const row = uploadBtn.getAttribute('data-row');
+			const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
+			
 			uploadBtn.textContent = 'Uploaded';
 			uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
 			uploadBtn.disabled = true;
+			
+			// Show checkmark
+			if (checkMark) {
+				checkMark.classList.remove('hidden');
+			}
 		}
 		return urlData.publicUrl;
 	}
