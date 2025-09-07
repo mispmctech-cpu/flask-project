@@ -180,6 +180,7 @@
 					<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
 					<input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="file-input" data-row="${idx}" />
 				</label>
+				<span class="file-check hidden" data-row="${idx}">✓ Uploaded</span>
 			</td>
 		`;
 		tbody.appendChild(tr);
@@ -229,6 +230,17 @@
 			window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
 		} else {
 			window.location.href = 'notification.html?status=success';
+		}
+	});
+	
+	// File upload indicator
+	document.addEventListener('change', function(e) {
+		if (e.target.classList.contains('file-input')) {
+			const rowId = e.target.getAttribute('data-row');
+			const checkmark = document.querySelector(`[data-row="${rowId}"].file-check`);
+			if (checkmark && e.target.files.length > 0) {
+				checkmark.classList.remove('hidden');
+			}
 		}
 	});
 	</script>  <!-- Footer -->
