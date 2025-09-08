@@ -393,7 +393,8 @@
               <tbody>
                 ${assignedFormsArr.map(f => {
                   const file = formNameToFile[f] || '#';
-                  return `<tr><td class="px-4 py-2">${f}</td><td class="px-4 py-2">${data['Name'] || ''}</td><td class="px-4 py-2"><a href="${file}" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-700Dark transition" target="_blank">Open Form</a></td></tr>`;
+                  const formId = file.replace('.html', '');
+                  return `<tr><td class="px-4 py-2">${f}</td><td class="px-4 py-2">${data['Name'] || ''}</td><td class="px-4 py-2"><button onclick="openForm('${file}', '${data['department']}', '${f}', '${data['Name']}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button></td></tr>`;
                 }).join('')}
               </tbody>
             </table>
@@ -634,7 +635,7 @@
             if (formLinks[i - 1].includes('form7')) frequency = ' (Weekly)';
             if (formLinks[i - 1].includes('form8')) frequency = ' (Weekly)';
             let fullPortfolio = portfolioName + frequency;
-            formsHtmlDept += `<tr><td class="p-4 align-top">${countDept}</td><td class="p-4 align-top">${portfolioName}</td><td class="p-4 align-top"><a href="#" onclick="openForm('${formLinks[i - 1]}', '${data['department']}', '${fullPortfolio}', '${data['Name']}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-700Dark transition">Open Form</a></td></tr>`;
+            formsHtmlDept += `<tr><td class="p-4 align-top">${countDept}</td><td class="p-4 align-top">${portfolioName}</td><td class="p-4 align-top"><button onclick="openForm('${formLinks[i - 1]}', '${data['department']}', '${fullPortfolio}', '${data['Name']}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button></td></tr>`;
             countDept++;
           }
         }
@@ -656,7 +657,7 @@
           ninthFormLink = "form-prof.html";
         }
         if (ninthFormName && ninthFormLink) {
-          formsHtmlCore += `<tr><td class="px-4 py-2">1</td><td class="px-4 py-2">${ninthFormName}</td><td class="px-4 py-2"><a href="#" onclick="openForm('${ninthFormLink}', '${data['department']}', '${ninthFormName}', '${data['Name']}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-700Dark transition" target="_blank">Open Form</a></td></tr>`;
+          formsHtmlCore += `<tr><td class="px-4 py-2">1</td><td class="px-4 py-2">${ninthFormName}</td><td class="px-4 py-2"><button onclick="openForm('${ninthFormLink}', '${data['department']}', '${ninthFormName}', '${data['Name']}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button></td></tr>`;
         }
         document.getElementById("facultyFormsDept").innerHTML =
           formsHtmlDept ||
@@ -664,12 +665,76 @@
         document.getElementById("facultyFormsCore").innerHTML =
           formsHtmlCore ||
           '<tr><td colspan="3" class="text-gray-400 text-center p-4">No core scope form assigned.</td></tr>';
-      // Auto-fetch Open Form logic
-      window.openForm = function(formUrl, department, portfolio, memberName) {
-        localStorage.setItem('selectedDepartment', department);
-        localStorage.setItem('selectedPortfolio', portfolio);
-        localStorage.setItem('selectedMemberName', memberName);
-        window.location.href = formUrl;
+      // Auto-fetch Open Form logic with form status check
+      window.openForm = async function(formUrl, department, portfolio, memberName) {
+        try {
+          // Extract form identifier from URL
+          let formId = formUrl.replace('.html', '');
+          
+          // Check form status from formstatus table
+          const { data: formStatus, error } = await supabaseClient
+            .from('formstatus')
+            .select('is_open, form_title')
+            .eq('form_name', formId)
+            .single();
+
+          if (error) {
+            console.warn('Could not check form status:', error);
+            // If we can't check status, allow form to open (fallback)
+            localStorage.setItem('selectedDepartment', department);
+            localStorage.setItem('selectedPortfolio', portfolio);
+            localStorage.setItem('selectedMemberName', memberName);
+            window.location.href = formUrl;
+            return;
+          }
+
+          // Check if form is open
+          if (formStatus && formStatus.is_open === false) {
+            // Show closed message
+            showFormClosedModal(formStatus.form_title || formId);
+            return;
+          }
+
+          // Form is open, proceed normally
+          localStorage.setItem('selectedDepartment', department);
+          localStorage.setItem('selectedPortfolio', portfolio);
+          localStorage.setItem('selectedMemberName', memberName);
+          window.location.href = formUrl;
+
+        } catch (error) {
+          console.error('Error checking form status:', error);
+          // Fallback: allow form to open
+          localStorage.setItem('selectedDepartment', department);
+          localStorage.setItem('selectedPortfolio', portfolio);
+          localStorage.setItem('selectedMemberName', memberName);
+          window.location.href = formUrl;
+        }
+      }
+
+      // Show form closed modal
+      function showFormClosedModal(formTitle) {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+        modal.innerHTML = `
+          <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
+            <div class="text-center">
+              <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <i class="fas fa-lock text-red-600 text-xl"></i>
+              </div>
+              <h3 class="text-lg font-medium text-gray-900 mb-2">Form Closed</h3>
+              <p class="text-sm text-gray-500 mb-6">
+                The form "<strong>${formTitle}</strong>" is currently closed and not accepting submissions.
+                <br><br>
+                Please contact the administrator for more information.
+              </p>
+              <button onclick="this.closest('.fixed').remove()" 
+                      class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium">
+                OK
+              </button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
       }
         // Load Workdone Section using centralized JS
         const workdoneTable = new WorkdoneTable(supabaseClient);
@@ -690,7 +755,7 @@
     <!-- Footer -->
     <footer class="text-center py-4 mt-8">
       <p class="text-gray-400 text-sm">
-        © All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>.<br/> 
+        © All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>, IV CSE 2022-2026.<br/> 
       </p>
     </footer>
   </body>

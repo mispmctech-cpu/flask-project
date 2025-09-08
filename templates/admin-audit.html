@@ -1,1 +1,926 @@
-﻿
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Management - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Cache busting -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <img src="../static/img/pmc.jpg" alt="PMC Tech" class="h-10 w-auto rounded-lg">
+                    <div class="ml-4">
+                        <h1 class="text-xl font-bold text-gray-900">Audit Management</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="admin-dashboard.html" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Audit Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-100 rounded-lg">
+                        <i class="fas fa-clipboard-list text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Logs</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalLogs">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-100 rounded-lg">
+                        <i class="fas fa-user-check text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">User Actions</p>
+                        <p class="text-2xl font-bold text-gray-900" id="userActions">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-yellow-100 rounded-lg">
+                        <i class="fas fa-exclamation-triangle text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Security Events</p>
+                        <p class="text-2xl font-bold text-gray-900" id="securityEvents">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-purple-100 rounded-lg">
+                        <i class="fas fa-database text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Data Changes</p>
+                        <p class="text-2xl font-bold text-gray-900" id="dataChanges">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-indigo-100 rounded-lg">
+                        <i class="fas fa-trash-alt text-indigo-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Deleted Records</p>
+                        <p class="text-2xl font-bold text-gray-900" id="deletedRecords">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-red-100 rounded-lg">
+                        <i class="fas fa-ban text-red-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Failed Attempts</p>
+                        <p class="text-2xl font-bold text-gray-900" id="failedAttempts">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white p-6 rounded-lg shadow border mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <button onclick="generateAuditReport()" class="bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-700 flex items-center justify-center">
+                    <i class="fas fa-file-alt mr-2"></i>Generate Report
+                </button>
+                <button onclick="exportAuditLogs()" class="bg-green-600 text-white px-4 py-3 rounded-md hover:bg-green-700 flex items-center justify-center">
+                    <i class="fas fa-download mr-2"></i>Export Logs
+                </button>
+                <button onclick="viewDeletedRecords()" class="bg-purple-600 text-white px-4 py-3 rounded-md hover:bg-purple-700 flex items-center justify-center">
+                    <i class="fas fa-eye mr-2"></i>Deleted Records
+                </button>
+                <button onclick="clearOldLogs()" class="bg-red-600 text-white px-4 py-3 rounded-md hover:bg-red-700 flex items-center justify-center">
+                    <i class="fas fa-broom mr-2"></i>Clear Old Logs
+                </button>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white p-6 rounded-lg shadow border mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search Logs</label>
+                    <input type="text" id="searchInput" placeholder="Search by user, action, or details..." 
+                           class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Log Type</label>
+                    <select id="typeFilter" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All Types</option>
+                        <option value="login">Login/Logout</option>
+                        <option value="user_action">User Actions</option>
+                        <option value="data_change">Data Changes</option>
+                        <option value="security">Security Events</option>
+                        <option value="system">System Events</option>
+                        <option value="deletion">Deletions</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+                    <select id="dateFilter" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="today">Today</option>
+                        <option value="week">Last Week</option>
+                        <option value="month">Last Month</option>
+                        <option value="quarter">Last Quarter</option>
+                        <option value="year">Last Year</option>
+                        <option value="all">All Time</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Severity</label>
+                    <select id="severityFilter" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All Levels</option>
+                        <option value="info">Info</option>
+                        <option value="warning">Warning</option>
+                        <option value="error">Error</option>
+                        <option value="critical">Critical</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="applyFilters()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        <i class="fas fa-filter mr-2"></i>Apply
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Logs Table -->
+        <div class="bg-white rounded-lg shadow border">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-gray-900">Audit Logs</h2>
+                    <div class="flex space-x-2">
+                        <span class="text-sm text-gray-600" id="logCount">0 logs found</span>
+                        <button onclick="refreshLogs()" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortLogs('timestamp')">
+                                Timestamp <i class="fas fa-sort text-xs ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortLogs('user')">
+                                User <i class="fas fa-sort text-xs ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortLogs('action')">
+                                Action <i class="fas fa-sort text-xs ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Details
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortLogs('severity')">
+                                Severity <i class="fas fa-sort text-xs ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditLogsBody" class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                                <i class="fas fa-spinner fa-spin mr-2"></i>Loading audit logs...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="bg-gray-50 px-6 py-3 flex items-center justify-between border-t">
+                <div class="text-sm text-gray-700">
+                    Showing <span id="showingFrom">0</span> to <span id="showingTo">0</span> of <span id="totalCount">0</span> results
+                </div>
+                <div class="flex space-x-2">
+                    <button id="prevBtn" onclick="previousPage()" class="px-3 py-2 border rounded-md hover:bg-gray-100 disabled:opacity-50" disabled>
+                        Previous
+                    </button>
+                    <span id="pageInfo" class="px-3 py-2">Page 1</span>
+                    <button id="nextBtn" onclick="nextPage()" class="px-3 py-2 border rounded-md hover:bg-gray-100 disabled:opacity-50" disabled>
+                        Next
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Detail Modal -->
+    <div id="logModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-4xl w-full max-h-96 overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Audit Log Details</h3>
+                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div id="logModalContent">
+                        <!-- Log details will be populated here -->
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button onclick="closeModal()" class="px-4 py-2 border rounded-md hover:bg-gray-50">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Report Modal -->
+    <div id="reportModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-2xl w-full">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Generate Audit Report</h3>
+                        <button onclick="closeReportModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <form id="reportForm" onsubmit="generateReport(event)">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                                <input type="date" name="startDate" required 
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                                <input type="date" name="endDate" required 
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Report Type</label>
+                                <select name="reportType" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="comprehensive">Comprehensive</option>
+                                    <option value="security">Security Events</option>
+                                    <option value="user_activity">User Activity</option>
+                                    <option value="data_changes">Data Changes</option>
+                                    <option value="compliance">Compliance Report</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Format</label>
+                                <select name="format" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="pdf">PDF Report</option>
+                                    <option value="csv">CSV Export</option>
+                                    <option value="excel">Excel Workbook</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <button type="button" onclick="closeReportModal()" 
+                                    class="px-4 py-2 border rounded-md hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                <i class="fas fa-file-alt mr-2"></i>Generate Report
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase configuration
+        const supabaseClient = window.supabase.createClient(
+            "https://cbhodgwaazmjszkujrti.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+        );
+
+        let auditLogs = [];
+        let filteredLogs = [];
+        let currentPage = 1;
+        const pageSize = 20;
+        let currentSort = { field: 'timestamp', direction: 'desc' };
+
+        // Load audit data from various sources
+        async function loadAuditLogs() {
+            try {
+                console.log('Loading audit logs from multiple sources...');
+                
+                // Generate sample audit logs (since you might not have dedicated audit tables yet)
+                const sampleLogs = generateSampleAuditLogs();
+                
+                // Load deleted faculty records
+                const { data: deletedFaculty, error: deletedError } = await supabaseClient
+                    .from('deleted_faculty')
+                    .select('*')
+                    .order('deleted_at', { ascending: false });
+
+                // Load form status changes
+                const { data: formStatusLogs, error: formError } = await supabaseClient
+                    .from('formstatuslog')
+                    .select('*')
+                    .order('changed_at', { ascending: false });
+
+                if (deletedError) console.log('Deleted faculty error:', deletedError);
+                if (formError) console.log('Form status error:', formError);
+
+                // Convert real data to audit log format
+                const deletionLogs = (deletedFaculty || []).map(record => ({
+                    id: `del_${record.id}`,
+                    timestamp: new Date(record.deleted_at),
+                    user: record.deleted_by || 'System',
+                    action: 'Faculty Deletion',
+                    details: `Deleted faculty: ${record.Name} (${record.email}) from ${record.department}`,
+                    severity: 'warning',
+                    type: 'deletion',
+                    ip_address: record.ip_address || 'Unknown',
+                    user_agent: 'Admin Panel',
+                    additional_data: {
+                        faculty_name: record.Name,
+                        department: record.department,
+                        reason: record.deletion_reason
+                    }
+                }));
+
+                const formStatusChangeLogs = (formStatusLogs || []).map(record => ({
+                    id: `form_${record.id}`,
+                    timestamp: new Date(record.changed_at),
+                    user: record.changed_by || 'System',
+                    action: 'Form Status Change',
+                    details: `Changed ${record.form_name} from ${record.old_status} to ${record.new_status}${record.reason ? `: ${record.reason}` : ''}`,
+                    severity: 'info',
+                    type: 'data_change',
+                    ip_address: 'Unknown',
+                    user_agent: 'Admin Panel',
+                    additional_data: {
+                        form_name: record.form_name,
+                        old_status: record.old_status,
+                        new_status: record.new_status,
+                        reason: record.reason
+                    }
+                }));
+
+                // Combine all logs
+                auditLogs = [
+                    ...sampleLogs,
+                    ...deletionLogs,
+                    ...formStatusChangeLogs
+                ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                // Update statistics
+                updateAuditStats();
+                
+                // Apply initial filters
+                filteredLogs = [...auditLogs];
+                document.getElementById('logCount').textContent = `${filteredLogs.length} logs found`;
+                displayLogs();
+
+            } catch (error) {
+                console.error('Error loading audit logs:', error);
+                showError('Failed to load audit logs');
+            }
+        }
+
+        // Generate sample audit logs for demonstration
+        function generateSampleAuditLogs() {
+            const sampleActions = [
+                { action: 'User Login', type: 'login', severity: 'info' },
+                { action: 'User Logout', type: 'login', severity: 'info' },
+                { action: 'Password Change', type: 'security', severity: 'warning' },
+                { action: 'Failed Login', type: 'security', severity: 'error' },
+                { action: 'Profile Update', type: 'user_action', severity: 'info' },
+                { action: 'System Backup', type: 'system', severity: 'info' },
+                { action: 'Data Export', type: 'user_action', severity: 'info' },
+                { action: 'Permission Change', type: 'security', severity: 'warning' },
+                { action: 'Database Query', type: 'data_change', severity: 'info' },
+                { action: 'File Upload', type: 'user_action', severity: 'info' }
+            ];
+
+            const sampleUsers = ['admin', 'faculty_user', 'hod_user', 'system', 'iqac_user'];
+            const logs = [];
+
+            // Generate logs for the last 30 days
+            for (let i = 0; i < 50; i++) {
+                const action = sampleActions[Math.floor(Math.random() * sampleActions.length)];
+                const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
+                const daysAgo = Math.floor(Math.random() * 30);
+                const timestamp = new Date();
+                timestamp.setDate(timestamp.getDate() - daysAgo);
+
+                logs.push({
+                    id: `sample_${i}`,
+                    timestamp,
+                    user,
+                    action: action.action,
+                    details: `${action.action} performed by ${user} on ${timestamp.toLocaleDateString()}`,
+                    severity: action.severity,
+                    type: action.type,
+                    ip_address: `192.168.1.${Math.floor(Math.random() * 254) + 1}`,
+                    user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    additional_data: {
+                        session_id: `sess_${Math.random().toString(36).substr(2, 9)}`,
+                        duration: Math.floor(Math.random() * 3600),
+                        success: Math.random() > 0.1
+                    }
+                });
+            }
+
+            return logs;
+        }
+
+        // Update audit statistics
+        function updateAuditStats() {
+            const totalLogs = auditLogs.length;
+            const userActions = auditLogs.filter(log => log.type === 'user_action').length;
+            const securityEvents = auditLogs.filter(log => log.type === 'security').length;
+            const dataChanges = auditLogs.filter(log => log.type === 'data_change').length;
+            const deletedRecords = auditLogs.filter(log => log.type === 'deletion').length;
+            const failedAttempts = auditLogs.filter(log => log.severity === 'error').length;
+
+            document.getElementById('totalLogs').textContent = totalLogs;
+            document.getElementById('userActions').textContent = userActions;
+            document.getElementById('securityEvents').textContent = securityEvents;
+            document.getElementById('dataChanges').textContent = dataChanges;
+            document.getElementById('deletedRecords').textContent = deletedRecords;
+            document.getElementById('failedAttempts').textContent = failedAttempts;
+        }
+
+        // Display logs in table
+        function displayLogs() {
+            const tbody = document.getElementById('auditLogsBody');
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, filteredLogs.length);
+            const pageLogs = filteredLogs.slice(startIndex, endIndex);
+
+            if (pageLogs.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                            No audit logs found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const logsHtml = pageLogs.map(log => {
+                const severityClass = {
+                    'info': 'text-blue-800 bg-blue-100',
+                    'warning': 'text-yellow-800 bg-yellow-100',
+                    'error': 'text-red-800 bg-red-100',
+                    'critical': 'text-purple-800 bg-purple-100'
+                }[log.severity] || 'text-gray-800 bg-gray-100';
+
+                const typeIcon = {
+                    'login': 'fas fa-sign-in-alt',
+                    'user_action': 'fas fa-user-cog',
+                    'data_change': 'fas fa-database',
+                    'security': 'fas fa-shield-alt',
+                    'system': 'fas fa-server',
+                    'deletion': 'fas fa-trash-alt'
+                }[log.type] || 'fas fa-info-circle';
+
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${formatTimestamp(log.timestamp)}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="h-8 w-8 bg-gray-300 rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-user text-gray-600 text-xs"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">${log.user}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <i class="${typeIcon} text-gray-500 mr-2"></i>
+                                <span class="text-sm text-gray-900">${log.action}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-900 max-w-xs truncate" title="${log.details}">
+                                ${log.details}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${severityClass}">
+                                ${log.severity.toUpperCase()}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="viewLogDetails('${log.id}')" class="text-blue-600 hover:text-blue-900">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            tbody.innerHTML = logsHtml;
+            updatePagination();
+        }
+
+        // Format timestamp for display
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 1) {
+                return `Today ${date.toLocaleTimeString()}`;
+            } else if (diffDays === 2) {
+                return `Yesterday ${date.toLocaleTimeString()}`;
+            } else if (diffDays <= 7) {
+                return `${diffDays - 1} days ago`;
+            } else {
+                return date.toLocaleString();
+            }
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const typeFilter = document.getElementById('typeFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            const severityFilter = document.getElementById('severityFilter').value;
+
+            const now = new Date();
+            let dateThreshold = null;
+
+            switch (dateFilter) {
+                case 'today':
+                    dateThreshold = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    break;
+                case 'week':
+                    dateThreshold = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'month':
+                    dateThreshold = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'quarter':
+                    dateThreshold = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'year':
+                    dateThreshold = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+                    break;
+            }
+
+            filteredLogs = auditLogs.filter(log => {
+                const matchesSearch = !searchTerm || 
+                    log.user.toLowerCase().includes(searchTerm) ||
+                    log.action.toLowerCase().includes(searchTerm) ||
+                    log.details.toLowerCase().includes(searchTerm);
+
+                const matchesType = typeFilter === 'all' || log.type === typeFilter;
+                const matchesSeverity = severityFilter === 'all' || log.severity === severityFilter;
+                const matchesDate = !dateThreshold || new Date(log.timestamp) >= dateThreshold;
+
+                return matchesSearch && matchesType && matchesSeverity && matchesDate;
+            });
+
+            document.getElementById('logCount').textContent = `${filteredLogs.length} logs found`;
+            currentPage = 1;
+            displayLogs();
+            showNotification(`Filtered to ${filteredLogs.length} logs`, 'success');
+        }
+
+        // Sort logs
+        function sortLogs(field) {
+            if (currentSort.field === field) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.field = field;
+                currentSort.direction = 'desc';
+            }
+
+            filteredLogs.sort((a, b) => {
+                let aVal, bVal;
+                
+                switch (field) {
+                    case 'timestamp':
+                        aVal = new Date(a.timestamp);
+                        bVal = new Date(b.timestamp);
+                        break;
+                    case 'user':
+                        aVal = a.user.toLowerCase();
+                        bVal = b.user.toLowerCase();
+                        break;
+                    case 'action':
+                        aVal = a.action.toLowerCase();
+                        bVal = b.action.toLowerCase();
+                        break;
+                    case 'severity':
+                        const severityOrder = { 'info': 1, 'warning': 2, 'error': 3, 'critical': 4 };
+                        aVal = severityOrder[a.severity] || 0;
+                        bVal = severityOrder[b.severity] || 0;
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
+                if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            displayLogs();
+        }
+
+        // View log details
+        function viewLogDetails(logId) {
+            const log = auditLogs.find(l => l.id === logId);
+            if (!log) return;
+
+            const modalContent = document.getElementById('logModalContent');
+            modalContent.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-md font-semibold text-gray-900 mb-3">Basic Information</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Timestamp</label>
+                                <p class="text-sm text-gray-900">${new Date(log.timestamp).toLocaleString()}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">User</label>
+                                <p class="text-sm text-gray-900">${log.user}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Action</label>
+                                <p class="text-sm text-gray-900">${log.action}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Type</label>
+                                <p class="text-sm text-gray-900">${log.type}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Severity</label>
+                                <span class="px-2 py-1 text-xs font-medium rounded-full ${log.severity === 'error' ? 'bg-red-100 text-red-800' : log.severity === 'warning' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}">
+                                    ${log.severity.toUpperCase()}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-md font-semibold text-gray-900 mb-3">Technical Details</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">IP Address</label>
+                                <p class="text-sm text-gray-900">${log.ip_address || 'Unknown'}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">User Agent</label>
+                                <p class="text-sm text-gray-900 break-all">${log.user_agent || 'Unknown'}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Log ID</label>
+                                <p class="text-sm text-gray-900 font-mono">${log.id}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <h4 class="text-md font-semibold text-gray-900 mb-3">Details</h4>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-900">${log.details}</p>
+                    </div>
+                </div>
+                
+                ${log.additional_data ? `
+                <div class="mt-6">
+                    <h4 class="text-md font-semibold text-gray-900 mb-3">Additional Data</h4>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <pre class="text-sm text-gray-900 whitespace-pre-wrap">${JSON.stringify(log.additional_data, null, 2)}</pre>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+            
+            document.getElementById('logModal').classList.remove('hidden');
+        }
+
+        // Pagination functions
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredLogs.length / pageSize);
+            const startIndex = (currentPage - 1) * pageSize + 1;
+            const endIndex = Math.min(currentPage * pageSize, filteredLogs.length);
+
+            document.getElementById('showingFrom').textContent = filteredLogs.length > 0 ? startIndex : 0;
+            document.getElementById('showingTo').textContent = endIndex;
+            document.getElementById('totalCount').textContent = filteredLogs.length;
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+
+            document.getElementById('prevBtn').disabled = currentPage === 1;
+            document.getElementById('nextBtn').disabled = currentPage === totalPages || totalPages === 0;
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                displayLogs();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredLogs.length / pageSize);
+            if (currentPage < totalPages) {
+                currentPage++;
+                displayLogs();
+            }
+        }
+
+        // Quick action functions
+        function generateAuditReport() {
+            document.getElementById('reportModal').classList.remove('hidden');
+        }
+
+        function exportAuditLogs() {
+            const csvContent = "data:text/csv;charset=utf-8," + 
+                "Timestamp,User,Action,Type,Severity,Details,IP Address,User Agent\n" +
+                filteredLogs.map(log => 
+                    `"${new Date(log.timestamp).toLocaleString()}","${log.user}","${log.action}","${log.type}","${log.severity}","${log.details.replace(/"/g, '""')}","${log.ip_address || ''}","${log.user_agent || ''}"`
+                ).join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `audit_logs_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification(`Exported ${filteredLogs.length} audit logs to CSV`, 'success');
+        }
+
+        function viewDeletedRecords() {
+            const deletedLogs = filteredLogs.filter(log => log.type === 'deletion');
+            if (deletedLogs.length === 0) {
+                showNotification('No deleted records found', 'error');
+                return;
+            }
+            
+            // Apply deletion filter
+            document.getElementById('typeFilter').value = 'deletion';
+            applyFilters();
+            showNotification(`Showing ${deletedLogs.length} deleted records`, 'success');
+        }
+
+        function clearOldLogs() {
+            if (confirm('Are you sure you want to clear logs older than 90 days? This action cannot be undone.')) {
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - 90);
+                
+                const beforeCount = auditLogs.length;
+                auditLogs = auditLogs.filter(log => new Date(log.timestamp) >= cutoffDate);
+                const afterCount = auditLogs.length;
+                const removedCount = beforeCount - afterCount;
+                
+                filteredLogs = [...auditLogs];
+                updateAuditStats();
+                displayLogs();
+                
+                showNotification(`Cleared ${removedCount} old logs`, 'success');
+            }
+        }
+
+        function generateReport(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            const startDate = formData.get('startDate');
+            const endDate = formData.get('endDate');
+            const reportType = formData.get('reportType');
+            const format = formData.get('format');
+            
+            // This is a simplified implementation
+            showNotification(`Generating ${reportType} report from ${startDate} to ${endDate} in ${format} format...`, 'success');
+            closeReportModal();
+            
+            // In a real implementation, you would generate the actual report here
+            setTimeout(() => {
+                showNotification('Report generated successfully and will be downloaded shortly', 'success');
+            }, 2000);
+        }
+
+        // Modal functions
+        function closeModal() {
+            document.getElementById('logModal').classList.add('hidden');
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.add('hidden');
+        }
+
+        function refreshLogs() {
+            loadAuditLogs();
+            showNotification('Audit logs refreshed', 'success');
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
+            notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'check-circle'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
+
+        function showError(message) {
+            document.getElementById('auditLogsBody').innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-red-500">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>${message}
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAuditLogs();
+            
+            // Set default date for report form
+            const today = new Date().toISOString().split('T')[0];
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            document.querySelector('input[name="endDate"]').value = today;
+            document.querySelector('input[name="startDate"]').value = thirtyDaysAgo.toISOString().split('T')[0];
+        });
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(applyFilters, 300);
+        });
+
+        // Close modals when clicking outside
+        document.getElementById('logModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        document.getElementById('reportModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeReportModal();
+            }
+        });
+    </script>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-8">
+        <p class="text-gray-400 text-sm">
+            &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>, IV CSE 2022-2026.<br>
+            Developed by <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>
+        </p>
+    </footer>
+</body>
+</html>

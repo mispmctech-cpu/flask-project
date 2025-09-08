@@ -29,8 +29,8 @@
     </nav>
 
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <!-- Enhanced Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
             <div class="bg-white p-6 rounded-lg shadow border">
                 <div class="flex items-center">
                     <div class="p-3 bg-blue-100 rounded-lg">
@@ -70,19 +70,41 @@
                         <i class="fas fa-crown text-purple-600"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Principals</p>
-                        <p class="text-2xl font-bold text-gray-900" id="principalCount">0</p>
+                        <p class="text-sm font-medium text-gray-600">Admins</p>
+                        <p class="text-2xl font-bold text-gray-900" id="adminCount">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-indigo-100 rounded-lg">
+                        <i class="fas fa-check-circle text-indigo-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Users</p>
+                        <p class="text-2xl font-bold text-gray-900" id="activeCount">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-red-100 rounded-lg">
+                        <i class="fas fa-user-slash text-red-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Inactive Users</p>
+                        <p class="text-2xl font-bold text-gray-900" id="inactiveCount">0</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Filters and Search -->
+        <!-- Enhanced Filters and Search -->
         <div class="bg-white p-6 rounded-lg shadow border mb-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Search Users</label>
-                    <input type="text" id="searchInput" placeholder="Search by name or email..." 
+                    <input type="text" id="searchInput" placeholder="Search by name, email, or ID..." 
                            class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
@@ -93,6 +115,8 @@
                         <option value="hod">HOD</option>
                         <option value="principal">Principal</option>
                         <option value="iqac">IQAC</option>
+                        <option value="management">Management</option>
+                        <option value="admin">Admin</option>
                     </select>
                 </div>
                 <div>
@@ -101,10 +125,36 @@
                         <option value="all">All Departments</option>
                     </select>
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select id="statusFilter" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
                 <div class="flex items-end">
                     <button onclick="applyFilters()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
                         <i class="fas fa-filter mr-2"></i>Apply Filters
                     </button>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <div class="flex justify-between items-center">
+                    <div class="text-sm text-gray-600">
+                        <span id="filterResultCount">0</span> users found
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="clearFilters()" class="text-gray-500 hover:text-gray-700 text-sm">
+                            <i class="fas fa-times mr-1"></i>Clear Filters
+                        </button>
+                        <button onclick="bulkActivate()" class="text-green-600 hover:text-green-800 text-sm">
+                            <i class="fas fa-check-circle mr-1"></i>Bulk Activate
+                        </button>
+                        <button onclick="bulkDeactivate()" class="text-red-600 hover:text-red-800 text-sm">
+                            <i class="fas fa-times-circle mr-1"></i>Bulk Deactivate
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -131,12 +181,24 @@
                 <table class="min-w-full">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortUsers('name')">
+                                User <i class="fas fa-sort text-xs ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortUsers('role')">
+                                Role <i class="fas fa-sort text-xs ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortUsers('department')">
+                                Department <i class="fas fa-sort text-xs ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Contact
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortUsers('status')">
+                                Status <i class="fas fa-sort text-xs ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
@@ -310,10 +372,54 @@
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
         );
 
+        let currentSort = { field: null, direction: 'asc' };
         let allUsers = [];
         let filteredUsers = [];
         let currentPage = 1;
         const pageSize = 10;
+
+        // Sort users function
+        function sortUsers(field) {
+            // Toggle direction if same field, otherwise start with ascending
+            if (currentSort.field === field) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.field = field;
+                currentSort.direction = 'asc';
+            }
+
+            filteredUsers.sort((a, b) => {
+                let aVal, bVal;
+                
+                switch (field) {
+                    case 'name':
+                        aVal = (a.displayName || '').toLowerCase();
+                        bVal = (b.displayName || '').toLowerCase();
+                        break;
+                    case 'role':
+                        aVal = a.role.toLowerCase();
+                        bVal = b.role.toLowerCase();
+                        break;
+                    case 'department':
+                        aVal = (a.displayDepartment || '').toLowerCase();
+                        bVal = (b.displayDepartment || '').toLowerCase();
+                        break;
+                    case 'status':
+                        aVal = (a.Status || 'Active').toLowerCase();
+                        bVal = (b.Status || 'Active').toLowerCase();
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
+                if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            displayUsers();
+            showNotification(`Sorted by ${field} (${currentSort.direction})`, 'success');
+        }
 
         // Load all users (adapted for your database structure)
         async function loadUsers() {
@@ -413,17 +519,24 @@
                     }))
                 ];
 
-                // Update stats
+                // Update stats with enhanced counters
+                const activeUsers = allUsers.filter(u => (u.Status || 'Active') === 'Active').length;
+                const inactiveUsers = allUsers.length - activeUsers;
+                const admins = (admin?.length || 0) + (management?.length || 0) + (iqac?.length || 0) + (principals?.length || 0);
+
                 document.getElementById('totalUsers').textContent = allUsers.length;
                 document.getElementById('facultyCount').textContent = faculty?.length || 0;
                 document.getElementById('hodCount').textContent = hods?.length || 0;
-                document.getElementById('principalCount').textContent = (principals?.length || 0) + (iqac?.length || 0) + (management?.length || 0) + (admin?.length || 0);
+                document.getElementById('adminCount').textContent = admins;
+                document.getElementById('activeCount').textContent = activeUsers;
+                document.getElementById('inactiveCount').textContent = inactiveUsers;
 
                 // Load departments for filter
                 loadDepartments();
 
                 // Display users
                 filteredUsers = [...allUsers];
+                document.getElementById('filterResultCount').textContent = filteredUsers.length;
                 displayUsers();
 
             } catch (error) {
@@ -499,14 +612,22 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button onclick="viewUser('${user.email}')" class="text-blue-600 hover:text-blue-900 mr-3">
+                            <button onclick="viewUserDetails('${user.email || user.id}')" class="text-blue-600 hover:text-blue-900 mr-3">
                                 <i class="fas fa-eye"></i> View
+                            </button>
+                            <button onclick="editUser('${user.email || user.id}')" class="text-green-600 hover:text-green-900 mr-3">
+                                <i class="fas fa-edit"></i> Edit
                             </button>
                             ${user.role === 'Faculty' ? `
                             <button onclick="deleteFaculty('${user.email}', '${user.displayName}')" class="text-red-600 hover:text-red-900">
                                 <i class="fas fa-trash"></i> Delete
                             </button>
                             ` : ''}
+                            <button onclick="toggleUserStatus('${user.email || user.id}', '${user.Status || 'Active'}', '${user.displayName}')" 
+                                    class="text-yellow-600 hover:text-yellow-900 ml-2">
+                                <i class="fas fa-toggle-${(user.Status || 'Active') === 'Active' ? 'on' : 'off'}"></i> 
+                                ${(user.Status || 'Active') === 'Active' ? 'Deactivate' : 'Activate'}
+                            </button>
                         </td>
                     </tr>
                 `;
@@ -531,45 +652,119 @@
             document.getElementById('nextBtn').disabled = currentPage === totalPages || totalPages === 0;
         }
 
-        // Apply filters
+        // Enhanced apply filters with status filtering
         function applyFilters() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const roleFilter = document.getElementById('roleFilter').value;
             const deptFilter = document.getElementById('deptFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
 
             filteredUsers = allUsers.filter(user => {
                 const matchesSearch = !searchTerm || 
                     (user.displayName && user.displayName.toLowerCase().includes(searchTerm)) ||
-                    (user.email && user.email.toLowerCase().includes(searchTerm));
+                    (user.email && user.email.toLowerCase().includes(searchTerm)) ||
+                    (user.displayEmployeeID && user.displayEmployeeID.toLowerCase().includes(searchTerm)) ||
+                    (user.Username && user.Username.toLowerCase().includes(searchTerm));
                 
                 const matchesRole = roleFilter === 'all' || 
                     user.role.toLowerCase() === roleFilter.toLowerCase();
                 
                 const matchesDept = deptFilter === 'all' || 
                     user.displayDepartment === deptFilter;
+                
+                const matchesStatus = statusFilter === 'all' || 
+                    (statusFilter === 'active' && (user.Status || 'Active') === 'Active') ||
+                    (statusFilter === 'inactive' && (user.Status || 'Active') !== 'Active');
 
-                return matchesSearch && matchesRole && matchesDept;
+                return matchesSearch && matchesRole && matchesDept && matchesStatus;
             });
 
+            document.getElementById('filterResultCount').textContent = filteredUsers.length;
             currentPage = 1;
             displayUsers();
         }
 
-        // View user details
-        function viewUser(email) {
-            const user = allUsers.find(u => u.email === email);
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('roleFilter').value = 'all';
+            document.getElementById('deptFilter').value = 'all';
+            document.getElementById('statusFilter').value = 'all';
+            
+            filteredUsers = [...allUsers];
+            document.getElementById('filterResultCount').textContent = filteredUsers.length;
+            currentPage = 1;
+            displayUsers();
+            showNotification('Filters cleared successfully!', 'success');
+        }
+
+        // Bulk activate users (only works for filtered/selected users)
+        function bulkActivate() {
+            const inactiveUsers = filteredUsers.filter(u => (u.Status || 'Active') !== 'Active');
+            if (inactiveUsers.length === 0) {
+                showNotification('No inactive users found in current filter.', 'error');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to activate ${inactiveUsers.length} inactive users?`)) {
+                // This is a simplified version - you'd want to implement proper bulk update
+                showNotification(`Bulk activation feature will be implemented soon (${inactiveUsers.length} users selected).`, 'success');
+            }
+        }
+
+        // Bulk deactivate users (only works for filtered/selected users)
+        function bulkDeactivate() {
+            const activeUsers = filteredUsers.filter(u => (u.Status || 'Active') === 'Active');
+            if (activeUsers.length === 0) {
+                showNotification('No active users found in current filter.', 'error');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to deactivate ${activeUsers.length} active users?`)) {
+                // This is a simplified version - you'd want to implement proper bulk update
+                showNotification(`Bulk deactivation feature will be implemented soon (${activeUsers.length} users selected).`, 'success');
+            }
+        }
+
+        // Enhanced view user details
+        function viewUserDetails(identifier) {
+            const user = allUsers.find(u => u.email === identifier || u.id === identifier);
             if (!user) return;
 
             const modalContent = document.getElementById('userModalContent');
             modalContent.innerHTML = `
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="h-16 w-16 bg-gray-300 rounded-full flex items-center justify-center">
+                            ${user["Upload Image"] ? `<img src="${user["Upload Image"]}" class="h-16 w-16 rounded-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+                            <i class="fas fa-user text-2xl text-gray-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900">${user.displayName || 'Unknown User'}</h4>
+                            <p class="text-sm text-gray-600">${user.role} - ${user.displayDepartment || 'No Department'}</p>
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${(user.Status || 'Active') === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${user.Status || 'Active'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Name</label>
+                        <label class="block text-sm font-medium text-gray-700">Full Name</label>
                         <p class="mt-1 text-sm text-gray-900">${user.displayName || 'N/A'}</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                        <label class="block text-sm font-medium text-gray-700">Username</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.Username || user.username || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email Address</label>
                         <p class="mt-1 text-sm text-gray-900">${user.email || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Employee ID</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.displayEmployeeID || user.EmployeeID || 'N/A'}</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Role</label>
@@ -580,21 +775,154 @@
                         <p class="mt-1 text-sm text-gray-900">${user.displayDepartment || 'N/A'}</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Mobile</label>
-                        <p class="mt-1 text-sm text-gray-900">${user.Mobile || 'N/A'}</p>
+                        <label class="block text-sm font-medium text-gray-700">Designation</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.displayDesignation || user.Designation || 'N/A'}</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Status</label>
+                        <label class="block text-sm font-medium text-gray-700">Mobile Number</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.Mobile || user.mobile || user.phone || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Experience</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.Experience || 'N/A'} ${user.Experience ? 'years' : ''}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Qualification</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.Qualification || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Salary</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.Salary ? '₹' + parseFloat(user.Salary).toLocaleString() : 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Account Status</label>
                         <p class="mt-1 text-sm text-gray-900">${user.Status || 'Unknown'}</p>
                     </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700">Employee ID</label>
-                        <p class="mt-1 text-sm text-gray-900">${user.EmpId || user.employee_id || 'N/A'}</p>
+                </div>
+                
+                ${user.role === 'Faculty' ? `
+                <div class="mt-6 pt-4 border-t">
+                    <h5 class="text-md font-medium text-gray-900 mb-3">Form Assignments</h5>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        ${['form1', 'form2', 'form3', 'form4', 'form5', 'form6', 'form7', 'form8'].map(form => `
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3 h-3 rounded-full ${(user[form] && user[form].toLowerCase() === 'yes') ? 'bg-green-500' : 'bg-gray-300'}"></span>
+                                <span class="text-sm">${form.toUpperCase()}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                
+                <div class="mt-6 pt-4 border-t">
+                    <div class="flex space-x-3">
+                        <button onclick="editUser('${user.email || user.id}')" 
+                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            <i class="fas fa-edit mr-2"></i>Edit User
+                        </button>
+                        <button onclick="toggleUserStatus('${user.email || user.id}', '${user.Status || 'Active'}', '${user.displayName}')" 
+                                class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700">
+                            <i class="fas fa-toggle-${(user.Status || 'Active') === 'Active' ? 'on' : 'off'} mr-2"></i>
+                            ${(user.Status || 'Active') === 'Active' ? 'Deactivate' : 'Activate'} User
+                        </button>
+                        ${user.role === 'Faculty' ? `
+                        <button onclick="deleteFaculty('${user.email}', '${user.displayName}'); closeModal();" 
+                                class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">
+                            <i class="fas fa-trash mr-2"></i>Delete Faculty
+                        </button>
+                        ` : ''}
                     </div>
                 </div>
             `;
             
             document.getElementById('userModal').classList.remove('hidden');
+        }
+
+        // Toggle user status (activate/deactivate)
+        async function toggleUserStatus(identifier, currentStatus, userName) {
+            const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+            const action = newStatus === 'Active' ? 'activate' : 'deactivate';
+            
+            if (!confirm(`Are you sure you want to ${action} "${userName}"?`)) {
+                return;
+            }
+            
+            try {
+                const user = allUsers.find(u => u.email === identifier || u.id === identifier);
+                if (!user) {
+                    throw new Error('User not found');
+                }
+                
+                let updateQuery;
+                const updateData = { Status: newStatus };
+                
+                // Determine which table to update based on user role
+                switch (user.role.toLowerCase()) {
+                    case 'faculty':
+                        updateQuery = supabaseClient.from('Faculty').update(updateData).eq('email', identifier);
+                        break;
+                    case 'hod':
+                        updateQuery = supabaseClient.from('HOD').update(updateData).eq('email', identifier);
+                        break;
+                    case 'principal':
+                        updateQuery = supabaseClient.from('Principal').update(updateData).eq('email', identifier);
+                        break;
+                    case 'iqac':
+                        updateQuery = supabaseClient.from('IQAC').update(updateData).eq('email', identifier);
+                        break;
+                    case 'management':
+                        updateQuery = supabaseClient.from('Management').update(updateData).eq('email', identifier);
+                        break;
+                    case 'admin':
+                        updateQuery = supabaseClient.from('Admin').update(updateData).eq('email', identifier);
+                        break;
+                    default:
+                        throw new Error('Unknown user role: ' + user.role);
+                }
+                
+                const { error } = await updateQuery;
+                
+                if (error) {
+                    throw error;
+                }
+                
+                showNotification(`User "${userName}" has been ${action}d successfully!`, 'success');
+                refreshUsers(); // Reload the users list
+                closeModal(); // Close any open modal
+                
+            } catch (error) {
+                console.error('Error toggling user status:', error);
+                showNotification('Failed to update user status: ' + (error.message || 'Unknown error'), 'error');
+            }
+        }
+
+        // Edit user function (placeholder for now)
+        function editUser(identifier) {
+            const user = allUsers.find(u => u.email === identifier || u.id === identifier);
+            if (!user) return;
+            
+            // For now, just show an alert. You can implement a full edit modal later
+            alert(`Edit functionality for ${user.displayName} will be implemented soon.\n\nUser Role: ${user.role}\nDepartment: ${user.displayDepartment}`);
+        }
+
+        // Show notification function
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
+            notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'check-circle'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 3000);
         }
 
         // Close modal
@@ -740,21 +1068,25 @@
             }
         }
 
-        // Export users
+        // Enhanced export users with detailed information
         function exportUsers() {
             const csvContent = "data:text/csv;charset=utf-8," + 
-                "Name,Email,Role,Department,Mobile,Status\n" +
-                filteredUsers.map(user => 
-                    `"${user.displayName || ''}","${user.displayEmail || ''}","${user.role}","${user.displayDepartment || ''}","${user.displayEmployeeID || ''}","${user.displayStatus || ''}"`
-                ).join("\n");
+                "Name,Username,Email,Role,Department,Designation,Employee ID,Mobile,Experience,Qualification,Salary,Status,Last Updated\n" +
+                filteredUsers.map(user => {
+                    const salary = user.Salary ? parseFloat(user.Salary).toLocaleString() : '';
+                    const experience = user.Experience ? user.Experience + ' years' : '';
+                    return `"${user.displayName || ''}","${user.Username || user.username || ''}","${user.displayEmail || ''}","${user.role}","${user.displayDepartment || ''}","${user.displayDesignation || ''}","${user.displayEmployeeID || ''}","${user.Mobile || user.mobile || user.phone || ''}","${experience}","${user.Qualification || ''}","${salary}","${user.displayStatus || ''}","${new Date().toLocaleString()}"`;
+                }).join("\n");
 
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `users_export_${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute("download", `users_detailed_export_${new Date().toISOString().split('T')[0]}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            
+            showNotification(`Exported ${filteredUsers.length} users to CSV successfully!`, 'success');
         }
 
         // Refresh users
@@ -800,7 +1132,7 @@
     <!-- Footer -->
     <footer class="text-center py-4 mt-8">
         <p class="text-gray-400 text-sm">
-            &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>, IV CSE.<br>
+            &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>, IV CSE 2022-2026.<br>
             Developed by <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>
         </p>
     </footer>
