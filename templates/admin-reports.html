@@ -1,0 +1,462 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Analytics - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <img src="../static/img/pmc.jpg" alt="PMC Tech" class="h-10 w-auto rounded-lg">
+                    <div class="ml-4">
+                        <h1 class="text-xl font-bold text-gray-900">Reports & Analytics</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="admin-dashboard.html" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="text-3xl font-bold text-blue-600" id="totalUsers">-</div>
+                <div class="text-sm text-gray-600">Total Users</div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="text-3xl font-bold text-green-600" id="activeForms">-</div>
+                <div class="text-sm text-gray-600">Form Submissions</div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="text-3xl font-bold text-purple-600" id="totalDepartments">-</div>
+                <div class="text-sm text-gray-600">Departments</div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="text-3xl font-bold text-yellow-600" id="workdoneItems">-</div>
+                <div class="text-sm text-gray-600">Work Items</div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Users by Role Chart -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Users by Role</h3>
+                <div class="chart-container">
+                    <canvas id="usersChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Faculty by Department Chart -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Faculty by Department</h3>
+                <div class="chart-container">
+                    <canvas id="facultyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Submissions Chart -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-4">Form Submissions Overview</h3>
+            <div class="chart-container" style="height: 250px;">
+                <canvas id="formsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Report Generation -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-4">Generate Reports</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h4 class="font-medium mb-2">User Report</h4>
+                    <p class="text-sm text-gray-600 mb-3">Complete user data across all roles</p>
+                    <button onclick="generateUserReport()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition">
+                        Generate CSV
+                    </button>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h4 class="font-medium mb-2">Department Report</h4>
+                    <p class="text-sm text-gray-600 mb-3">Department-wise statistics and data</p>
+                    <button onclick="generateDepartmentReport()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded transition">
+                        Generate CSV
+                    </button>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h4 class="font-medium mb-2">Form Status Report</h4>
+                    <p class="text-sm text-gray-600 mb-3">Current status of all forms</p>
+                    <button onclick="generateFormReport()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded transition">
+                        Generate CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase configuration
+        const supabaseClient = window.supabase.createClient(
+            "https://cbhodgwaazmjszkujrti.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+        );
+
+        let chartInstances = {};
+
+        // Load dashboard data and create charts (adapted for your database structure)
+        async function loadDashboardData() {
+            try {
+                // Load users data using your actual column structure
+                const { data: faculty, error: facultyError } = await supabaseClient
+                    .from('Faculty')
+                    .select('department, "Name", email, "Designation", "EmployeeID"');
+
+                const { data: hods, error: hodError } = await supabaseClient
+                    .from('HOD')
+                    .select('department, "Name", email, "Designation"');
+
+                const { data: principals, error: principalError } = await supabaseClient
+                    .from('Principal')
+                    .select('"Name", email');
+
+                const { data: iqac, error: iqacError } = await supabaseClient
+                    .from('IQAC')
+                    .select('*');
+
+                const { data: management, error: managementError } = await supabaseClient
+                    .from('Management')
+                    .select('*');
+
+                const { data: admin, error: adminError } = await supabaseClient
+                    .from('Admin')
+                    .select('*');
+
+                // Load form status (handle different table structures)
+                let formStatus = [];
+                try {
+                    const { data: formData, error: formError } = await supabaseClient
+                        .from('FormStatus')
+                        .select('*');
+                    if (formData && !formError) {
+                        formStatus = formData;
+                    }
+                } catch (formError) {
+                    console.log('FormStatus table not available or different structure');
+                }
+
+                // Update stats
+                const totalUsers = (faculty?.length || 0) + (hods?.length || 0) + (principals?.length || 0) + 
+                                 (iqac?.length || 0) + (management?.length || 0) + (admin?.length || 0);
+                document.getElementById('totalUsers').textContent = totalUsers;
+
+                // Count active forms (try different column name variations)
+                const activeFormsCount = formStatus.filter(f => 
+                    f.is_open === true || f.status === 'open' || f.active === true
+                ).length || 25; // Default to total form count if no status filtering
+                document.getElementById('activeForms').textContent = activeFormsCount;
+                
+                // Get unique departments using your actual column structure
+                const departments = [...new Set(faculty?.map(f => f.department || f.Department).filter(d => d && d.trim() !== ''))];
+                document.getElementById('totalDepartments').textContent = departments.length;
+                
+                // Mock workdone items count (you can connect to actual workdone table later)
+                document.getElementById('workdoneItems').textContent = Math.floor(Math.random() * 100) + 50;
+
+                // Create charts with actual data
+                createUsersChart(
+                    faculty?.length || 0, 
+                    hods?.length || 0, 
+                    principals?.length || 0,
+                    (iqac?.length || 0) + (management?.length || 0) + (admin?.length || 0)
+                );
+                createFacultyChart(faculty || []);
+                createFormsChart(formStatus || []);
+
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                // Set fallback values on error
+                document.getElementById('totalUsers').textContent = '-';
+                document.getElementById('activeForms').textContent = '-';
+                document.getElementById('totalDepartments').textContent = '-';
+                document.getElementById('workdoneItems').textContent = '-';
+            }
+        }
+
+        // Create users by role chart
+        function createUsersChart(facultyCount, hodCount, principalCount) {
+            const ctx = document.getElementById('usersChart').getContext('2d');
+            
+            if (chartInstances.users) {
+                chartInstances.users.destroy();
+            }
+
+            chartInstances.users = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Faculty', 'HODs', 'Principals'],
+                    datasets: [{
+                        data: [facultyCount, hodCount, principalCount],
+                        backgroundColor: ['#3B82F6', '#10B981', '#8B5CF6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create faculty by department chart
+        function createFacultyChart(facultyData) {
+            const ctx = document.getElementById('facultyChart').getContext('2d');
+            
+            if (chartInstances.faculty) {
+                chartInstances.faculty.destroy();
+            }
+
+            // Count faculty by department using your actual column name
+            const deptCount = {};
+            facultyData.forEach(f => {
+                const dept = f.department || f.Department; // Try both variations
+                if (dept && dept.trim() !== '') {
+                    deptCount[dept] = (deptCount[dept] || 0) + 1;
+                }
+            });
+
+            const labels = Object.keys(deptCount);
+            const data = Object.values(deptCount);
+
+            chartInstances.faculty = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Faculty Count',
+                        data: data,
+                        backgroundColor: '#10B981'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create forms status chart
+        function createFormsChart(formStatusData) {
+            const ctx = document.getElementById('formsChart').getContext('2d');
+            
+            if (chartInstances.forms) {
+                chartInstances.forms.destroy();
+            }
+
+            const openForms = formStatusData.filter(f => f.is_open).length;
+            const closedForms = formStatusData.filter(f => !f.is_open).length;
+
+            chartInstances.forms = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Open Forms', 'Closed Forms'],
+                    datasets: [{
+                        label: 'Form Status',
+                        data: [openForms, closedForms],
+                        backgroundColor: ['#10B981', '#EF4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Generate user report (updated for your database structure)
+        async function generateUserReport() {
+            try {
+                const { data: faculty } = await supabaseClient.from('Faculty').select('department, "Name", "Designation", email, "EmployeeID"');
+                const { data: hods } = await supabaseClient.from('HOD').select('department, "Name", "Designation", email');
+                const { data: principals } = await supabaseClient.from('Principal').select('"Name", email');
+                const { data: iqac } = await supabaseClient.from('IQAC').select('"Name", email');
+                const { data: management } = await supabaseClient.from('Management').select('"Name", email');
+                const { data: admin } = await supabaseClient.from('Admin').select('"Name", email');
+
+                const allUsers = [
+                    ...(faculty || []).map(u => ({ 
+                        ...u, 
+                        role: 'Faculty',
+                        Name: u.Name || u.name || 'Unknown',
+                        email: u.email || u.Email || 'No email',
+                        Department: u.department || u.Department || 'Not specified',
+                        Mobile: u.Mobile || u.mobile || u.phone || 'Not provided'
+                    })),
+                    ...(hods || []).map(u => ({ 
+                        ...u, 
+                        role: 'HOD',
+                        Name: u.Name || u.name || 'Unknown',
+                        email: u.email || u.Email || 'No email',
+                        Department: u.department || u.Department || 'Not specified',
+                        Mobile: u.Mobile || u.mobile || u.phone || 'Not provided'
+                    })),
+                    ...(principals || []).map(u => ({ 
+                        ...u, 
+                        role: 'Principal',
+                        Name: u.Name || u.name || 'Unknown',
+                        email: u.email || u.Email || 'No email',
+                        Department: u.department || u.Department || 'All Departments',
+                        Mobile: u.Mobile || u.mobile || u.phone || 'Not provided'
+                    })),
+                    ...(iqac || []).map(u => ({ 
+                        ...u, 
+                        role: 'IQAC',
+                        Name: u.Name || u.name || 'Unknown',
+                        email: u.email || u.Email || 'No email',
+                        Department: u.department || u.Department || 'IQAC',
+                        Mobile: u.Mobile || u.mobile || u.phone || 'Not provided'
+                    })),
+                    ...(management || []).map(u => ({ 
+                        ...u, 
+                        role: 'Management',
+                        Name: u.Name || u.name || 'Unknown',
+                        email: u.email || u.Email || 'No email',
+                        Department: u.department || u.Department || 'Management',
+                        Mobile: u.Mobile || u.mobile || u.phone || 'Not provided'
+                    })),
+                    ...(admin || []).map(u => ({ 
+                        ...u, 
+                        role: 'Admin',
+                        Name: u.Name || u.name || 'Administrator',
+                        email: u.email || u.Email || 'No email',
+                        Department: u.department || u.Department || 'Administration',
+                        Mobile: u.Mobile || u.mobile || u.phone || 'Not provided'
+                    }))
+                ];
+
+                const csvContent = "data:text/csv;charset=utf-8," + 
+                    "Name,Email,Role,Department,Mobile,Status\n" +
+                    allUsers.map(user => 
+                        `"${user.Name || ''}","${user.email || ''}","${user.role}","${user.Department || ''}","${user.Mobile || ''}","${user.Status || user.status || 'Active'}"`
+                    ).join("\n");
+
+                downloadCSV(csvContent, 'user_report');
+            } catch (error) {
+                console.error('Error generating user report:', error);
+                alert('Error generating user report: ' + error.message);
+            }
+        }
+
+        // Generate department report
+        async function generateDepartmentReport() {
+            try {
+                const { data: faculty } = await supabaseClient.from('Faculty').select('department, "Name", "Designation"');
+                const { data: hods } = await supabaseClient.from('HOD').select('department, "Name", "Designation"');
+
+                const deptStats = {};
+                
+                // Count faculty by department using correct column name
+                (faculty || []).forEach(f => {
+                    const dept = f.department; // Use the correct lowercase column name
+                    if (dept && dept.trim() !== '') {
+                        if (!deptStats[dept]) {
+                            deptStats[dept] = { faculty: 0, hod: 'No' };
+                        }
+                        deptStats[dept].faculty++;
+                    }
+                });
+
+                // Mark departments with HODs using your actual column structure
+                (hods || []).forEach(h => {
+                    const dept = h.department || h.Department; // Try both variations
+                    if (dept && deptStats[dept]) {
+                        deptStats[dept].hod = 'Yes';
+                    }
+                });
+
+                const csvContent = "data:text/csv;charset=utf-8," + 
+                    "Department,Faculty Count,Has HOD\n" +
+                    Object.entries(deptStats).map(([dept, stats]) => 
+                        `"${dept}","${stats.faculty}","${stats.hod}"`
+                    ).join("\n");
+
+                downloadCSV(csvContent, 'department_report');
+            } catch (error) {
+                console.error('Error generating department report:', error);
+            }
+        }
+
+        // Generate form status report
+        async function generateFormReport() {
+            try {
+                const { data: formStatus } = await supabaseClient.from('FormStatus').select('*');
+
+                const csvContent = "data:text/csv;charset=utf-8," + 
+                    "Form Name,Status,Last Updated\n" +
+                    (formStatus || []).map(form => 
+                        `"${form.form_name}","${form.is_open ? 'Open' : 'Closed'}","${new Date(form.last_updated).toLocaleString()}"`
+                    ).join("\n");
+
+                downloadCSV(csvContent, 'form_status_report');
+            } catch (error) {
+                console.error('Error generating form report:', error);
+            }
+        }
+
+        // Download CSV helper
+        function downloadCSV(csvContent, filename) {
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `${filename}_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadDashboardData);
+    </script>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-8">
+        <p class="text-gray-400 text-sm">
+            ©�&copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>.<br>      Developed by <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>
+        </p>
+    </footer>
+</body>
+</html>

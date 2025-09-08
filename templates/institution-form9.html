@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script src="https://unpkg.com/@supabase/supabase-js"></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>PLACEMENT OFFICER : ONCE IN A MONTH</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+	<style>
+		body, input, select, textarea, button {
+			font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+		}
+		.card-shadow {
+			box-shadow: 0 4px 24px 0 rgba(80, 0, 120, 0.08), 0 1.5px 4px 0 rgba(80,0,120,0.04);
+		}
+		th, td {
+			font-size: 1rem;
+		}
+		input:focus, select:focus {
+			outline: none;
+			box-shadow: 0 0 0 2px #a78bfa33;
+			border-color: #a78bfa;
+		}
+		.bg-orange-400 {
+			background: linear-gradient(90deg, #f59e42 0%, #fbbf24 100%);
+		}
+		.bg-purple-800 {
+			background: linear-gradient(90deg, #6d28d9 0%, #7c3aed 100%);
+		}
+		.custom-upload {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: #ede9fe;
+			color: #6d28d9;
+			border: 1px solid #a78bfa;
+			border-radius: 0.5rem;
+			padding: 0.25rem 1rem;
+			font-weight: 500;
+			cursor: pointer;
+			transition: background 0.2s;
+		}
+		.custom-upload:hover {
+			background: #c4b5fd;
+			color: #fff;
+		}
+		.custom-upload svg {
+			margin-left: 0.5rem;
+			width: 1.1em;
+			height: 1.1em;
+		}
+		input[type="file"] {
+			display: none;
+		}
+		select {
+			background: #f3f4f6;
+		}
+		label {
+			letter-spacing: 0.01em;
+		}
+		.table-section-title {
+			font-size: 1.1rem;
+			font-weight: 700;
+			letter-spacing: 0.04em;
+			color: #fff;
+			background: linear-gradient(90deg, #f59e42 0%, #fbbf24 100%);
+			padding-left: 1rem;
+		}
+		@media (max-width: 1200px) {
+			.min-w-\[1100px\] { min-width: 900px !important; }
+		}
+		@media (max-width: 900px) {
+			th, td { font-size: 0.95rem; }
+			.min-w-\[1100px\] { min-width: 700px !important; }
+			.p-8 { padding: 1.5rem !important; }
+		}
+		@media (max-width: 600px) {
+			th, td { font-size: 0.9rem; }
+			.min-w-\[1100px\] { min-width: 100vw !important; }
+			.p-8 { padding: 0.5rem !important; }
+			.p-6, .md\:p-10 { padding: 0.5rem !important; }
+		}
+	</style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col min-h-screen">
+	<div class="w-full bg-purple-800 py-4 flex items-center">
+		<img src="https://www.pmctech.org/images/gallery/logo1.jpg" alt="PMC Tech Logo" class="h-14 ml-8" style="max-height:56px;" />
+	</div>
+	<div class="flex-1 flex flex-col items-center justify-center py-8 px-2">
+		<div class="w-full max-w-7xl mx-auto bg-white rounded-2xl card-shadow border border-purple-300 overflow-x-auto p-0 mb-12">
+			<h2 class="text-center text-2xl md:text-3xl font-extrabold tracking-wide text-purple-800 py-8">PLACEMENT OFFICER : ONCE IN A MONTH</h2>
+			<form id="placementOfficerMonthlyForm" class="p-6 md:p-10 space-y-10 w-full">
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-8 bg-purple-50 rounded-xl p-8 card-shadow mb-8">
+					<div>
+						<label class="block font-semibold text-purple-900 mb-1">Portfolio Name:</label>
+						<input type="text" name="Portfolio Name:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
+					</div>
+					<div>
+						<label class="block font-semibold text-purple-900 mb-1">Portfolio Member Name:</label>
+						<input type="text" name="Portfolio Member Name:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
+					</div>
+					<div>
+						<label class="block font-semibold text-purple-900 mb-1">Month:</label>
+						<select name="Month:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400">
+							<option value="">-- Select Month --</option>
+							<option value="January">January</option>
+							<option value="February">February</option>
+							<option value="March">March</option>
+							<option value="April">April</option>
+							<option value="May">May</option>
+							<option value="June">June</option>
+							<option value="July">July</option>
+							<option value="August">August</option>
+							<option value="September">September</option>
+							<option value="October">October</option>
+							<option value="November">November</option>
+							<option value="December">December</option>
+						</select>
+					</div>
+				</div>
+				<div class="overflow-x-auto rounded-xl card-shadow border border-purple-100 bg-white w-full p-6 my-8">
+					<table class="w-full min-w-[1100px] text-xs md:text-sm table-fixed">
+						<thead class="bg-orange-400">
+						<tr>
+							<th class="border px-2 py-2 font-bold text-white">S.No</th>
+							<th class="border px-2 py-2 font-bold text-white">Name of the file</th>
+							<th class="border px-2 py-2 font-bold text-white">Status</th>
+							<th class="border px-2 py-2 font-bold text-white">Description</th>
+							<th class="border px-2 py-2 font-bold text-white">Upload the scanned  file</th>
+						</tr>
+						</thead>
+						<tbody id="placement-officer-monthly-table-body">
+							<!-- JS will render 16 rows here -->
+						</tbody>
+					</table>
+				</div>
+				<div class="flex justify-center mt-10">
+					<button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
+				</div>
+			</form>
+		</div>
+	</div>
+	<script>
+	// Placement officer monthly rows
+	const officerRows = [
+		'Campus placement schedule file',
+		'Company database file',
+		'Job profile file',
+		'Placement records and statistics',
+		'Students profile file',
+		'Company feedback file',
+		'MOU file(for Placement and internship)',
+		'Placement policy file',
+		'Aptitude ,technical and soft skill file',
+		'Mock interview file',
+		'Resume building workshop file',
+		'GD file',
+		'Skill gap identification file',
+		'Placement reports file (On bar off campus)',
+		'Offer letter file',
+		'Placement Grievances file'
+	];
+	// Render placement officer monthly rows
+	const tbodyOfficer = document.getElementById('placement-officer-monthly-table-body');
+	officerRows.forEach((name, i) => {
+		const idx = i + 1;
+		const tr = document.createElement('tr');
+		tr.innerHTML = `
+			<td class="border px-4 py-3 text-center">${idx}</td>
+			<td class="border px-4 py-3">${name}</td>
+			<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
+			<td class="border px-4 py-3"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-2 py-2" placeholder="0-200 chars" /></td>
+			<td class="border px-4 py-3">
+				<label class="custom-upload">
+					Upload
+					<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
+					<input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="file-input" data-row="${idx}" />
+				</label>
+				<span class="file-check hidden" data-row="${idx}">✓ Uploaded</span>
+			</td>
+		`;
+		tbodyOfficer.appendChild(tr);
+	});
+	// Supabase setup
+	const supabase = window.supabase.createClient(
+		"https://cbhodgwaazmjszkujrti.supabase.co",
+		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+	);
+	async function uploadFileToStorage(file, path) {
+		if (!file) return null;
+		const { data, error } = await supabase.storage.from('Institution-form9').upload(path, file, { upsert: true });
+		if (error) throw error;
+		const { data: urlData } = supabase.storage.from('Institution-form9').getPublicUrl(path);
+		return urlData.publicUrl;
+	}
+	// Placement officer monthly form submit
+	document.getElementById('placementOfficerMonthlyForm').addEventListener('submit', async function(e) {
+		e.preventDefault();
+		const form = e.target;
+		const formData = new FormData(form);
+		// Build row with all fields explicitly set (null if missing)
+		const row = {
+			"Portfolio Name:": formData.get('Portfolio Name:') || null,
+			"Portfolio Member Name:": formData.get('Portfolio Member Name:') || null,
+			"Month:": formData.get('Month:') || null
+		};
+		for (let i = 1; i <= 16; i++) {
+			row[`Status_${i}`] = formData.get(`Status_${i}`) || null;
+			row[`Description_${i}`] = formData.get(`Description_${i}`) || null;
+			const file = formData.get(`Upload the scanned file_${i}`);
+			if (file && file.size > 0) {
+				const ts = Date.now();
+				const path = `form9file${i}_${ts}_${file.name}`;
+				try {
+					row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
+				} catch (err) {
+					window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
+					return;
+				}
+			} else {
+				row[`Upload the scanned file_${i}`] = null;
+			}
+		}
+		// Debug: log row before insert
+		console.log('Submitting row to Supabase:', row);
+		// Submit to Supabase
+		const { data, error } = await supabase.from('Institution-form9').insert([row]);
+		if (error) {
+			console.error('Supabase insert error:', error);
+			window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
+		} else {
+			window.location.href = 'notification.html?status=success';
+		}
+	});
+	
+	// File upload indicator
+	document.addEventListener('change', function(e) {
+		if (e.target.classList.contains('file-input')) {
+			const rowId = e.target.getAttribute('data-row');
+			const checkmark = document.querySelector(`[data-row="${rowId}"].file-check`);
+			if (checkmark && e.target.files.length > 0) {
+				checkmark.classList.remove('hidden');
+			}
+		}
+	});
+	</script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> © All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>.<br/>Developed by <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>
+    </p>
+  </footer>
+
+</body>
+</html>

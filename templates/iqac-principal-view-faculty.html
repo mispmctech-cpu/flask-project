@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Faculty Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../static/javascript/form-modal-mapper.js"></script>
+  <script src="../static/javascript/workdone-table.js"></script>
+  </head>
+  <body class="bg-pmcBg min-h-screen">
+    <header class="bg-purple-700 text-white">
+      <div
+        class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-3">
+          <img
+            src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3"
+            alt="PMC Logo"
+            class="h-12 mr-4 rounded shadow bg-white p-1"
+          />
+          <nav
+            class="hidden sm:flex gap-6 ml-6 text-sm font-medium items-center"
+          >
+            <a href="iqac-viewhod.html" class="opacity-90 hover:opacity-100">Back</a>
+            <span class="underline decoration-2 underline-offset-4"
+              >Faculty Profile</span
+            >
+            <button
+              onclick="window.location.href='/logout'"
+              aria-label="Logout"
+              class="ml-4 focus:outline-none"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-7 h-7 text-white hover:text-red-400 transition"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3"
+                />
+              </svg>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main class="max-w-6xl mx-auto px-4 py-8">
+      <section class="bg-white rounded-xl card-shadow p-6 mb-8">
+        <div class="flex flex-col md:flex-row items-start gap-8">
+          <div class="flex-shrink-0 text-center w-full md:w-auto">
+            <div class="relative inline-block">
+              <img
+                id="facultyImage"
+                class="w-40 h-40 object-cover shadow border-4 border-pmcPurple mx-auto"
+                style="border-radius: 16px"
+                src=""
+                alt="Faculty Image"
+              />
+            </div>
+          </div>
+          <div class="flex-1 w-full">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="text-sm font-medium text-gray-600"
+                  >Employee ID</label
+                >
+                <div
+                  id="facultyEmployeeID"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-pmcPurple"
+                ></div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Name</label>
+                <div
+                  id="facultyName"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-lg font-bold text-pmcPurple"
+                ></div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600"
+                  >Department</label
+                >
+                <div
+                  id="facultyDepartment"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-pmcPurple"
+                ></div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600"
+                  >Email ID</label
+                >
+                <div
+                  id="facultyEmail"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600"
+                ></div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600"
+                  >Designation</label
+                >
+                <div
+                  id="facultyDesignation"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-pmcPurpleDark font-semibold"
+                ></div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600"
+                  >Username</label
+                >
+                <div
+                  id="facultyUsername"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600"
+                ></div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Salary</label>
+                <div
+                  id="facultySalary"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600"
+                ></div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600"
+                  >Experience</label
+                >
+                <div
+                  id="facultyExperience"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600"
+                ></div>
+              </div>
+              <div class="md:col-span-2">
+                <label class="text-sm font-medium text-gray-600"
+                  >Qualification</label
+                >
+                <div
+                  id="facultyQualification"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- SEM, SUBJECT, CLASS Table -->
+        <div class="mt-8">
+          <label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-1">SUBJECT ALLOTTED</label>
+          <div id="facultySemSubjectClassTable" class="mt-1"></div>
+        </div>
+        <!-- Details Table -->
+        <div class="mt-8">
+          <label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-1">FACULTY MANDATORY SCOPE IN RESEARCH, INNOVATIONS AND EXTENSION ACTIVITY/FACULTY CONTRIBUTIONS</label>
+          <div id="facultyDetailsTable" class="mt-1"></div>
+        </div>
+      </section>
+      <section class="card-shadow rounded-xl overflow-hidden mb-8">
+        <div class="bg-white p-4">
+          <div class="mb-6">
+            <h2 class="text-lg font-bold text-pmcPurple mb-2">
+              DEPARTMENT PORTFOLIO
+            </h2>
+            <table class="min-w-full text-sm">
+              <thead class="bg-purple-700">
+                <tr class="text-left text-white">
+                  <th class="p-4 w-16">S.No</th>
+                  <th class="p-4">Role Name</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y" id="facultyFormsDept"></tbody>
+            </table>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-pmcPurple mb-2">
+              FACULTY CORE SCOPE
+            </h2>
+            <table class="min-w-full text-sm">
+              <thead class="bg-purple-700">
+                <tr class="text-left text-white">
+                  <th class="p-4 w-16">S.No</th>
+                  <th class="p-4">Form Name</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y" id="facultyFormsCore"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <!-- Workdone Section -->
+      <section class="card-shadow rounded-xl overflow-hidden">
+        <div class="bg-white p-4">
+          <h2 class="text-lg font-bold text-pmcPurple mb-4 uppercase">WORKDONE</h2>
+          <div class="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <input id="workdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-purple-700" placeholder="Search by Portfolio Member Name" oninput="filterWorkdoneTable()" />
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full bg-white shadow-lg text-sm border border-gray-300">
+              <thead class="bg-gradient-to-r from-purple-700 to-purple-500 text-white">
+                <tr>
+                  <th class="p-3 border-b border-gray-300">Department</th>
+                  <th class="p-3 border-b border-gray-300">Portfolio Name</th>
+                  <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
+                  <th class="p-3 border-b border-gray-300">Status</th>
+                  <th class="p-3 border-b border-gray-300">View</th>
+                </tr>
+              </thead>
+              <tbody id="facultyWorkdoneTable" class="divide-y divide-gray-200"></tbody>
+            </table>
+          </div>
+          <div id="workdoneErrorBox" class="hidden mt-4 p-3 rounded bg-red-100 text-red-700 font-semibold"></div>
+          <div id="workdoneLoadingBox" class="mt-4 p-3 rounded bg-blue-100 text-blue-800 font-semibold" style="display: none">Loading workdone data, please wait...</div>
+        </div>
+      </section>
+    </main>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script>
+      // Search/filter logic for workdone table
+      function filterWorkdoneTable() {
+        const search = document.getElementById('workdoneSearch').value.toLowerCase();
+        const rows = Array.from(document.getElementById('facultyWorkdoneTable').querySelectorAll('tr'));
+        rows.forEach(row => {
+          const memberCell = row.querySelector('td:nth-child(3)');
+          if (!memberCell) return;
+          const memberText = memberCell.textContent.toLowerCase();
+          row.style.display = memberText.includes(search) ? '' : 'none';
+        });
+      }
+      // Get email from query param
+      function getQueryParam(name) {
+        const url = new URL(window.location.href);
+        return url.searchParams.get(name);
+      }
+      const email = getQueryParam("email");
+      const supabaseClient = window.supabase.createClient(
+        "https://cbhodgwaazmjszkujrti.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+      );
+      async function loadFacultyProfile() {
+        if (!email) {
+          document.body.innerHTML =
+            '<div class="text-center mt-20 text-red-500">No faculty selected.</div>';
+          return;
+        }
+        const { data, error } = await supabaseClient
+          .from("Faculty")
+          .select("*")
+          .eq("email", email)
+          .single();
+        if (error || !data) {
+          document.body.innerHTML =
+            '<div class="text-center mt-20 text-red-500">Faculty not found.</div>';
+          return;
+        }
+        // Institution Portfolio Section: show only forms assigned to this faculty
+        let assignedFormsArr = [];
+        try {
+          assignedFormsArr = data["assigned_forms"] ? JSON.parse(data["assigned_forms"]) : [];
+        } catch (e) {}
+        let assignedFormsHtml = '';
+        if (Array.isArray(assignedFormsArr) && assignedFormsArr.length > 0) {
+          assignedFormsHtml = `<div class="mt-8">
+            <label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-1">Institution Portfolio</label>
+            <table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white">
+              <thead class='bg-purple-700 text-white'>
+                <tr><th class="px-4 py-2">Form Name</th><th class="px-4 py-2">Faculty Name</th></tr>
+              </thead>
+              <tbody>
+                ${assignedFormsArr.map(f => `<tr><td class="px-4 py-2">${f}</td><td class="px-4 py-2">${data['Name'] || ''}</td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+        } else {
+          assignedFormsHtml = '<div class="mt-8"><label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-1">Institution Portfolio</label><div class="text-gray-400">No forms assigned.</div></div>';
+        }
+        // Insert below FACULTY CORE SCOPE section
+        const facultyCoreScopeSection = document.querySelector('#facultyFormsCore');
+        if (facultyCoreScopeSection) {
+          facultyCoreScopeSection.parentElement.insertAdjacentHTML('afterend', assignedFormsHtml);
+        }
+        document.getElementById("facultyImage").src =
+          data["Upload Image"] ||
+          "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80";
+        document.getElementById("facultyEmployeeID").textContent =
+          data["EmployeeID"] || "";
+        document.getElementById("facultyName").textContent = data["Name"] || "";
+        document.getElementById("facultyDesignation").textContent =
+          data["Designation"] || "";
+        document.getElementById("facultyDepartment").textContent =
+          data["department"] || "";
+        document.getElementById("facultyEmail").textContent =
+          data["email"] || "";
+        document.getElementById("facultyUsername").textContent =
+          data["Username"] || "";
+        document.getElementById("facultySalary").textContent =
+          data["Salary"] || "";
+        document.getElementById("facultyExperience").textContent =
+          data["Experience"] || "";
+        document.getElementById("facultyQualification").textContent =
+          data["Qualification"] || "";
+        // SEM, SUBJECT, CLASS Table
+        let semSubjectClassArr = [];
+        try {
+          semSubjectClassArr = data["SEM_SUBJECT_CLASS"]
+            ? JSON.parse(data["SEM_SUBJECT_CLASS"])
+            : [];
+        } catch (e) {}
+        let semTableHtml = "";
+        if (
+          Array.isArray(semSubjectClassArr) &&
+          semSubjectClassArr.length > 0
+        ) {
+          semTableHtml =
+            `<div class="overflow-x-auto"><table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white">
+          <thead class='bg-purple-700 text-white'>
+            <tr><th class="px-4 py-2">SEM</th><th class="px-4 py-2">SUBJECT</th><th class="px-4 py-2">CLASS</th></tr>
+          </thead>
+          <tbody>` +
+            semSubjectClassArr
+              .map(
+                (row, idx) =>
+                  `<tr class="${
+                    idx % 2 === 0 ? "bg-gray-50" : "bg-white"
+                  }"><td class="px-2 py-2">${
+                    row.sem || ""
+                  }</td><td class="px-2 py-2">${
+                    row.subject || ""
+                  }</td><td class="px-2 py-2">${row.class || ""}</td></tr>`
+              )
+              .join("") +
+            `</tbody></table></div>`;
+        } else {
+          semTableHtml = '<div class="text-gray-400">No data</div>';
+        }
+        document.getElementById("facultySemSubjectClassTable").innerHTML =
+          semTableHtml;
+        // Details Table
+        let detailsTableArr = [];
+        try {
+          detailsTableArr = data["DETAILS_TABLE"]
+            ? JSON.parse(data["DETAILS_TABLE"])
+            : [];
+        } catch (e) {}
+        // --- Begin: Compliance per SCOPE from ap/asp/prof_compliance table ---
+        async function getCoreComplianceDetails() {
+          let designation = (document.getElementById('facultyDesignation').textContent || "").toString().trim().toUpperCase();
+          let department = document.getElementById('facultyDepartment').textContent || "";
+          let email = document.getElementById('facultyEmail').textContent || "";
+          let name = document.getElementById('facultyName').textContent || "";
+          let table = null;
+          if (designation === "AP") table = "ap_compliance";
+          else if (designation === "ASP") table = "asp_compliance";
+          else if (designation === "PROF" || designation === "PROFESSOR") table = "prof_compliance";
+          if (!table) return [null, 'No compliance table for designation'];
+          const { data: complianceRows, error } = await supabaseClient
+            .from(table)
+            .select('*')
+            .eq('department', department)
+            .eq('faculty_email', email)
+            .eq('faculty_name', name)
+            .order('created_at', { ascending: false });
+          if (error || !complianceRows || complianceRows.length === 0) {
+            return [null, 'No compliance data'];
+          }
+          let row = complianceRows[0];
+          return [row, null];
+        }
+
+        (async function renderDetailsTableWithCompliance() {
+          let [coreCompliance, complianceError] = await getCoreComplianceDetails();
+          let detailsTableHtml = "";
+          if (Array.isArray(detailsTableArr) && detailsTableArr.length > 0) {
+            detailsTableHtml =
+              `<div class="overflow-x-auto"><table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white">
+            <thead class='bg-purple-700 text-white'>
+              <tr><th class="px-4 py-2">S. NO</th><th class="px-4 py-2">PARTICULAR</th><th class="px-4 py-2">TARGET</th><th class="px-4 py-2">TAT</th><th class="px-4 py-2">Compliance</th></tr>
+            </thead>
+            <tbody>` +
+                detailsTableArr
+                  .map(
+                    (row, idx) =>
+                      `<tr class="${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}"><td class="px-2 py-2">${idx + 1}</td><td class="px-2 py-2">${row.particular || ""}</td><td class="px-2 py-2">${row.target || ""}</td><td class="px-2 py-2">${row.tat || ""}</td><td class="px-2 py-2">${coreCompliance ? (coreCompliance[`compliance_${idx+1}`] || '<span class="text-gray-400">-</span>') : (complianceError ? `<span class='text-gray-400'>${complianceError}</span>` : '<span class="text-gray-400">-</span>')}</td></tr>`
+                  )
+                  .join("") +
+                `</tbody></table></div>`;
+          } else {
+            detailsTableHtml = '<div class="text-gray-400">No data</div>';
+          }
+          document.getElementById("facultyDetailsTable").innerHTML =
+            detailsTableHtml;
+        })();
+        // --- End: Compliance per SCOPE from ap/asp/prof_compliance table ---
+        // Forms assigned: show only 'yes' as table rows with real names and links
+        const formNames = [
+          "Students Performance in Training & Placement Member",
+          "Class Advisor",
+          "Faculty Information & Contribution Member",
+          "Course Outcome & Program Outcome Member (Exam Cell)",
+          "Continuous Improvement Member (Program Member)",
+          "Teaching & Learning Process Member (IQAC)",
+          "Student Support System Member (Discipline & Extra Curricular)",
+          "Facilities & Technical Support Member (Lab Member)",
+        ];
+        const formLinks = [
+          "faculty-form1.html",
+          "faculty-form2.html",
+          "faculty-form3.html",
+          "faculty-form4.html",
+          "faculty-form5.html",
+          "faculty-form6.html",
+          "faculty-form7.html",
+          "faculty-form8.html",
+        ];
+        let formsHtmlDept = "";
+        let formsHtmlCore = "";
+        let countDept = 1;
+        let countCore = 1;
+        for (let i = 1; i <= 8; i++) {
+          if (data[`form${i}`] && data[`form${i}`].toLowerCase() === "yes") {
+            formsHtmlDept += `<tr><td class="p-4 align-top">${countDept}</td><td class="p-4 align-top">${
+              formNames[i - 1]
+            }</td></tr>`;
+            countDept++;
+          }
+        }
+        // Add the 9th form based on Designation
+        let designation = (data["Designation"] || "")
+          .toString()
+          .trim()
+          .toUpperCase();
+        let ninthFormName = "";
+        let ninthFormLink = "";
+        if (designation === "AP") {
+          ninthFormName = "AP Core Scope Form";
+          ninthFormLink = "form-ap.html";
+        } else if (designation === "ASP") {
+          ninthFormName = "ASP Core Scope Form";
+          ninthFormLink = "form-asp.html";
+        } else if (designation === "PROF" || designation === "PROFESSOR") {
+          ninthFormName = "Professor Core Scope Form";
+          ninthFormLink = "form-prof.html";
+        }
+        if (ninthFormName && ninthFormLink) {
+          formsHtmlCore += `<tr><td class="px-4 py-2">1</td><td class="px-4 py-2">${ninthFormName}</td></tr>`;
+        }
+        document.getElementById("facultyFormsDept").innerHTML =
+          formsHtmlDept ||
+          '<tr><td colspan="3" class="text-gray-400 text-center p-4">No roles assigned.</td></tr>';
+        document.getElementById("facultyFormsCore").innerHTML =
+          formsHtmlCore ||
+          '<tr><td colspan="3" class="text-gray-400 text-center p-4">No core scope form assigned.</td></tr>';
+        // Load Workdone Section using centralized JS
+        const workdoneTable = new WorkdoneTable(supabaseClient);
+        
+        // Override the viewRowDetails function to show complete data
+        window.viewRowDetails = async function(idx) {
+          const row = window._workdoneRows && window._workdoneRows[idx];
+          if (!row) return;
+          
+          // Form table mappings
+          const formTables = [
+            {table: 'form1-once in a year', portfolio: 'Students Performance in Training & Placement Member (Yearly)'},
+            {table: 'form1-Weekly', portfolio: 'Students Performance in Training & Placement Member (Weekly)'},
+            {table: 'form1-once in 15 days', portfolio: 'Students Performance in Training & Placement Member (Bi-weekly)'},
+            {table: 'form1-once in a semester', portfolio: 'Students Performance in Training & Placement Member (Semester)'},
+            {table: 'form2-daily', portfolio: 'Class Advisor (Daily)'},
+            {table: 'form2-weekly', portfolio: 'Class Advisor (Weekly)'},
+            {table: 'form2-once in a month', portfolio: 'Class Advisor (Monthly)'},
+            {table: 'form2-once in a semester', portfolio: 'Class Advisor (Semester)'},
+            {table: 'form3-Weekly', portfolio: 'Faculty Information & Contribution Member (Weekly)'},
+            {table: 'form3- once in 15 days', portfolio: 'Faculty Information & Contribution Member (Bi-weekly)'},
+            {table: 'form3-once in a semester', portfolio: 'Faculty Information & Contribution Member (Semester)'},
+            {table: 'form4-Weekly', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell) (Weekly)'},
+            {table: 'form4-once in a month', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell) (Monthly)'},
+            {table: 'form4-once in a semester', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell) (Semester)'},
+            {table: 'form5-weekly', portfolio: 'Continuous Improvement Member (Program Member) (Weekly)'},
+            {table: 'form5-Once in a 3 Months', portfolio: 'Continuous Improvement Member (Program Member) (Quarterly)'},
+            {table: 'form5-once in a semester', portfolio: 'Continuous Improvement Member (Program Member) (Semester)'},
+            {table: 'form6-once in a semester', portfolio: 'Teaching & Learning Process Member (IQAC) (Semester)'},
+            {table: 'form7-Once in a Semester', portfolio: 'Student Support System Member (Discipline & Extra Curricular) (Semester)'},
+            {table: 'form7-Once in 2 Months', portfolio: 'Student Support System Member (Discipline & Extra Curricular) (Bi-monthly)'},
+            {table: 'form7-Weekly', portfolio: 'Student Support System Member (Discipline & Extra Curricular) (Weekly)'},
+            {table: 'form8-weekly', portfolio: 'Facilities & Technical Support Member (Lab Member) (Weekly)'},
+            {table: 'form8-once in 3 Months', portfolio: 'Facilities & Technical Support Member (Lab Member) (Quarterly)'},
+            {table: 'form8-Once in Semester', portfolio: 'Facilities & Technical Support Member (Lab Member) (Semester)'},
+            {table: 'ASP', portfolio: 'ASP Core Scope Form'},
+            {table: 'AP', portfolio: 'AP Core Scope Form'},
+            {table: 'Prof', portfolio: 'Professor Core Scope Form'}
+          ];
+          
+          let matchTable = null;
+          let matchPortfolio = (row.portfolio || '').toLowerCase();
+          let portfolioLabel = row.portfolio || '';
+          
+          // Find matching table
+          for (const ft of formTables) {
+            if ((ft.portfolio || '').toLowerCase() === matchPortfolio) {
+              matchTable = ft.table;
+              portfolioLabel = ft.portfolio;
+              break;
+            }
+          }
+          
+          // If no exact match, try partial match
+          if (!matchTable) {
+            for (const ft of formTables) {
+              if (matchPortfolio.includes((ft.portfolio || '').toLowerCase().split('(')[0].trim())) {
+                matchTable = ft.table;
+                portfolioLabel = ft.portfolio;
+                break;
+              }
+            }
+          }
+          
+          if (matchTable) {
+            try {
+              const { data: origRows, error } = await supabaseClient
+                .from(matchTable)
+                .select('*')
+                .eq('Department', row.department)
+                .eq('Portfolio Member Name', row.member)
+                .order('created_at', { ascending: false });
+                
+              if (error) {
+                console.error('Error fetching original data:', error);
+                showFacultyViewModal(createFallbackHtml(row));
+                return;
+              }
+              
+              let orig = origRows && origRows.length > 0 ? origRows[0] : row;
+              const modalContext = {
+                portfolio: portfolioLabel,
+                table: matchTable,
+                department: row.department,
+                member: row.member
+              };
+              
+              let html = getFormModalContent(modalContext, orig);
+              showFacultyViewModal(html);
+            } catch (err) {
+              console.error('Exception fetching original data:', err);
+              showFacultyViewModal(createFallbackHtml(row));
+            }
+          } else {
+            // Fallback: show available data
+            showFacultyViewModal(createFallbackHtml(row));
+          }
+        };
+        
+        // Helper function to create fallback HTML
+        function createFallbackHtml(row) {
+          let html = '<table class="min-w-full text-left">';
+          for (const [key, value] of Object.entries(row)) {
+            let cellContent = '';
+            if (typeof value === 'string' && value.startsWith('http')) {
+              cellContent = `<a href='${value}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow' style='text-decoration:none;'>View File</a>`;
+            } else if (value === '' || value === null || value === undefined) {
+              cellContent = "<span class='text-gray-400'>-</span>";
+            } else {
+              cellContent = value;
+            }
+            html += `<tr><th class="pr-4 py-2 text-gray-700 font-semibold align-top">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</th><td class="py-2">${cellContent}</td></tr>`;
+          }
+          html += '</table>';
+          return html;
+        }
+        
+        // Custom modal show function
+        function showFacultyViewModal(html) {
+          const modal = document.getElementById('viewModal');
+          const modalContent = document.getElementById('viewModalContent');
+          if (modal && modalContent) {
+            modalContent.innerHTML = html;
+            modal.classList.remove('hidden');
+          }
+        }
+        
+        // Modal close function
+        window.closeViewModal = function() {
+          const modal = document.getElementById('viewModal');
+          if (modal) {
+            modal.classList.add('hidden');
+            const modalContent = document.getElementById('viewModalContent');
+            if (modalContent) modalContent.innerHTML = '';
+          }
+        };
+        
+        workdoneTable.initWorkdoneSection(data["Name"], data["Designation"]);
+      }
+
+      loadFacultyProfile();
+    </script>
+
+    <!-- View Modal for Workdone Details -->
+    <div id="viewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+        <button onclick="closeViewModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <div id="viewModalContent"></div>
+      </div>
+    </div>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> © All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>.<br/>Developed by <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>
+    </p>
+  </footer>
+
+  </body>
+</html>
+      

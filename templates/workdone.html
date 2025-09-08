@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workdone Overview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script src="../static/javascript/form-modal-mapper.js"></script>
+  <script src="../static/javascript/workdone-table.js"></script>
+</head>
+<body class="bg-pmcBg min-h-screen">
+  <header class="bg-purple-700  text-white shadow-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+      <a href="hod.html" class="flex items-center">
+        <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 mr-4 rounded shadow" />
+      </a>
+      <h1 class="text-2xl font-bold">Workdone Overview</h1>
+      <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+        </svg>
+      </button>
+    </div>
+  </header>
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <label class="font-semibold text-black">Department:</label>
+        <span id="deptDisplay" class="ml-2"></span>
+      </div>
+      <div class="flex flex-col md:flex-row gap-2 md:gap-4 items-center">
+        <input id="workdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-purple-700" placeholder="Search by Portfolio or Member" />
+        <button onclick="exportWorkdoneToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export table to Excel">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+          Export to Excel
+        </button>
+      </div>
+    </div>
+
+    <!-- Error and Loading Messages -->
+    <div id="errorBox" class="hidden mb-4 p-3 rounded bg-red-100 text-red-700 font-semibold"></div>
+    <div id="loadingBox" class="mb-4 p-3 rounded bg-blue-100 text-blue-800 font-semibold" style="display: none;">Loading data, please wait...</div>
+
+    <!-- Main Workdone Table -->
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white shadow-lg text-sm border border-gray-300">
+        <thead class="bg-gradient-to-r from-purple-700 to-purple-500 text-white">
+          <tr>
+            <th class="p-3 border-b border-gray-300">Department</th>
+            <th class="p-3 border-b border-gray-300">Portfolio Name</th>
+            <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
+            <th class="p-3 border-b border-gray-300">Status</th>
+            <th class="p-3 border-b border-gray-300">Verify</th>
+            <th class="p-3 border-b border-gray-300">View</th>
+          </tr>
+        </thead>
+        <tbody id="workdoneTable" class="divide-y divide-gray-200"></tbody>
+      </table>
+      <div class="flex justify-center items-center mt-4" id="workdonePagination"></div>
+    </div>
+
+    <!-- Verified Workdone Section -->
+    <div class="mt-10">
+      <h2 class="text-lg font-bold mb-2 text-purple-700">Verified Workdone</h2>
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
+        <input id="verifiedWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-green-700" placeholder="Search by Portfolio or Member" oninput="filterVerifiedWorkdoneTable()" />
+        <button onclick="exportTableToExcel('verifiedWorkdoneTable', 'Verified_Workdone')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+          Export to Excel
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white shadow-lg text-sm border border-gray-300">
+          <thead class="bg-gradient-to-r from-green-700 to-green-500 text-white">
+            <tr>
+              <th class="p-3 border-b border-gray-300">Department</th>
+              <th class="p-3 border-b border-gray-300">Portfolio Name</th>
+              <th class="p-3 border-b border-gray-300">Member Name</th>
+              <th class="p-3 border-b border-gray-300">Status</th>
+              <th class="p-3 border-b border-gray-300">Verified By</th>
+              <th class="p-3 border-b border-gray-300">Verified At</th>
+              <th class="p-3 border-b border-gray-300">View</th>
+            </tr>
+          </thead>
+          <tbody id="verifiedWorkdoneTable" class="divide-y divide-gray-200"></tbody>
+        </table>
+        <div class="flex justify-center items-center mt-4" id="verifiedWorkdonePagination"></div>
+      </div>
+    </div>
+
+    <!-- Modal for viewing row details -->
+    <div id="viewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-4xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+        <button onclick="closeViewModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <h3 class="text-xl font-bold mb-4 text-purple-700">Workdone Details</h3>
+        <div id="viewModalContent" class="overflow-y-auto max-h-[70vh] text-sm"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    // Export to Excel for any table by id
+    function exportTableToExcel(tbodyId, filenamePrefix) {
+      const tbody = document.getElementById(tbodyId);
+      if (!tbody) return;
+      const table = tbody.closest('table');
+      const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => row.style.display !== 'none');
+      if (rows.length === 0) {
+        alert('No data to export!');
+        return;
+      }
+      // Get headers, but skip Verify and View columns (last 2 columns)
+      let headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
+      if (headers.length > 2) {
+        headers = headers.slice(0, -2); // Remove last 2 columns (Verify/View)
+      }
+      const data = [headers];
+      rows.forEach(row => {
+        // Only take the first N-2 cells (ignore Verify/View buttons)
+        const tds = Array.from(row.querySelectorAll('td'));
+        let cells = tds.slice(0, tds.length - 2).map(td => td.innerText.trim());
+        data.push(cells);
+      });
+      // Create worksheet and workbook
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
+      XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+    }
+
+    // Generic table filter function for search bars
+    function filterTable(tbodyId, searchInputId) {
+      const search = document.getElementById(searchInputId).value.toLowerCase();
+      const rows = Array.from(document.getElementById(tbodyId).querySelectorAll('tr'));
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(search) ? '' : 'none';
+      });
+    }
+
+    // Modal close function
+    function closeViewModal() {
+      const modal = document.getElementById('viewModal');
+      const modalContent = document.getElementById('viewModalContent');
+      
+      if (modal) modal.classList.add('hidden');
+      if (modalContent) modalContent.innerHTML = '';
+    }
+
+    // Supabase client
+    const supabaseClient = window.supabase.createClient(
+      "https://cbhodgwaazmjszkujrti.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+
+    // Get department from localStorage (HOD) or query param
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+
+    let role = getQueryParam('role') || localStorage.getItem('role') || '';
+    let department = getQueryParam('department');
+    if (department) {
+      localStorage.setItem('department', department);
+    } else {
+      department = localStorage.getItem('department') || '';
+    }
+
+    document.getElementById('deptDisplay').textContent = department || '(None)';
+
+    // Initialize WorkdoneTable with supabase client
+    const workdoneTable = new WorkdoneTable(supabaseClient);
+
+    // Load workdone data for the department using new WorkdoneTable
+    async function loadWorkdone() {
+      try {
+        const rows = await workdoneTable.initHodWorkdoneSection(department);
+        console.log(`Loaded ${rows.length} workdone records for department: ${department}`);
+        
+        // Store all rows globally for pagination and filtering
+        window._allWorkdoneRows = rows;
+        window._filteredWorkdoneRows = rows;
+        window._workingWorkdoneRows = rows;
+        window._workdoneRows = rows;
+        
+        // Render with pagination
+        renderHodWorkdoneTableWithPagination(1);
+      } catch (error) {
+        console.error('Error loading workdone:', error);
+      }
+    }
+
+    // Enhanced filter function that works with pagination
+    function filterWorkdoneTable() {
+      const search = document.getElementById('workdoneSearch').value.toLowerCase();
+      
+      if (!window._allWorkdoneRows) return;
+      
+      if (search.trim() === '') {
+        // Show all rows if no search term
+        window._filteredWorkdoneRows = window._allWorkdoneRows;
+      } else {
+        // Filter rows based on search term
+        window._filteredWorkdoneRows = window._allWorkdoneRows.filter(row => {
+          const department = (row.department || '').toLowerCase();
+          const portfolio = (row.portfolio || '').toLowerCase();
+          const member = (row.member || '').toLowerCase();
+          
+          return department.includes(search) || portfolio.includes(search) || member.includes(search);
+        });
+      }
+      
+      // Update the working set for pagination
+      window._workingWorkdoneRows = window._filteredWorkdoneRows || window._allWorkdoneRows;
+      
+      // Reset to first page and re-render
+      renderFilteredWorkdoneTable(1);
+    }
+
+    // Render filtered workdone table with pagination
+    function renderFilteredWorkdoneTable(page = 1) {
+      const workingRows = window._workingWorkdoneRows || window._allWorkdoneRows || [];
+      
+      if (workingRows.length === 0) {
+        const tbody = document.getElementById("workdoneTable");
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan='6' class='text-center text-gray-400 p-4'>No records found matching your search.</td></tr>`;
+        }
+        const container = document.getElementById('workdonePagination');
+        if (container) container.innerHTML = '';
+        return;
+      }
+
+      workdoneCurrentPage = page;
+      const startIdx = (page - 1) * workdoneRowsPerPage;
+      const endIdx = startIdx + workdoneRowsPerPage;
+      const pageRows = workingRows.slice(startIdx, endIdx);
+
+      const tbody = document.getElementById("workdoneTable");
+      if (!tbody) return;
+
+      let html = "";
+      pageRows.forEach((row, idx) => {
+        // Find the global index in the original array for the view/verify functions
+        const globalIdx = window._allWorkdoneRows.findIndex(r => 
+          r.department === row.department && 
+          r.portfolio === row.portfolio && 
+          r.member === row.member
+        );
+        
+        const statusText = (row.status || '').toString().toUpperCase();
+        let statusClass = '';
+        if (statusText === 'COMPLETED') {
+          statusClass = 'text-green-600 font-bold uppercase';
+        } else if (statusText === 'PENDING') {
+          statusClass = 'text-red-600 font-bold uppercase';
+        } else {
+          statusClass = 'font-bold uppercase';
+        }
+
+        const verifyButtonHtml = `<button class="bg-green-500 hover:bg-green-700 text-white px-3 py-1 rounded text-sm" onclick="verifyRow(this, ${globalIdx})">Verify</button>`;
+        
+        html += `<tr class="hover:bg-purple-50 transition border-b border-gray-200" data-row-idx="${globalIdx}">
+          <td class='p-3 border-r border-gray-200'>${row.department}</td>
+          <td class='p-3 border-r border-gray-200'>${row.portfolio}</td>
+          <td class='p-3 border-r border-gray-200'>${row.member}</td>
+          <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
+          <td class='p-3 text-center'>${verifyButtonHtml}</td>
+          <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewRowDetails(${globalIdx})">View</button></td>
+        </tr>`;
+      });
+
+      tbody.innerHTML = html;
+      renderFilteredWorkdonePagination();
+    }
+
+    // Render pagination for filtered results
+    function renderFilteredWorkdonePagination() {
+      const container = document.getElementById('workdonePagination');
+      if (!container) return;
+
+      const workingRows = window._workingWorkdoneRows || window._allWorkdoneRows || [];
+      const totalRows = workingRows.length;
+      const totalPages = Math.ceil(totalRows / workdoneRowsPerPage);
+
+      if (totalPages <= 1) {
+        container.innerHTML = totalRows > 0 ? `<div class="text-sm text-gray-700">Showing all ${totalRows} entries</div>` : '';
+        return;
+      }
+
+      let html = `
+        <div class="flex items-center space-x-1">
+          <button 
+            onclick="renderFilteredWorkdoneTable(${workdoneCurrentPage - 1})" 
+            ${workdoneCurrentPage === 1 ? 'disabled' : ''} 
+            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 ${workdoneCurrentPage === 1 ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
+            Previous
+          </button>
+      `;
+
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, workdoneCurrentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        const isActive = i === workdoneCurrentPage;
+        html += `
+          <button 
+            onclick="renderFilteredWorkdoneTable(${i})" 
+            class="px-3 py-2 text-sm font-medium ${isActive ? 'text-purple-600 bg-purple-50 border-purple-300' : 'text-gray-500 bg-white border-gray-300 hover:bg-gray-50 hover:text-gray-700'} border">
+            ${i}
+          </button>
+        `;
+      }
+
+      html += `
+          <button 
+            onclick="renderFilteredWorkdoneTable(${workdoneCurrentPage + 1})" 
+            ${workdoneCurrentPage === totalPages ? 'disabled' : ''} 
+            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 ${workdoneCurrentPage === totalPages ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
+            Next
+          </button>
+        </div>
+        <div class="text-sm text-gray-700 ml-4">
+          Showing ${Math.min((workdoneCurrentPage - 1) * workdoneRowsPerPage + 1, totalRows)} to ${Math.min(workdoneCurrentPage * workdoneRowsPerPage, totalRows)} of ${totalRows} entries
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Export function for workdone table
+    function exportWorkdoneToExcel() {
+      exportTableToExcel('workdoneTable', 'Workdone_Overview');
+    }
+
+    // Render verified workdone table (keeping existing functionality)
+    function renderVerifiedWorkdoneTable(rows) {
+      // Store all rows for pagination and filtering
+      window._allVerifiedRows = rows;
+      window._filteredVerifiedRows = rows;
+      window._workingVerifiedRows = rows;
+      window._verifiedRows = rows;
+      
+      // Initialize pagination
+      renderVerifiedWorkdoneTableWithPagination(1);
+    }
+
+    // Pagination variables for main workdone table
+    let workdoneCurrentPage = 1;
+    let workdoneRowsPerPage = 10;
+
+    // Pagination variables for verified workdone table  
+    let verifiedCurrentPage = 1;
+    let verifiedRowsPerPage = 10;
+
+    // Enhanced renderHodWorkdoneTable with pagination (override the one in workdone-table.js for this page)
+    function renderHodWorkdoneTableWithPagination(page = 1) {
+      if (!window._allWorkdoneRows || window._allWorkdoneRows.length === 0) {
+        const tbody = document.getElementById("workdoneTable");
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan='6' class='text-center text-gray-400 p-4'>No workdone records found for this department.</td></tr>`;
+        }
+        return;
+      }
+
+      workdoneCurrentPage = page;
+      const startIdx = (page - 1) * workdoneRowsPerPage;
+      const endIdx = startIdx + workdoneRowsPerPage;
+      const pageRows = window._allWorkdoneRows.slice(startIdx, endIdx);
+
+      const tbody = document.getElementById("workdoneTable");
+      if (!tbody) return;
+
+      let html = "";
+      pageRows.forEach((row, idx) => {
+        const globalIdx = startIdx + idx;
+        const statusText = (row.status || '').toString().toUpperCase();
+        let statusClass = '';
+        if (statusText === 'COMPLETED') {
+          statusClass = 'text-green-600 font-bold uppercase';
+        } else if (statusText === 'PENDING') {
+          statusClass = 'text-red-600 font-bold uppercase';
+        } else {
+          statusClass = 'font-bold uppercase';
+        }
+
+        const verifyButtonHtml = `<button class="bg-green-500 hover:bg-green-700 text-white px-3 py-1 rounded text-sm" onclick="verifyRow(this, ${globalIdx})">Verify</button>`;
+        
+        html += `<tr class="hover:bg-purple-50 transition border-b border-gray-200" data-row-idx="${globalIdx}">
+          <td class='p-3 border-r border-gray-200'>${row.department}</td>
+          <td class='p-3 border-r border-gray-200'>${row.portfolio}</td>
+          <td class='p-3 border-r border-gray-200'>${row.member}</td>
+          <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
+          <td class='p-3 text-center'>${verifyButtonHtml}</td>
+          <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewRowDetails(${globalIdx})">View</button></td>
+        </tr>`;
+      });
+
+      tbody.innerHTML = html;
+      renderWorkdonePagination();
+    }
+
+    // Render workdone pagination
+    function renderWorkdonePagination() {
+      const container = document.getElementById('workdonePagination');
+      if (!container || !window._allWorkdoneRows) return;
+
+      const totalRows = window._allWorkdoneRows.length;
+      const totalPages = Math.ceil(totalRows / workdoneRowsPerPage);
+
+      if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+
+      let html = `
+        <div class="flex items-center space-x-1">
+          <button 
+            onclick="changeWorkdonePage(${workdoneCurrentPage - 1})" 
+            ${workdoneCurrentPage === 1 ? 'disabled' : ''} 
+            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 ${workdoneCurrentPage === 1 ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
+            Previous
+          </button>
+      `;
+
+      // Page numbers
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, workdoneCurrentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        const isActive = i === workdoneCurrentPage;
+        html += `
+          <button 
+            onclick="changeWorkdonePage(${i})" 
+            class="px-3 py-2 text-sm font-medium ${isActive ? 'text-purple-600 bg-purple-50 border-purple-300' : 'text-gray-500 bg-white border-gray-300 hover:bg-gray-50 hover:text-gray-700'} border">
+            ${i}
+          </button>
+        `;
+      }
+
+      html += `
+          <button 
+            onclick="changeWorkdonePage(${workdoneCurrentPage + 1})" 
+            ${workdoneCurrentPage === totalPages ? 'disabled' : ''} 
+            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 ${workdoneCurrentPage === totalPages ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
+            Next
+          </button>
+        </div>
+        <div class="text-sm text-gray-700 ml-4">
+          Showing ${Math.min((workdoneCurrentPage - 1) * workdoneRowsPerPage + 1, totalRows)} to ${Math.min(workdoneCurrentPage * workdoneRowsPerPage, totalRows)} of ${totalRows} entries
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Change workdone page
+    function changeWorkdonePage(page) {
+      if (!window._allWorkdoneRows) return;
+      
+      const totalPages = Math.ceil(window._allWorkdoneRows.length / workdoneRowsPerPage);
+      if (page < 1 || page > totalPages) return;
+      
+      renderHodWorkdoneTableWithPagination(page);
+    }
+
+    // Render verified workdone table with pagination
+    function renderVerifiedWorkdoneTableWithPagination(page = 1) {
+      if (!window._allVerifiedRows || window._allVerifiedRows.length === 0) {
+        const tbody = document.getElementById('verifiedWorkdoneTable');
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan='7' class='text-center text-gray-400 p-4'>No verified records found.</td></tr>`;
+        }
+        return;
+      }
+
+      verifiedCurrentPage = page;
+      const startIdx = (page - 1) * verifiedRowsPerPage;
+      const endIdx = startIdx + verifiedRowsPerPage;
+      const pageRows = window._allVerifiedRows.slice(startIdx, endIdx);
+
+      const tbody = document.getElementById('verifiedWorkdoneTable');
+      if (!tbody) return;
+
+      let html = "";
+      pageRows.forEach((r, idx) => {
+        const globalIdx = startIdx + idx;
+        let statusText = (r.status || '').toUpperCase();
+        let statusClass = '';
+        if (statusText === 'PENDING') {
+          statusClass = 'text-red-600 font-bold';
+        } else if (statusText === 'COMPLETED') {
+          statusClass = 'text-green-600 font-bold';
+        } else {
+          statusClass = 'font-bold';
+        }
+        
+        const verifiedAt = new Date(r.verified_at || r.created_at).toLocaleDateString();
+        
+        html += `
+        <tr class="hover:bg-green-50 transition border-b border-gray-200" data-verified-idx="${globalIdx}">
+          <td class='p-3 border-r border-gray-200'>${r.department}</td>
+          <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
+          <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
+          <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
+          <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
+          <td class='p-3 border-r border-gray-200'>${verifiedAt}</td>
+          <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewVerifiedRowDetails(${globalIdx})">View</button></td>
+        </tr>`;
+      });
+
+      tbody.innerHTML = html;
+      renderVerifiedWorkdonePagination();
+    }
+
+    // Enhanced filter function for verified workdone that works with pagination
+    function filterVerifiedWorkdoneTable() {
+      const search = document.getElementById('verifiedWorkdoneSearch').value.toLowerCase();
+      
+      if (!window._allVerifiedRows) return;
+      
+      if (search.trim() === '') {
+        // Show all rows if no search term
+        window._filteredVerifiedRows = window._allVerifiedRows;
+      } else {
+        // Filter rows based on search term
+        window._filteredVerifiedRows = window._allVerifiedRows.filter(row => {
+          const department = (row.department || '').toLowerCase();
+          const portfolio = (row.portfolio_name || '').toLowerCase();
+          const member = (row.portfolio_member_name || '').toLowerCase();
+          const status = (row.status || '').toLowerCase();
+          const verifiedBy = (row.verified_by || '').toLowerCase();
+          
+          return department.includes(search) || portfolio.includes(search) || member.includes(search) || 
+                 status.includes(search) || verifiedBy.includes(search);
+        });
+      }
+      
+      // Update the working set for pagination
+      window._workingVerifiedRows = window._filteredVerifiedRows || window._allVerifiedRows;
+      
+      // Reset to first page and re-render
+      renderFilteredVerifiedTable(1);
+    }
+
+    // Render filtered verified table with pagination
+    function renderFilteredVerifiedTable(page = 1) {
+      const workingRows = window._workingVerifiedRows || window._allVerifiedRows || [];
+      
+      if (workingRows.length === 0) {
+        const tbody = document.getElementById("verifiedWorkdoneTable");
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan='7' class='text-center text-gray-400 p-4'>No verified records found matching your search.</td></tr>`;
+        }
+        const container = document.getElementById('verifiedWorkdonePagination');
+        if (container) container.innerHTML = '';
+        return;
+      }
+
+      verifiedCurrentPage = page;
+      const startIdx = (page - 1) * verifiedRowsPerPage;
+      const endIdx = startIdx + verifiedRowsPerPage;
+      const pageRows = workingRows.slice(startIdx, endIdx);
+
+      const tbody = document.getElementById("verifiedWorkdoneTable");
+      if (!tbody) return;
+
+      let html = "";
+      pageRows.forEach((r, idx) => {
+        // Find the global index in the original array for the view function
+        const globalIdx = window._allVerifiedRows.findIndex(row => 
+          row.department === r.department && 
+          row.portfolio_name === r.portfolio_name && 
+          row.portfolio_member_name === r.portfolio_member_name && 
+          row.verified_at === r.verified_at
+        );
+
+        let statusText = (r.status || '').toUpperCase();
+        let statusClass = '';
+        if (statusText === 'PENDING') {
+          statusClass = 'text-red-600 font-bold';
+        } else if (statusText === 'COMPLETED') {
+          statusClass = 'text-green-600 font-bold';
+        } else {
+          statusClass = 'font-bold';
+        }
+        
+        const verifiedAt = new Date(r.verified_at || r.created_at).toLocaleDateString();
+        
+        html += `<tr class="hover:bg-green-50 transition border-b border-gray-200" data-verified-idx="${globalIdx}">
+          <td class='p-3 border-r border-gray-200'>${r.department}</td>
+          <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
+          <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
+          <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
+          <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
+          <td class='p-3 border-r border-gray-200'>${verifiedAt}</td>
+          <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewVerifiedRowDetails(${globalIdx})">View</button></td>
+        </tr>`;
+      });
+
+      tbody.innerHTML = html;
+      renderFilteredVerifiedPagination();
+    }
+
+    // Render pagination for filtered verified results
+    function renderFilteredVerifiedPagination() {
+      const container = document.getElementById('verifiedWorkdonePagination');
+      if (!container) return;
+
+      const workingRows = window._workingVerifiedRows || window._allVerifiedRows || [];
+      const totalRows = workingRows.length;
+      const totalPages = Math.ceil(totalRows / verifiedRowsPerPage);
+
+      if (totalPages <= 1) {
+        container.innerHTML = totalRows > 0 ? `<div class="text-sm text-gray-700">Showing all ${totalRows} entries</div>` : '';
+        return;
+      }
+
+      let html = `
+        <div class="flex items-center space-x-1">
+          <button 
+            onclick="renderFilteredVerifiedTable(${verifiedCurrentPage - 1})" 
+            ${verifiedCurrentPage === 1 ? 'disabled' : ''} 
+            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 ${verifiedCurrentPage === 1 ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
+            Previous
+          </button>
+      `;
+
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, verifiedCurrentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        const isActive = i === verifiedCurrentPage;
+        html += `
+          <button 
+            onclick="renderFilteredVerifiedTable(${i})" 
+            class="px-3 py-2 text-sm font-medium ${isActive ? 'text-green-600 bg-green-50 border-green-300' : 'text-gray-500 bg-white border-gray-300 hover:bg-gray-50 hover:text-gray-700'} border">
+            ${i}
+          </button>
+        `;
+      }
+
+      html += `
+          <button 
+            onclick="renderFilteredVerifiedTable(${verifiedCurrentPage + 1})" 
+            ${verifiedCurrentPage === totalPages ? 'disabled' : ''} 
+            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 ${verifiedCurrentPage === totalPages ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
+            Next
+          </button>
+        </div>
+        <div class="text-sm text-gray-700 ml-4">
+          Showing ${Math.min((verifiedCurrentPage - 1) * verifiedRowsPerPage + 1, totalRows)} to ${Math.min(verifiedCurrentPage * verifiedRowsPerPage, totalRows)} of ${totalRows} entries
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Render verified workdone pagination
+    function renderVerifiedWorkdonePagination() {
+      const container = document.getElementById('verifiedWorkdonePagination');
+      if (!container || !window._allVerifiedRows) return;
+
+      const totalRows = window._allVerifiedRows.length;
+      const totalPages = Math.ceil(totalRows / verifiedRowsPerPage);
+
+      if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+
+      let html = `
+        <div class="flex items-center space-x-1">
+          <button 
+            onclick="changeVerifiedPage(${verifiedCurrentPage - 1})" 
+            ${verifiedCurrentPage === 1 ? 'disabled' : ''} 
+            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 ${verifiedCurrentPage === 1 ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
+            Previous
+          </button>
+      `;
+
+      // Page numbers
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, verifiedCurrentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        const isActive = i === verifiedCurrentPage;
+        html += `
+          <button 
+            onclick="changeVerifiedPage(${i})" 
+            class="px-3 py-2 text-sm font-medium ${isActive ? 'text-green-600 bg-green-50 border-green-300' : 'text-gray-500 bg-white border-gray-300 hover:bg-gray-50 hover:text-gray-700'} border">
+            ${i}
+          </button>
+        `;
+      }
+
+      html += `
+          <button 
+            onclick="changeVerifiedPage(${verifiedCurrentPage + 1})" 
+            ${verifiedCurrentPage === totalPages ? 'disabled' : ''} 
+            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 ${verifiedCurrentPage === totalPages ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
+            Next
+          </button>
+        </div>
+        <div class="text-sm text-gray-700 ml-4">
+          Showing ${Math.min((verifiedCurrentPage - 1) * verifiedRowsPerPage + 1, totalRows)} to ${Math.min(verifiedCurrentPage * verifiedRowsPerPage, totalRows)} of ${totalRows} entries
+        </div>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    // Change verified workdone page
+    function changeVerifiedPage(page) {
+      if (!window._allVerifiedRows) return;
+      
+      const totalPages = Math.ceil(window._allVerifiedRows.length / verifiedRowsPerPage);
+      if (page < 1 || page > totalPages) return;
+      
+      renderVerifiedWorkdoneTableWithPagination(page);
+    }
+
+    // Fetch verified workdone from hod-workdone table
+    async function loadVerifiedWorkdone() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('hod-workdone')
+          .select('*')
+          .eq('department', department)
+          .order('verified_at', { ascending: false });
+
+        if (error) {
+          console.error('Error loading verified workdone:', error);
+          document.getElementById('verifiedWorkdoneTable').innerHTML = `<tr><td colspan='7' class='text-center text-red-500 p-4'>Failed to load verified workdone: ${error.message}</td></tr>`;
+          return;
+        }
+
+        renderVerifiedWorkdoneTable(data || []);
+      } catch (err) {
+        console.error('Exception loading verified workdone:', err);
+        document.getElementById('verifiedWorkdoneTable').innerHTML = `<tr><td colspan='7' class='text-center text-red-500 p-4'>Error loading verified workdone: ${err.message}</td></tr>`;
+      }
+    }
+
+    // Modal logic for viewing verified row details
+    async function viewVerifiedRowDetails(idx) {
+      console.log('viewVerifiedRowDetails called with index:', idx);
+      
+      // Get verified row data
+      if (!window._verifiedRows || !window._verifiedRows[idx]) {
+        console.error('Verified row not found for index:', idx);
+        alert('Error: Verified record not found');
+        return;
+      }
+      
+      const verifiedRow = window._verifiedRows[idx];
+      console.log('Verified row:', verifiedRow);
+      
+      try {
+        // Show loading in modal
+        const modal = document.getElementById('viewModal');
+        const modalContent = document.getElementById('viewModalContent');
+        
+        if (modalContent && modal) {
+          modalContent.innerHTML = '<div class="p-4 text-center">Loading original data...</div>';
+          modal.classList.remove('hidden');
+        }
+        
+        // Determine which table to fetch from based on portfolio name
+        const portfolioName = verifiedRow.portfolio_name;
+        const memberName = verifiedRow.portfolio_member_name;
+        const department = verifiedRow.department;
+        
+        console.log('Searching for:', { portfolioName, memberName, department });
+        
+        // Get the form table mapping from workdoneTable instance
+        const formTables = workdoneTable.formTables;
+        let originalData = null;
+        let matchedTable = null;
+        let matchedPortfolio = null;
+        
+        // Search through all form tables to find the original data
+        for (const entry of formTables) {
+          // Check if portfolio names match (with or without frequency)
+          const basePortfolio = entry.portfolio;
+          const portfolioWithFreq = portfolioName;
+          
+          if (portfolioWithFreq.includes(basePortfolio) || basePortfolio.includes(portfolioWithFreq.split('(')[0].trim())) {
+            console.log('Checking table:', entry.table, 'for portfolio:', basePortfolio);
+            
+            try {
+              const { data, error } = await supabaseClient
+                .from(entry.table)
+                .select('*');
+              
+              if (error) {
+                console.warn(`Error fetching from ${entry.table}:`, error);
+                continue;
+              }
+              
+              if (data && data.length > 0) {
+                // Filter by department and member name
+                const filtered = data.filter(row => {
+                  const rowDept = row['Department'] || row['Department:'] || row['department'] || row['department:'] || '';
+                  const rowMember = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+                  
+                  return workdoneTable.eq(rowDept, department) && workdoneTable.eq(rowMember, memberName);
+                });
+                
+                if (filtered.length > 0) {
+                  originalData = filtered[0]; // Take the first match
+                  matchedTable = entry.table;
+                  matchedPortfolio = entry.portfolio;
+                  console.log('Found original data in table:', matchedTable);
+                  break;
+                }
+              }
+            } catch (err) {
+              console.warn(`Exception fetching from ${entry.table}:`, err);
+              continue;
+            }
+          }
+        }
+        
+        if (originalData && matchedTable) {
+          // Create row context for modal display
+          const rowContext = {
+            portfolio: portfolioName,
+            table: matchedTable,
+            department: department,
+            member: memberName,
+            status: verifiedRow.status,
+            _original: originalData
+          };
+          
+          console.log('Generating modal content with context:', rowContext);
+          
+          // Use form-modal-mapper.js function to generate content
+          if (typeof getFormModalContent === 'function') {
+            const html = getFormModalContent(rowContext, originalData);
+            
+            if (modalContent && modal) {
+              modalContent.innerHTML = `
+                <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded">
+                  <h4 class="font-bold text-green-800">✅ Verified Record</h4>
+                  <p class="text-sm text-green-600">Verified by: ${verifiedRow.verified_by} on ${new Date(verifiedRow.verified_at).toLocaleString()}</p>
+                </div>
+                ${html}
+              `;
+              modal.classList.remove('hidden');
+            }
+          } else {
+            throw new Error('getFormModalContent function not available');
+          }
+        } else {
+          // Original data not found
+          if (modalContent) {
+            modalContent.innerHTML = `
+              <div class="p-4 text-center text-red-600">
+                <h4 class="font-bold mb-2">Original Data Not Found</h4>
+                <p>Could not find the original form data for this verified record.</p>
+                <div class="mt-4 text-sm text-gray-600">
+                  <p><strong>Portfolio:</strong> ${portfolioName}</p>
+                  <p><strong>Member:</strong> ${memberName}</p>
+                  <p><strong>Department:</strong> ${department}</p>
+                  <p><strong>Status:</strong> ${verifiedRow.status}</p>
+                  <p><strong>Verified By:</strong> ${verifiedRow.verified_by}</p>
+                  <p><strong>Verified At:</strong> ${new Date(verifiedRow.verified_at).toLocaleString()}</p>
+                </div>
+              </div>
+            `;
+          }
+        }
+        
+      } catch (error) {
+        console.error('Error loading verified row details:', error);
+        const modalContent = document.getElementById('viewModalContent');
+        if (modalContent) {
+          modalContent.innerHTML = `
+            <div class="p-4 text-center text-red-600">
+              <h4 class="font-bold mb-2">Error Loading Data</h4>
+              <p>${error.message}</p>
+            </div>
+          `;
+        }
+      }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded, checking functions...');
+      console.log('getFormModalContent available:', typeof getFormModalContent);
+      console.log('WorkdoneTable available:', typeof WorkdoneTable);
+      console.log('supabaseClient available:', typeof supabaseClient);
+      
+      loadWorkdone();
+      loadVerifiedWorkdone();
+    });
+  </script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> © All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>.<br/>Developed by <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>
+    </p>
+  </footer>
+
+</body>
+</html>

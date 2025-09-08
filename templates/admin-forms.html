@@ -1,0 +1,493 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Control - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .form-card {
+            transition: all 0.3s ease;
+        }
+        .form-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <img src="../static/img/pmc.jpg" alt="PMC Tech" class="h-10 w-auto rounded-lg">
+                    <div class="ml-4">
+                        <h1 class="text-xl font-bold text-gray-900">Form Control Panel</h1>
+                        <p class="text-sm text-gray-600">Enable/Disable form submissions</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="admin-dashboard.html" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Control Panel -->
+        <div class="bg-white p-6 rounded-lg shadow border mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-semibold text-gray-900">Quick Actions</h2>
+                <div class="text-sm text-gray-600" id="lastUpdated"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onclick="toggleAllForms(true)" class="bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 transition-colors">
+                    <i class="fas fa-toggle-on mr-2"></i>Open All Forms
+                </button>
+                <button onclick="toggleAllForms(false)" class="bg-red-600 text-white py-3 px-4 rounded-md hover:bg-red-700 transition-colors">
+                    <i class="fas fa-toggle-off mr-2"></i>Close All Forms
+                </button>
+                <button onclick="refreshFormStatus()" class="bg-gray-600 text-white py-3 px-4 rounded-md hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-sync-alt mr-2"></i>Refresh Status
+                </button>
+            </div>
+        </div>
+
+        <!-- Faculty Forms -->
+        <div class="mb-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Faculty Forms</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="facultyFormsGrid">
+                <!-- Faculty forms will be populated here -->
+            </div>
+        </div>
+
+        <!-- Institution Forms -->
+        <div class="mb-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Institution Forms</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="institutionFormsGrid">
+                <!-- Institution forms will be populated here -->
+            </div>
+        </div>
+
+        <!-- Form Status Log -->
+        <div class="bg-white rounded-lg shadow border">
+            <div class="p-6 border-b">
+                <h3 class="text-lg font-semibold text-gray-900">Recent Form Status Changes</h3>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4" id="formStatusLog">
+                    <div class="text-center text-gray-500 py-8">
+                        <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+                        <p>Loading form status log...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase configuration
+        const supabaseClient = window.supabase.createClient(
+            "https://cbhodgwaazmjszkujrti.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+        );
+
+        // Form configuration based on your actual template files
+        const FORMS_CONFIG = [
+            // Faculty Forms (actual files in your templates)
+            { id: 'faculty-form1', name: 'Faculty Form 1', type: 'faculty', description: 'Basic Faculty Information', file: 'faculty-form1.html' },
+            { id: 'faculty-form2', name: 'Faculty Form 2', type: 'faculty', description: 'Academic Qualifications', file: 'faculty-form2.html' },
+            { id: 'faculty-form3', name: 'Faculty Form 3', type: 'faculty', description: 'Professional Experience', file: 'faculty-form3.html' },
+            { id: 'faculty-form4', name: 'Faculty Form 4', type: 'faculty', description: 'Research & Publications', file: 'faculty-form4.html' },
+            { id: 'faculty-form5', name: 'Faculty Form 5', type: 'faculty', description: 'Achievements & Awards', file: 'faculty-form5.html' },
+            { id: 'faculty-form6', name: 'Faculty Form 6', type: 'faculty', description: 'Professional Development', file: 'faculty-form6.html' },
+            { id: 'faculty-form7', name: 'Faculty Form 7', type: 'faculty', description: 'Service & Leadership', file: 'faculty-form7.html' },
+            { id: 'faculty-form8', name: 'Faculty Form 8', type: 'faculty', description: 'Additional Information', file: 'faculty-form8.html' },
+            
+            // Special Faculty Forms (role-based)
+            { id: 'form-ap', name: 'Assistant Professor Form', type: 'faculty', description: 'Assistant Professor Application', file: 'form-ap.html' },
+            { id: 'form-asp', name: 'Associate Professor Form', type: 'faculty', description: 'Associate Professor Application', file: 'form-asp.html' },
+            { id: 'form-prof', name: 'Professor Form', type: 'faculty', description: 'Professor Application', file: 'form-prof.html' },
+            
+            // Institution Forms (actual files in your templates)
+            { id: 'institution-form1', name: 'Institution Form 1', type: 'institution', description: 'Institution Overview', file: 'institution-form1.html' },
+            { id: 'institution-form2', name: 'Institution Form 2', type: 'institution', description: 'Infrastructure Details', file: 'institution-form2.html' },
+            { id: 'institution-form3', name: 'Institution Form 3', type: 'institution', description: 'Academic Programs', file: 'institution-form3.html' },
+            { id: 'institution-form4', name: 'Institution Form 4', type: 'institution', description: 'Faculty Details', file: 'institution-form4.html' },
+            { id: 'institution-form5', name: 'Institution Form 5', type: 'institution', description: 'Student Information', file: 'institution-form5.html' },
+            { id: 'institution-form6', name: 'Institution Form 6', type: 'institution', description: 'Research Activities', file: 'institution-form6.html' },
+            { id: 'institution-form7', name: 'Institution Form 7', type: 'institution', description: 'Industry Collaboration', file: 'institution-form7.html' },
+            { id: 'institution-form8', name: 'Institution Form 8', type: 'institution', description: 'Quality Assurance', file: 'institution-form8.html' },
+            { id: 'institution-form9', name: 'Institution Form 9', type: 'institution', description: 'Financial Information', file: 'institution-form9.html' },
+            { id: 'institution-form10', name: 'Institution Form 10', type: 'institution', description: 'Governance Structure', file: 'institution-form10.html' },
+            { id: 'institution-form11', name: 'Institution Form 11', type: 'institution', description: 'Alumni Network', file: 'institution-form11.html' },
+            { id: 'institution-form12', name: 'Institution Form 12', type: 'institution', description: 'Community Outreach', file: 'institution-form12.html' },
+            { id: 'institution-form13', name: 'Institution Form 13', type: 'institution', description: 'Technology Integration', file: 'institution-form13.html' },
+            { id: 'institution-form14', name: 'Institution Form 14', type: 'institution', description: 'Environmental Initiatives', file: 'institution-form14.html' },
+            { id: 'institution-form15', name: 'Institution Form 15', type: 'institution', description: 'International Relations', file: 'institution-form15.html' },
+            { id: 'institution-form16', name: 'Institution Form 16', type: 'institution', description: 'Innovation Programs', file: 'institution-form16.html' },
+            { id: 'institution-form17', name: 'Institution Form 17', type: 'institution', description: 'Future Planning', file: 'institution-form17.html' }
+        ];
+
+        let formStatusData = new Map();
+
+        // Load form status from database (adapted for your table structure)
+        async function loadFormStatus() {
+            try {
+                let formStatus;
+                let error;
+                
+                // Try to load FormStatus data, adapt to your actual column structure
+                try {
+                    const result = await supabaseClient
+                        .from('FormStatus')
+                        .select('*');
+                    
+                    formStatus = result.data;
+                    error = result.error;
+                } catch (dbError) {
+                    console.log('FormStatus table structure different:', dbError);
+                    error = dbError;
+                }
+
+                if (error || !formStatus) {
+                    console.log('Using default form status due to:', error?.message || 'No data');
+                    // Initialize with default status if table doesn't exist or has different structure
+                    initializeDefaultStatus();
+                    return;
+                }
+
+                // Update form status map (adapt to your actual column names)
+                formStatusData.clear();
+                if (formStatus && formStatus.length > 0) {
+                    formStatus.forEach(status => {
+                        // Try different possible column name variations
+                        const formName = status.form_name || status.table_name || status.name || status.form_id;
+                        const isOpen = status.is_open !== undefined ? status.is_open : 
+                                     status.status === 'open' || status.active === true || 
+                                     status.enabled === true || true; // Default to true if no clear status
+                        
+                        if (formName) {
+                            formStatusData.set(formName, isOpen);
+                        }
+                    });
+                }
+
+                // Ensure all forms have a status
+                FORMS_CONFIG.forEach(form => {
+                    if (!formStatusData.has(form.id)) {
+                        formStatusData.set(form.id, true); // Default to open
+                    }
+                });
+
+                displayForms();
+                loadFormStatusLog();
+                updateLastUpdated();
+
+            } catch (error) {
+                console.error('Error loading form status:', error);
+                initializeDefaultStatus();
+            }
+        }
+
+        // Initialize default status
+        function initializeDefaultStatus() {
+            FORMS_CONFIG.forEach(form => {
+                formStatusData.set(form.id, true); // Default to open
+            });
+            displayForms();
+        }
+
+        // Display forms
+        function displayForms() {
+            const facultyGrid = document.getElementById('facultyFormsGrid');
+            const institutionGrid = document.getElementById('institutionFormsGrid');
+
+            const facultyForms = FORMS_CONFIG.filter(form => form.type === 'faculty');
+            const institutionForms = FORMS_CONFIG.filter(form => form.type === 'institution');
+
+            facultyGrid.innerHTML = facultyForms.map(form => createFormCard(form)).join('');
+            institutionGrid.innerHTML = institutionForms.map(form => createFormCard(form)).join('');
+        }
+
+        // Create form card HTML (enhanced with form file link)
+        function createFormCard(form) {
+            const isOpen = formStatusData.get(form.id) || false;
+            const statusClass = isOpen ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+            const iconClass = isOpen ? 'fas fa-toggle-on text-green-600' : 'fas fa-toggle-off text-red-600';
+            const buttonClass = isOpen ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700';
+            const buttonText = isOpen ? 'Close Form' : 'Open Form';
+
+            return `
+                <div class="form-card bg-white p-4 rounded-lg shadow border">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-medium text-gray-900">${form.name}</h3>
+                        <i class="${iconClass} text-xl"></i>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-3">${form.description}</p>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">
+                            ${isOpen ? 'Open' : 'Closed'}
+                        </span>
+                        ${form.file ? `<a href="${form.file}" target="_blank" class="text-blue-600 hover:text-blue-800 text-xs">
+                            <i class="fas fa-external-link-alt mr-1"></i>View
+                        </a>` : ''}
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="toggleForm('${form.id}')" 
+                                class="w-full ${buttonClass} text-white py-2 px-4 rounded-md transition-colors">
+                            <i class="fas fa-${isOpen ? 'lock' : 'unlock'} mr-2"></i>${buttonText}
+                        </button>
+                        ${form.file ? `<a href="${form.file}" target="_blank" 
+                                class="block w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors text-center text-sm">
+                            <i class="fas fa-eye mr-2"></i>Open Form
+                        </a>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Toggle individual form (adapted for your table structure)
+        async function toggleForm(formId) {
+            const currentStatus = formStatusData.get(formId) || false;
+            const newStatus = !currentStatus;
+
+            try {
+                // Try to update in database (adapt to your actual column structure)
+                let updateSuccessful = false;
+                
+                try {
+                    // First, try the expected structure
+                    const { error } = await supabaseClient
+                        .from('FormStatus')
+                        .upsert({
+                            form_name: formId,
+                            is_open: newStatus,
+                            last_updated: new Date().toISOString()
+                        }, { onConflict: 'form_name' });
+
+                    if (!error) {
+                        updateSuccessful = true;
+                    }
+                } catch (dbError) {
+                    console.log('First upsert attempt failed:', dbError);
+                    
+                    // Try alternative column structure
+                    try {
+                        const { error: altError } = await supabaseClient
+                            .from('FormStatus')
+                            .upsert({
+                                table_name: formId,
+                                status: newStatus ? 'open' : 'closed',
+                                updated_at: new Date().toISOString()
+                            }, { onConflict: 'table_name' });
+                            
+                        if (!altError) {
+                            updateSuccessful = true;
+                        }
+                    } catch (altDbError) {
+                        console.log('Alternative upsert failed:', altDbError);
+                    }
+                }
+
+                if (!updateSuccessful) {
+                    console.log('Database update failed, proceeding with local state only');
+                }
+
+                // Try to log the change (optional if table doesn't exist)
+                try {
+                    await logFormStatusChange(formId, newStatus);
+                } catch (logError) {
+                    console.log('Logging failed (table may not exist):', logError);
+                }
+
+                // Update local data
+                formStatusData.set(formId, newStatus);
+                
+                // Refresh display
+                displayForms();
+                loadFormStatusLog();
+                updateLastUpdated();
+
+                // Show success message
+                showNotification(`${formId} has been ${newStatus ? 'opened' : 'closed'}`);
+
+            } catch (error) {
+                console.error('Error toggling form:', error);
+                alert('Error updating form status: ' + error.message);
+            }
+        }
+
+        // Toggle all forms
+        async function toggleAllForms(status) {
+            if (!confirm(`Are you sure you want to ${status ? 'open' : 'close'} all forms?`)) {
+                return;
+            }
+
+            try {
+                const updates = FORMS_CONFIG.map(form => ({
+                    form_name: form.id,
+                    is_open: status,
+                    last_updated: new Date().toISOString()
+                }));
+
+                const { error } = await supabaseClient
+                    .from('FormStatus')
+                    .upsert(updates, { onConflict: 'form_name' });
+
+                if (error) {
+                    console.error('Error updating all forms:', error);
+                    alert('Error updating form status: ' + error.message);
+                    return;
+                }
+
+                // Log changes for all forms
+                for (const form of FORMS_CONFIG) {
+                    await logFormStatusChange(form.id, status);
+                    formStatusData.set(form.id, status);
+                }
+
+                // Refresh display
+                displayForms();
+                loadFormStatusLog();
+                updateLastUpdated();
+
+                showNotification(`All forms have been ${status ? 'opened' : 'closed'}`);
+
+            } catch (error) {
+                console.error('Error toggling all forms:', error);
+                alert('Error updating form status');
+            }
+        }
+
+        // Log form status change (adapted for your table structure)
+        async function logFormStatusChange(formName, newStatus) {
+            try {
+                // Try to log the change (handle if table doesn't exist or has different structure)
+                const logData = {
+                    form_name: formName,
+                    new_status: newStatus,
+                    changed_by: 'Admin',
+                    changed_at: new Date().toISOString()
+                };
+
+                const { error } = await supabaseClient
+                    .from('FormStatusLog')
+                    .insert(logData);
+
+                if (error) {
+                    console.log('Logging not available (table may not exist):', error);
+                    // Don't throw error - logging is optional
+                }
+            } catch (error) {
+                console.log('Form status logging not available:', error);
+                // Don't throw error - logging is optional
+            }
+        }
+
+        // Load form status log (adapted for your table structure)
+        async function loadFormStatusLog() {
+            try {
+                let logs = null;
+                
+                // Try to load FormStatusLog data
+                try {
+                    const { data: logData, error } = await supabaseClient
+                        .from('FormStatusLog')
+                        .select('*')
+                        .order('changed_at', { ascending: false })
+                        .limit(10);
+
+                    if (!error && logData) {
+                        logs = logData;
+                    }
+                } catch (dbError) {
+                    console.log('FormStatusLog table not available:', dbError);
+                }
+
+                const logContainer = document.getElementById('formStatusLog');
+
+                if (!logs || logs.length === 0) {
+                    logContainer.innerHTML = `
+                        <div class="text-center text-gray-500 py-8">
+                            <i class="fas fa-history text-4xl mb-4"></i>
+                            <p>No form status changes recorded</p>
+                            <p class="text-sm mt-2">Changes will appear here when forms are toggled</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const logsHtml = logs.map(log => `
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                        <i class="fas fa-${log.new_status ? 'toggle-on text-green-600' : 'toggle-off text-red-600'} mr-3 text-lg"></i>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-900">
+                                ${log.form_name} was ${log.new_status ? 'opened' : 'closed'}
+                            </p>
+                            <p class="text-xs text-gray-500">
+                                by ${log.changed_by || 'Admin'} • ${new Date(log.changed_at).toLocaleString()}
+                            </p>
+                        </div>
+                    </div>
+                `).join('');
+
+                logContainer.innerHTML = logsHtml;
+
+            } catch (error) {
+                console.error('Error loading form status log:', error);
+                document.getElementById('formStatusLog').innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+                        <p>Unable to load status history</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Refresh form status
+        function refreshFormStatus() {
+            loadFormStatus();
+            showNotification('Form status refreshed');
+        }
+
+        // Update last updated time
+        function updateLastUpdated() {
+            document.getElementById('lastUpdated').textContent = 
+                'Last updated: ' + new Date().toLocaleString();
+        }
+
+        // Show notification
+        function showNotification(message) {
+            // Simple alert for now - could be enhanced with a toast notification
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFormStatus();
+        });
+    </script>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-8">
+        <p class="text-gray-400 text-sm">
+            ©&copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>.<br>
+            Developed by <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>
+        </p>
+    </footer>
+</body>
+</html>
+ 

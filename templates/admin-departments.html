@@ -1,0 +1,533 @@
+﻿<!DOC    <title>Departments - Admin Dashboard (v2.0)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Cache busting -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0"> html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Department Management - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <img src="../static/img/pmc.jpg" alt="PMC Tech" class="h-10 w-auto rounded-lg">
+                    <div class="ml-4">
+                        <h1 class="text-xl font-bold text-gray-900">Department Management</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="admin-dashboard.html" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Department Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-100 rounded-lg">
+                        <i class="fas fa-building text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Departments</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalDepartments">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-100 rounded-lg">
+                        <i class="fas fa-users text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Faculty</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalFaculty">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-yellow-100 rounded-lg">
+                        <i class="fas fa-user-tie text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">HODs</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalHods">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-purple-100 rounded-lg">
+                        <i class="fas fa-chart-bar text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Avg Faculty/Dept</p>
+                        <p class="text-2xl font-bold text-gray-900" id="avgFaculty">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Department Overview Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="departmentsGrid">
+            <div class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-4xl text-gray-400 mb-4"></i>
+                <p class="text-gray-500">Loading departments...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase configuration
+        const supabaseClient = window.supabase.createClient(
+            "https://cbhodgwaazmjszkujrti.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+        );
+
+        let departmentData = [];
+
+        // Department image mapping
+        const deptImages = {
+            'CSE': '../static/img/CSE.PNG',
+            'ECE': '../static/img/ECE.PNG',
+            'EEE': '../static/img/EEE.PNG',
+            'MECH': '../static/img/MECH.PNG',
+            'CIVIL': '../static/img/CIVIL.PNG',
+            'IT': '../static/img/IT.PNG',
+            'AERO': '../static/img/AERO.PNG',
+            'CHEM': '../static/img/CHEM.PNG',
+            'AIDS': '../static/img/AIDS.PNG',
+            'AIML': '../static/img/AIML.PNG',
+            'CSBS': '../static/img/CSBS.PNG',
+            'MBA': '../static/img/MBA.PNG',
+            'MCA': '../static/img/MCA.PNG',
+            'MCO': '../static/img/MCO.PNG',
+            'S&H': '../static/img/S&H.PNG'
+        };
+
+        // Load department data (fixed for your exact database structure)
+        async function loadDepartments() {
+            try {
+                console.log('=== DEPARTMENT LOADING DEBUG ===');
+                console.log('Loading departments...');
+                console.log('Current timestamp:', new Date().toISOString());
+                
+                // First, try Flask API endpoint
+                console.log('Testing Flask API endpoint...');
+                try {
+                    const flaskResponse = await fetch('/api/test-departments');
+                    const flaskData = await flaskResponse.json();
+                    console.log('Flask API response:', flaskData);
+                    
+                    if (flaskData.success && Object.keys(flaskData.departments).length > 0) {
+                        console.log('Using Flask API data');
+                        displayDepartmentData(flaskData.departments);
+                        return;
+                    }
+                } catch (flaskError) {
+                    console.log('Flask API failed:', flaskError);
+                }
+                
+                // Fallback to direct Supabase connection
+                console.log('Falling back to direct Supabase connection...');
+                console.log('Supabase URL:', 'https://pdaoeuflyflbzgaqdclr.supabase.co');
+                
+                // Test basic connection first
+                console.log('Testing basic Supabase connection...');
+                const { data: testConnection, error: connectionError } = await supabaseClient
+                    .from('Faculty')
+                    .select('count', { count: 'exact', head: true });
+                
+                console.log('Connection test result:', { count: testConnection, error: connectionError });
+                
+                // Load faculty data using your exact table structure
+                console.log('Querying Faculty table with specific columns...');
+                const { data: faculty, error: facultyError } = await supabaseClient
+                    .from('Faculty') // Your table name with quotes
+                    .select('department, "Name", email, "Designation", "EmployeeID"'); // Select only needed columns
+
+                console.log('=== FACULTY QUERY RESULTS ===');
+                console.log('Faculty data:', faculty);
+                console.log('Faculty data type:', typeof faculty);
+                console.log('Faculty data length:', faculty ? faculty.length : 'null/undefined');
+                console.log('Faculty error:', facultyError);
+                
+                if (faculty && faculty.length > 0) {
+                    console.log('Sample faculty records:');
+                    faculty.slice(0, 3).forEach((f, i) => {
+                        console.log(`Faculty ${i}:`, {
+                            department: f.department,
+                            Name: f["Name"],
+                            email: f.email,
+                            raw: f
+                        });
+                    });
+                }
+
+                // Load HOD data using your exact table structure
+                const { data: hods, error: hodError } = await supabaseClient
+                    .from('HOD') // Your HOD table
+                    .select('department, "Name", email, "Designation"'); // Select only needed columns
+
+                console.log('HOD data:', hods);
+                console.log('HOD error:', hodError);
+
+                if (facultyError) {
+                    console.error('Faculty Error:', facultyError);
+                    showError('Failed to load faculty data: ' + facultyError.message);
+                    return;
+                }
+                if (hodError) {
+                    console.error('HOD Error:', hodError);
+                    // HOD error is not critical, continue without HODs
+                }
+
+                // Process department data using 'department' column (lowercase)
+                const deptMap = new Map();
+                
+                // Process faculty using your actual column name 'department' (lowercase)
+                if (faculty && faculty.length > 0) {
+                    console.log('Processing faculty...');
+                    faculty.forEach((f, index) => {
+                        console.log(`Faculty ${index}:`, f);
+                        
+                        // Use the exact column name from your schema: 'department'
+                        const deptName = f.department;
+                        console.log(`Faculty ${index} department:`, deptName);
+                        
+                        if (deptName && deptName.trim() !== '') {
+                            if (!deptMap.has(deptName)) {
+                                deptMap.set(deptName, {
+                                    name: deptName,
+                                    faculty: [],
+                                    hod: null,
+                                    totalFaculty: 0
+                                });
+                            }
+                            deptMap.get(deptName).faculty.push(f);
+                            deptMap.get(deptName).totalFaculty++;
+                        }
+                    });
+                } else {
+                    console.log('No faculty data found');
+                    showError('No faculty records found in the database');
+                    return;
+                }
+
+                // Process HODs using your actual column structure
+                if (hods && hods.length > 0) {
+                    console.log('Processing HODs...');
+                    hods.forEach((h, index) => {
+                        console.log(`HOD ${index}:`, h);
+                        
+                        // Use the exact column name from your schema: 'department'
+                        const deptName = h.department;
+                        console.log(`HOD ${index} department:`, deptName);
+                        
+                        if (deptName && deptMap.has(deptName)) {
+                            deptMap.get(deptName).hod = h;
+                        }
+                    });
+                } else {
+                    console.log('No HOD data found');
+                }
+
+                departmentData = Array.from(deptMap.values());
+                console.log('Final department data:', departmentData);
+                
+                if (departmentData.length === 0) {
+                    showError('No departments found. Make sure faculty records have department values.');
+                    return;
+                }
+                
+                // Update stats
+                updateStats();
+                displayDepartments();
+
+            } catch (error) {
+                console.error('Error loading departments:', error);
+                showError('Failed to load departments: ' + error.message);
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            const totalDepts = departmentData.length;
+            const totalFac = departmentData.reduce((sum, dept) => sum + dept.totalFaculty, 0);
+            const totalHodCount = departmentData.filter(dept => dept.hod).length;
+            const avgFac = totalDepts > 0 ? Math.round(totalFac / totalDepts) : 0;
+
+            document.getElementById('totalDepartments').textContent = totalDepts;
+            document.getElementById('totalFaculty').textContent = totalFac;
+            document.getElementById('totalHods').textContent = totalHodCount;
+            document.getElementById('avgFaculty').textContent = avgFac;
+        }
+
+        // Display departments
+        function displayDepartments() {
+            const grid = document.getElementById('departmentsGrid');
+            
+            if (departmentData.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500">No departments found</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const departmentsHtml = departmentData.map(dept => {
+                const deptImage = deptImages[dept.name] || '../static/img/default-dept.png';
+                // Use the correct column name "Name" (with capital N)
+                const hodName = dept.hod ? dept.hod.Name || dept.hod.name || 'Unknown' : 'Not Assigned';
+                
+                return `
+                    <div class="bg-white rounded-lg shadow border hover:shadow-lg transition-shadow duration-300">
+                        <div class="p-6">
+                            <div class="flex items-center mb-4">
+                                <img src="${deptImage}" alt="${dept.name}" class="h-12 w-12 rounded-lg object-cover" 
+                                     onerror="this.src='../static/img/default-dept.png'">
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-semibold text-gray-900">${dept.name}</h3>
+                                    <p class="text-sm text-gray-600">${getDeptFullName(dept.name)}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">
+                                        <i class="fas fa-users mr-2"></i>Faculty Count
+                                    </span>
+                                    <span class="font-medium text-gray-900">${dept.totalFaculty}</span>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">
+                                        <i class="fas fa-user-tie mr-2"></i>HOD
+                                    </span>
+                                    <span class="font-medium text-gray-900 text-right">
+                                        ${hodName}
+                                    </span>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">
+                                        <i class="fas fa-chart-pie mr-2"></i>Status
+                                    </span>
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full ${dept.hod ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                        ${dept.hod ? 'Active' : 'No HOD'}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 pt-4 border-t border-gray-200">
+                                <button onclick="viewDepartmentDetails('${dept.name}')" 
+                                        class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                                    <i class="fas fa-eye mr-2"></i>View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            grid.innerHTML = departmentsHtml;
+        }
+
+        // Get full department name
+        function getDeptFullName(shortName) {
+            const fullNames = {
+                'CSE': 'Computer Science & Engineering',
+                'ECE': 'Electronics & Communication Engineering',
+                'EEE': 'Electrical & Electronics Engineering',
+                'MECH': 'Mechanical Engineering',
+                'CIVIL': 'Civil Engineering',
+                'IT': 'Information Technology',
+                'AERO': 'Aeronautical Engineering',
+                'CHEM': 'Chemical Engineering',
+                'AIDS': 'Artificial Intelligence & Data Science',
+                'AIML': 'Artificial Intelligence & Machine Learning',
+                'CSBS': 'Computer Science & Business Systems',
+                'MBA': 'Master of Business Administration',
+                'MCA': 'Master of Computer Applications',
+                'MCO': 'M.Com',
+                'S&H': 'Science & Humanities'
+            };
+            return fullNames[shortName] || shortName;
+        }
+
+        // View department details (updated for your table structure)
+        function viewDepartmentDetails(deptName) {
+            const dept = departmentData.find(d => d.name === deptName);
+            if (!dept) return;
+
+            // Create a simple alert with department details using correct column names
+            const hodInfo = dept.hod ? 
+                `HOD: ${dept.hod.Name || 'Unknown'}\nEmail: ${dept.hod.email || 'N/A'}\nDesignation: ${dept.hod.Designation || 'N/A'}` :
+                'HOD: Not Assigned';
+
+            // Use correct column name "Name" for faculty
+            const facultyList = dept.faculty.slice(0, 5).map(f => f.Name || 'Unknown').join(', ');
+            const moreCount = dept.faculty.length > 5 ? `... and ${dept.faculty.length - 5} more` : '';
+
+            alert(`Department: ${dept.name}
+Full Name: ${getDeptFullName(dept.name)}
+Total Faculty: ${dept.totalFaculty}
+
+${hodInfo}
+
+Faculty Members: ${facultyList}${moreCount}
+
+Note: For detailed management, use the User Management section.`);
+        }
+
+        // Function to display department data from either Flask API or Supabase
+        function displayDepartmentData(departmentStats) {
+            console.log('Displaying department data:', departmentStats);
+            
+            const container = document.getElementById('departmentsGrid');
+            const statsContainer = document.querySelector('.grid.grid-cols-1.md\\:grid-cols-3.gap-6.mb-8');
+            
+            if (!departmentStats || Object.keys(departmentStats).length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">No departments found</div>';
+                return;
+            }
+            
+            // Update stats if stats container exists
+            const totalDepts = Object.keys(departmentStats).length;
+            const totalFaculty = Object.values(departmentStats).reduce((sum, count) => sum + count, 0);
+            
+            if (statsContainer) {
+                statsContainer.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow border">
+                        <div class="text-3xl font-bold text-blue-600">${totalDepts}</div>
+                        <div class="text-sm text-gray-600">Total Departments</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow border">
+                        <div class="text-3xl font-bold text-green-600">${totalFaculty}</div>
+                        <div class="text-sm text-gray-600">Total Faculty</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow border">
+                        <div class="text-3xl font-bold text-purple-600">${Math.round(totalFaculty / totalDepts)}</div>
+                        <div class="text-sm text-gray-600">Avg Faculty/Dept</div>
+                    </div>
+                `;
+            }
+            
+            // Display departments
+            let html = '';
+            Object.entries(departmentStats).forEach(([dept, count]) => {
+                const percentage = ((count / totalFaculty) * 100).toFixed(1);
+                html += `
+                    <div class="bg-white p-6 rounded-lg shadow border hover:shadow-lg transition-shadow">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">${dept || 'Unknown Department'}</h3>
+                            <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">${count} Faculty</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Faculty Count</span>
+                                <span class="font-medium">${count}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: ${percentage}%"></div>
+                            </div>
+                            <div class="text-right text-xs text-gray-500">${percentage}% of total</div>
+                        </div>
+                        <button onclick="viewDepartmentDetails('${dept}')" class="mt-4 w-full bg-blue-50 text-blue-600 py-2 px-4 rounded hover:bg-blue-100 transition-colors">
+                            View Details
+                        </button>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Show error message with more details
+        function showError(message) {
+            console.error('Department loading error:', message);
+            document.getElementById('departmentsGrid').innerHTML = `
+                <div class="col-span-full text-center py-8">
+                    <i class="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+                    <p class="text-red-600 mb-2">${message}</p>
+                    <p class="text-gray-500 text-sm">Check the browser console for more details</p>
+                    <button onclick="loadDepartments()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        <i class="fas fa-sync-alt mr-2"></i>Retry Loading
+                    </button>
+                </div>
+            `;
+        }
+
+        // Initialize (with database structure discovery)
+        document.addEventListener('DOMContentLoaded', function() {
+            // First, let's discover what columns your tables actually have
+            discoverTableStructure().then(() => {
+                loadDepartments();
+            });
+        });
+
+        // Discover actual table structure
+        async function discoverTableStructure() {
+            try {
+                console.log('=== DISCOVERING TABLE STRUCTURE ===');
+                
+                // Get a sample Faculty record to see column names
+                const { data: sampleFaculty, error: facultyError } = await supabaseClient
+                    .from('Faculty')
+                    .select('*')
+                    .limit(1);
+
+                if (sampleFaculty && sampleFaculty.length > 0) {
+                    console.log('Sample Faculty record:', sampleFaculty[0]);
+                    console.log('Faculty columns:', Object.keys(sampleFaculty[0]));
+                } else {
+                    console.log('No Faculty records found or error:', facultyError);
+                }
+
+                // Get a sample HOD record to see column names
+                const { data: sampleHOD, error: hodError } = await supabaseClient
+                    .from('HOD')
+                    .select('*')
+                    .limit(1);
+
+                if (sampleHOD && sampleHOD.length > 0) {
+                    console.log('Sample HOD record:', sampleHOD[0]);
+                    console.log('HOD columns:', Object.keys(sampleHOD[0]));
+                } else {
+                    console.log('No HOD records found or error:', hodError);
+                }
+
+                console.log('=== END STRUCTURE DISCOVERY ===');
+            } catch (error) {
+                console.error('Error discovering table structure:', error);
+            }
+        }
+    </script>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-8">
+        <p class="text-gray-400 text-sm">
+            ©&copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>.<br>
+            Developed by <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>
+        </p>
+    </footer>
+</body>
+</html>
