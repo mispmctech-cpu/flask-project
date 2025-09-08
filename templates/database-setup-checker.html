@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Setup Checker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h1 class="text-2xl font-bold mb-6">Database Setup Checker</h1>
+            
+            <div id="status" class="mb-6">
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-4xl mb-4 text-blue-500"></i>
+                    <p>Checking database connection...</p>
+                </div>
+            </div>
+
+            <div id="setupInstructions" class="hidden bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                <h3 class="font-bold text-yellow-800 mb-3">Setup Instructions:</h3>
+                <ol class="list-decimal list-inside space-y-2 text-sm text-yellow-700">
+                    <li>Go to your Supabase Dashboard: <a href="https://supabase.com/dashboard" target="_blank" class="text-blue-600 underline">https://supabase.com/dashboard</a></li>
+                    <li>Select your project</li>
+                    <li>Go to "SQL Editor" in the sidebar</li>
+                    <li>Click "New query"</li>
+                    <li>Copy and paste the SQL below into the editor</li>
+                    <li>Click "Run" to execute the SQL</li>
+                    <li>Refresh this page to verify the setup</li>
+                </ol>
+            </div>
+
+            <div id="sqlCode" class="hidden">
+                <h3 class="font-bold mb-3">Execute this SQL in your Supabase SQL Editor:</h3>
+                <div class="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+                    <pre class="text-sm"><code id="sqlContent">-- Loading SQL content...</code></pre>
+                </div>
+                <button onclick="copySQLToClipboard()" class="mt-3 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    <i class="fas fa-copy mr-2"></i>Copy SQL to Clipboard
+                </button>
+            </div>
+
+            <div class="mt-6">
+                <button onclick="checkDatabase()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                    <i class="fas fa-sync-alt mr-2"></i>Recheck Database
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const supabaseClient = window.supabase.createClient(
+            "https://cbhodgwaazmjszkujrti.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+        );
+
+        const SQL_SETUP = `-- FormStatus table for controlling form availability
+CREATE TABLE IF NOT EXISTS FormStatus (
+    id SERIAL PRIMARY KEY,
+    form_name VARCHAR(100) UNIQUE NOT NULL,
+    form_title VARCHAR(200),
+    is_open BOOLEAN DEFAULT true,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(100) DEFAULT 'Admin'
+);
+
+-- Insert initial form data
+INSERT INTO FormStatus (form_name, form_title, is_open) VALUES
+('faculty-form1', 'Faculty Form 1', true),
+('faculty-form2', 'Faculty Form 2', true),
+('faculty-form3', 'Faculty Form 3', true),
+('institution-form1', 'Institution Form 1', true),
+('institution-form2', 'Institution Form 2', true),
+('institution-form3', 'Institution Form 3', true)
+ON CONFLICT (form_name) DO NOTHING;
+
+-- Grant permissions
+GRANT ALL ON FormStatus TO authenticated;
+GRANT ALL ON FormStatus TO anon;
+GRANT USAGE ON SEQUENCE formstatus_id_seq TO authenticated;
+GRANT USAGE ON SEQUENCE formstatus_id_seq TO anon;
+
+-- Disable RLS for simplicity
+ALTER TABLE FormStatus DISABLE ROW LEVEL SECURITY;
+
+-- Test query
+SELECT 'Setup completed successfully!' as message, COUNT(*) as form_count FROM FormStatus;`;
+
+        async function checkDatabase() {
+            const statusDiv = document.getElementById('status');
+            const setupDiv = document.getElementById('setupInstructions');
+            const sqlDiv = document.getElementById('sqlCode');
+            
+            statusDiv.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-4xl mb-4 text-blue-500"></i>
+                    <p>Checking database connection...</p>
+                </div>
+            `;
+
+            try {
+                // Test basic connection
+                const { data, error } = await supabaseClient
+                    .from('FormStatus')
+                    .select('*')
+                    .limit(1);
+
+                if (error) {
+                    if (error.message.includes('does not exist') || 
+                        error.message.includes('relation') ||
+                        error.message.includes('schema cache')) {
+                        
+                        statusDiv.innerHTML = `
+                            <div class="text-center py-8">
+                                <i class="fas fa-exclamation-triangle text-4xl mb-4 text-yellow-500"></i>
+                                <p class="text-lg font-semibold text-yellow-700">FormStatus table not found</p>
+                                <p class="text-sm text-gray-600">Please execute the SQL setup below</p>
+                            </div>
+                        `;
+                        
+                        setupDiv.classList.remove('hidden');
+                        sqlDiv.classList.remove('hidden');
+                        document.getElementById('sqlContent').textContent = SQL_SETUP;
+                    } else {
+                        statusDiv.innerHTML = `
+                            <div class="text-center py-8">
+                                <i class="fas fa-exclamation-circle text-4xl mb-4 text-red-500"></i>
+                                <p class="text-lg font-semibold text-red-700">Database Error</p>
+                                <p class="text-sm text-red-600">${error.message}</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-check-circle text-4xl mb-4 text-green-500"></i>
+                            <p class="text-lg font-semibold text-green-700">Database Setup Complete!</p>
+                            <p class="text-sm text-gray-600">Found ${data.length} form records</p>
+                            <div class="mt-4">
+                                <a href="admin-forms.html" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                                    Go to Form Control Panel
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    
+                    setupDiv.classList.add('hidden');
+                    sqlDiv.classList.add('hidden');
+                }
+            } catch (err) {
+                statusDiv.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-times-circle text-4xl mb-4 text-red-500"></i>
+                        <p class="text-lg font-semibold text-red-700">Connection Failed</p>
+                        <p class="text-sm text-red-600">${err.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function copySQLToClipboard() {
+            const sqlContent = document.getElementById('sqlContent').textContent;
+            navigator.clipboard.writeText(sqlContent).then(() => {
+                alert('SQL copied to clipboard! Now paste it in your Supabase SQL Editor.');
+            }).catch(() => {
+                alert('Failed to copy. Please manually select and copy the SQL code.');
+            });
+        }
+
+        // Auto-check on page load
+        document.addEventListener('DOMContentLoaded', checkDatabase);
+    </script>
+</body>
+</html>

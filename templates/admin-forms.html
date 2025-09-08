@@ -136,46 +136,44 @@
 
         let formStatusData = new Map();
 
-        // Load form status from database (adapted for your table structure)
+        // Load form status from database
         async function loadFormStatus() {
             try {
-                let formStatus;
-                let error;
+                console.log('Attempting to load FormStatus table...');
                 
-                // Try to load FormStatus data, adapt to your actual column structure
-                try {
-                    const result = await supabaseClient
-                        .from('FormStatus')
-                        .select('*');
+                // First try to check if table exists by attempting to select from it
+                const { data: formStatus, error } = await supabaseClient
+                    .from('FormStatus')
+                    .select('*');
+
+                if (error) {
+                    console.error('FormStatus table error:', error);
                     
-                    formStatus = result.data;
-                    error = result.error;
-                } catch (dbError) {
-                    console.log('FormStatus table structure different:', dbError);
-                    error = dbError;
+                    // Check if it's a table not found error
+                    if (error.message.includes('does not exist') || 
+                        error.message.includes('relation') ||
+                        error.message.includes('schema cache')) {
+                        
+                        // Table doesn't exist, show setup instructions
+                        showDatabaseSetupMessage();
+                        initializeDefaultStatus();
+                        return;
+                    } else {
+                        throw error;
+                    }
                 }
 
-                if (error || !formStatus) {
-                    console.log('Using default form status due to:', error?.message || 'No data');
-                    // Initialize with default status if table doesn't exist or has different structure
-                    initializeDefaultStatus();
-                    return;
-                }
-
-                // Update form status map (adapt to your actual column names)
+                // Update form status map
                 formStatusData.clear();
                 if (formStatus && formStatus.length > 0) {
+                    console.log('Loaded form status from database:', formStatus);
                     formStatus.forEach(status => {
-                        // Try different possible column name variations
-                        const formName = status.form_name || status.table_name || status.name || status.form_id;
-                        const isOpen = status.is_open !== undefined ? status.is_open : 
-                                     status.status === 'open' || status.active === true || 
-                                     status.enabled === true || true; // Default to true if no clear status
-                        
-                        if (formName) {
-                            formStatusData.set(formName, isOpen);
-                        }
+                        formStatusData.set(status.form_name, status.is_open);
                     });
+                } else {
+                    console.warn('No form status records found, initializing defaults...');
+                    // If table exists but is empty, insert default records
+                    await insertDefaultFormStatus();
                 }
 
                 // Ensure all forms have a status
@@ -191,8 +189,113 @@
 
             } catch (error) {
                 console.error('Error loading form status:', error);
+                showNotification('Database error: ' + error.message + '. Please check your database setup.', 'error');
                 initializeDefaultStatus();
             }
+        }
+
+        // Show database setup message
+        function showDatabaseSetupMessage() {
+            const message = `
+                <div class="col-span-full bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                <strong>Database Setup Required:</strong> The FormStatus table doesn't exist yet.
+                                <br>Please execute the SQL schema file: <code>sql/create_form_control_tables.sql</code>
+                                <br>in your Supabase SQL Editor to enable form control functionality.
+                            </p>
+                            <div class="mt-2">
+                                <button onclick="showSetupInstructions()" class="text-yellow-600 underline text-sm">
+                                    Show Setup Instructions
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Insert the message into both form grids
+            const facultyContainer = document.getElementById('facultyFormsGrid');
+            const institutionContainer = document.getElementById('institutionFormsGrid');
+            
+            if (facultyContainer) {
+                facultyContainer.insertAdjacentHTML('afterbegin', message);
+            }
+            if (institutionContainer) {
+                // Only add to institution container if faculty container doesn't exist or is empty
+                if (!facultyContainer || facultyContainer.children.length === 0) {
+                    institutionContainer.insertAdjacentHTML('afterbegin', message);
+                }
+            }
+        }
+
+        // Insert default form status records
+        async function insertDefaultFormStatus() {
+            try {
+                const defaultRecords = FORMS_CONFIG.map(form => ({
+                    form_name: form.id,
+                    form_title: form.name,
+                    is_open: true
+                }));
+
+                const { error } = await supabaseClient
+                    .from('FormStatus')
+                    .insert(defaultRecords);
+
+                if (error) {
+                    console.error('Error inserting default records:', error);
+                } else {
+                    console.log('Default form status records inserted successfully');
+                    // Reload to get the inserted data
+                    loadFormStatus();
+                }
+            } catch (error) {
+                console.error('Failed to insert default records:', error);
+            }
+        }
+
+        // Show detailed setup instructions
+        function showSetupInstructions() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
+            modal.innerHTML = `
+                <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+                    <div class="mt-3 text-center">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Database Setup Instructions</h3>
+                        <div class="text-left space-y-4 text-sm text-gray-700">
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-blue-900 mb-2">🔹 Step 1: Open Supabase Dashboard</h4>
+                                <p>Go to your Supabase project dashboard</p>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-green-900 mb-2">🔹 Step 2: Access SQL Editor</h4>
+                                <p>Navigate to: <strong>SQL Editor</strong> in the left sidebar</p>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-purple-900 mb-2">🔹 Step 3: Execute Schema</h4>
+                                <p>Copy and paste the contents of:</p>
+                                <code class="bg-gray-100 px-2 py-1 rounded text-xs">sql/create_form_control_tables.sql</code>
+                                <p class="mt-2">Then click <strong>"Run"</strong> to execute</p>
+                            </div>
+                            <div class="bg-orange-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-orange-900 mb-2">🔹 Step 4: Refresh This Page</h4>
+                                <p>Once the SQL is executed successfully, refresh this page</p>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <button onclick="this.closest('.fixed').remove()" 
+                                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                                Got it!
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
         }
 
         // Initialize default status
@@ -207,6 +310,12 @@
         function displayForms() {
             const facultyGrid = document.getElementById('facultyFormsGrid');
             const institutionGrid = document.getElementById('institutionFormsGrid');
+
+            // Check if elements exist before trying to use them
+            if (!facultyGrid || !institutionGrid) {
+                console.error('Form grid elements not found. DOM may not be ready.');
+                return;
+            }
 
             const facultyForms = FORMS_CONFIG.filter(form => form.type === 'faculty');
             const institutionForms = FORMS_CONFIG.filter(form => form.type === 'institution');
@@ -252,58 +361,25 @@
             `;
         }
 
-        // Toggle individual form (adapted for your table structure)
+        // Toggle individual form
         async function toggleForm(formId) {
             const currentStatus = formStatusData.get(formId) || false;
             const newStatus = !currentStatus;
 
             try {
-                // Try to update in database (adapt to your actual column structure)
-                let updateSuccessful = false;
-                
-                try {
-                    // First, try the expected structure
-                    const { error } = await supabaseClient
-                        .from('FormStatus')
-                        .upsert({
-                            form_name: formId,
-                            is_open: newStatus,
-                            last_updated: new Date().toISOString()
-                        }, { onConflict: 'form_name' });
+                // Update in database
+                const { error } = await supabaseClient
+                    .from('FormStatus')
+                    .upsert({
+                        form_name: formId,
+                        form_title: FORMS_CONFIG.find(f => f.id === formId)?.name || formId,
+                        is_open: newStatus,
+                        updated_by: 'Admin',
+                        last_updated: new Date().toISOString()
+                    }, { onConflict: 'form_name' });
 
-                    if (!error) {
-                        updateSuccessful = true;
-                    }
-                } catch (dbError) {
-                    console.log('First upsert attempt failed:', dbError);
-                    
-                    // Try alternative column structure
-                    try {
-                        const { error: altError } = await supabaseClient
-                            .from('FormStatus')
-                            .upsert({
-                                table_name: formId,
-                                status: newStatus ? 'open' : 'closed',
-                                updated_at: new Date().toISOString()
-                            }, { onConflict: 'table_name' });
-                            
-                        if (!altError) {
-                            updateSuccessful = true;
-                        }
-                    } catch (altDbError) {
-                        console.log('Alternative upsert failed:', altDbError);
-                    }
-                }
-
-                if (!updateSuccessful) {
-                    console.log('Database update failed, proceeding with local state only');
-                }
-
-                // Try to log the change (optional if table doesn't exist)
-                try {
-                    await logFormStatusChange(formId, newStatus);
-                } catch (logError) {
-                    console.log('Logging failed (table may not exist):', logError);
+                if (error) {
+                    throw error;
                 }
 
                 // Update local data
@@ -315,11 +391,29 @@
                 updateLastUpdated();
 
                 // Show success message
-                showNotification(`${formId} has been ${newStatus ? 'opened' : 'closed'}`);
+                showNotification(`${FORMS_CONFIG.find(f => f.id === formId)?.name || formId} has been ${newStatus ? 'opened' : 'closed'}`);
 
             } catch (error) {
                 console.error('Error toggling form:', error);
                 alert('Error updating form status: ' + error.message);
+            }
+        }
+
+        // Log form status change
+        async function logFormStatusChange(formName, newStatus) {
+            try {
+                await supabaseClient
+                    .from('FormStatusLog')
+                    .insert({
+                        form_name: formName,
+                        previous_status: !newStatus,
+                        new_status: newStatus,
+                        changed_by: 'Admin',
+                        changed_at: new Date().toISOString(),
+                        reason: `Manual toggle by admin`
+                    });
+            } catch (error) {
+                console.error('Failed to log form status change:', error);
             }
         }
 
@@ -463,16 +557,26 @@
         }
 
         // Show notification
-        function showNotification(message) {
-            // Simple alert for now - could be enhanced with a toast notification
+        function showNotification(message, type = 'success') {
+            // Create notification element
             const notification = document.createElement('div');
-            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-            notification.textContent = message;
+            const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
+            notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'check-circle'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
             document.body.appendChild(notification);
 
+            // Remove after 5 seconds (longer for error messages)
+            const timeout = type === 'error' ? 5000 : 3000;
             setTimeout(() => {
-                notification.remove();
-            }, 3000);
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, timeout);
         }
 
         // Initialize
@@ -484,7 +588,7 @@
     <!-- Footer -->
     <footer class="text-center py-4 mt-8">
         <p class="text-gray-400 text-sm">
-            ©&copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>.<br>
+            &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>.<br>
             Developed by <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>
         </p>
     </footer>

@@ -177,9 +177,9 @@ def test_departments():
     from flask import jsonify
     import requests
     
-    # Supabase configuration (same as in your HTML files)
-    supabase_url = "https://pdaoeuflyflbzgaqdclr.supabase.co"
-    supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkYW9ldWZseWZsYnpnYXFkY2xyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY3MzAwNzMsImV4cCI6MjA0MjMwNjA3M30.zr8_eeO0LH-wPxMXY7pJmZ4bk-uRF5aXr-bWfj8_o0s"
+    # Supabase configuration (updated to match HTML forms project)
+    supabase_url = "https://cbhodgwaazmjszkujrti.supabase.co"
+    supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
     
     try:
         # Test Faculty table query

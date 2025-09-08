@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Setup Checker</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .setup-box { background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Form Control System - Database Checker</h1>
+    
+    <div class="setup-box">
+        <h2>📋 Setup Your Supabase Connection</h2>
+        <p>Enter your Supabase credentials to check if the database tables exist:</p>
+        
+        <label for="supabaseUrl">Supabase URL:</label><br>
+        <input type="url" id="supabaseUrl" placeholder="https://your-project.supabase.co" style="width: 100%; padding: 8px; margin: 5px 0 15px 0;">
+        
+        <label for="supabaseKey">Supabase Anon Key:</label><br>
+        <input type="password" id="supabaseKey" placeholder="Your anon key" style="width: 100%; padding: 8px; margin: 5px 0 15px 0;">
+        
+        <button onclick="checkDatabase()">🔍 Check Database</button>
+        <button onclick="clearResults()">🧹 Clear Results</button>
+    </div>
+
+    <div id="results"></div>
+
+    <div class="setup-box">
+        <h2>📚 SQL Schema to Execute</h2>
+        <p>If tables don't exist, copy this SQL and execute it in your Supabase SQL Editor:</p>
+        <details>
+            <summary>Click to show SQL schema</summary>
+            <pre id="sqlSchema">-- Loading SQL schema...</pre>
+        </details>
+    </div>
+
+    <script>
+        let supabaseClient = null;
+
+        async function checkDatabase() {
+            const url = document.getElementById('supabaseUrl').value.trim();
+            const key = document.getElementById('supabaseKey').value.trim();
+            const resultsDiv = document.getElementById('results');
+            
+            if (!url || !key) {
+                resultsDiv.innerHTML = '<div class="status error">❌ Please provide both Supabase URL and Anon Key</div>';
+                return;
+            }
+
+            try {
+                // Initialize Supabase client
+                supabaseClient = supabase.createClient(url, key);
+                resultsDiv.innerHTML = '<div class="status info">🔄 Checking database connection...</div>';
+
+                // Test connection
+                const { data: testData, error: testError } = await supabaseClient
+                    .from('_supabase_version')
+                    .select('*')
+                    .limit(1);
+
+                if (testError && !testError.message.includes('does not exist')) {
+                    throw new Error('Connection failed: ' + testError.message);
+                }
+
+                resultsDiv.innerHTML += '<div class="status success">✅ Database connection successful!</div>';
+
+                // Check FormStatus table
+                await checkTable('FormStatus', [
+                    'form_name', 'form_title', 'is_open', 'last_updated', 'updated_by'
+                ]);
+
+                // Check FormStatusLog table  
+                await checkTable('FormStatusLog', [
+                    'form_name', 'old_status', 'new_status', 'changed_by', 'changed_at'
+                ]);
+
+                // Check if we can insert test data
+                await testFormOperations();
+
+            } catch (error) {
+                resultsDiv.innerHTML += '<div class="status error">❌ Error: ' + error.message + '</div>';
+            }
+        }
+
+        async function checkTable(tableName, expectedColumns) {
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from(tableName)
+                    .select('*')
+                    .limit(1);
+
+                if (error) {
+                    if (error.message.includes('does not exist') || 
+                        error.message.includes('relation') ||
+                        error.message.includes('schema cache')) {
+                        resultsDiv.innerHTML += `<div class="status error">❌ Table "${tableName}" does not exist</div>`;
+                        return false;
+                    } else {
+                        throw error;
+                    }
+                }
+
+                resultsDiv.innerHTML += `<div class="status success">✅ Table "${tableName}" exists</div>`;
+                
+                if (data && data.length > 0) {
+                    const columns = Object.keys(data[0]);
+                    resultsDiv.innerHTML += `<div class="status info">📊 Columns found: ${columns.join(', ')}</div>`;
+                    
+                    const missingColumns = expectedColumns.filter(col => !columns.includes(col));
+                    if (missingColumns.length > 0) {
+                        resultsDiv.innerHTML += `<div class="status warning">⚠️ Missing expected columns: ${missingColumns.join(', ')}</div>`;
+                    }
+                } else {
+                    resultsDiv.innerHTML += `<div class="status info">📊 Table "${tableName}" exists but is empty</div>`;
+                }
+
+                return true;
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="status error">❌ Error checking table "${tableName}": ${error.message}</div>`;
+                return false;
+            }
+        }
+
+        async function testFormOperations() {
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                // Try to upsert a test record
+                const { error: upsertError } = await supabaseClient
+                    .from('FormStatus')
+                    .upsert({
+                        form_name: 'test-form',
+                        form_title: 'Test Form',
+                        is_open: true
+                    }, { onConflict: 'form_name' });
+
+                if (upsertError) {
+                    resultsDiv.innerHTML += `<div class="status error">❌ Cannot perform upsert operations: ${upsertError.message}</div>`;
+                } else {
+                    resultsDiv.innerHTML += '<div class="status success">✅ Form operations test successful</div>';
+                    
+                    // Clean up test record
+                    await supabaseClient
+                        .from('FormStatus')
+                        .delete()
+                        .eq('form_name', 'test-form');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="status error">❌ Form operations test failed: ${error.message}</div>`;
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        // Load SQL schema
+        async function loadSqlSchema() {
+            try {
+                const response = await fetch('/static/sql/create_form_control_tables.sql');
+                if (response.ok) {
+                    const sql = await response.text();
+                    document.getElementById('sqlSchema').textContent = sql;
+                } else {
+                    document.getElementById('sqlSchema').textContent = 'SQL file not found. Please check sql/create_form_control_tables.sql exists.';
+                }
+            } catch (error) {
+                document.getElementById('sqlSchema').textContent = `
+-- Create FormStatus table to control form availability
+CREATE TABLE FormStatus (
+    id SERIAL PRIMARY KEY,
+    form_name VARCHAR(100) UNIQUE NOT NULL,
+    form_title VARCHAR(200) NOT NULL,
+    is_open BOOLEAN DEFAULT true,
+    close_message TEXT DEFAULT 'This form is currently closed for submissions.',
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(100) DEFAULT 'Admin',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create FormStatusLog table to track form status changes
+CREATE TABLE FormStatusLog (
+    id SERIAL PRIMARY KEY,
+    form_name VARCHAR(100) NOT NULL,
+    old_status BOOLEAN,
+    new_status BOOLEAN NOT NULL,
+    changed_by VARCHAR(100) DEFAULT 'Admin',
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reason TEXT
+);
+
+-- Insert initial form status records (add all your forms here)
+INSERT INTO FormStatus (form_name, form_title, is_open) VALUES
+('faculty-form1', 'Faculty Form 1', true),
+('faculty-form2', 'Faculty Form 2', true);
+-- Add more forms as needed...
+`;
+            }
+        }
+
+        // Load SQL on page load
+        document.addEventListener('DOMContentLoaded', loadSqlSchema);
+    </script>
+</body>
+</html>

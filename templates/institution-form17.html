@@ -2,11 +2,13 @@
 <html lang="en">
 <head>
 	<script src="https://unpkg.com/@supabase/supabase-js"></script>
+	<script src="../static/javascript/form-status-controller.js"></script>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>LOGISTICS COORDINATOR: MONTHLY</title>
 	<script src="https://cdn.tailwindcss.com"></script>
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+	<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
 	<style>
 		body, input, select, textarea, button {
 			font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
@@ -128,6 +130,15 @@
 		</div>
 	</div>
 	<script>
+	// Initialize form status checking
+	const supabase = window.supabase.createClient(
+		"https://cbhodgwaazmjszkujrti.supabase.co",
+		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+	);
+	
+	// Initialize form status controller
+	const formStatusController = initializeFormStatusCheck(supabase, 'institution-form17');
+	
 	// File rows for form 17 (from image)
 	const fileRows = [
 		'Transport and Database file',
@@ -158,11 +169,8 @@
 		`;
 		tbody.appendChild(tr);
 	});
-	// Supabase setup
-	const supabase = window.supabase.createClient(
-		"https://cbhodgwaazmjszkujrti.supabase.co",
-		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
-	);
+	
+	// Upload function using the already declared supabase client
 	async function uploadFileToStorage(file, path) {
 		if (!file) return null;
 		const { data, error } = await supabase.storage.from('Institution-files17').upload(path, file, { upsert: true });

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Table Checker</title>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+</head>
+<body>
+    <div style="padding: 20px; font-family: Arial, sans-serif;">
+        <h1>Database Table Checker</h1>
+        <button onclick="checkTables()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Check Tables</button>
+        <div id="results" style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 5px;"></div>
+    </div>
+
+    <script>
+        // Supabase client
+        const supabaseClient = window.supabase.createClient(
+            "https://cbhodgwaazmjszkujrti.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+        );
+
+        async function checkTables() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Checking tables...</p>';
+            
+            try {
+                // Test different possible table names
+                const tableVariants = [
+                    'deleted_faculty',
+                    'Deleted_Faculty',
+                    'DeletedFaculty',
+                    'deleted-faculty'
+                ];
+                
+                let results = '<h3>Table Check Results:</h3>';
+                
+                for (const tableName of tableVariants) {
+                    try {
+                        const { data, error } = await supabaseClient
+                            .from(tableName)
+                            .select('*')
+                            .limit(1);
+                        
+                        if (error) {
+                            results += `<p><strong>${tableName}</strong>: ❌ Error - ${error.message}</p>`;
+                        } else {
+                            results += `<p><strong>${tableName}</strong>: ✅ Found! Has ${data ? data.length : 0} records</p>`;
+                            if (data && data.length > 0) {
+                                results += `<pre style="background: #e9ecef; padding: 10px; border-radius: 3px; margin-left: 20px;">${JSON.stringify(data[0], null, 2)}</pre>`;
+                            }
+                        }
+                    } catch (err) {
+                        results += `<p><strong>${tableName}</strong>: ❌ Exception - ${err.message}</p>`;
+                    }
+                }
+                
+                // Also check existing tables that we know work
+                results += '<h3>Known Tables Check:</h3>';
+                const knownTables = ['Faculty', 'HOD', 'Principal', 'IQAC', 'Management'];
+                
+                for (const tableName of knownTables) {
+                    try {
+                        const { data, error } = await supabaseClient
+                            .from(tableName)
+                            .select('*')
+                            .limit(1);
+                        
+                        if (error) {
+                            results += `<p><strong>${tableName}</strong>: ❌ ${error.message}</p>`;
+                        } else {
+                            results += `<p><strong>${tableName}</strong>: ✅ Working (${data ? data.length : 0} records)</p>`;
+                        }
+                    } catch (err) {
+                        results += `<p><strong>${tableName}</strong>: ❌ ${err.message}</p>`;
+                    }
+                }
+                
+                resultsDiv.innerHTML = results;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<p style="color: red;">Error checking tables: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

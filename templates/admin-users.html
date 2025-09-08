@@ -115,6 +115,9 @@
                 <div class="flex justify-between items-center">
                     <h2 class="text-lg font-semibold text-gray-900">All Users</h2>
                     <div class="flex space-x-2">
+                        <button onclick="showAddFacultyModal()" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700">
+                            <i class="fas fa-user-plus mr-2"></i>Add Faculty
+                        </button>
                         <button onclick="exportUsers()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
                             <i class="fas fa-download mr-2"></i>Export
                         </button>
@@ -183,6 +186,118 @@
                             Close
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Faculty Modal -->
+    <div id="addFacultyModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Add New Faculty</h3>
+                        <button onclick="closeAddFacultyModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <form id="addFacultyForm" onsubmit="addFaculty(event)">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Employee ID *</label>
+                                <input type="text" name="EmployeeID" required 
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                                <input type="text" name="Name" required 
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Username *</label>
+                                <input type="text" name="Username" required 
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                                <input type="email" name="email" required 
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                                <input type="password" name="password" required 
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Department *</label>
+                                <select name="department" required 
+                                        class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select Department</option>
+                                    <option value="AERO">AERO</option>
+                                    <option value="AIDS">AIDS</option>
+                                    <option value="AIML">AIML</option>
+                                    <option value="CHEM">CHEM</option>
+                                    <option value="CIVIL">CIVIL</option>
+                                    <option value="CSBS">CSBS</option>
+                                    <option value="CSE">CSE</option>
+                                    <option value="ECE">ECE</option>
+                                    <option value="EEE">EEE</option>
+                                    <option value="IT">IT</option>
+                                    <option value="MBA">MBA</option>
+                                    <option value="MCA">MCA</option>
+                                    <option value="MCO">MCO</option>
+                                    <option value="MECH">MECH</option>
+                                    <option value="S&H V1">S&H V1</option>
+                                    <option value="S&H V2">S&H V2</option>
+                                    <option value="S&H V3">S&H V3</option>
+                                    <option value="S&H V4">S&H V4</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Designation *</label>
+                                <select name="Designation" required 
+                                        class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select Designation</option>
+                                    <option value="Professor">Professor</option>
+                                    <option value="Associate Professor">Associate Professor</option>
+                                    <option value="Assistant Professor">Assistant Professor</option>
+                                    <option value="Lecturer">Lecturer</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Qualification</label>
+                                <input type="text" name="Qualification" 
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Experience (Years)</label>
+                                <input type="number" name="Experience" min="0"
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Salary</label>
+                                <input type="number" name="Salary" min="0"
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Upload Image URL</label>
+                                <input type="url" name="Upload Image" 
+                                       placeholder="https://example.com/image.jpg"
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <button type="button" onclick="closeAddFacultyModal()" 
+                                    class="px-4 py-2 border rounded-md hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                <i class="fas fa-save mr-2"></i>Add Faculty
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -376,7 +491,7 @@
                             ${user.displayDepartment || 'N/A'}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div>${user.Mobile || 'N/A'}</div>
+                            <div>${user.phone || user.Mobile || user.mobile || 'N/A'}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">
@@ -387,6 +502,11 @@
                             <button onclick="viewUser('${user.email}')" class="text-blue-600 hover:text-blue-900 mr-3">
                                 <i class="fas fa-eye"></i> View
                             </button>
+                            ${user.role === 'Faculty' ? `
+                            <button onclick="deleteFaculty('${user.email}', '${user.displayName}')" class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                            ` : ''}
                         </td>
                     </tr>
                 `;
@@ -482,6 +602,128 @@
             document.getElementById('userModal').classList.add('hidden');
         }
 
+        // Show Add Faculty Modal
+        function showAddFacultyModal() {
+            document.getElementById('addFacultyModal').classList.remove('hidden');
+        }
+
+        // Close Add Faculty Modal
+        function closeAddFacultyModal() {
+            document.getElementById('addFacultyModal').classList.add('hidden');
+            document.getElementById('addFacultyForm').reset();
+        }
+
+        // Add Faculty Function
+        async function addFaculty(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            const facultyData = {};
+            
+            // Convert FormData to object with exact column names matching your schema
+            for (let [key, value] of formData) {
+                if (value.trim() !== '') { // Only add non-empty values
+                    facultyData[key] = value;
+                }
+            }
+            
+            console.log('Faculty data to insert:', facultyData);
+            
+            try {
+                const submitButton = form.querySelector('button[type="submit"]');
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding...';
+                
+                const { data, error } = await supabaseClient
+                    .from('Faculty')
+                    .insert([facultyData]);
+                
+                if (error) {
+                    throw error;
+                }
+                
+                alert('Faculty added successfully!');
+                closeAddFacultyModal();
+                refreshUsers(); // Reload the users list
+                
+            } catch (error) {
+                console.error('Error adding faculty:', error);
+                alert('Failed to add faculty: ' + (error.message || 'Unknown error'));
+            } finally {
+                const submitButton = form.querySelector('button[type="submit"]');
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-save mr-2"></i>Add Faculty';
+            }
+        }
+
+        // Delete Faculty Function
+        async function deleteFaculty(email, name) {
+            if (!confirm(`Are you sure you want to delete faculty member "${name}"?\n\nThis action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                // First, get the complete faculty record to store in deleted table
+                const { data: facultyData, error: fetchError } = await supabaseClient
+                    .from('Faculty')
+                    .select('*')
+                    .eq('email', email)
+                    .single();
+                
+                if (fetchError) {
+                    throw new Error('Failed to fetch faculty data: ' + fetchError.message);
+                }
+                
+                if (!facultyData) {
+                    throw new Error('Faculty record not found');
+                }
+                
+                // Store in Deleted_Faculty table for audit trail
+                const deletedRecord = {
+                    original_faculty_id: facultyData.id,
+                    department: facultyData.department,
+                    email: facultyData.email,
+                    "Name": facultyData["Name"],
+                    "Username": facultyData["Username"],
+                    password: facultyData.password,
+                    "Upload Image": facultyData["Upload Image"],
+                    "Designation": facultyData["Designation"],
+                    "EmployeeID": facultyData["EmployeeID"],
+                    "Salary": facultyData["Salary"],
+                    "Experience": facultyData["Experience"],
+                    "Qualification": facultyData["Qualification"],
+                    deleted_by: 'admin', // You can get this from session or login state
+                    deletion_reason: 'Manual deletion from admin panel'
+                };
+                
+                const { error: backupError } = await supabaseClient
+                    .from('deleted_faculty')
+                    .insert([deletedRecord]);
+                
+                if (backupError) {
+                    throw new Error('Failed to backup faculty data: ' + backupError.message);
+                }
+                
+                // Now delete from main Faculty table
+                const { error: deleteError } = await supabaseClient
+                    .from('Faculty')
+                    .delete()
+                    .eq('email', email);
+                
+                if (deleteError) {
+                    throw new Error('Failed to delete faculty: ' + deleteError.message);
+                }
+                
+                alert(`Faculty "${name}" has been deleted successfully.\n\nRecord has been backed up for audit purposes.`);
+                refreshUsers(); // Reload the users list
+                
+            } catch (error) {
+                console.error('Error deleting faculty:', error);
+                alert('Failed to delete faculty: ' + (error.message || 'Unknown error'));
+            }
+        }
+
         // Pagination functions
         function previousPage() {
             if (currentPage > 1) {
@@ -546,12 +788,19 @@
                 closeModal();
             }
         });
+
+        // Close Add Faculty modal when clicking outside
+        document.getElementById('addFacultyModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAddFacultyModal();
+            }
+        });
     </script>
 
     <!-- Footer -->
     <footer class="text-center py-4 mt-8">
         <p class="text-gray-400 text-sm">
-            ©&copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>.<br>
+            &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>.<br>
             Developed by <a href="https://zeonytechnologies.netlify.app" target="_blank" class="text-gray-400 hover:text-gray-600 underline">Zeony Technologies</a>
         </p>
     </footer>
