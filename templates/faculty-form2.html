@@ -279,18 +279,18 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <select id="w-month" name="Month" required
                                     class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2">
                                     <option value="" disabled selected>Select</option>
-                                    <option value="1">January</option>
-                                    <option value="2">February</option>
-                                    <option value="3">March</option>
-                                    <option value="4">April</option>
-                                    <option value="5">May</option>
-                                    <option value="6">June</option>
-                                    <option value="7">July</option>
-                                    <option value="8">August</option>
-                                    <option value="9">September</option>
-                                    <option value="10">October</option>
-                                    <option value="11">November</option>
-                                    <option value="12">December</option>
+                                    <option value="January">January</option>
+                                    <option value="February">February</option>
+                                    <option value="March">March</option>
+                                    <option value="April">April</option>
+                                    <option value="May">May</option>
+                                    <option value="June">June</option>
+                                    <option value="July">July</option>
+                                    <option value="August">August</option>
+                                    <option value="September">September</option>
+                                    <option value="October">October</option>
+                                    <option value="November">November</option>
+                                    <option value="December">December</option>
                                 </select>
                             </div>
                             <div class="flex flex-col">
@@ -440,18 +440,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     <select id="m-month" name="Month" required
                         class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
                         <option value="" disabled selected>Select</option>
-                        <option value="1">January</option>
-                        <option value="2">February</option>
-                        <option value="3">March</option>
-                        <option value="4">April</option>
-                        <option value="5">May</option>
-                        <option value="6">June</option>
-                        <option value="7">July</option>
-                        <option value="8">August</option>
-                        <option value="9">September</option>
-                        <option value="10">October</option>
-                        <option value="11">November</option>
-                        <option value="12">December</option>
+                        <option value="January">January</option>
+                        <option value="February">February</option>
+                        <option value="March">March</option>
+                        <option value="April">April</option>
+                        <option value="May">May</option>
+                        <option value="June">June</option>
+                        <option value="July">July</option>
+                        <option value="August">August</option>
+                        <option value="September">September</option>
+                        <option value="October">October</option>
+                        <option value="November">November</option>
+                        <option value="December">December</option>
                     </select>
                 </div>
                 <div class="flex flex-col">
@@ -516,8 +516,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="flex flex-col">
                     <label for="s-month" class="font-semibold text-gray-700 mb-1">Month:</label>
-                    <input id="s-month" name="Month" type="number" min="1" max="12"
-                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                    <select id="s-month" name="Month" required
+                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                        <option value="" disabled selected>Select</option>
+                        <option value="January">January</option>
+                        <option value="February">February</option>
+                        <option value="March">March</option>
+                        <option value="April">April</option>
+                        <option value="May">May</option>
+                        <option value="June">June</option>
+                        <option value="July">July</option>
+                        <option value="August">August</option>
+                        <option value="September">September</option>
+                        <option value="October">October</option>
+                        <option value="November">November</option>
+                        <option value="December">December</option>
+                    </select>
                 </div>
                 <div class="flex flex-col">
                     <label for="s-weekno" class="font-semibold text-gray-700 mb-1">Week Number:</label>
@@ -706,7 +720,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         "Department": form["Department"].value,
                         "Portfolio Name": form["Portfolio Name"].value,
                         "Portfolio Member Name": form["Portfolio Member Name"].value,
-                        "Month": form["Month"].value ? parseInt(form["Month"].value) : null,
+                        "Month": form["Month"].value || null,
                         "Week No": form["Week No"].value ? parseInt(form["Week No"].value) : null,
                         "Week Starting Date": form["Week Starting Date"].value || null,
                         "Week Ending Date": form["Week Ending Date"].value || null,
@@ -815,7 +829,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         "Department": form["Department"].value,
                         "Portfolio Name": form["Portfolio Name"].value,
                         "Portfolio Member Name": form["Portfolio Member Name"].value,
-                        "Month": form["Month"].value ? parseInt(form["Month"].value) : null,
+                        "Month": form["Month"].value || null,
                         "Week no": form["Week no"].value ? parseInt(form["Week no"].value) : null,
                         "Week Starting Date": form["Week Starting Date"].value || null,
                         "Week Ending Date": form["Week Ending Date"].value || null,
@@ -871,7 +885,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         "Department": form["Department"].value,
                         "Portfolio Name": form["Portfolio Name"].value,
                         "Portfolio Member Name": form["Portfolio Member Name"].value,
-                        "Month": form["Month"].value ? parseInt(form["Month"].value) : null,
+                        "Month": form["Month"].value || null,
                         "Week Number": form["Week Number"].value ? parseInt(form["Week Number"].value) : null,
                         "Week Starting Date": form["Week Starting Date"].value || null,
                         "Week Ending Date": form["Week Ending Date"].value || null,
