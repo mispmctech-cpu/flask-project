@@ -154,10 +154,30 @@ class WorkdoneTable {
 
     let allRows = [];
     let errors = [];
+    const uniqueRecords = new Map(); // Use Map to track unique combinations
 
     // Show loading indicator
     const loadingBox = document.getElementById("loadingBox");
     if (loadingBox) loadingBox.style.display = "";
+
+    // First, get all verified records to exclude them from main table
+    let verifiedRecords = new Set();
+    try {
+      const { data: verifiedData } = await this.supabaseClient
+        .from('hod-workdone')
+        .select('department, portfolio_name, portfolio_member_name')
+        .eq('department', department);
+      
+      if (verifiedData) {
+        verifiedData.forEach(record => {
+          const key = `${record.department}|${record.portfolio_name}|${record.portfolio_member_name}`.toLowerCase().trim();
+          verifiedRecords.add(key);
+        });
+        console.log(`Found ${verifiedRecords.size} verified records to exclude`);
+      }
+    } catch (err) {
+      console.warn('Could not fetch verified records:', err);
+    }
 
     for (const entry of this.formTables) {
       try {
@@ -178,11 +198,21 @@ class WorkdoneTable {
             return this.eq(rowDept, department);
           });
 
-          // Add portfolio info and calculate status, with frequency detection
+          // Process each filtered row
           filtered.forEach(row => {
             row._original = { ...row };
             
-            // Add frequency to portfolio name based on table name
+            // Get member name and create unique key
+            const memberName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+            const baseDepartment = row['Department'] || row['Department:'] || row['department'] || row['department:'] || department;
+            
+            // Extract base portfolio name (without frequency suffix)
+            let basePortfolio = entry.portfolio.replace(/ \([^)]*\)$/, ''); // Remove frequency suffix
+            
+            // Create unique key combining department, base portfolio, and member
+            const uniqueKey = `${baseDepartment}|${basePortfolio}|${memberName}`.toLowerCase().trim();
+            
+            // Add frequency to portfolio name based on table name for verification check
             let frequency = '';
             const tableName = entry.table.toLowerCase();
             if (tableName.includes('weekly')) frequency = ' (Weekly)';
@@ -194,16 +224,30 @@ class WorkdoneTable {
             else if (tableName.includes('15 days') || tableName.includes('once in 15')) frequency = ' (Once in 15 Days)';
             else if (tableName.includes('2 months') || tableName.includes('once in 2')) frequency = ' (Once in 2 Months)';
             
-            row.portfolio = entry.portfolio + frequency;
-            row.table = entry.table;
-            row.status = this.calculateStatus(row);
+            const fullPortfolioName = basePortfolio + frequency;
+            const verificationKey = `${baseDepartment}|${fullPortfolioName}|${memberName}`.toLowerCase().trim();
             
-            // Add member name and department for display
-            row.member = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
-            row.department = row['Department'] || row['Department:'] || row['department'] || row['department:'] || department;
+            // Only add if we haven't seen this combination before AND it's not already verified
+            if (!uniqueRecords.has(uniqueKey) && memberName.trim() !== '' && !verifiedRecords.has(verificationKey)) {
+              row.portfolio = fullPortfolioName;
+              row.table = entry.table;
+              row.status = this.calculateStatus(row);
+              
+              // Add member name and department for display
+              row.member = memberName;
+              row.department = baseDepartment;
+              
+              // Mark this combination as seen
+              uniqueRecords.set(uniqueKey, row);
+              allRows.push(row);
+              
+              console.log(`Added unique unverified record: ${uniqueKey}`);
+            } else if (verifiedRecords.has(verificationKey)) {
+              console.log(`Skipping already verified record: ${verificationKey}`);
+            } else if (memberName.trim() !== '') {
+              console.log(`Skipping duplicate: ${uniqueKey}`);
+            }
           });
-
-          allRows.push(...filtered);
         }
       } catch (err) {
         console.error(`Exception for ${entry.table}:`, err);
@@ -213,6 +257,22 @@ class WorkdoneTable {
 
     // Hide loading indicator
     if (loadingBox) loadingBox.style.display = "none";
+
+    // Final deduplication check and logging
+    console.log(`Total records before final deduplication: ${allRows.length}`);
+    console.log(`Unique combinations tracked: ${uniqueRecords.size}`);
+    console.log(`Verified records excluded: ${verifiedRecords.size}`);
+    
+    // Sort by department, portfolio, then member name for consistent display
+    allRows.sort((a, b) => {
+      const deptCompare = a.department.localeCompare(b.department);
+      if (deptCompare !== 0) return deptCompare;
+      
+      const portfolioCompare = a.portfolio.localeCompare(b.portfolio);
+      if (portfolioCompare !== 0) return portfolioCompare;
+      
+      return a.member.localeCompare(b.member);
+    });
 
     // Handle errors
     const errorBox = document.getElementById("errorBox");
@@ -226,6 +286,7 @@ class WorkdoneTable {
       errorBox.classList.add("hidden");
     }
 
+    console.log(`Final unverified records loaded for department ${department}: ${allRows.length}`);
     this.workdoneRows = allRows;
     return allRows;
   }
