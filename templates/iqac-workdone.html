@@ -136,14 +136,15 @@
       }
 
       // Helper to check if a row is already accepted (with 12hr logic for daily forms)
-      function isRowAccepted(rowDept, portfolio, rowName) {
+      function isRowAccepted(rowDept, portfolio, rowName, verifiedAt) {
         const isDaily = portfolio.toLowerCase().includes('daily');
         const now = Date.now();
         for (const v of acceptedRows) {
           if (
             (v.department || '').toLowerCase() === (rowDept || '').toLowerCase() &&
             (v.portfolio_name || '').toLowerCase() === (portfolio || '').toLowerCase() &&
-            (v.portfolio_member_name || '').toLowerCase() === (rowName || '').toLowerCase()
+            (v.portfolio_member_name || '').toLowerCase() === (rowName || '').toLowerCase() &&
+            (v.verified_at || '') === (verifiedAt || '') // Match exact timestamp
           ) {
             if (isDaily && v.accepted_at) {
               const acceptedTime = new Date(v.accepted_at).getTime();
@@ -168,7 +169,8 @@
         const rowDept = row.department || '';
         const portfolio = row.portfolio_name || '';
         const rowName = row.portfolio_member_name || '';
-        return !isRowAccepted(rowDept, portfolio, rowName);
+        const verifiedAt = row.verified_at || '';
+        return !isRowAccepted(rowDept, portfolio, rowName, verifiedAt);
       });
       renderIQACWorkdoneTable(filtered);
 
@@ -305,6 +307,26 @@
         container.innerHTML = html;
       }
     }
+    // Helper function to show fallback data when form data can't be found
+    function showFallbackModal(row) {
+      let html = '<div class="mb-4 p-3 bg-yellow-100 text-yellow-800 rounded">⚠️ Could not find original form data. Showing verification record data:</div>';
+      html += '<table class="min-w-full text-left">';
+      for (const [key, value] of Object.entries(row)) {
+        if (key === 'id') continue; // Skip internal ID
+        let cellContent = '';
+        if (typeof value === 'string' && value.startsWith('http')) {
+          cellContent = `<a href='${value}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow' style='text-decoration:none;'>View File</a>`;
+        } else if (value === '' || value === null || value === undefined) {
+          cellContent = "<span class='text-gray-400'>Not provided</span>";
+        } else {
+          cellContent = value;
+        }
+        html += `<tr><th class="pr-4 py-2 text-gray-700 font-semibold align-top">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</th><td class="py-2">${cellContent}</td></tr>`;
+      }
+      html += '</table>';
+      showModal(html);
+    }
+
     // Modal logic for viewing IQAC Workdone row details
     function viewIQACRowDetails(idx) {
       const row = window._iqacRows && window._iqacRows[idx];
@@ -359,13 +381,62 @@
         }
       }
       if (matchTable) {
+        // Get all records and find matches with flexible field matching
         supabaseClient
           .from(matchTable)
           .select('*')
-          .eq('Department', row.department)
-          .eq('Portfolio Member Name', row.portfolio_member_name)
-          .then(({ data: origRows }) => {
-            let orig = origRows && origRows.length > 0 ? origRows[0] : row;
+          .then(({ data: origRows, error }) => {
+            if (error) {
+              console.warn(`Error querying ${matchTable}:`, error);
+              showFallbackModal(row);
+              return;
+            }
+            
+            let orig = null;
+            if (origRows && origRows.length > 0) {
+              // Try flexible field matching
+              const memberName = (row.portfolio_member_name || '').toLowerCase().trim();
+              const department = (row.department || '').toLowerCase().trim();
+              
+              const memberFields = ['Portfolio Member Name', 'Portfolio Memeber Name', 'faculty_name', 'Faculty Name', 'Name'];
+              const deptFields = ['Department', 'department', 'Department:', 'department:'];
+              
+              if (memberName) {
+                orig = origRows.find(r => {
+                  const memberMatch = memberFields.some(field => {
+                    const val = r[field];
+                    return val && val.toString().toLowerCase().trim() === memberName;
+                  });
+                  
+                  let deptMatch = !department;
+                  if (department) {
+                    deptMatch = deptFields.some(field => {
+                      const val = r[field];
+                      return val && val.toString().toLowerCase().trim() === department;
+                    });
+                  }
+                  
+                  return memberMatch && deptMatch;
+                });
+              }
+              
+              if (!orig && department) {
+                orig = origRows.find(r => {
+                  return deptFields.some(field => {
+                    const val = r[field];
+                    return val && val.toString().toLowerCase().trim() === department;
+                  });
+                });
+              }
+              
+              if (!orig) orig = origRows[0];
+            }
+            
+            if (!orig) {
+              showFallbackModal(row);
+              return;
+            }
+            
             const modalContext = {
               portfolio: portfolioLabel,
               table: matchTable,
@@ -376,21 +447,7 @@
             showModal(html);
           });
       } else {
-        // fallback: show raw
-        let html = '<table class="min-w-full text-left">';
-        for (const [key, value] of Object.entries(row)) {
-          let cellContent = '';
-          if (typeof value === 'string' && value.startsWith('http')) {
-            cellContent = `<a href='${value}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow' style='text-decoration:none;'>View File</a>`;
-          } else if (value === '') {
-            cellContent = "<span class='text-gray-400'>-</span>";
-          } else {
-            cellContent = value;
-          }
-          html += `<tr><th class="pr-4 py-2 text-gray-700 font-semibold align-top">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</th><td class="py-2">${cellContent}</td></tr>`;
-        }
-        html += '</table>';
-        showModal(html);
+        showFallbackModal(row);
       }
     }
 
@@ -448,13 +505,62 @@
         }
       }
       if (matchTable) {
+        // Get all records and find matches with flexible field matching
         supabaseClient
           .from(matchTable)
           .select('*')
-          .eq('Department', row.department)
-          .eq('Portfolio Member Name', row.portfolio_member_name)
-          .then(({ data: origRows }) => {
-            let orig = origRows && origRows.length > 0 ? origRows[0] : row;
+          .then(({ data: origRows, error }) => {
+            if (error) {
+              console.warn(`Error querying ${matchTable}:`, error);
+              showFallbackModal(row);
+              return;
+            }
+            
+            let orig = null;
+            if (origRows && origRows.length > 0) {
+              // Try flexible field matching
+              const memberName = (row.portfolio_member_name || '').toLowerCase().trim();
+              const department = (row.department || '').toLowerCase().trim();
+              
+              const memberFields = ['Portfolio Member Name', 'Portfolio Memeber Name', 'faculty_name', 'Faculty Name', 'Name'];
+              const deptFields = ['Department', 'department', 'Department:', 'department:'];
+              
+              if (memberName) {
+                orig = origRows.find(r => {
+                  const memberMatch = memberFields.some(field => {
+                    const val = r[field];
+                    return val && val.toString().toLowerCase().trim() === memberName;
+                  });
+                  
+                  let deptMatch = !department;
+                  if (department) {
+                    deptMatch = deptFields.some(field => {
+                      const val = r[field];
+                      return val && val.toString().toLowerCase().trim() === department;
+                    });
+                  }
+                  
+                  return memberMatch && deptMatch;
+                });
+              }
+              
+              if (!orig && department) {
+                orig = origRows.find(r => {
+                  return deptFields.some(field => {
+                    const val = r[field];
+                    return val && val.toString().toLowerCase().trim() === department;
+                  });
+                });
+              }
+              
+              if (!orig) orig = origRows[0];
+            }
+            
+            if (!orig) {
+              showFallbackModal(row);
+              return;
+            }
+            
             const modalContext = {
               portfolio: portfolioLabel,
               table: matchTable,
@@ -465,21 +571,7 @@
             showModal(html);
           });
       } else {
-        // fallback: show raw
-        let html = '<table class="min-w-full text-left">';
-        for (const [key, value] of Object.entries(row)) {
-          let cellContent = '';
-          if (typeof value === 'string' && value.startsWith('http')) {
-            cellContent = `<a href='${value}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow' style='text-decoration:none;'>View File</a>`;
-          } else if (value === '') {
-            cellContent = "<span class='text-gray-400'>-</span>";
-          } else {
-            cellContent = value;
-          }
-          html += `<tr><th class="pr-4 py-2 text-gray-700 font-semibold align-top">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</th><td class="py-2">${cellContent}</td></tr>`;
-        }
-        html += '</table>';
-        showModal(html);
+        showFallbackModal(row);
       }
     }
 
@@ -570,13 +662,15 @@
       const { error } = await supabaseClient
         .from('iqac-workdone')
         .insert([{
+          input_id: row.input_id,
           department: row.department,
           portfolio_name: row.portfolio_name,
           portfolio_member_name: row.portfolio_member_name,
           status: row.status,
           verified_by: row.verified_by,
-          verified_at: row.verified_at,
-          accepted_by
+          verified_at: row.verified_at, // Include exact timestamp for unique identification
+          accepted_by: accepted_by
+          // Note: accepted_at will be automatically set by database default
         }]);
       if (error) {
         alert('Failed to record acceptance: ' + (error.message || error));
