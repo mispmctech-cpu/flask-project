@@ -53,6 +53,10 @@ document.addEventListener('DOMContentLoaded', function() {
     <title>PMC Tech Faculty - Form 3</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Prevent Double Submit Protection -->
+    <script src="../static/javascript/prevent-double-submit.js"></script>
 </head>
 
 <body>
@@ -844,26 +848,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 form1DailyForm.addEventListener('submit', async function (e) {
                     e.preventDefault();
                     const form = e.target;
-                    async function uploadFileToStorage(file, path) {
-                        if (!file) return null;
-                        const bucket = 'form3-files';
-                        const { data, error } = await supabaseClient.storage.from(bucket).upload(path, file, { upsert: true });
-                        if (error) {
-                            window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
-                            throw error;
+                    
+                    // Get the double-submit protection instance
+                    const protection = form.doubleSubmitPrevention;
+                    
+                    try {
+                        async function uploadFileToStorage(file, path) {
+                            if (!file) return null;
+                            const bucket = 'form3-files';
+                            const { data, error } = await supabaseClient.storage.from(bucket).upload(path, file, { upsert: true });
+                            if (error) {
+                                if (protection) protection.handleError();
+                                window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
+                                throw error;
+                            }
+                            const { data: publicUrlData, error: urlError } = supabaseClient.storage.from(bucket).getPublicUrl(path);
+                            if (urlError) {
+                                if (protection) protection.handleError();
+                                window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(urlError.message);
+                                throw urlError;
+                            }
+                            return publicUrlData.publicUrl;
                         }
-                        const { data: publicUrlData, error: urlError } = supabaseClient.storage.from(bucket).getPublicUrl(path);
-                        if (urlError) {
-                            window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(urlError.message);
-                            throw urlError;
-                        }
-                        return publicUrlData.publicUrl;
-                    }
 
-                    const file = form['Upload The Scanned File']?.files?.[0] || null;
-                    const ts = Date.now();
-                    const filePath = file ? `file/${ts}_${file.name}` : null;
-                    let fileUrl = null;
+                        const file = form['Upload The Scanned File']?.files?.[0] || null;
+                        const ts = Date.now();
+                        const filePath = file ? `file/${ts}_${file.name}` : null;
+                        let fileUrl = null;
                     try {
                         if (file) fileUrl = await uploadFileToStorage(file, filePath);
                     } catch (uploadErr) {
@@ -882,14 +893,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         "Description-1": form["Description-1"].value,
                         "Upload The Scanned File": fileUrl
                     };
+                    
                     const { data, error } = await supabaseClient
                         .from('form3-Weekly')
                         .insert([row]);
+                        
                     if (error) {
+                        if (protection) protection.handleError();
                         window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
                     } else {
+                        if (protection) protection.handleSuccess();
                         window.location.href = 'notification.html?status=success';
                         form.reset();
+                    }
+                    
+                    } catch (error) {
+                        console.error('Form submission error:', error);
+                        if (protection) protection.handleError();
+                        alert('An error occurred while submitting the form. Please try again.');
                     }
                 });
             }
@@ -899,6 +920,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 fifteenDaysForm.addEventListener('submit', async function (e) {
                     e.preventDefault();
                     const form = e.target;
+                    
+                    // Get the double-submit protection instance
+                    const protection = form.doubleSubmitPrevention;
+                    
+                    try {
                     async function uploadFileToStorage(file, path) {
                         if (!file) return null;
                         const bucket = 'form3-files';
@@ -974,11 +1000,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     const { data, error } = await supabaseClient
                         .from('form3- once in 15 days')
                         .insert([row]);
+                        
                     if (error) {
+                        if (protection) protection.handleError();
                         window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
                     } else {
+                        if (protection) protection.handleSuccess();
                         window.location.href = 'notification.html?status=success';
                         form.reset();
+                    }
+                    
+                    } catch (error) {
+                        console.error('Form submission error:', error);
+                        if (protection) protection.handleError();
+                        alert('An error occurred while submitting the form. Please try again.');
                     }
                 });
             }

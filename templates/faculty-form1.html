@@ -54,6 +54,10 @@ document.addEventListener('DOMContentLoaded', function() {
     <title>PMC Tech Faculty - Form 1</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Prevent Double Submit Protection -->
+    <script src="../static/javascript/prevent-double-submit.js"></script>
 </head>
 
 <body>
@@ -761,25 +765,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 form1DailyForm.addEventListener('submit', async function (e) {
                     e.preventDefault();
                     const form = e.target;
-                    async function uploadFileToStorage(file, path) {
-                        if (!file) return null;
-                        const bucket = 'form1-files';
-                        const { data, error } = await supabaseClient.storage.from(bucket).upload(path, file, { upsert: true });
-                        if (error) {
-                            window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
-                            throw error;
-                        }
-                        const { data: publicUrlData, error: urlError } = supabaseClient.storage.from(bucket).getPublicUrl(path);
-                        if (urlError) {
-                            window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(urlError.message);
-                            throw urlError;
-                        }
-                        return publicUrlData.publicUrl;
-                    }
-
-                    const ts = Date.now();
-                    let file1Url = null, file2Url = null, file3Url = null, file4Url = null;
+                    
+                    // Get the double-submit protection instance
+                    const protection = form.doubleSubmitPrevention;
+                    
                     try {
+                        async function uploadFileToStorage(file, path) {
+                            if (!file) return null;
+                            const bucket = 'form1-files';
+                            const { data, error } = await supabaseClient.storage.from(bucket).upload(path, file, { upsert: true });
+                            if (error) {
+                                if (protection) protection.handleError();
+                                window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
+                                throw error;
+                            }
+                            const { data: publicUrlData, error: urlError } = supabaseClient.storage.from(bucket).getPublicUrl(path);
+                            if (urlError) {
+                                if (protection) protection.handleError();
+                                window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(urlError.message);
+                                throw urlError;
+                            }
+                            return publicUrlData.publicUrl;
+                        }
+
+                        const ts = Date.now();
+                        let file1Url = null, file2Url = null, file3Url = null, file4Url = null;
+                        
                         const file1 = form.querySelector("input[name='Upload The Scanned File_1']")?.files?.[0] || null;
                         if (file1) file1Url = await uploadFileToStorage(file1, `weekly_file1/${ts}_${file1.name}`);
                         const file2 = form.querySelector("input[name='Upload The Scanned File_2']")?.files?.[0] || null;
@@ -788,12 +799,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (file3) file3Url = await uploadFileToStorage(file3, `weekly_file3/${ts}_${file3.name}`);
                         const file4 = form.querySelector("input[name='Upload the scanned file_4']")?.files?.[0] || null;
                         if (file4) file4Url = await uploadFileToStorage(file4, `weekly_file4/${ts}_${file4.name}`);
-                    } catch (uploadErr) {
-                        return;
-                    }
 
-                    const row = {
-                        "Department": form["Department:"].value,
+                        const row = {
+                            "Department": form["Department:"].value,
                         "Portfolio Name": form["Portfolio Name:"].value,
                         "Portfolio Member Name": form["Portfolio Member Name"].value,
                         "Month": form["Month:"].value,
@@ -813,14 +821,25 @@ document.addEventListener('DOMContentLoaded', function() {
                         "Description_4": form["Description_4"].value,
                         "Upload The Scanned File_4": file4Url
                     };
+                    
                     const { data, error } = await supabaseClient
                         .from('form1-Weekly')
                         .insert([row]);
+                        
                     if (error) {
+                        if (protection) protection.handleError();
                         window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
                     } else {
+                        if (protection) protection.handleSuccess();
                         window.location.href = 'notification.html?status=success';
                         form.reset();
+                    }
+                    
+                    } catch (error) {
+                        console.error('Form submission error:', error);
+                        if (protection) protection.handleError();
+                        // Fallback error handling if redirect fails
+                        alert('An error occurred while submitting the form. Please try again.');
                     }
                 });
             }
