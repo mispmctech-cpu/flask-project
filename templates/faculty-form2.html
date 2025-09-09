@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let deptFields = document.querySelectorAll("input[name='Department'], input[name='Department:'], select[name='Department'], select[name='Department:']");
     deptFields.forEach(function(field) {
         if (dept) field.value = dept;
-        field.requi                        
+        field.required = true;
         // Make department mutable (not readOnly, not disabled)
         field.readOnly = false;
         field.disabled = false;
@@ -658,7 +658,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         "Department:": form["Department:"].value,
                         "Portfolio Name:": form["Portfolio Name:"].value,
                         "Portfolio Member Name": form["Portfolio Member Name"].value,
-                        "Month:": form["Month:"].value ? parseInt(form["Month:"].value) : null,
+                        "Month:": form["Month:"].value || null,
                         "Week no": form["Week no"].value ? parseInt(form["Week no"].value) : null,
                         "Week Starting Date": form["Week Starting Date"].value || null,
                         "Week Ending Date": form["Week Ending Date"].value || null,
@@ -669,6 +669,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         "Description_2": form["Description_2"].value,
                         "Upload the scanned file_2": file2Url
                     };
+                    
+                    // Debug logging to check form values
+                    console.log('Daily form values:', {
+                        Department: form["Department:"].value,
+                        Portfolio: form["Portfolio Name:"].value,
+                        Member: form["Portfolio Member Name"].value,
+                        Month: form["Month:"].value,
+                        WeekNo: form["Week no"].value
+                    });
+                    console.log('Daily row object before insert:', row);
+                    
+                    // Ensure month is not empty string
+                    if (!row["Month:"] || row["Month:"] === "") {
+                        alert('Please select a month before submitting the form.');
+                        return;
+                    }
                     // Insert into Supabase
                     const { data, error } = await supabaseClient
                         .from('form2-daily')
@@ -834,6 +850,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         "Week Starting Date": form["Week Starting Date"].value || null,
                         "Week Ending Date": form["Week Ending Date"].value || null,
                     };
+                    // Debug logging to check form values
+                    console.log('Monthly form values:', {
+                        Department: form["Department"].value,
+                        Portfolio: form["Portfolio Name"].value,
+                        Member: form["Portfolio Member Name"].value,
+                        Month: form["Month"].value,
+                        WeekNo: form["Week no"].value
+                    });
+                    console.log('Row object before insert:', row);
+                    
+                    // Ensure month is not empty string
+                    if (!row["Month"] || row["Month"] === "") {
+                        alert('Please select a month before submitting the form.');
+                        return;
+                    }
                     for (let i = 1; i <= 8; i++) {
                         row[`Status_${i}`] = form[`Status_${i}`]?.value || null;
                         row[`Description_${i}`] = form[`Description_${i}`]?.value || null;
