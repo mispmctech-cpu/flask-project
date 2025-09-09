@@ -701,6 +701,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     weeklyForm5.addEventListener('submit', async function(e) {
                         e.preventDefault();
                         const form = e.target;
+
+                        // Get double-submit protection instance
+                        const protection = window.getFormProtection && window.getFormProtection('weeklyForm5');
+                        
+                        try {
                         async function uploadFileToStorage(file, path) {
                             if (!file) return null;
                             const bucket = 'form5-files';
@@ -769,6 +774,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         } else {
                             window.location.href = 'notification.html?status=success';
                             form.reset();
+                            if (protection) protection.onSuccess();
+                        }
+                        } catch (err) {
+                            console.error('Form submission error:', err);
+                            if (protection) protection.onError();
+                            window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent('Submission failed: ' + err.message);
                         }
                     });
                 }
@@ -778,6 +789,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     onceMonthForm4.addEventListener('submit', async function(e) {
                         e.preventDefault();
                         const form = e.target;
+
+                        // Get double-submit protection instance
+                        const protection = window.getFormProtection && window.getFormProtection('onceMonthForm4');
+                        
+                        try {
                         async function uploadFileToStorage(file, path) {
                             if (!file) return null;
                             const bucket = 'form5-files';
@@ -831,6 +847,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         } else {
                             window.location.href = 'notification.html?status=success';
                             form.reset();
+                            if (protection) protection.onSuccess();
+                        }
+                        } catch (err) {
+                            console.error('Form submission error:', err);
+                            if (protection) protection.onError();
+                            window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent('Submission failed: ' + err.message);
                         }
                     });
                 }
