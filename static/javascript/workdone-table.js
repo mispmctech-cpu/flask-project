@@ -168,13 +168,17 @@ class WorkdoneTable {
         .eq('department', department);
       
       if (!verifiedError && verifiedData) {
-        // Store verified input_ids for quick lookup
+        // Store verified input_ids for quick lookup and debug
+        console.log(`🔍 DEBUG: Retrieved verified records from hod-workdone:`, verifiedData);
         verifiedData.forEach(record => {
           if (record.input_id) {
-            verifiedInputIds.add(`${record.table_name}_${record.input_id}`);
+            // Use input_id directly since it's unique across all tables
+            verifiedInputIds.add(record.input_id);
+            console.log(`   ✅ Added verified input_id: ${record.input_id} (type: ${typeof record.input_id}) from table: ${record.table_name}`);
           }
         });
-        console.log(`Found ${verifiedInputIds.size} verified records to exclude`);
+        console.log(`🔧 Found ${verifiedInputIds.size} verified records to exclude`);
+        console.log(`🔧 Verified input_ids Set:`, Array.from(verifiedInputIds));
       }
     } catch (err) {
       console.warn('Error fetching verified records:', err);
@@ -203,8 +207,13 @@ class WorkdoneTable {
           filtered.forEach(row => {
             row._original = { ...row };
             
-            // Store the input_id (record's unique ID from database)
-            row.input_id = row.id; // Store the database record ID as input_id
+            // Use the input_id directly from database (after schema update)
+            // The input_id should now exist in all form tables after running the SQL
+            if (!row.input_id) {
+              console.warn('Row missing input_id from database:', entry.table, row);
+              // Create a temporary ID for now
+              row.input_id = row.id || `temp_${entry.table}_${Date.now()}_${Math.random()}`;
+            }
             
             // Add frequency to portfolio name based on table name
             let frequency = '';
@@ -229,14 +238,13 @@ class WorkdoneTable {
 
           // Filter out already verified records based on input_id
           const unverifiedRows = filtered.filter(row => {
-            if (!row.input_id) {
+            if (row.input_id) {
+              const isAlreadyVerified = verifiedInputIds.has(row.input_id);
+              return !isAlreadyVerified;
+            } else {
               console.warn('Row missing input_id:', row);
               return true; // Include records without input_id (shouldn't happen, but safe fallback)
             }
-            
-            const recordKey = `${entry.table}_${row.input_id}`;
-            const isAlreadyVerified = verifiedInputIds.has(recordKey);
-            return !isAlreadyVerified;
           });
 
           console.log(`${entry.table}: ${filtered.length} total, ${unverifiedRows.length} unverified`);
@@ -712,20 +720,20 @@ window.verifyRow = function(btn, idx) {
             // Remove from main array by index
             window._allWorkdoneRows.splice(idx, 1);
             
-            // Update filtered rows if they exist - find by input_id and table
+            // Update filtered rows if they exist - find by input_id
             if (window._filteredWorkdoneRows) {
               const filteredIdx = window._filteredWorkdoneRows.findIndex(r => 
-                r.input_id === row.input_id && r.table === row.table
+                r.input_id === row.input_id
               );
               if (filteredIdx !== -1) {
                 window._filteredWorkdoneRows.splice(filteredIdx, 1);
               }
             }
             
-            // Update working rows if they exist - find by input_id and table
+            // Update working rows if they exist - find by input_id
             if (window._workingWorkdoneRows) {
               const workingIdx = window._workingWorkdoneRows.findIndex(r => 
-                r.input_id === row.input_id && r.table === row.table
+                r.input_id === row.input_id
               );
               if (workingIdx !== -1) {
                 window._workingWorkdoneRows.splice(workingIdx, 1);
