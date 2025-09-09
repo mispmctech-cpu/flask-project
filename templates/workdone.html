@@ -344,11 +344,33 @@
 
     // Render verified workdone table (keeping existing functionality)
     function renderVerifiedWorkdoneTable(rows) {
-      // Store all rows for pagination and filtering
-      window._allVerifiedRows = rows;
-      window._filteredVerifiedRows = rows;
-      window._workingVerifiedRows = rows;
-      window._verifiedRows = rows;
+      // Deduplicate rows by input_id to prevent duplicate display
+      const uniqueRows = [];
+      const seenInputIds = new Set();
+      
+      if (rows && rows.length > 0) {
+        for (const row of rows) {
+          if (row.input_id && !seenInputIds.has(row.input_id)) {
+            uniqueRows.push(row);
+            seenInputIds.add(row.input_id);
+          } else if (!row.input_id) {
+            // Fallback: if no input_id, check by combination of fields
+            const key = `${row.department}_${row.portfolio_name}_${row.portfolio_member_name}_${row.verified_at}`;
+            if (!seenInputIds.has(key)) {
+              uniqueRows.push(row);
+              seenInputIds.add(key);
+            }
+          }
+        }
+      }
+      
+      console.log(`Deduplicated verified records: ${rows?.length || 0} -> ${uniqueRows.length}`);
+      
+      // Store all unique rows for pagination and filtering
+      window._allVerifiedRows = uniqueRows;
+      window._filteredVerifiedRows = uniqueRows;
+      window._workingVerifiedRows = uniqueRows;
+      window._verifiedRows = uniqueRows;
       
       // Initialize pagination
       renderVerifiedWorkdoneTableWithPagination(1);

@@ -159,6 +159,27 @@ class WorkdoneTable {
     const loadingBox = document.getElementById("loadingBox");
     if (loadingBox) loadingBox.style.display = "";
 
+    // First, get all verified records for this department to exclude them
+    let verifiedInputIds = new Set(); // Use Set for faster lookup
+    try {
+      const { data: verifiedData, error: verifiedError } = await this.supabaseClient
+        .from('hod-workdone')
+        .select('input_id, table_name')
+        .eq('department', department);
+      
+      if (!verifiedError && verifiedData) {
+        // Store verified input_ids for quick lookup
+        verifiedData.forEach(record => {
+          if (record.input_id) {
+            verifiedInputIds.add(`${record.table_name}_${record.input_id}`);
+          }
+        });
+        console.log(`Found ${verifiedInputIds.size} verified records to exclude`);
+      }
+    } catch (err) {
+      console.warn('Error fetching verified records:', err);
+    }
+
     for (const entry of this.formTables) {
       try {
         const { data, error } = await this.supabaseClient
@@ -182,6 +203,9 @@ class WorkdoneTable {
           filtered.forEach(row => {
             row._original = { ...row };
             
+            // Store the input_id (record's unique ID from database)
+            row.input_id = row.id; // Store the database record ID as input_id
+            
             // Add frequency to portfolio name based on table name
             let frequency = '';
             const tableName = entry.table.toLowerCase();
@@ -203,7 +227,20 @@ class WorkdoneTable {
             row.department = row['Department'] || row['Department:'] || row['department'] || row['department:'] || department;
           });
 
-          allRows.push(...filtered);
+          // Filter out already verified records based on input_id
+          const unverifiedRows = filtered.filter(row => {
+            if (!row.input_id) {
+              console.warn('Row missing input_id:', row);
+              return true; // Include records without input_id (shouldn't happen, but safe fallback)
+            }
+            
+            const recordKey = `${entry.table}_${row.input_id}`;
+            const isAlreadyVerified = verifiedInputIds.has(recordKey);
+            return !isAlreadyVerified;
+          });
+
+          console.log(`${entry.table}: ${filtered.length} total, ${unverifiedRows.length} unverified`);
+          allRows.push(...unverifiedRows);
         }
       } catch (err) {
         console.error(`Exception for ${entry.table}:`, err);
@@ -643,6 +680,8 @@ window.verifyRow = function(btn, idx) {
 
   // Insert into hod-workdone table
   const verificationData = {
+    input_id: row.input_id, // Store the original record's input_id
+    table_name: row.table, // Store the source table name
     department: row.department,
     portfolio_name: row.portfolio,
     portfolio_member_name: row.member,
@@ -668,8 +707,76 @@ window.verifyRow = function(btn, idx) {
         } else {
           console.log('Verification successful:', data);
           
-          // Update button to show verified state
-          btn.outerHTML = '<span class="text-green-600 font-bold">VERIFIED</span>';
+          // Remove the verified row from the unverified workdone arrays based on input_id
+          if (window._allWorkdoneRows && window._allWorkdoneRows[idx]) {
+            // Remove from main array by index
+            window._allWorkdoneRows.splice(idx, 1);
+            
+            // Update filtered rows if they exist - find by input_id and table
+            if (window._filteredWorkdoneRows) {
+              const filteredIdx = window._filteredWorkdoneRows.findIndex(r => 
+                r.input_id === row.input_id && r.table === row.table
+              );
+              if (filteredIdx !== -1) {
+                window._filteredWorkdoneRows.splice(filteredIdx, 1);
+              }
+            }
+            
+            // Update working rows if they exist - find by input_id and table
+            if (window._workingWorkdoneRows) {
+              const workingIdx = window._workingWorkdoneRows.findIndex(r => 
+                r.input_id === row.input_id && r.table === row.table
+              );
+              if (workingIdx !== -1) {
+                window._workingWorkdoneRows.splice(workingIdx, 1);
+              }
+            }
+            
+            // Update _workdoneRows reference
+            window._workdoneRows = window._allWorkdoneRows;
+          }
+          
+          // Re-render the first table to show updated data
+          if (typeof renderHodWorkdoneTableWithPagination === 'function') {
+            renderHodWorkdoneTableWithPagination(workdoneCurrentPage || 1);
+          } else if (typeof renderFilteredWorkdoneTable === 'function') {
+            renderFilteredWorkdoneTable(workdoneCurrentPage || 1);
+          }
+          
+          // Add to verified workdone table if arrays exist
+          if (window._allVerifiedRows) {
+            const verifiedRecord = {
+              input_id: row.input_id,
+              table_name: row.table,
+              department: row.department,
+              portfolio_name: row.portfolio,
+              portfolio_member_name: row.member,
+              status: row.status,
+              verified_by: verified_by,
+              verified_at: new Date().toISOString()
+            };
+            
+            // Add to beginning of verified arrays (with duplicate check)
+            const existsInVerified = window._allVerifiedRows.some(existing => 
+              existing.input_id === verifiedRecord.input_id
+            );
+            
+            if (!existsInVerified) {
+              window._allVerifiedRows.unshift(verifiedRecord);
+              if (window._filteredVerifiedRows) {
+                window._filteredVerifiedRows.unshift(verifiedRecord);
+              }
+              if (window._workingVerifiedRows) {
+                window._workingVerifiedRows.unshift(verifiedRecord);
+              }
+              window._verifiedRows = window._allVerifiedRows;
+            }
+            
+            // Re-render verified table
+            if (typeof renderVerifiedWorkdoneTableWithPagination === 'function') {
+              renderVerifiedWorkdoneTableWithPagination(verifiedCurrentPage || 1);
+            }
+          }
           
           alert('Record verified successfully!');
         }
