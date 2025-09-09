@@ -3,23 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard</title>
+  <title>Principal Dashboard - PMC Tech</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    .chart-container {
+      position: relative;
+      height: 300px;
+      width: 100%;
+    }
+  </style>
 </head>
-<body class="bg-pmcBg min-h-screen">
-  <header class="bg-purple-700 text-white shadow-md">
-    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
-      <h1 class="text-2xl font-bold">Dashboard</h1>
-      <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
-        </svg>
-      </button>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Header -->
+  <header class="bg-white shadow-sm border-b">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16">
+        <div class="flex items-center">
+          <img src="../static/img/pmc.jpg" alt="PMC Tech" class="h-10 w-auto rounded-lg">
+          <div class="ml-4">
+            <h1 class="text-xl font-bold text-gray-900">Principal Dashboard</h1>
+          </div>
+        </div>
+        <div class="flex items-center space-x-4">
+          <button onclick="window.location.href='/logout'" aria-label="Logout" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition">
+            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+          </button>
+        </div>
+      </div>
     </div>
   </header>
   <main class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Stats Cards from Admin Reports -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="bg-white p-6 rounded-lg shadow border">
+        <div class="text-3xl font-bold text-blue-600" id="totalUsers">-</div>
+        <div class="text-sm text-gray-600">Total Users</div>
+      </div>
+      <div class="bg-white p-6 rounded-lg shadow border">
+        <div class="text-3xl font-bold text-green-600" id="activeForms">-</div>
+        <div class="text-sm text-gray-600">Form Submissions</div>
+      </div>
+      <div class="bg-white p-6 rounded-lg shadow border">
+        <div class="text-3xl font-bold text-purple-600" id="totalDepartments">-</div>
+        <div class="text-sm text-gray-600">Departments</div>
+      </div>
+    </div>
+
+    <!-- Form Categories Distribution Chart from Admin Reports -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+      <h3 class="text-lg font-semibold mb-4">Forms Available by Category</h3>
+      <div class="chart-container">
+        <canvas id="formCategoriesChart"></canvas>
+      </div>
+    </div>
+
     <!-- Top: Department Status Distribution (large) -->
     <div class="mb-8">
       <h2 class="text-xl font-bold mb-2 text-purple-700">Department Status Distribution</h2>
@@ -58,6 +98,35 @@
         </div>
       </div>
     </div>
+
+    <!-- Report Generation Section from Admin Reports -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+      <h3 class="text-lg font-semibold mb-4">Generate Reports</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="border border-gray-200 rounded-lg p-4">
+          <h4 class="font-medium mb-2">User Report</h4>
+          <p class="text-sm text-gray-600 mb-3">Complete user data across all roles</p>
+          <button onclick="generateUserReport()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition">
+            Generate CSV
+          </button>
+        </div>
+        <div class="border border-gray-200 rounded-lg p-4">
+          <h4 class="font-medium mb-2">Department Report</h4>
+          <p class="text-sm text-gray-600 mb-3">Department-wise statistics and data</p>
+          <button onclick="generateDepartmentReport()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded transition">
+            Generate CSV
+          </button>
+        </div>
+        <div class="border border-gray-200 rounded-lg p-4">
+          <h4 class="font-medium mb-2">Form Status Report</h4>
+          <p class="text-sm text-gray-600 mb-3">Current status of all forms</p>
+          <button onclick="generateFormReport()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded transition">
+            Generate CSV
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div id="loadingBox" class="mt-8 p-3 rounded bg-blue-100 text-blue-800 font-semibold">Loading data, please wait...</div>
     <div id="errorBox" class="hidden mt-4 p-3 rounded bg-red-100 text-red-700 font-semibold"></div>
   </main>
@@ -249,7 +318,233 @@
     }
     document.getElementById('departmentDropdown').addEventListener('change', renderCharts);
     document.getElementById('portfolioDropdown').addEventListener('change', renderCharts);
-    fetchAllData();
+
+    // Functions from admin-reports for stats and form categories chart
+    let chartInstances = {};
+
+    // Create form categories distribution chart
+    async function createFormCategoriesChart() {
+      console.log('Creating form categories chart...');
+      
+      const ctx = document.getElementById('formCategoriesChart').getContext('2d');
+      
+      if (chartInstances.formCategories) {
+        chartInstances.formCategories.destroy();
+      }
+
+      const formCategories = {
+        'Institution Forms': 17,
+        'Faculty Forms': 8,  
+        'Faculty Core Forms': 3
+      };
+
+      const labels = Object.keys(formCategories);
+      const data = Object.values(formCategories);
+      
+      const colors = ['#3B82F6', '#10B981', '#F59E0B'];
+
+      chartInstances.formCategories = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: colors,
+            borderColor: '#ffffff',
+            borderWidth: 3,
+            hoverBorderWidth: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 15,
+                usePointStyle: true,
+                font: { size: 12, weight: 'bold' },
+                generateLabels: function(chart) {
+                  const data = chart.data;
+                  if (data.labels.length && data.datasets.length) {
+                    return data.labels.map((label, i) => ({
+                      text: `${label}: ${data.datasets[0].data[i]} forms`,
+                      fillStyle: data.datasets[0].backgroundColor[i],
+                      strokeStyle: data.datasets[0].borderColor,
+                      lineWidth: data.datasets[0].borderWidth,
+                      pointStyle: 'circle',
+                      index: i
+                    }));
+                  }
+                  return [];
+                }
+              }
+            },
+            title: {
+              display: true,
+              text: 'Forms Available by Category',
+              padding: 20,
+              font: { size: 16, weight: 'bold' }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = ((value / total) * 100).toFixed(1);
+                  return `${label}: ${value} forms (${percentage}%)`;
+                }
+              },
+              titleFont: { size: 14, weight: 'bold' },
+              bodyFont: { size: 13 }
+            }
+          },
+          elements: {
+            arc: { borderRadius: 8 }
+          }
+        }
+      });
+
+      const totalForms = data.reduce((sum, count) => sum + count, 0);
+      console.log(`Form categories chart created: ${totalForms} total forms`);
+    }
+
+    // Load stats data from admin-reports logic
+    async function loadStatsData() {
+      try {
+        // Load users data from all user tables  
+        const { data: faculty } = await supabaseClient.from('Faculty').select('department, "Name", email, "Designation", "EmployeeID"');
+        const { data: hods } = await supabaseClient.from('HOD').select('department, "Name", email, "Designation"');
+        const { data: principals } = await supabaseClient.from('Principal').select('"Name", email');
+        const { data: iqac } = await supabaseClient.from('IQAC').select('*');
+        const { data: management } = await supabaseClient.from('Management').select('*');
+        const { data: admin } = await supabaseClient.from('Admin').select('*');
+
+        // Load form submission data
+        let totalFormSubmissions = 0;
+        try {
+          const { data: form2Daily } = await supabaseClient.from('form2-daily').select('input_id');
+          totalFormSubmissions += form2Daily?.length || 0;
+        } catch (e) {}
+        try {
+          const { data: form2Weekly } = await supabaseClient.from('form2-weekly').select('id');
+          totalFormSubmissions += form2Weekly?.length || 0;
+        } catch (e) {}
+
+        // Update stats
+        const totalUsers = (faculty?.length || 0) + (hods?.length || 0) + (principals?.length || 0) + 
+                         (iqac?.length || 0) + (management?.length || 0) + (admin?.length || 0);
+        document.getElementById('totalUsers').textContent = totalUsers;
+        document.getElementById('activeForms').textContent = totalFormSubmissions;
+        
+        // Get unique departments
+        const facultyDepartments = faculty?.map(f => f.department).filter(d => d && d.trim() !== '' && d.toLowerCase() !== 'null') || [];
+        const hodDepartments = hods?.map(h => h.department || h.Department).filter(d => d && d.trim() !== '' && d.toLowerCase() !== 'null') || [];
+        const allDepartments = [...facultyDepartments, ...hodDepartments];
+        const departments = [...new Set(allDepartments)];
+        document.getElementById('totalDepartments').textContent = departments.length;
+
+        console.log('Stats loaded:', { totalUsers, totalFormSubmissions, departments: departments.length });
+      } catch (error) {
+        console.error('Error loading stats:', error);
+        document.getElementById('totalUsers').textContent = 'Error';
+        document.getElementById('activeForms').textContent = 'Error';
+        document.getElementById('totalDepartments').textContent = 'Error';
+      }
+    }
+
+    // Report generation functions from admin-reports
+    async function generateUserReport() {
+      try {
+        const { data: faculty } = await supabaseClient.from('Faculty').select('*');
+        const { data: hods } = await supabaseClient.from('HOD').select('*');
+        const { data: principals } = await supabaseClient.from('Principal').select('*');
+        const { data: iqac } = await supabaseClient.from('IQAC').select('*');
+        const { data: management } = await supabaseClient.from('Management').select('*');
+        const { data: admin } = await supabaseClient.from('Admin').select('*');
+
+        const allUsers = [
+          ...(faculty || []).map(u => ({ ...u, role: 'Faculty', Name: u.Name || 'Unknown', email: u.email || 'No email' })),
+          ...(hods || []).map(u => ({ ...u, role: 'HOD', Name: u.Name || 'Unknown', email: u.email || 'No email' })),
+          ...(principals || []).map(u => ({ ...u, role: 'Principal', Name: u.Name || 'Unknown', email: u.email || 'No email' })),
+          ...(iqac || []).map(u => ({ ...u, role: 'IQAC', Name: u.Name || 'Unknown', email: u.email || 'No email' })),
+          ...(management || []).map(u => ({ ...u, role: 'Management', Name: u.Name || 'Unknown', email: u.email || 'No email' })),
+          ...(admin || []).map(u => ({ ...u, role: 'Admin', Name: u.Name || 'Administrator', email: u.email || 'No email' }))
+        ];
+
+        const csvContent = "data:text/csv;charset=utf-8," + 
+          "Name,Email,Role,Department,Mobile,EmployeeID,Designation,Experience,Qualification,Status\n" +
+          allUsers.map(user => 
+            `"${user.Name || ''}","${user.email || ''}","${user.role}","${user.Department || user.department || ''}","${user.Mobile || ''}","${user.EmployeeID || ''}","${user.Designation || ''}","${user.Experience || ''}","${user.Qualification || ''}","${user.Status || 'Active'}"`
+          ).join("\n");
+
+        downloadCSV(csvContent, 'user_report');
+      } catch (error) {
+        alert('Error generating user report: ' + error.message);
+      }
+    }
+
+    async function generateDepartmentReport() {
+      try {
+        const { data: faculty } = await supabaseClient.from('Faculty').select('department, "Name", "Designation"');
+        const { data: hods } = await supabaseClient.from('HOD').select('department, "Name", "Designation"');
+
+        const deptStats = {};
+        (faculty || []).forEach(f => {
+          const dept = f.department;
+          if (dept && dept.trim() !== '') {
+            if (!deptStats[dept]) deptStats[dept] = { faculty: 0, hod: 'No' };
+            deptStats[dept].faculty++;
+          }
+        });
+
+        (hods || []).forEach(h => {
+          const dept = h.department || h.Department;
+          if (dept && deptStats[dept]) deptStats[dept].hod = 'Yes';
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8," + 
+          "Department,Faculty Count,Has HOD\n" +
+          Object.entries(deptStats).map(([dept, stats]) => 
+            `"${dept}","${stats.faculty}","${stats.hod}"`
+          ).join("\n");
+
+        downloadCSV(csvContent, 'department_report');
+      } catch (error) {
+        alert('Error generating department report: ' + error.message);
+      }
+    }
+
+    async function generateFormReport() {
+      try {
+        // Implementation similar to admin-reports
+        alert('Form report generation - check console for details');
+        console.log('Form report would be generated here');
+      } catch (error) {
+        alert('Error generating form report: ' + error.message);
+      }
+    }
+
+    function downloadCSV(csvContent, filename) {
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `${filename}_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Initialize both original and new functionality
+    async function initializeDashboard() {
+      await fetchAllData(); // Original principal dashboard data
+      await loadStatsData(); // Admin reports stats
+      await createFormCategoriesChart(); // Admin reports form categories chart
+    }
+
+    initializeDashboard();
   </script>  <!-- Footer -->
   <footer class="text-center py-4 mt-8">
     <p class="text-gray-400 text-sm"> © All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>, IV CSE 2022-2026.<br/> 
