@@ -1,0 +1,1662 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Analytics - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <img src="../static/img/pmc.jpg" alt="PMC Tech" class="h-10 w-auto rounded-lg">
+                    <div class="ml-4">
+                        <h1 class="text-xl font-bold text-gray-900">Reports & Analytics</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="admin-dashboard.html" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="text-3xl font-bold text-blue-600" id="totalUsers">-</div>
+                <div class="text-sm text-gray-600">Total Users</div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="text-3xl font-bold text-green-600" id="activeForms">-</div>
+                <div class="text-sm text-gray-600">Form Submissions</div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="text-3xl font-bold text-purple-600" id="totalDepartments">-</div>
+                <div class="text-sm text-gray-600">Departments</div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Form Categories Distribution Chart -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Forms Available by Category</h3>
+                <div class="chart-container">
+                    <canvas id="formCategoriesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Faculty by Department Chart -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Faculty by Department</h3>
+                <div class="chart-container">
+                    <canvas id="facultyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Status Chart -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-4">Form Opening & Closing Status</h3>
+            <div class="chart-container" style="height: 250px;">
+                <canvas id="formStatusChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Department Status Distribution (from principal dashboard) -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-4">Department Status Distribution</h3>
+            <div class="chart-container" style="height: 350px;">
+                <canvas id="deptStatusBarChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Overall Submission Status (from principal dashboard) -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-4">Overall Submission Status</h3>
+            <div class="chart-container" style="height: 350px;">
+                <canvas id="overallChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Form Submissions Chart -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-4">Form Submissions Overview</h3>
+            <div class="mb-4 flex flex-wrap gap-3">
+                <select id="formFilter" class="border border-gray-300 rounded px-3 py-1 text-sm" onchange="updateFormsChart()">
+                    <option value="all">All Forms Overview</option>
+                    <option value="faculty">Faculty Forms Only</option>
+                    <option value="institution">Institution Forms Only</option>
+                    <option value="core">Faculty Core Scope Forms</option>
+                </select>
+                <select id="specificFormFilter" class="border border-gray-300 rounded px-3 py-1 text-sm" onchange="updateFormsChart()">
+                    <option value="all">All Specific Forms</option>
+                </select>
+                <button onclick="refreshFormsData()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                    <i class="fas fa-sync-alt mr-1"></i>Refresh
+                </button>
+                <button onclick="testFormDataLoading()" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
+                    <i class="fas fa-bug mr-1"></i>Test Forms
+                </button>
+            </div>
+            <div class="chart-container" style="height: 250px;">
+                <canvas id="formsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Report Generation -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-4">Generate Reports</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h4 class="font-medium mb-2">User Report</h4>
+                    <p class="text-sm text-gray-600 mb-3">Complete user data across all roles</p>
+                    <button onclick="generateUserReport()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition">
+                        Generate CSV
+                    </button>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h4 class="font-medium mb-2">Department Report</h4>
+                    <p class="text-sm text-gray-600 mb-3">Department-wise statistics and data</p>
+                    <button onclick="generateDepartmentReport()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded transition">
+                        Generate CSV
+                    </button>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h4 class="font-medium mb-2">Form Status Report</h4>
+                    <p class="text-sm text-gray-600 mb-3">Current status of all forms</p>
+                    <button onclick="generateFormReport()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded transition">
+                        Generate CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase configuration
+        const supabaseClient = window.supabase.createClient(
+            "https://cbhodgwaazmjszkujrti.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+        );
+
+        let chartInstances = {};
+        let currentFacultyData = [];
+        let currentHodData = [];
+
+        // Portfolio configuration based on your form system
+        const PORTFOLIO_CONFIG = {
+            faculty: [
+                'Students Performance in Training & Placement Member',
+                'Class Advisor',
+                'Faculty Information & Contribution Member',
+                'Course Outcome & Program Outcome Member (Exam Cell)',
+                'Continuous Improvement Member (Program Member)',
+                'Teaching & Learning Process Member (IQAC)',
+                'Student Support System Member (Discipline & Extra Curricular)',
+                'Facilities & Technical Support Member (Lab Member)',
+                'Assistant Professor Core Scope',
+                'Associate Professor Core Scope',
+                'Professor Core Scope'
+            ],
+            institution: [
+                'Director – Students welfare & Admission',
+                'Head - HR',
+                'Principal',
+                'Dean - IQAC',
+                'Director - Academics',
+                'Controller of Examinations',
+                'Executive Dean – International Affairs',
+                'Head - Placements',
+                'Placement Officer',
+                'Head – Training',
+                'Training Officer',
+                'Head - RISE',
+                'IT Infra – Coordinator',
+                'Website – Coordinator',
+                'ERP Coordinator',
+                'Public Relations Officer',
+                'Logistics Coordinator'
+            ]
+        };
+
+        // Create form categories distribution chart (Institution, Faculty, Faculty Core)
+        async function createFormCategoriesChart() {
+            console.log('Creating form categories chart...');
+            
+            const ctx = document.getElementById('formCategoriesChart').getContext('2d');
+            
+            if (chartInstances.formCategories) {
+                chartInstances.formCategories.destroy();
+            }
+
+            // Define form categories based on template files
+            const formCategories = {
+                'Institution Forms': 17,  // institution-form1.html to institution-form17.html
+                'Faculty Forms': 8,       // faculty-form1.html to faculty-form8.html  
+                'Faculty Core Forms': 3   // form-ap.html, form-asp.html, form-prof.html
+            };
+
+            const labels = Object.keys(formCategories);
+            const data = Object.values(formCategories);
+            
+            // Create distinct colors for each category
+            const colors = [
+                '#3B82F6', // Blue for Institution Forms
+                '#10B981', // Green for Faculty Forms  
+                '#F59E0B'  // Orange for Faculty Core Forms
+            ];
+
+            chartInstances.formCategories = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderColor: '#ffffff',
+                        borderWidth: 3,
+                        hoverBorderWidth: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                usePointStyle: true,
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    if (data.labels.length && data.datasets.length) {
+                                        return data.labels.map((label, i) => ({
+                                            text: `${label}: ${data.datasets[0].data[i]} forms`,
+                                            fillStyle: data.datasets[0].backgroundColor[i],
+                                            strokeStyle: data.datasets[0].borderColor,
+                                            lineWidth: data.datasets[0].borderWidth,
+                                            pointStyle: 'circle',
+                                            index: i
+                                        }));
+                                    }
+                                    return [];
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Forms Available by Category',
+                            padding: 20,
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: ${value} forms (${percentage}%)`;
+                                }
+                            },
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 13
+                            }
+                        }
+                    },
+                    elements: {
+                        arc: {
+                            borderRadius: 8
+                        }
+                    }
+                }
+            });
+
+            const totalForms = data.reduce((sum, count) => sum + count, 0);
+            console.log(`Form categories chart created: ${totalForms} total forms across ${labels.length} categories`);
+            console.log('Form categories breakdown:', formCategories);
+        }
+
+        // Create form status chart (opening/closing status)
+        async function createFormStatusChart() {
+            const ctx = document.getElementById('formStatusChart').getContext('2d');
+            
+            if (chartInstances.formStatus) {
+                chartInstances.formStatus.destroy();
+            }
+
+            try {
+                // Try to get form status from formstatus table
+                const { data: formStatus, error } = await supabaseClient
+                    .from('formstatus')
+                    .select('form_name, is_open, last_updated');
+
+                let statusCounts = { 'Open': 0, 'Closed': 0 };
+                let formDetails = [];
+                const TOTAL_FORMS = 28; // Actual count: 8 faculty + 17 institution + 3 role-specific forms
+
+                if (formStatus && !error && formStatus.length > 0) {
+                    formStatus.forEach(form => {
+                        if (form.is_open) {
+                            statusCounts['Open']++;
+                        } else {
+                            statusCounts['Closed']++;
+                        }
+                        formDetails.push({
+                            name: form.form_name,
+                            status: form.is_open ? 'Open' : 'Closed',
+                            lastUpdated: form.last_updated
+                        });
+                    });
+                    
+                    // If we have fewer records than expected, add missing as 'Open' (default state)
+                    const totalRecorded = statusCounts['Open'] + statusCounts['Closed'];
+                    if (totalRecorded < TOTAL_FORMS) {
+                        statusCounts['Open'] += (TOTAL_FORMS - totalRecorded);
+                    }
+                } else {
+                    // If formstatus table doesn't exist or is empty, show all forms as open by default
+                    console.log('Form status table not available or empty, showing default distribution');
+                    statusCounts = { 'Open': TOTAL_FORMS, 'Closed': 0 };
+                }
+
+                chartInstances.formStatus = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(statusCounts),
+                        datasets: [{
+                            label: 'Form Count',
+                            data: Object.values(statusCounts),
+                            backgroundColor: [
+                                'rgba(34, 197, 94, 0.8)',  // Green for Open
+                                'rgba(239, 68, 68, 0.8)'   // Red for Closed
+                            ],
+                            borderColor: [
+                                'rgba(34, 197, 94, 1)',
+                                'rgba(239, 68, 68, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: `Form Status Distribution (Total: ${TOTAL_FORMS} Forms)`
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: Math.max(TOTAL_FORMS, 30),
+                                ticks: {
+                                    stepSize: 2
+                                }
+                            }
+                        }
+                    }
+                });
+
+                const totalShown = statusCounts['Open'] + statusCounts['Closed'];
+                console.log(`Form status distribution: Open: ${statusCounts['Open']}, Closed: ${statusCounts['Closed']}, Total: ${totalShown}/${TOTAL_FORMS}`);
+                if (formDetails.length > 0) {
+                    console.log('Form details:', formDetails);
+                }
+
+            } catch (error) {
+                console.error('Error creating form status chart:', error);
+                // Create a default chart on error showing all 28 forms as open
+                const TOTAL_FORMS = 28;
+                chartInstances.formStatus = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Open', 'Closed'],
+                        datasets: [{
+                            label: 'Form Count',
+                            data: [TOTAL_FORMS, 0],
+                            backgroundColor: ['rgba(34, 197, 94, 0.8)', 'rgba(239, 68, 68, 0.8)'],
+                            borderColor: ['rgba(34, 197, 94, 1)', 'rgba(239, 68, 68, 1)'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `Form Status (Default - Total: ${TOTAL_FORMS} Forms)`
+                            },
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 30,
+                                ticks: {
+                                    stepSize: 2
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Load dashboard data and create charts (using actual database data)
+        async function loadDashboardData() {
+            try {
+                // Load users data from all user tables  
+                const { data: faculty, error: facultyError } = await supabaseClient
+                    .from('Faculty')
+                    .select('department, "Name", email, "Designation", "EmployeeID"');
+
+                const { data: hods, error: hodError } = await supabaseClient
+                    .from('HOD')
+                    .select('department, "Name", email, "Designation"');
+
+                console.log('Loaded user data:', {
+                    faculty: faculty?.length || 0,
+                    hods: hods?.length || 0,
+                    facultyError,
+                    hodError
+                });
+
+                // Log sample data for debugging
+                if (faculty && faculty.length > 0) {
+                    console.log('Sample faculty data:', faculty[0]);
+                }
+                if (hods && hods.length > 0) {
+                    console.log('Sample HOD data:', hods[0]);
+                }
+
+                const { data: principals, error: principalError } = await supabaseClient
+                    .from('Principal')
+                    .select('"Name", email');
+
+                const { data: iqac, error: iqacError } = await supabaseClient
+                    .from('IQAC')
+                    .select('*');
+
+                const { data: management, error: managementError } = await supabaseClient
+                    .from('Management')
+                    .select('*');
+
+                const { data: admin, error: adminError } = await supabaseClient
+                    .from('Admin')
+                    .select('*');
+
+                // Load form submission data from actual form tables
+                let totalFormSubmissions = 0;
+                
+                // Get data from form2 tables
+                try {
+                    const { data: form2Daily, error: f2dError } = await supabaseClient
+                        .from('form2-daily')
+                        .select('input_id');
+                    totalFormSubmissions += form2Daily?.length || 0;
+                } catch (e) { console.log('form2-daily not accessible'); }
+
+                try {
+                    const { data: form2Weekly, error: f2wError } = await supabaseClient
+                        .from('form2-weekly')
+                        .select('id');
+                    totalFormSubmissions += form2Weekly?.length || 0;
+                } catch (e) { console.log('form2-weekly not accessible'); }
+
+                try {
+                    const { data: form2Monthly, error: f2mError } = await supabaseClient
+                        .from('form2-once in a month')
+                        .select('id');
+                    totalFormSubmissions += form2Monthly?.length || 0;
+                } catch (e) { console.log('form2-monthly not accessible'); }
+
+                try {
+                    const { data: form2Semester, error: f2sError } = await supabaseClient
+                        .from('form2-once in a semester')
+                        .select('id');
+                    totalFormSubmissions += form2Semester?.length || 0;
+                } catch (e) { console.log('form2-semester not accessible'); }
+
+                // Update stats with real data
+                const totalUsers = (faculty?.length || 0) + (hods?.length || 0) + (principals?.length || 0) + 
+                                 (iqac?.length || 0) + (management?.length || 0) + (admin?.length || 0);
+                document.getElementById('totalUsers').textContent = totalUsers;
+
+                // Use actual form submissions count
+                document.getElementById('activeForms').textContent = totalFormSubmissions;
+                
+                // Get unique departments from both faculty and HOD data
+                const facultyDepartments = faculty?.map(f => f.department).filter(d => d && d.trim() !== '' && d.toLowerCase() !== 'null') || [];
+                const hodDepartments = hods?.map(h => h.department || h.Department).filter(d => d && d.trim() !== '' && d.toLowerCase() !== 'null') || [];
+                const allDepartments = [...facultyDepartments, ...hodDepartments];
+                const departments = [...new Set(allDepartments)];
+                console.log('Department calculation DEBUG:', {
+                    facultyLength: faculty?.length || 0,
+                    hodsLength: hods?.length || 0,
+                    facultyDepts: facultyDepartments,
+                    hodDepts: hodDepartments,
+                    uniqueDepts: departments,
+                    totalUnique: departments.length
+                });
+                
+                // Log individual faculty departments for debugging
+                if (faculty) {
+                    faculty.forEach((f, index) => {
+                        if (index < 3) { // Log first 3 only
+                            console.log(`Faculty ${index + 1}: Name="${f.Name}", Dept="${f.department}"`);
+                        }
+                    });
+                }
+                
+                document.getElementById('totalDepartments').textContent = departments.length;
+
+                // Create charts with actual data
+                await createFormCategoriesChart(); // Show form categories distribution
+                await createFacultyChart(); // Fetch data directly from Faculty table
+                await createFormStatusChart();
+                await createDeptStatusBarChart(); // Department status distribution from principal dashboard
+                await createOverallChart(); // Overall submission status from principal dashboard
+                await createFormsChart(); // Now async to fetch actual data
+                await populateFormFilters(); // Populate form filter dropdowns
+
+                console.log('Dashboard loaded with actual data:', {
+                    totalUsers,
+                    totalFormSubmissions,
+                    departments: departments.length
+                });
+
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                // Set error indicators
+                document.getElementById('totalUsers').textContent = 'Error';
+                document.getElementById('activeForms').textContent = 'Error';
+                document.getElementById('totalDepartments').textContent = 'Error';
+            }
+        }
+
+        // Create faculty by department chart using Faculty table data
+        async function createFacultyChart() {
+            const ctx = document.getElementById('facultyChart').getContext('2d');
+            
+            console.log('Creating faculty chart - fetching from Faculty table...');
+            
+            if (chartInstances.faculty) {
+                chartInstances.faculty.destroy();
+            }
+
+            // Fetch data directly from Faculty table
+            let facultyData = [];
+            try {
+                const { data, error } = await supabaseClient
+                    .from('Faculty')
+                    .select('department, Name, Designation, EmployeeID');
+                
+                if (error) {
+                    console.error('Error fetching Faculty table:', error);
+                    // Show error state
+                    chartInstances.faculty = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Error Loading Data'],
+                            datasets: [{
+                                label: 'Faculty Count',
+                                data: [0],
+                                backgroundColor: ['#FEF2F2']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                title: { display: true, text: 'Error Loading Faculty Data' }
+                            }
+                        }
+                    });
+                    return;
+                }
+                
+                facultyData = data || [];
+                console.log('Fetched faculty data from Faculty table:', facultyData.length);
+            } catch (e) {
+                console.error('Exception fetching Faculty table:', e);
+                facultyData = [];
+            }
+
+            if (!facultyData || facultyData.length === 0) {
+                // Show empty state
+                chartInstances.faculty = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['No Faculty Data'],
+                        datasets: [{
+                            label: 'Faculty Count',
+                            data: [0],
+                            backgroundColor: ['#E5E7EB']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: 'No Faculty Data Available' }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, max: 1 }
+                        }
+                    }
+                });
+                return;
+            }
+
+            // Count faculty by department using the department column
+            const deptCount = {};
+            
+            facultyData.forEach(faculty => {
+                const dept = faculty.department; // Use exact department field name
+                console.log('Processing faculty:', { 
+                    name: faculty.Name, 
+                    employeeID: faculty.EmployeeID,
+                    department: dept,
+                    designation: faculty.Designation 
+                });
+                
+                if (dept && dept.trim() !== '' && dept.toLowerCase() !== 'null') {
+                    deptCount[dept] = (deptCount[dept] || 0) + 1;
+                } else {
+                    // Count unassigned faculty
+                    deptCount['Unassigned'] = (deptCount['Unassigned'] || 0) + 1;
+                }
+            });
+
+            console.log('Department counts from Faculty table:', deptCount);
+
+            if (Object.keys(deptCount).length === 0) {
+                // No valid departments
+                chartInstances.faculty = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['No Departments'],
+                        datasets: [{
+                            label: 'Faculty Count',
+                            data: [facultyData.length],
+                            backgroundColor: ['#FEF3C7']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: 'Faculty Without Department Assignment' }
+                        }
+                    }
+                });
+                return;
+            }
+
+            // Sort departments by faculty count for better visualization
+            const sortedDepts = Object.entries(deptCount)
+                .sort(([,a], [,b]) => b - a)
+                .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+
+            const labels = Object.keys(sortedDepts);
+            const data = Object.values(sortedDepts);
+            const colors = labels.map((_, index) => 
+                `hsl(${(index * 137.508) % 360}, 70%, 60%)`
+            );
+
+            chartInstances.faculty = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Faculty Count',
+                        data: data,
+                        backgroundColor: colors,
+                        borderColor: colors.map(color => color.replace('60%', '40%')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Faculty Distribution by Department'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            const totalFaculty = data.reduce((sum, count) => sum + count, 0);
+            console.log(`Faculty by department chart created: ${labels.length} departments, ${totalFaculty} total faculty`);
+            console.log('Department distribution from Faculty table:', deptCount);
+        }
+
+        // Status categories (from principal dashboard)
+        const STATUS_CATEGORIES = {
+            completed: ['completed', 'uploaded'],
+            notcompleted: ['yet to be completed'],
+            process: ['under process']
+        };
+
+        // Helper: classify status (from principal dashboard)
+        function classifyStatus(row) {
+            let statusFields = Object.keys(row).filter(key => key.toLowerCase().includes('status'));
+            let hasNotCompleted = false;
+            let hasProcess = false;
+            let allCompleted = true;
+            for (const key of statusFields) {
+                const val = (row[key] || '').toLowerCase();
+                if (STATUS_CATEGORIES.notcompleted.some(s => val.includes(s))) {
+                    hasNotCompleted = true;
+                    allCompleted = false;
+                } else if (STATUS_CATEGORIES.process.some(s => val.includes(s))) {
+                    hasProcess = true;
+                    allCompleted = false;
+                } else if (!STATUS_CATEGORIES.completed.some(s => val.includes(s))) {
+                    allCompleted = false;
+                }
+            }
+            if (hasNotCompleted) return 'Not Completed';
+            if (allCompleted && statusFields.length > 0) return 'Completed/Uploaded';
+            if (hasProcess) return 'Under Process';
+            return 'Not Completed';
+        }
+
+        // Create Department Status Distribution chart (from principal dashboard)
+        async function createDeptStatusBarChart() {
+            const ctx = document.getElementById('deptStatusBarChart').getContext('2d');
+            
+            if (chartInstances.deptStatusBar) {
+                chartInstances.deptStatusBar.destroy();
+            }
+
+            // Get all form submission data with status classification
+            let allStatusRows = [];
+            let departments = new Set();
+
+            try {
+                // Load data from each form table and classify status
+                for (const table of ACTUAL_FORM_TABLES) {
+                    try {
+                        const { data, error } = await supabaseClient
+                            .from(table)
+                            .select('*');
+                        
+                        if (error || !data) continue;
+                        
+                        data.forEach(row => {
+                            let dept = row['Department'] || row['department'] || row['Department:'] || row['department:'] || '';
+                            if (dept && dept.trim() !== '') {
+                                let status = classifyStatus(row);
+                                allStatusRows.push({ department: dept, status });
+                                departments.add(dept);
+                            }
+                        });
+                    } catch (e) {
+                        console.log(`Table ${table} not accessible for status analysis`);
+                    }
+                }
+
+                const labels = Array.from(departments);
+                const statusTypes = ['Completed/Uploaded', 'Not Completed', 'Under Process'];
+                
+                // Build data for each status
+                const dataByStatus = statusTypes.map(status =>
+                    labels.map(dept => allStatusRows.filter(r => r.department === dept && r.status === status).length)
+                );
+
+                chartInstances.deptStatusBar = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Completed/Uploaded',
+                                data: dataByStatus[0],
+                                backgroundColor: 'rgba(34,197,94,0.7)',
+                                borderColor: 'rgba(34,197,94,1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Not Completed',
+                                data: dataByStatus[1],
+                                backgroundColor: 'rgba(239,68,68,0.7)',
+                                borderColor: 'rgba(239,68,68,1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Under Process',
+                                data: dataByStatus[2],
+                                backgroundColor: 'rgba(59,130,246,0.7)',
+                                borderColor: 'rgba(59,130,246,1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: true } },
+                        scales: {
+                            x: { stacked: false },
+                            y: { beginAtZero: true, ticks: { precision: 0 } }
+                        }
+                    }
+                });
+
+                console.log(`Department status chart created with ${labels.length} departments`);
+            } catch (error) {
+                console.error('Error creating department status chart:', error);
+            }
+        }
+
+        // Create Overall Submission Status chart (from principal dashboard)
+        async function createOverallChart() {
+            const ctx = document.getElementById('overallChart').getContext('2d');
+            
+            if (chartInstances.overall) {
+                chartInstances.overall.destroy();
+            }
+
+            // Get overall status counts from all form submissions
+            const overallCounts = { 'Completed/Uploaded': 0, 'Not Completed': 0, 'Under Process': 0 };
+
+            try {
+                // Load data from each form table and classify status
+                for (const table of ACTUAL_FORM_TABLES) {
+                    try {
+                        const { data, error } = await supabaseClient
+                            .from(table)
+                            .select('*');
+                        
+                        if (error || !data) continue;
+                        
+                        data.forEach(row => {
+                            let status = classifyStatus(row);
+                            if (overallCounts[status] !== undefined) {
+                                overallCounts[status]++;
+                            }
+                        });
+                    } catch (e) {
+                        console.log(`Table ${table} not accessible for overall status analysis`);
+                    }
+                }
+
+                chartInstances.overall = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(overallCounts),
+                        datasets: [{
+                            label: 'Overall Submission Status',
+                            data: Object.values(overallCounts),
+                            backgroundColor: [
+                                'rgba(34,197,94,0.7)', // green
+                                'rgba(239,68,68,0.7)', // red
+                                'rgba(59,130,246,0.7)' // blue
+                            ],
+                            borderColor: [
+                                'rgba(34,197,94,1)',
+                                'rgba(239,68,68,1)',
+                                'rgba(59,130,246,1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                    }
+                });
+
+                const total = Object.values(overallCounts).reduce((sum, count) => sum + count, 0);
+                console.log(`Overall status chart created: ${total} total submissions`, overallCounts);
+            } catch (error) {
+                console.error('Error creating overall status chart:', error);
+            }
+        }
+
+        // Form configuration using exact table names and actual form names
+        const ACTUAL_FORM_TABLES = [
+            // Faculty Forms (8 forms)
+            'form1-Weekly', 'form1-once in 15 days', 'form1-once in a semester', 'form1-once in a year',
+            'form2-daily', 'form2-weekly', 'form2-once in a month', 'form2-once in a semester',
+            'form3-Weekly', 'form3- once in 15 days', 'form3-once in a semester',
+            'form4-Weekly', 'form4-once in a month', 'form4-once in a semester',
+            'form5-weekly', 'form5-Once in a 3 Months', 'form5-once in a semester',
+            'form6-weekly', 'form6-once in 2 month', 'form6-once in a semester',
+            'form7-Weekly', 'form7-Once in 2 Months', 'form7-Once in a Semester',
+            'form8-weekly', 'form8-once in 3 Months', 'form8-Once in Semester',
+            // Institution Forms (17 forms) - these would be institution-form1 to institution-form17 tables
+            'institution-form1', 'institution-form2', 'institution-form3', 'institution-form4', 'institution-form5',
+            'institution-form6', 'institution-form7', 'institution-form8', 'institution-form9', 'institution-form10',
+            'institution-form11', 'institution-form12', 'institution-form13', 'institution-form14', 'institution-form15',
+            'institution-form16', 'institution-form17',
+            // Faculty Core Scope Forms (3 forms)
+            'form-ap', 'form-asp', 'form-prof'
+        ];
+
+        // Form groups with actual names for better organization
+        const FORM_GROUPS = {
+            faculty: {
+                'Students Performance in Training & Placement': ['form1-Weekly', 'form1-once in 15 days', 'form1-once in a semester', 'form1-once in a year'],
+                'Class Advisor Activities': ['form2-daily', 'form2-weekly', 'form2-once in a month', 'form2-once in a semester'],
+                'Faculty Information & Contribution': ['form3-Weekly', 'form3- once in 15 days', 'form3-once in a semester'],
+                'Course Outcome & Program Outcome': ['form4-Weekly', 'form4-once in a month', 'form4-once in a semester'],
+                'Continuous Improvement Activities': ['form5-weekly', 'form5-Once in a 3 Months', 'form5-once in a semester'],
+                'Teaching & Learning Process': ['form6-weekly', 'form6-once in 2 month', 'form6-once in a semester'],
+                'Student Support System': ['form7-Weekly', 'form7-Once in 2 Months', 'form7-Once in a Semester'],
+                'Facilities & Technical Support': ['form8-weekly', 'form8-once in 3 Months', 'form8-Once in Semester']
+            },
+            institution: {
+                'Director – Students Welfare & Admission': ['institution-form1'],
+                'Head - HR Management': ['institution-form2'],
+                'Principal Administration': ['institution-form3'],
+                'Dean - IQAC Activities': ['institution-form4'],
+                'Director - Academics': ['institution-form5'],
+                'Controller of Examinations': ['institution-form6'],
+                'Executive Dean – International Affairs': ['institution-form7'],
+                'Head - Placements': ['institution-form8'],
+                'Placement Officer Activities': ['institution-form9'],
+                'Head – Training': ['institution-form10'],
+                'Training Officer Activities': ['institution-form11'],
+                'Head - RISE': ['institution-form12'],
+                'IT Infrastructure Coordination': ['institution-form13'],
+                'Website Coordination': ['institution-form14'],
+                'ERP Coordination': ['institution-form15'],
+                'Public Relations Activities': ['institution-form16'],
+                'Logistics Coordination': ['institution-form17']
+            },
+            core: {
+                'Assistant Professor Core Scope': ['form-ap'],
+                'Associate Professor Core Scope': ['form-asp'],
+                'Professor Core Scope': ['form-prof']
+            }
+        };
+
+        let allFormsData = {};
+        let allFormSubmissions = []; // Store all submission records with portfolio info
+        let currentFormFilter = 'all';
+
+        // Helper function to determine form type from table name
+        function getFormType(tableName) {
+            if (tableName.includes('institution-form')) {
+                return 'institution';
+            } else if (tableName.includes('form-ap') || tableName.includes('form-asp') || tableName.includes('form-prof')) {
+                return 'core';
+            } else {
+                return 'faculty';
+            }
+        }
+
+        // Populate form filter dropdowns with all form categories
+        async function populateFormFilters() {
+            try {
+                const specificFilter = document.getElementById('specificFormFilter');
+                if (!specificFilter) {
+                    console.error('specificFormFilter element not found');
+                    return;
+                }
+                
+                // Clear existing options except "All"
+                specificFilter.innerHTML = '<option value="all">All Specific Forms</option>';
+                
+                // Add faculty forms to specific filter
+                Object.keys(FORM_GROUPS.faculty).forEach(formName => {
+                    const option = document.createElement('option');
+                    option.value = formName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+                    option.textContent = formName;
+                    specificFilter.appendChild(option);
+                });
+                
+                // Add institution forms to specific filter
+                Object.keys(FORM_GROUPS.institution).forEach(formName => {
+                    const option = document.createElement('option');
+                    option.value = formName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+                    option.textContent = formName;
+                    specificFilter.appendChild(option);
+                });
+                
+                // Add core scope forms to specific filter
+                Object.keys(FORM_GROUPS.core).forEach(formName => {
+                    const option = document.createElement('option');
+                    option.value = formName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+                    option.textContent = formName;
+                    specificFilter.appendChild(option);
+                });
+                
+                console.log('Form filters populated successfully with all categories');
+            } catch (error) {
+                console.error('Error populating form filters:', error);
+            }
+        }
+
+        // Load data from actual form tables (including faculty, institution, and core forms)
+        async function loadAllFormsData() {
+            console.log('Loading all forms submission data from all categories...');
+            allFormsData = {};
+            allFormSubmissions = [];
+            
+            try {
+                // Load data from each actual form table
+                for (const table of ACTUAL_FORM_TABLES) {
+                    console.log(`Loading data from table: ${table}`);
+                    
+                    try {
+                        const { data, error } = await supabaseClient
+                            .from(table)
+                            .select('*');
+                        
+                        if (error) {
+                            console.log(`Error fetching ${table}: ${error.message}`);
+                            continue;
+                        }
+                        
+                        if (data && data.length > 0) {
+                            console.log(`${table}: Found ${data.length} submissions`);
+                            
+                            // Process each submission record with enhanced data extraction
+                            data.forEach(row => {
+                                // Extract department info using multiple possible field names
+                                let dept = row['Department'] || row['department'] || row['Department:'] || 
+                                          row['department:'] || row['dept'] || 'Unassigned';
+                                
+                                // Extract portfolio info
+                                let portfolio = row['Portfolio Name'] || row['portfolio_name'] || 
+                                              row['Portfolio_Name'] || row['portfolio'] || 'Not Specified';
+                                
+                                // Extract employee info
+                                let employeeID = row['EmployeeID'] || row['employee_id'] || row['Employee_ID'] || 
+                                               row['empID'] || row['emp_id'] || '';
+                                
+                                allFormSubmissions.push({
+                                    id: row.id || row.input_id || Math.random(),
+                                    table: table,
+                                    department: dept,
+                                    portfolio: portfolio,
+                                    employeeID: employeeID,
+                                    formType: getFormType(table),
+                                    submittedAt: row.submitted_at || row.created_at || row.date || new Date().toISOString(),
+                                    ...row
+                                });
+                            });
+                        } else {
+                            console.log(`${table}: No submissions found`);
+                        }
+                        
+                    } catch (e) {
+                        console.log(`Table ${table} not accessible: ${e.message}`);
+                    }
+                }
+
+                // Group submissions by form categories
+                // Faculty Forms
+                Object.entries(FORM_GROUPS.faculty).forEach(([formName, tables]) => {
+                    const formSubmissions = allFormSubmissions.filter(submission => 
+                        tables.some(table => submission.table === table)
+                    );
+                    
+                    const formId = formName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+                    allFormsData[formId] = {
+                        name: formName,
+                        type: 'faculty',
+                        submissions: formSubmissions.length,
+                        tables: tables,
+                        category: 'Faculty Forms'
+                    };
+                });
+
+                // Institution Forms  
+                Object.entries(FORM_GROUPS.institution).forEach(([formName, tables]) => {
+                    const formSubmissions = allFormSubmissions.filter(submission => 
+                        tables.some(table => submission.table === table)
+                    );
+                    
+                    const formId = formName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+                    allFormsData[formId] = {
+                        name: formName,
+                        type: 'institution',
+                        submissions: formSubmissions.length,
+                        tables: tables,
+                        category: 'Institution Forms'
+                    };
+                });
+
+                // Faculty Core Scope Forms
+                Object.entries(FORM_GROUPS.core).forEach(([formName, tables]) => {
+                    const formSubmissions = allFormSubmissions.filter(submission => 
+                        tables.some(table => submission.table === table)
+                    );
+                    
+                    const formId = formName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+                    allFormsData[formId] = {
+                        name: formName,
+                        type: 'core',
+                        submissions: formSubmissions.length,
+                        tables: tables,
+                        category: 'Faculty Core Scope'
+                    };
+                });
+
+                console.log('All forms data loaded:', allFormsData);
+                console.log(`Total submissions across all forms: ${allFormSubmissions.length}`);
+                
+                // Log statistics by category
+                const facultyForms = Object.values(allFormsData).filter(f => f.type === 'faculty');
+                const institutionForms = Object.values(allFormsData).filter(f => f.type === 'institution');
+                const coreForms = Object.values(allFormsData).filter(f => f.type === 'core');
+                
+                console.log(`Faculty Forms: ${facultyForms.length} forms, ${facultyForms.reduce((sum, f) => sum + f.submissions, 0)} submissions`);
+                console.log(`Institution Forms: ${institutionForms.length} forms, ${institutionForms.reduce((sum, f) => sum + f.submissions, 0)} submissions`);
+                console.log(`Core Scope Forms: ${coreForms.length} forms, ${coreForms.reduce((sum, f) => sum + f.submissions, 0)} submissions`);
+                
+            } catch (error) {
+                console.error('Error loading forms data:', error);
+                // Create empty data structure if loading fails
+                [...Object.keys(FORM_GROUPS.faculty), ...Object.keys(FORM_GROUPS.institution), ...Object.keys(FORM_GROUPS.core)].forEach(formName => {
+                    const formId = formName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+                    const type = Object.keys(FORM_GROUPS.faculty).includes(formName) ? 'faculty' : 
+                                Object.keys(FORM_GROUPS.institution).includes(formName) ? 'institution' : 'core';
+                    
+                    allFormsData[formId] = {
+                        name: formName,
+                        type: type,
+                        submissions: 0,
+                        tables: FORM_GROUPS[type === 'faculty' ? 'faculty' : type === 'institution' ? 'institution' : 'core'][formName] || [],
+                        category: type === 'faculty' ? 'Faculty Forms' : type === 'institution' ? 'Institution Forms' : 'Faculty Core Scope'
+                    };
+                });
+            }
+        }
+
+        // Refresh forms data
+        async function refreshFormsData() {
+            console.log('Refreshing forms data...');
+            allFormsData = {};
+            allFormSubmissions = [];
+            await loadAllFormsData();
+            await updateFormsChart();
+            await createFormCategoriesChart(); // Refresh form categories chart
+            await createFacultyChart(); // Refresh faculty chart with fresh Faculty table data
+            await createDeptStatusBarChart(); // Refresh department status chart
+            await createOverallChart(); // Refresh overall status chart
+        }
+
+        // Create forms status chart with actual submission data and filtering
+        async function createFormsChart() {
+            console.log('Creating forms chart with actual submission data...');
+            
+            try {
+                await loadAllFormsData();
+                console.log(`Forms data loaded: ${Object.keys(allFormsData).length} forms, ${allFormSubmissions.length} total submissions`);
+                await updateFormsChart();
+            } catch (error) {
+                console.error('Error in createFormsChart:', error);
+                // Create empty chart on error
+                const ctx = document.getElementById('formsChart').getContext('2d');
+                if (chartInstances.forms) {
+                    chartInstances.forms.destroy();
+                }
+                chartInstances.forms = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Error Loading Forms'],
+                        datasets: [{
+                            label: 'Submissions',
+                            data: [0],
+                            backgroundColor: ['#FEF2F2'],
+                            borderColor: ['#EF4444'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: 'Error Loading Form Submissions Data' }
+                        },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+        }
+
+        // Update forms chart based on filters
+        async function updateFormsChart() {
+            const ctx = document.getElementById('formsChart').getContext('2d');
+            
+            if (chartInstances.forms) {
+                chartInstances.forms.destroy();
+            }
+
+            const formFilter = document.getElementById('formFilter')?.value || 'all';
+            const specificFormFilter = document.getElementById('specificFormFilter')?.value || 'all';
+
+            let filteredData = {};
+            let chartTitle = '';
+
+            console.log('Updating forms chart with filters:', { formFilter, specificFormFilter });
+            console.log('Available forms data keys:', Object.keys(allFormsData));
+            console.log('Total submissions loaded:', allFormSubmissions.length);
+            console.log('All forms data:', allFormsData);
+
+            // Apply filters
+            if (specificFormFilter !== 'all') {
+                // Show specific form only
+                if (allFormsData[specificFormFilter]) {
+                    filteredData[specificFormFilter] = allFormsData[specificFormFilter];
+                    chartTitle = `Submissions: ${allFormsData[specificFormFilter].name}`;
+                    console.log(`Filtered to specific form: ${specificFormFilter}`, filteredData[specificFormFilter]);
+                } else {
+                    console.warn(`Specific form not found: ${specificFormFilter}`);
+                }
+            } else {
+                // Apply category filter
+                Object.entries(allFormsData).forEach(([formId, formData]) => {
+                    if (formFilter === 'all' || formData.type === formFilter) {
+                        filteredData[formId] = formData;
+                    }
+                });
+
+                switch(formFilter) {
+                    case 'faculty':
+                        chartTitle = 'Faculty Forms Submissions';
+                        break;
+                    case 'institution':
+                        chartTitle = 'Institution Forms Submissions';
+                        break;
+                    case 'core':
+                        chartTitle = 'Faculty Core Scope Forms Submissions';
+                        break;
+                    default:
+                        chartTitle = 'All Forms Submissions Overview';
+                }
+                console.log(`Applied category filter: ${formFilter}, found ${Object.keys(filteredData).length} forms`);
+            }
+
+            console.log('Filtered data:', filteredData);
+
+            if (Object.keys(filteredData).length === 0) {
+                // Show empty state
+                chartInstances.forms = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['No Forms Available'],
+                        datasets: [{
+                            label: 'Submissions',
+                            data: [0],
+                            backgroundColor: ['#E5E7EB']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: 'No Forms Data Available' }
+                        }
+                    }
+                });
+                return;
+            }
+
+            // Prepare chart data
+            const labels = Object.values(filteredData).map(form => {
+                // Truncate long names for better display
+                return form.name.length > 30 ? form.name.substring(0, 30) + '...' : form.name;
+            });
+            const data = Object.values(filteredData).map(form => form.submissions);
+            const colors = labels.map((_, index) => 
+                `hsl(${(index * 137.508) % 360}, 70%, 60%)`
+            );
+
+            chartInstances.forms = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Submissions',
+                        data: data,
+                        backgroundColor: colors,
+                        borderColor: colors.map(color => color.replace('60%', '40%')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: chartTitle
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            const totalSubmissions = data.reduce((sum, count) => sum + count, 0);
+            console.log(`${chartTitle}: ${Object.keys(filteredData).length} forms, ${totalSubmissions} total submissions`);
+        }
+
+        // Generate user report with actual database fields
+        async function generateUserReport() {
+            try {
+                // Get actual data with all relevant fields
+                const { data: faculty } = await supabaseClient.from('Faculty').select('*');
+                const { data: hods } = await supabaseClient.from('HOD').select('*');
+                const { data: principals } = await supabaseClient.from('Principal').select('*');
+                const { data: iqac } = await supabaseClient.from('IQAC').select('*');
+                const { data: management } = await supabaseClient.from('Management').select('*');
+                const { data: admin } = await supabaseClient.from('Admin').select('*');
+
+                const allUsers = [
+                    ...(faculty || []).map(u => ({ 
+                        ...u, 
+                        role: 'Faculty',
+                        Name: u.Name || 'Unknown',
+                        email: u.email || 'No email',
+                        Department: u.department || 'Not specified',
+                        Mobile: u.Mobile || 'Not provided',
+                        EmployeeID: u.EmployeeID || 'Not provided',
+                        Designation: u.Designation || 'Faculty',
+                        Experience: u.Experience || 'Not specified',
+                        Qualification: u.Qualification || 'Not specified',
+                        Salary: u.Salary || 'Not specified'
+                    })),
+                    ...(hods || []).map(u => ({ 
+                        ...u, 
+                        role: 'HOD',
+                        Name: u.Name || 'Unknown',
+                        email: u.email || 'No email',
+                        Department: u.department || 'Not specified',
+                        Mobile: u.Mobile || 'Not provided',
+                        Designation: u.Designation || 'HOD'
+                    })),
+                    ...(principals || []).map(u => ({ 
+                        ...u, 
+                        role: 'Principal',
+                        Name: u.Name || 'Unknown',
+                        email: u.email || 'No email',
+                        Department: 'All Departments',
+                        Mobile: u.Mobile || 'Not provided'
+                    })),
+                    ...(iqac || []).map(u => ({ 
+                        ...u, 
+                        role: 'IQAC',
+                        Name: u.Name || 'Unknown',
+                        email: u.email || 'No email',
+                        Department: 'IQAC',
+                        Mobile: u.Mobile || 'Not provided'
+                    })),
+                    ...(management || []).map(u => ({ 
+                        ...u, 
+                        role: 'Management',
+                        Name: u.Name || 'Unknown',
+                        email: u.email || 'No email',
+                        Department: 'Management',
+                        Mobile: u.Mobile || 'Not provided'
+                    })),
+                    ...(admin || []).map(u => ({ 
+                        ...u, 
+                        role: 'Admin',
+                        Name: u.Name || 'Administrator',
+                        email: u.email || 'No email',
+                        Department: 'Administration',
+                        Mobile: u.Mobile || 'Not provided'
+                    }))
+                ];
+
+                const csvContent = "data:text/csv;charset=utf-8," + 
+                    "Name,Email,Role,Department,Mobile,EmployeeID,Designation,Experience,Qualification,Status\n" +
+                    allUsers.map(user => 
+                        `"${user.Name || ''}","${user.email || ''}","${user.role}","${user.Department || ''}","${user.Mobile || ''}","${user.EmployeeID || ''}","${user.Designation || ''}","${user.Experience || ''}","${user.Qualification || ''}","${user.Status || 'Active'}"`
+                    ).join("\n");
+
+                downloadCSV(csvContent, 'user_report');
+                console.log(`Generated user report with ${allUsers.length} users`);
+            } catch (error) {
+                console.error('Error generating user report:', error);
+                alert('Error generating user report: ' + error.message);
+            }
+        }
+
+        // Generate department report
+        async function generateDepartmentReport() {
+            try {
+                const { data: faculty } = await supabaseClient.from('Faculty').select('department, "Name", "Designation"');
+                const { data: hods } = await supabaseClient.from('HOD').select('department, "Name", "Designation"');
+
+                const deptStats = {};
+                
+                // Count faculty by department using correct column name
+                (faculty || []).forEach(f => {
+                    const dept = f.department; // Use the correct lowercase column name
+                    if (dept && dept.trim() !== '') {
+                        if (!deptStats[dept]) {
+                            deptStats[dept] = { faculty: 0, hod: 'No' };
+                        }
+                        deptStats[dept].faculty++;
+                    }
+                });
+
+                // Mark departments with HODs using your actual column structure
+                (hods || []).forEach(h => {
+                    const dept = h.department || h.Department; // Try both variations
+                    if (dept && deptStats[dept]) {
+                        deptStats[dept].hod = 'Yes';
+                    }
+                });
+
+                const csvContent = "data:text/csv;charset=utf-8," + 
+                    "Department,Faculty Count,Has HOD\n" +
+                    Object.entries(deptStats).map(([dept, stats]) => 
+                        `"${dept}","${stats.faculty}","${stats.hod}"`
+                    ).join("\n");
+
+                downloadCSV(csvContent, 'department_report');
+            } catch (error) {
+                console.error('Error generating department report:', error);
+            }
+        }
+
+        // Generate forms report with detailed submission data
+        async function generateFormReport() {
+            try {
+                // Get form submission data from all form tables
+                const dailyForms = await supabaseClient.from('form2-daily').select('*, EmployeeID, Date, Day, submitted_at');
+                const weeklyForms = await supabaseClient.from('form2-weekly').select('*, EmployeeID, Week, submitted_at');
+                const monthlyForms = await supabaseClient.from('form2-once in a month').select('*, EmployeeID, Month, submitted_at');
+                const semesterForms = await supabaseClient.from('form2-once in a semester').select('*, EmployeeID, Semester, submitted_at');
+
+                // Get faculty data to map employee IDs to names
+                const { data: facultyData } = await supabaseClient.from('Faculty').select('EmployeeID, Name, department');
+                const facultyMap = {};
+                if (facultyData) {
+                    facultyData.forEach(faculty => {
+                        facultyMap[faculty.EmployeeID] = { 
+                            name: faculty.Name || 'Unknown',
+                            department: faculty.department || 'Not specified'
+                        };
+                    });
+                }
+
+                const allSubmissions = [];
+
+                // Process daily forms
+                if (dailyForms.data) {
+                    dailyForms.data.forEach(form => {
+                        allSubmissions.push({
+                            formType: 'Daily',
+                            employeeID: form.EmployeeID || 'Unknown',
+                            facultyName: facultyMap[form.EmployeeID]?.name || 'Unknown',
+                            department: facultyMap[form.EmployeeID]?.department || 'Unknown',
+                            period: form.Day || form.Date || 'Unknown',
+                            submittedAt: form.submitted_at || 'Unknown',
+                            status: 'Submitted'
+                        });
+                    });
+                }
+
+                // Process weekly forms
+                if (weeklyForms.data) {
+                    weeklyForms.data.forEach(form => {
+                        allSubmissions.push({
+                            formType: 'Weekly',
+                            employeeID: form.EmployeeID || 'Unknown',
+                            facultyName: facultyMap[form.EmployeeID]?.name || 'Unknown',
+                            department: facultyMap[form.EmployeeID]?.department || 'Unknown',
+                            period: form.Week || 'Unknown',
+                            submittedAt: form.submitted_at || 'Unknown',
+                            status: 'Submitted'
+                        });
+                    });
+                }
+
+                // Process monthly forms
+                if (monthlyForms.data) {
+                    monthlyForms.data.forEach(form => {
+                        allSubmissions.push({
+                            formType: 'Monthly',
+                            employeeID: form.EmployeeID || 'Unknown',
+                            facultyName: facultyMap[form.EmployeeID]?.name || 'Unknown',
+                            department: facultyMap[form.EmployeeID]?.department || 'Unknown',
+                            period: form.Month || 'Unknown',
+                            submittedAt: form.submitted_at || 'Unknown',
+                            status: 'Submitted'
+                        });
+                    });
+                }
+
+                // Process semester forms
+                if (semesterForms.data) {
+                    semesterForms.data.forEach(form => {
+                        allSubmissions.push({
+                            formType: 'Semester',
+                            employeeID: form.EmployeeID || 'Unknown',
+                            facultyName: facultyMap[form.EmployeeID]?.name || 'Unknown',
+                            department: facultyMap[form.EmployeeID]?.department || 'Unknown',
+                            period: form.Semester || 'Unknown',
+                            submittedAt: form.submitted_at || 'Unknown',
+                            status: 'Submitted'
+                        });
+                    });
+                }
+
+                const csvContent = "data:text/csv;charset=utf-8," + 
+                    "Form Type,Employee ID,Faculty Name,Department,Period,Submitted At,Status\n" +
+                    allSubmissions.map(submission => 
+                        `"${submission.formType}","${submission.employeeID}","${submission.facultyName}","${submission.department}","${submission.period}","${submission.submittedAt}","${submission.status}"`
+                    ).join("\n");
+
+                downloadCSV(csvContent, 'forms_submission_report');
+                console.log(`Generated forms report with ${allSubmissions.length} submissions`);
+            } catch (error) {
+                console.error('Error generating forms report:', error);
+                alert('Error generating forms report: ' + error.message);
+            }
+        }
+
+        // Download CSV helper
+        function downloadCSV(csvContent, filename) {
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `${filename}_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Debug function to manually test form data loading
+        async function testFormDataLoading() {
+            console.log('=== TESTING FORM DATA LOADING ===');
+            
+            // Test a few specific form tables first
+            const testTables = ['form2-daily', 'form2-weekly', 'form1-Weekly', 'institution-form1', 'form-ap'];
+            
+            for (const table of testTables) {
+                try {
+                    console.log(`Testing table: ${table}`);
+                    const { data, error } = await supabaseClient
+                        .from(table)
+                        .select('*')
+                        .limit(5); // Just get first 5 records
+                    
+                    if (error) {
+                        console.log(`❌ ${table}: ${error.message}`);
+                    } else if (data && data.length > 0) {
+                        console.log(`✅ ${table}: ${data.length} records found`);
+                        console.log(`Sample data:`, data[0]);
+                    } else {
+                        console.log(`⚠️  ${table}: Table exists but empty`);
+                    }
+                } catch (e) {
+                    console.log(`🚫 ${table}: Not accessible - ${e.message}`);
+                }
+            }
+            
+            console.log('=== END FORM DATA TEST ===');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('=== ADMIN REPORTS DASHBOARD INITIALIZING ===');
+            
+            // Run diagnostic test first
+            await testFormDataLoading();
+            
+            // Load main dashboard data
+            await loadDashboardData();
+            
+            console.log('=== ADMIN REPORTS DASHBOARD LOADED ===');
+        });
+    </script>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-8">
+        <p class="text-gray-400 text-sm">
+            &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>, IV CSE 2022-2026.<br>       
+        </p>
+    </footer>
+</body>
+</html>

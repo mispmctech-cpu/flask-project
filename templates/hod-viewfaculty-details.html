@@ -1,0 +1,693 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Faculty Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../static/javascript/form-modal-mapper.js"></script>
+  <script src="../static/javascript/workdone-table.js"></script>
+  <style>
+    /* Hide delete buttons in hod-viewfaculty-details.html */
+    button[onclick*="Delete"] {
+      display: none !important;
+    }
+    button[onclick*="deleteWorkdoneRow"] {
+      display: none !important;
+    }
+    /* Hide the table cell containing delete buttons */
+    td:has(button[onclick*="Delete"]),
+    td:has(button[onclick*="deleteWorkdoneRow"]) {
+      display: none !important;
+    }
+    /* Hide table header for delete column if present */
+    th:empty {
+      display: none !important;
+    }
+  </style>
+  </head>
+  <body class="bg-pmcBg min-h-screen">
+    <header class="bg-purple-700 text-white">
+      <div
+        class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between"
+      >
+          <div class="flex items-center">
+            <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 rounded shadow bg-white p-1" />
+          </div>
+          <button id="menuBtn" class="sm:hidden ml-2 p-2 rounded focus:outline-none focus:ring-2 focus:ring-white" aria-label="Open Menu">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </button>
+          <nav id="mainNav" class="hidden sm:flex gap-6 text-sm font-medium items-center">
+            <a href="hod.html" class="opacity-90 hover:opacity-100">Back</a>
+            <span class="underline decoration-2 underline-offset-4">Faculty Profile</span>
+            <button onclick="window.location.href='/logout'" aria-label="Logout" class="ml-4 focus:outline-none">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-white hover:text-red-400 transition">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+              </svg>
+            </button>
+          </nav>
+          </nav>
+        <div id="mobileNav" class="sm:hidden hidden px-4 pb-4">
+          <nav class="flex flex-col gap-3 text-sm font-medium bg-purple-700 rounded shadow">
+            <a href="hod.html" class="opacity-90 hover:opacity-100 py-2">Back</a>
+            <span class="underline decoration-2 underline-offset-4 py-2">Faculty Profile</span>
+            <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none py-2 text-left">
+              <span class="inline-flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-white hover:text-red-400 transition">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+                </svg>
+                Logout
+              </span>
+            </button>
+          </nav>
+        </div>
+        <script>
+          // Toggle mobile nav
+          document.addEventListener('DOMContentLoaded', function() {
+            const menuBtn = document.getElementById('menuBtn');
+            const mobileNav = document.getElementById('mobileNav');
+            menuBtn.addEventListener('click', function() {
+              mobileNav.classList.toggle('hidden');
+            });
+          });
+        </script>
+        </div>
+      </div>
+    </header>
+    <main class="max-w-6xl mx-auto px-4 py-8">
+      <section class="bg-white rounded-xl card-shadow p-6 mb-8">
+        <div class="flex flex-col md:flex-row items-start gap-8">
+          <div class="flex-shrink-0 text-center w-full md:w-auto">
+            <div class="relative inline-block">
+              <img
+                id="facultyImage"
+                class="w-40 h-40 object-cover shadow border-4 border-pmcPurple mx-auto"
+                style="border-radius: 16px"
+                src=""
+                alt="Faculty Image"
+              />
+            </div>
+          </div>
+          <div class="flex-1 w-full">
+            <form id="facultyEditForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="text-sm font-medium text-gray-600">Employee ID</label>
+                <input id="facultyEmployeeID" name="EmployeeID" type="text" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-pmcPurple" disabled />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Name</label>
+                <input id="facultyName" name="Name" type="text" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-lg font-bold text-pmcPurple" disabled />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Department</label>
+                <input id="facultyDepartment" name="department" type="text" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-pmcPurple" disabled />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Email ID</label>
+                <input id="facultyEmail" name="email" type="email" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600" disabled />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Designation</label>
+                <input id="facultyDesignation" name="Designation" type="text" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-pmcPurpleDark font-semibold" disabled />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Username</label>
+                <input id="facultyUsername" name="Username" type="text" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600" disabled />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Salary</label>
+                <input id="facultySalary" name="Salary" type="text" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600" disabled />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Experience</label>
+                <input id="facultyExperience" name="Experience" type="text" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600" disabled />
+              </div>
+              <div class="md:col-span-2">
+                <label class="text-sm font-medium text-gray-600">Qualification</label>
+                <input id="facultyQualification" name="Qualification" type="text" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600" disabled />
+              </div>
+              <div id="formAssignmentsSection" class="md:col-span-2 grid grid-cols-2 gap-4 mt-2 hidden">
+                <label class="text-sm font-medium text-gray-600 col-span-2">Form Assignments (form1 - form8)</label>
+                <template id="formAssignmentTemplate">
+                  <div class="flex items-center gap-2">
+                    <label class="text-xs font-medium text-gray-600"></label>
+                    <select class="formAssignmentSelect border border-gray-300 rounded px-2 py-1 bg-gray-50" disabled>
+                      <option value="no">No</option>
+                      <option value="yes">Yes</option>
+                    </select>
+                  </div>
+                </template>
+                <div id="formAssignments" class="col-span-2 grid grid-cols-2 gap-2"></div>
+              </div>
+              <div class="md:col-span-2 flex gap-4 mt-2">
+                <button type="button" id="editProfileBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-semibold">Edit</button>
+                <button type="submit" id="saveProfileBtn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-semibold hidden">Save</button>
+                <span id="editStatusMsg" class="ml-4 text-sm"></span>
+              </div>
+            </form>
+          </div>
+        </div>
+        <!-- SEM, SUBJECT, CLASS Table -->
+        <div class="mt-8">
+          <div class="flex items-center gap-2 mb-2">
+            <label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-0 flex-1">SUBJECT ALLOTTED</label>
+            <button type="button" id="editSemSubjectBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded font-semibold">Edit</button>
+            <button type="button" id="saveSemSubjectBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded font-semibold hidden">Save</button>
+            <span id="semSubjectStatusMsg" class="ml-2 text-sm"></span>
+          </div>
+          <div id="facultySemSubjectClassTable" class="mt-1"></div>
+        </div>
+        <!-- Details Table -->
+        <div class="mt-8">
+          <div class="flex items-center gap-2 mb-2">
+            <label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-0 flex-1">FACULTY MANDATORY SCOPE IN RESEARCH, INNOVATIONS AND EXTENSION ACTIVITY/FACULTY CONTRIBUTIONS</label>
+            <button type="button" id="editDetailsTableBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded font-semibold">Edit</button>
+            <button type="button" id="saveDetailsTableBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded font-semibold hidden">Save</button>
+            <span id="detailsTableStatusMsg" class="ml-2 text-sm"></span>
+          </div>
+          <div id="facultyDetailsTable" class="mt-1"></div>
+        </div>
+      </section>
+      <section class="card-shadow rounded-xl overflow-hidden mb-8">
+        <div class="bg-white p-4">
+          <div class="mb-6">
+            <h2 class="text-lg font-bold text-pmcPurple mb-2">
+              DEPARTMENT PORTFOLIO
+
+            </h2>
+            <table class="min-w-full text-sm">
+              <thead class="bg-purple-700">
+                <tr class="text-left text-white">
+                  <th class="p-4 w-16">S.No</th>
+                  <th class="p-4">Role Name</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y" id="facultyFormsDept"></tbody>
+            </table>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-pmcPurple mb-2">
+              FACULTY CORE SCOPE
+            </h2>
+            <table class="min-w-full text-sm">
+              <thead class="bg-purple-700">
+                <tr class="text-left text-white">
+                  <th class="p-4 w-16">S.No</th>
+                  <th class="p-4">Form Name</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y" id="facultyFormsCore"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <!-- Workdone Section -->
+      <section class="card-shadow rounded-xl overflow-hidden">
+        <div class="bg-white p-4">
+          <h2 class="text-lg font-bold text-pmcPurple mb-4 uppercase">WORKDONE</h2>
+          <div class="overflow-x-auto">
+            <table
+              class="min-w-full bg-white shadow text-sm border border-gray-300"
+            >
+              <thead
+                class="bg-gradient-to-r from-purple-700 to-purple-500 text-white"
+              >
+                <tr>
+                  <th class="p-3 border-b border-gray-300">Department</th>
+                  <th class="p-3 border-b border-gray-300">Portfolio Name</th>
+                  <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
+                  <th class="p-3 border-b border-gray-300">Status</th>
+                  <th class="p-3 border-b border-gray-300 text-center">View</th>
+                </tr>
+              </thead>
+              <tbody
+                id="facultyWorkdoneTable"
+                class="divide-y divide-gray-200"
+              ></tbody>
+            </table>
+          </div>
+          <div
+            id="workdoneErrorBox"
+            class="hidden mt-4 p-3 rounded bg-red-100 text-red-700 font-semibold"
+          ></div>
+          <div
+            id="workdoneLoadingBox"
+            class="mt-4 p-3 rounded bg-blue-100 text-blue-800 font-semibold"
+            style="display: none"
+          >
+            Loading workdone data, please wait...
+          </div>
+        </div>
+      </section>
+    </main>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script>
+      // Edit/Save logic for profile and form assignments
+      function setEditMode(editable) {
+        const form = document.getElementById('facultyEditForm');
+        Array.from(form.elements).forEach(el => {
+          if (el.tagName === 'INPUT' || el.classList.contains('formAssignmentSelect')) {
+            el.disabled = !editable;
+          }
+        });
+        document.getElementById('editProfileBtn').style.display = editable ? 'none' : '';
+        document.getElementById('saveProfileBtn').classList.toggle('hidden', !editable);
+        document.getElementById('editStatusMsg').textContent = '';
+        // Show/hide Form Assignments section
+        document.getElementById('formAssignmentsSection').classList.toggle('hidden', !editable);
+      }
+      // Get email from query param
+      function getQueryParam(name) {
+        const url = new URL(window.location.href);
+        return url.searchParams.get(name);
+      }
+      const email = getQueryParam("email");
+      const supabaseClient = window.supabase.createClient(
+        "https://cbhodgwaazmjszkujrti.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+      );
+  let semSubjectClassArr = [];
+  let detailsTableArr = [];
+  let semSubjectEditMode = false;
+  let detailsTableEditMode = false;
+  let semSubjectOriginal = [];
+  let detailsTableOriginal = [];
+
+  async function loadFacultyProfile() {
+        if (!email) {
+          document.body.innerHTML =
+            '<div class="text-center mt-20 text-red-500">No faculty selected.</div>';
+          return;
+        }
+        const { data, error } = await supabaseClient
+          .from("Faculty")
+          .select("*")
+          .eq("email", email)
+          .single();
+        if (error || !data) {
+          document.body.innerHTML =
+            '<div class="text-center mt-20 text-red-500">Faculty not found.</div>';
+          return;
+        }
+        // Institution Portfolio Section: show only forms assigned to this faculty
+        let assignedFormsArr = [];
+        try {
+          if (data["assigned_forms"]) {
+            const parsed = JSON.parse(data["assigned_forms"]);
+            if (Array.isArray(parsed)) {
+              assignedFormsArr = parsed.filter(f => typeof f === 'string' && f.trim() !== '');
+            }
+          }
+        } catch (e) {}
+        let assignedFormsHtml = '';
+        if (assignedFormsArr.length > 0) {
+          assignedFormsHtml = `<div class="mt-8">
+            <label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-1">Institution Portfolio</label>
+            <table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white">
+              <thead class='bg-purple-700 text-white'>
+                <tr><th class="px-4 py-2">Form Name</th><th class="px-4 py-2">Faculty Name</th></tr>
+              </thead>
+              <tbody>
+                ${assignedFormsArr.map(f => `<tr><td class="px-4 py-2">${f}</td><td class="px-4 py-2">${data['Name'] || ''}</td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+        } else {
+          assignedFormsHtml = '<div class="mt-8"><label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-1">Institution Portfolio</label><div class="text-gray-400">No forms assigned.</div></div>';
+        }
+        // Insert below FACULTY CORE SCOPE section
+        const facultyCoreScopeSection = document.querySelector('#facultyFormsCore');
+        if (facultyCoreScopeSection) {
+          facultyCoreScopeSection.parentElement.insertAdjacentHTML('afterend', assignedFormsHtml);
+        }
+        document.getElementById("facultyImage").src = data["Upload Image"] || "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80";
+        document.getElementById("facultyEmployeeID").value = data["EmployeeID"] || "";
+        document.getElementById("facultyName").value = data["Name"] || "";
+        document.getElementById("facultyDesignation").value = data["Designation"] || "";
+        document.getElementById("facultyDepartment").value = data["department"] || "";
+        document.getElementById("facultyEmail").value = data["email"] || "";
+        document.getElementById("facultyUsername").value = data["Username"] || "";
+        document.getElementById("facultySalary").value = data["Salary"] || "";
+        document.getElementById("facultyExperience").value = data["Experience"] || "";
+        document.getElementById("facultyQualification").value = data["Qualification"] || "";
+        // Render form assignments
+        const formAssignmentsDiv = document.getElementById('formAssignments');
+        formAssignmentsDiv.innerHTML = '';
+        const formAssignmentLabels = [
+          '1. Students Performance in Training & Placement Member',
+          '2. Class Advisor',
+          '3. Faculty Information & Contribution Member',
+          '4. Course Outcome & Program Outcome Member (Exam Cell)',
+          '5. Continuous Improvement Member (Program Member)',
+          '6. Teaching & Learning Process Member (IQAC)',
+          '7. Student Support System Member (Discipline & Extra Curricular)',
+          '8. Facilities & Technical Support Member (Lab Member)'
+        ];
+        for (let i = 1; i <= 8; i++) {
+          const template = document.getElementById('formAssignmentTemplate').content.cloneNode(true);
+          template.querySelector('label').textContent = formAssignmentLabels[i-1];
+          const select = template.querySelector('select');
+          select.name = `form${i}`;
+          select.value = (data[`form${i}`] || 'no').toLowerCase();
+          formAssignmentsDiv.appendChild(template);
+        }
+        // Store original data for change detection
+        window._facultyProfileOriginal = {
+          EmployeeID: data["EmployeeID"] || "",
+          Name: data["Name"] || "",
+          department: data["department"] || "",
+          email: data["email"] || "",
+          Designation: data["Designation"] || "",
+          Username: data["Username"] || "",
+          Salary: data["Salary"] || "",
+          Experience: data["Experience"] || "",
+          Qualification: data["Qualification"] || "",
+          ...Object.fromEntries(Array.from({length:8}, (_,i)=>[`form${i+1}`, (data[`form${i+1}`]||'no').toLowerCase()]))
+        };
+        setEditMode(false);
+      document.getElementById('editProfileBtn').addEventListener('click', function() {
+        setEditMode(true);
+      });
+      document.getElementById('facultyEditForm').addEventListener('input', function() {
+        // Show save button if any field changed
+        const orig = window._facultyProfileOriginal;
+        let changed = false;
+        for (const key in orig) {
+          const el = document.getElementsByName(key)[0];
+          if (el && el.value !== orig[key]) {
+            changed = true;
+            break;
+          }
+        }
+        document.getElementById('saveProfileBtn').classList.toggle('hidden', !changed);
+      });
+      document.getElementById('facultyEditForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const updateData = {};
+        const orig = window._facultyProfileOriginal;
+        let changed = false;
+        for (const key in orig) {
+          const el = form.elements[key];
+          if (el && el.value !== orig[key]) {
+            updateData[key] = el.value;
+            changed = true;
+          }
+        }
+        if (!changed) {
+          setEditMode(false);
+          return;
+        }
+        document.getElementById('saveProfileBtn').disabled = true;
+        document.getElementById('editStatusMsg').textContent = 'Saving...';
+        // Update Faculty table by email
+        const { error } = await supabaseClient
+          .from('Faculty')
+          .update(updateData)
+          .eq('email', orig.email);
+        if (error) {
+          document.getElementById('editStatusMsg').textContent = 'Update failed: ' + (error.message || error);
+          document.getElementById('saveProfileBtn').disabled = false;
+        } else {
+          document.getElementById('editStatusMsg').textContent = 'Profile updated successfully!';
+          // Update original data
+          for (const key in updateData) {
+            orig[key] = updateData[key];
+          }
+          setEditMode(false);
+        }
+      });
+        // SEM, SUBJECT, CLASS Table
+        // SEM_SUBJECT_CLASS
+        try {
+          semSubjectClassArr = data["SEM_SUBJECT_CLASS"] ? JSON.parse(data["SEM_SUBJECT_CLASS"]) : [];
+        } catch (e) { semSubjectClassArr = []; }
+        semSubjectOriginal = JSON.parse(JSON.stringify(semSubjectClassArr));
+        renderSemSubjectTable();
+        // DETAILS_TABLE
+        try {
+          detailsTableArr = data["DETAILS_TABLE"] ? JSON.parse(data["DETAILS_TABLE"]) : [];
+        } catch (e) { detailsTableArr = []; }
+        detailsTableOriginal = JSON.parse(JSON.stringify(detailsTableArr));
+        renderDetailsTable();
+      // --- SEM SUBJECT TABLE EDIT/SAVE ---
+      function renderSemSubjectTable() {
+        let html = "";
+        if (Array.isArray(semSubjectClassArr) && semSubjectClassArr.length > 0) {
+          html = `<div class='overflow-x-auto'><table class='min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white'><thead class='bg-purple-700 text-white'><tr><th class='px-4 py-2'>SEM</th><th class='px-4 py-2'>SUBJECT</th><th class='px-4 py-2'>CLASS</th>${semSubjectEditMode ? "<th></th>" : ""}</tr></thead><tbody>` +
+            semSubjectClassArr.map((row, idx) =>
+              `<tr class='${idx%2===0?"bg-gray-50":"bg-white"}'>`+
+              (semSubjectEditMode
+                ? `<td><input type='text' class='border px-2 py-1 rounded w-20' value='${row.sem||""}' onchange='onSemSubjectEdit(${idx},"sem",this.value)' /></td><td><input type='text' class='border px-2 py-1 rounded w-32' value='${row.subject||""}' onchange='onSemSubjectEdit(${idx},"subject",this.value)' /></td><td><input type='text' class='border px-2 py-1 rounded w-24' value='${row.class||""}' onchange='onSemSubjectEdit(${idx},"class",this.value)' /></td><td><button onclick='onSemSubjectDelete(${idx})' class='text-red-600 font-bold'>Delete</button></td>`
+                : `<td class='px-2 py-2'>${row.sem||""}</td><td class='px-2 py-2'>${row.subject||""}</td><td class='px-2 py-2'>${row.class||""}</td>`
+              )+
+              `</tr>`
+            ).join("") +
+            (semSubjectEditMode ? `<tr><td colspan='4'><button onclick='onSemSubjectAdd()' class='bg-blue-500 text-white px-3 py-1 rounded'>Add Row</button></td></tr>` : "") +
+            `</tbody></table></div>`;
+        } else {
+          html = semSubjectEditMode ? `<div class='text-gray-400 mb-2'>No data</div><button onclick='onSemSubjectAdd()' class='bg-blue-500 text-white px-3 py-1 rounded'>Add Row</button>` : '<div class="text-gray-400">No data</div>';
+        }
+        document.getElementById("facultySemSubjectClassTable").innerHTML = html;
+      }
+      window.onSemSubjectEdit = function(idx, key, value) {
+        semSubjectClassArr[idx][key] = value;
+        checkSemSubjectChanged();
+      }
+      window.onSemSubjectAdd = function() {
+        semSubjectClassArr.push({sem:"",subject:"",class:""});
+        renderSemSubjectTable();
+        checkSemSubjectChanged();
+      }
+      window.onSemSubjectDelete = function(idx) {
+        semSubjectClassArr.splice(idx,1);
+        renderSemSubjectTable();
+        checkSemSubjectChanged();
+      }
+      function checkSemSubjectChanged() {
+        const changed = JSON.stringify(semSubjectClassArr) !== JSON.stringify(semSubjectOriginal);
+        document.getElementById('saveSemSubjectBtn').classList.toggle('hidden', !changed);
+      }
+      document.getElementById('editSemSubjectBtn').onclick = function() {
+        semSubjectEditMode = true;
+        renderSemSubjectTable();
+        document.getElementById('editSemSubjectBtn').style.display = 'none';
+        document.getElementById('saveSemSubjectBtn').classList.remove('hidden');
+      }
+      document.getElementById('saveSemSubjectBtn').onclick = async function() {
+        document.getElementById('saveSemSubjectBtn').disabled = true;
+        document.getElementById('semSubjectStatusMsg').textContent = 'Saving...';
+        const { error } = await supabaseClient.from('Faculty').update({ SEM_SUBJECT_CLASS: JSON.stringify(semSubjectClassArr) }).eq('email', window._facultyProfileOriginal.email);
+        if (error) {
+          document.getElementById('semSubjectStatusMsg').textContent = 'Update failed: ' + (error.message || error);
+        } else {
+          document.getElementById('semSubjectStatusMsg').textContent = 'Updated successfully!';
+          semSubjectOriginal = JSON.parse(JSON.stringify(semSubjectClassArr));
+          semSubjectEditMode = false;
+          renderSemSubjectTable();
+          document.getElementById('editSemSubjectBtn').style.display = '';
+          document.getElementById('saveSemSubjectBtn').classList.add('hidden');
+        }
+        document.getElementById('saveSemSubjectBtn').disabled = false;
+      }
+
+      // --- DETAILS TABLE EDIT/SAVE ---
+      function renderDetailsTable() {
+        // --- Begin: Compliance per SCOPE from ap/asp/prof_compliance table ---
+        async function getCoreComplianceDetails() {
+          let designation = (document.getElementById('facultyDesignation').value || "").toString().trim().toUpperCase();
+          let department = document.getElementById('facultyDepartment').value || "";
+          let email = document.getElementById('facultyEmail').value || "";
+          let name = document.getElementById('facultyName').value || "";
+          let table = null;
+          if (designation === "AP") table = "ap_compliance";
+          else if (designation === "ASP") table = "asp_compliance";
+          else if (designation === "PROF" || designation === "PROFESSOR") table = "prof_compliance";
+          if (!table) return [null, 'No compliance table for designation'];
+          const { data: complianceRows, error } = await supabaseClient
+            .from(table)
+            .select('*')
+            .eq('department', department)
+            .eq('faculty_email', email)
+            .eq('faculty_name', name)
+            .order('created_at', { ascending: false });
+          if (error || !complianceRows || complianceRows.length === 0) {
+            return [null, 'No compliance data'];
+          }
+          let row = complianceRows[0];
+          return [row, null];
+        }
+
+        (async function renderDetailsTableWithCompliance() {
+          let [coreCompliance, complianceError] = await getCoreComplianceDetails();
+          let html = "";
+          if (Array.isArray(detailsTableArr) && detailsTableArr.length > 0) {
+            html = `<div class='overflow-x-auto'><table class='min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white'><thead class='bg-purple-700 text-white'><tr><th class='px-4 py-2'>S. NO</th><th class='px-4 py-2'>PARTICULAR</th><th class='px-4 py-2'>TARGET</th><th class='px-4 py-2'>TAT</th><th class='px-4 py-2'>Compliance</th>${detailsTableEditMode ? "<th></th>" : ""}</tr></thead><tbody>` +
+              detailsTableArr.map((row, idx) =>
+                `<tr class='${idx%2===0?"bg-gray-50":"bg-white"}'>`+
+                (detailsTableEditMode
+                  ? `<td>${idx+1}</td><td><input type='text' class='border px-2 py-1 rounded w-32' value='${row.particular||""}' onchange='onDetailsEdit(${idx},"particular",this.value)' /></td><td><input type='text' class='border px-2 py-1 rounded w-24' value='${row.target||""}' onchange='onDetailsEdit(${idx},"target",this.value)' /></td><td><input type='text' class='border px-2 py-1 rounded w-16' value='${row.tat||""}' onchange='onDetailsEdit(${idx},"tat",this.value)' />`+
+                  `<td><input type='text' class='border px-2 py-1 rounded w-24' value='${row.compliance||""}' onchange='onDetailsEdit(${idx},"compliance",this.value)' /></td><td><button onclick='onDetailsDelete(${idx})' class='text-red-600 font-bold'>Delete</button></td>`
+                  : `<td class='px-2 py-2'>${idx+1}</td><td class='px-2 py-2'>${row.particular||""}</td><td class='px-2 py-2'>${row.target||""}</td><td class='px-2 py-2'>${row.tat||""}</td><td class='px-2 py-2'>${coreCompliance ? (coreCompliance[`compliance_${idx+1}`] || '<span class="text-gray-400">-</span>') : (complianceError ? `<span class='text-gray-400'>${complianceError}</span>` : '<span class="text-gray-400">-</span>')}</td>`
+                )+
+                `</tr>`
+              ).join("") +
+              (detailsTableEditMode ? `<tr><td colspan='6'><button onclick='onDetailsAdd()' class='bg-blue-500 text-white px-3 py-1 rounded'>Add Row</button></td></tr>` : "") +
+              `</tbody></table></div>`;
+          } else {
+            html = detailsTableEditMode ? `<div class='text-gray-400 mb-2'>No data</div><button onclick='onDetailsAdd()' class='bg-blue-500 text-white px-3 py-1 rounded'>Add Row</button>` : '<div class="text-gray-400">No data</div>';
+          }
+          document.getElementById("facultyDetailsTable").innerHTML = html;
+        })();
+        // --- End: Compliance per SCOPE from ap/asp/prof_compliance table ---
+      }
+      window.onDetailsEdit = function(idx, key, value) {
+        detailsTableArr[idx][key] = value;
+        checkDetailsChanged();
+      }
+      window.onDetailsAdd = function() {
+        detailsTableArr.push({particular:"",target:"",tat:"",compliance:""});
+        renderDetailsTable();
+        checkDetailsChanged();
+      }
+      window.onDetailsDelete = function(idx) {
+        detailsTableArr.splice(idx,1);
+        renderDetailsTable();
+        checkDetailsChanged();
+      }
+      function checkDetailsChanged() {
+        const changed = JSON.stringify(detailsTableArr) !== JSON.stringify(detailsTableOriginal);
+        document.getElementById('saveDetailsTableBtn').classList.toggle('hidden', !changed);
+      }
+      document.getElementById('editDetailsTableBtn').onclick = function() {
+        detailsTableEditMode = true;
+        renderDetailsTable();
+        document.getElementById('editDetailsTableBtn').style.display = 'none';
+        document.getElementById('saveDetailsTableBtn').classList.remove('hidden');
+      }
+      document.getElementById('saveDetailsTableBtn').onclick = async function() {
+        document.getElementById('saveDetailsTableBtn').disabled = true;
+        document.getElementById('detailsTableStatusMsg').textContent = 'Saving...';
+        const { error } = await supabaseClient.from('Faculty').update({ DETAILS_TABLE: JSON.stringify(detailsTableArr) }).eq('email', window._facultyProfileOriginal.email);
+        if (error) {
+          document.getElementById('detailsTableStatusMsg').textContent = 'Update failed: ' + (error.message || error);
+        } else {
+          document.getElementById('detailsTableStatusMsg').textContent = 'Updated successfully!';
+          detailsTableOriginal = JSON.parse(JSON.stringify(detailsTableArr));
+          detailsTableEditMode = false;
+          renderDetailsTable();
+          document.getElementById('editDetailsTableBtn').style.display = '';
+          document.getElementById('saveDetailsTableBtn').classList.add('hidden');
+        }
+        document.getElementById('saveDetailsTableBtn').disabled = false;
+      }
+        // Forms assigned: show only 'yes' as table rows with real names and links
+        const formNames = [
+          "Students Performance in Training & Placement Member",
+          "Class Advisor",
+          "Faculty Information & Contribution Member",
+          "Course Outcome & Program Outcome Member (Exam Cell)",
+          "Continuous Improvement Member (Program Member)",
+          "Teaching & Learning Process Member (IQAC)",
+          "Student Support System Member (Discipline & Extra Curricular)",
+          "Facilities & Technical Support Member (Lab Member)",
+        ];
+        const formLinks = [
+          "faculty-form1.html",
+          "faculty-form2.html",
+          "faculty-form3.html",
+          "faculty-form4.html",
+          "faculty-form5.html",
+          "faculty-form6.html",
+          "faculty-form7.html",
+          "faculty-form8.html",
+        ];
+        let formsHtmlDept = "";
+        let formsHtmlCore = "";
+        let countDept = 1;
+        let countCore = 1;
+        for (let i = 1; i <= 8; i++) {
+          if (data[`form${i}`] && data[`form${i}`].toLowerCase() === "yes") {
+            formsHtmlDept += `<tr><td class="p-4 align-top">${countDept}</td><td class="p-4 align-top">${formNames[i - 1]}</td></tr>`;
+            countDept++;
+          }
+        }
+        // Add the 9th form based on Designation
+        let designation = (data["Designation"] || "")
+          .toString()
+          .trim()
+          .toUpperCase();
+        let ninthFormName = "";
+        if (designation === "AP") {
+          ninthFormName = "AP Core Scope Form";
+        } else if (designation === "ASP") {
+          ninthFormName = "ASP Core Scope Form";
+        } else if (designation === "PROF" || designation === "PROFESSOR") {
+          ninthFormName = "Professor Core Scope Form";
+        }
+        if (ninthFormName) {
+          formsHtmlCore += `<tr><td class="px-4 py-2">1</td><td class="px-4 py-2">${ninthFormName}</td></tr>`;
+        }
+        document.getElementById("facultyFormsDept").innerHTML =
+          formsHtmlDept || 
+          '<tr><td colspan="2" class="text-gray-400 text-center p-4">No roles assigned.</td></tr>';
+        document.getElementById("facultyFormsCore").innerHTML =
+          formsHtmlCore ||
+          '<tr><td colspan="2" class="text-gray-400 text-center p-4">No core scope form assigned.</td></tr>';
+        // Load Workdone Section using centralized JS
+        const workdoneTable = new WorkdoneTable(supabaseClient);
+        workdoneTable.initWorkdoneSection(data["Name"], data["Designation"]);
+        
+        // Hide delete buttons specifically for hod-viewfaculty-details.html
+        function hideDeleteButtons() {
+          // Hide all delete buttons in workdone table
+          const deleteButtons = document.querySelectorAll('button[onclick*="deleteWorkdoneRow"]');
+          deleteButtons.forEach(btn => {
+            btn.style.display = 'none';
+            // Also hide the parent cell
+            if (btn.parentElement) {
+              btn.parentElement.style.display = 'none';
+            }
+          });
+          
+          // Hide other delete buttons
+          const otherDeleteButtons = document.querySelectorAll('button[onclick*="Delete"]');
+          otherDeleteButtons.forEach(btn => {
+            btn.style.display = 'none';
+            // Also hide the parent cell if it only contains the delete button
+            if (btn.parentElement && btn.parentElement.children.length === 1) {
+              btn.parentElement.style.display = 'none';
+            }
+          });
+        }
+        
+        // Run immediately and after table loads
+        setTimeout(hideDeleteButtons, 500);
+        setTimeout(hideDeleteButtons, 1000);
+        setTimeout(hideDeleteButtons, 2000);
+        
+        // Also observe for dynamic content changes
+        const observer = new MutationObserver(hideDeleteButtons);
+        observer.observe(document.body, { childList: true, subtree: true });
+      }
+
+      loadFacultyProfile();
+    </script>
+
+    <!-- View Modal for Workdone Details -->
+    <div id="viewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+        <button onclick="closeViewModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <div id="viewModalContent"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-8">
+      <p class="text-gray-400 text-sm">
+        © All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>, IV CSE 2022-2026.
+      </p>
+    </footer>
+  </body>
+</html>
+      

@@ -1,0 +1,417 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faculty Details - PMC Tech</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            pmcPurple: '#6f3d91',
+            pmcPurpleDark: '#542c6f',
+            pmcBg: '#f8f7f9',
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-pmcBg min-h-screen">
+  <!-- Navbar -->
+  <nav class="bg-pmcPurple text-white shadow-md">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-4 py-2">
+      <a href="#" class="flex items-center">
+        <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 mr-4 rounded shadow">
+      </a>
+      <ul class="flex items-center gap-6 text-base font-medium">
+        <li><a href="#" class="hover:underline">Home</a></li>
+        <li><a href="#" class="underline">Faculty Form</a></li>
+        <li><a href="#">Shunmuga karpagam</a></li>
+        <li><span class="text-2xl">👤</span></li>
+      </ul>
+    </div>
+  </nav>
+  <!-- Form -->
+  <div class="flex justify-center items-center w-full px-2 mt-12">
+    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-3xl flex flex-col gap-8">
+      <div class="flex flex-col items-center justify-center">
+          <label
+            class="w-48 h-48 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden cursor-pointer relative group"
+            for="imageUpload">
+            <input type="file" id="imageUpload" accept="image/*" hidden required>
+            <div class="upload-text absolute text-center text-gray-400 group-hover:text-pmcPurple pointer-events-none">
+              Upload Image
+            </div>
+            <img id="previewImage" class="w-full h-full object-cover hidden" />
+          </label>
+        </div>
+      <form id="facultyDetailsForm" class="flex flex-col gap-4">
+        <div class="flex flex-col md:flex-row items-center gap-4">
+          <label class="md:w-1/3 font-medium text-pmcPurple">Employee ID :</label>
+          <input type="text" name="EmployeeID" placeholder="Enter Employee ID" required class="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pmcPurple">
+        </div>
+        <div class="flex flex-col md:flex-row items-center gap-4">
+          <label class="md:w-1/3 font-medium text-pmcPurple">Name :</label>
+          <input type="text" name="Name" placeholder="Enter Name" required class="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pmcPurple">
+        </div>
+        <div class="flex flex-col md:flex-row items-center gap-4">
+          <label class="md:w-1/3 font-medium text-pmcPurple">Salary :</label>
+          <input type="number" name="Salary" placeholder="Enter Salary" required class="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pmcPurple">
+        </div>
+        <div class="flex flex-col md:flex-row items-center gap-4">
+          <label class="md:w-1/3 font-medium text-pmcPurple">Experience (years) :</label>
+          <input type="number" name="Experience" placeholder="Enter Experience" required class="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pmcPurple">
+        </div>
+        <div class="flex flex-col md:flex-row items-center gap-4">
+          <label class="md:w-1/3 font-medium text-pmcPurple">Qualification :</label>
+          <input type="text" name="Qualification" placeholder="Enter Qualification" required class="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pmcPurple">
+        </div>
+        <div class="flex flex-col md:flex-row items-center gap-4">
+          <label class="md:w-1/3 font-medium text-pmcPurple">Department :</label>
+          <input type="text" name="Department" placeholder="Enter Department" required class="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pmcPurple">
+        </div>
+        <div class="flex flex-col md:flex-row items-center gap-4">
+          <label class="md:w-1/3 font-medium text-pmcPurple">Designation :</label>
+          <input type="text" name="Designation" placeholder="Enter Designation" required class="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pmcPurple">
+        </div>
+        <div class="flex flex-col md:flex-row items-center gap-4">
+          <label class="md:w-1/3 font-medium text-pmcPurple">Email ID :</label>
+          <input type="email" name="email" placeholder="Enter Email" required class="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pmcPurple">
+        </div>
+        <div class="flex flex-col md:flex-row items-center gap-4">
+          <label class="md:w-1/3 font-medium text-pmcPurple">Username :</label>
+          <input type="text" name="Username" placeholder="Enter Username" required class="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pmcPurple">
+        </div>
+        <div class="flex flex-col md:flex-row items-center gap-4">
+          <label class="md:w-1/3 font-medium text-pmcPurple">Password :</label>
+          <input type="password" name="Password" placeholder="Enter Password" required class="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pmcPurple">
+        </div>
+        <div class="flex items-center gap-4">
+              <label class="flex-1 font-medium text-pmcPurple">Faculty Responsibility:</label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form" value="AP" required class="form-radio text-pmcPurple"> <span class="ml-2">Assistant Professor</span>
+              </label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form" value="ASP" required class="form-radio text-pmcPurple"> <span class="ml-2">Associate Professor</span>
+              </label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form" value="Professor" required class="form-radio text-pmcPurple"> <span class="ml-2">Professor</span>
+              </label>
+            </div>
+        
+        <!-- SEM, SUBJECT, CLASS (multiple) -->
+        <div class="mt-6">
+          <h3 class="text-lg font-semibold text-pmcPurple mb-2">SUBJECT ALLOTED</h3>
+          <div id="semSubjectClassContainer"></div>
+          <button type="button" id="addSemSubjectClassBtn" class="bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg mb-2">Add Row</button>
+        </div>
+        <!-- Dynamic Table: S. NO, PARTICULAR, TARGET, TAT, Compliance -->
+        <div class="mt-6">
+          <h3 class="text-lg font-semibold text-pmcPurple mb-2">Faculty mandatory scope in Research, Innovations and Extension activity/ Faculty Contributions (NAAC – C3, NBA- C5)</h3>
+          <div id="detailsTableContainer"></div>
+          <button type="button" id="addDetailsTableRowBtn" class="bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg mb-2">Add Row</button>
+        </div>
+        <!-- 1-8 Forms Yes/No -->
+        <div class="mt-6">
+          <h3 class="text-lg font-semibold text-pmcPurple mb-2">Forms Assigned</h3>
+          <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
+            
+            <div class="flex items-center gap-4">
+              <label class="flex-1">1. Students Performance in Training & Placement Member</label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form1" value="Yes" required class="form-radio text-pmcPurple"> <span class="ml-2">Yes</span>
+              </label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form1" value="No" required class="form-radio text-pmcPurple"> <span class="ml-2">No</span>
+              </label>
+            </div>
+            <div class="flex items-center gap-4">
+              <label class="flex-1">2. Class Advisor</label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form2" value="Yes" required class="form-radio text-pmcPurple"> <span class="ml-2">Yes</span>
+              </label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form2" value="No" required class="form-radio text-pmcPurple"> <span class="ml-2">No</span>
+              </label>
+            </div>
+            <div class="flex items-center gap-4">
+              <label class="flex-1">3. Faculty Information & Contribution Member</label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form3" value="Yes" required class="form-radio text-pmcPurple"> <span class="ml-2">Yes</span>
+              </label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form3" value="No" required class="form-radio text-pmcPurple"> <span class="ml-2">No</span>
+              </label>
+            </div>
+            <div class="flex items-center gap-4">
+              <label class="flex-1">4. Course Outcome & Program Outcome Member (Exam Cell)</label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form4" value="Yes" required class="form-radio text-pmcPurple"> <span class="ml-2">Yes</span>
+              </label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form4" value="No" required class="form-radio text-pmcPurple"> <span class="ml-2">No</span>
+              </label>
+            </div>
+            <div class="flex items-center gap-4">
+              <label class="flex-1">5. Continuous Improvement Member (Program Member)</label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form5" value="Yes" required class="form-radio text-pmcPurple"> <span class="ml-2">Yes</span>
+              </label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form5" value="No" required class="form-radio text-pmcPurple"> <span class="ml-2">No</span>
+              </label>
+            </div>
+            <div class="flex items-center gap-4">
+              <label class="flex-1">6. Teaching & Learning Process Member (IQAC)</label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form6" value="Yes" required class="form-radio text-pmcPurple"> <span class="ml-2">Yes</span>
+              </label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form6" value="No" required class="form-radio text-pmcPurple"> <span class="ml-2">No</span>
+              </label>
+            </div>
+            <div class="flex items-center gap-4">
+              <label class="flex-1">7. Student Support System Member (Discipline & Extra Curricular)</label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form7" value="Yes" required class="form-radio text-pmcPurple"> <span class="ml-2">Yes</span>
+              </label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form7" value="No" required class="form-radio text-pmcPurple"> <span class="ml-2">No</span>
+              </label>
+            </div>
+            <div class="flex items-center gap-4">
+              <label class="flex-1">8. Facilities & Technical Support Member (Lab Member)</label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form8" value="Yes" required class="form-radio text-pmcPurple"> <span class="ml-2">Yes</span>
+              </label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="form8" value="No" required class="form-radio text-pmcPurple"> <span class="ml-2">No</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <!-- Image Upload -->
+        
+        <div class="flex justify-center mt-8">
+          <button type="submit" class="bg-pmcPurple hover:bg-pmcPurpleDark text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-200 shadow">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- Supabase Submit Script -->
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script>
+    // Supabase client
+    const supabaseClient = window.supabase.createClient(
+      "https://cbhodgwaazmjszkujrti.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+
+    // Image preview logic
+    const imageUpload = document.getElementById('imageUpload');
+    const previewImage = document.getElementById('previewImage');
+    const uploadText = document.querySelector('.upload-text');
+
+    imageUpload.addEventListener('change', function () {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          previewImage.src = e.target.result;
+          previewImage.classList.remove('hidden');
+          uploadText.style.display = 'none';
+        }
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Upload image to Supabase Storage
+    async function uploadImageToStorage(file, path) {
+      if (!file) return null;
+      const bucket = "Faculty";
+      const { data, error } = await supabaseClient.storage.from(bucket).upload(path, file, { upsert: true });
+      if (error) {
+        alert("Image upload failed: " + error.message);
+        throw error;
+      }
+      // Get the public URL and decode it
+      const { data: publicUrlData } = supabaseClient.storage.from(bucket).getPublicUrl(path);
+      let url = publicUrlData && publicUrlData.publicUrl ? publicUrlData.publicUrl : null;
+      if (url) {
+        try {
+          url = decodeURIComponent(url);
+        } catch (e) {}
+      }
+      return url;
+    }
+
+    // Dynamic SEM, SUBJECT, CLASS rows
+    const semSubjectClassContainer = document.getElementById('semSubjectClassContainer');
+    const addSemSubjectClassBtn = document.getElementById('addSemSubjectClassBtn');
+    let semSubjectClassRows = [];
+    function renderSemSubjectClassRows() {
+      semSubjectClassContainer.innerHTML = '';
+      if (semSubjectClassRows.length > 0) {
+        const table = document.createElement('table');
+        table.className = 'min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white';
+        table.innerHTML = `<thead class="bg-pmcPurple text-white"><tr><th class="px-4 py-2">SEM</th><th class="px-4 py-2">SUBJECT</th><th class="px-4 py-2">CLASS</th><th class="px-4 py-2">Remove</th></tr></thead><tbody></tbody>`;
+        semSubjectClassRows.forEach((row, idx) => {
+          const tr = document.createElement('tr');
+          tr.className = idx % 2 === 0 ? 'bg-gray-50' : 'bg-white';
+          tr.innerHTML = `
+            <td class="px-2 py-2"><input type="text" placeholder="SEM" value="${row.sem || ''}" class="p-2 border rounded w-20 focus:ring-2 focus:ring-pmcPurple" onchange="this.dispatchEvent(new CustomEvent('semchange', {detail: {idx: ${idx}, value: this.value}}))"></td>
+            <td class="px-2 py-2"><input type="text" placeholder="SUBJECT" value="${row.subject || ''}" class="p-2 border rounded w-40 focus:ring-2 focus:ring-pmcPurple" onchange="this.dispatchEvent(new CustomEvent('subjectchange', {detail: {idx: ${idx}, value: this.value}}))"></td>
+            <td class="px-2 py-2"><input type="text" placeholder="CLASS" value="${row.class || ''}" class="p-2 border rounded w-32 focus:ring-2 focus:ring-pmcPurple" onchange="this.dispatchEvent(new CustomEvent('classchange', {detail: {idx: ${idx}, value: this.value}}))"></td>
+            <td class="px-2 py-2 text-center"><button type="button" class="text-red-500 font-bold text-lg hover:bg-red-100 rounded-full w-8 h-8 flex items-center justify-center" title="Remove" onclick="this.parentElement.parentElement.remove(); semSubjectClassRows.splice(${idx},1); renderSemSubjectClassRows();">&times;</button></td>
+          `;
+          table.querySelector('tbody').appendChild(tr);
+          tr.querySelector('input[placeholder="SEM"]').addEventListener('semchange', e => { semSubjectClassRows[e.detail.idx].sem = e.detail.value; });
+          tr.querySelector('input[placeholder="SUBJECT"]').addEventListener('subjectchange', e => { semSubjectClassRows[e.detail.idx].subject = e.detail.value; });
+          tr.querySelector('input[placeholder="CLASS"]').addEventListener('classchange', e => { semSubjectClassRows[e.detail.idx].class = e.detail.value; });
+        });
+        semSubjectClassContainer.appendChild(table);
+      }
+    }
+    addSemSubjectClassBtn.onclick = () => { semSubjectClassRows.push({sem:'',subject:'',class:''}); renderSemSubjectClassRows(); };
+    renderSemSubjectClassRows();
+
+    // Dynamic Details Table rows
+    const detailsTableContainer = document.getElementById('detailsTableContainer');
+    const addDetailsTableRowBtn = document.getElementById('addDetailsTableRowBtn');
+    let detailsTableRows = [];
+    function renderDetailsTableRows() {
+      detailsTableContainer.innerHTML = '';
+      if (detailsTableRows.length > 0) {
+        const table = document.createElement('table');
+        table.className = 'min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white';
+        table.innerHTML = `<thead class="bg-pmcPurple text-white"><tr><th class="px-4 py-2">S. NO</th><th class="px-4 py-2">PARTICULAR</th><th class="px-4 py-2">TARGET</th><th class="px-4 py-2">TAT</th><th class="px-4 py-2">Compliance</th><th class="px-4 py-2">Remove</th></tr></thead><tbody></tbody>`;
+        detailsTableRows.forEach((row, idx) => {
+          const tr = document.createElement('tr');
+          tr.className = idx % 2 === 0 ? 'bg-gray-50' : 'bg-white';
+          tr.innerHTML = `
+            <td class="px-2 py-2">${idx+1}</td>
+            <td class="px-2 py-2"><input type="text" value="${row.particular||''}" class="p-1 border rounded w-32 focus:ring-2 focus:ring-pmcPurple" onchange="this.dispatchEvent(new CustomEvent('particularchange', {detail: {idx: ${idx}, value: this.value}}))"></td>
+            <td class="px-2 py-2"><input type="text" value="${row.target||''}" class="p-1 border rounded w-24 focus:ring-2 focus:ring-pmcPurple" onchange="this.dispatchEvent(new CustomEvent('targetchange', {detail: {idx: ${idx}, value: this.value}}))"></td>
+            <td class="px-2 py-2"><input type="text" value="${row.tat||''}" class="p-1 border rounded w-20 focus:ring-2 focus:ring-pmcPurple" onchange="this.dispatchEvent(new CustomEvent('tatchange', {detail: {idx: ${idx}, value: this.value}}))"></td>
+            <td class="px-2 py-2"><input type="text" value="${row.compliance||''}" class="p-1 border rounded w-24 focus:ring-2 focus:ring-pmcPurple" onchange="this.dispatchEvent(new CustomEvent('compliancechange', {detail: {idx: ${idx}, value: this.value}}))"></td>
+            <td class="px-2 py-2 text-center"><button type="button" class="text-red-500 font-bold text-lg hover:bg-red-100 rounded-full w-8 h-8 flex items-center justify-center" title="Remove" onclick="this.parentElement.parentElement.remove(); detailsTableRows.splice(${idx},1); renderDetailsTableRows();">&times;</button></td>
+          `;
+          table.querySelector('tbody').appendChild(tr);
+          tr.querySelector('input[type="text"]').addEventListener('particularchange', e => { detailsTableRows[e.detail.idx].particular = e.detail.value; });
+          tr.querySelectorAll('input[type="text"]')[1].addEventListener('targetchange', e => { detailsTableRows[e.detail.idx].target = e.detail.value; });
+          tr.querySelectorAll('input[type="text"]')[2].addEventListener('tatchange', e => { detailsTableRows[e.detail.idx].tat = e.detail.value; });
+          tr.querySelectorAll('input[type="text"]')[3].addEventListener('compliancechange', e => { detailsTableRows[e.detail.idx].compliance = e.detail.value; });
+        });
+        detailsTableContainer.appendChild(table);
+      }
+    }
+    addDetailsTableRowBtn.onclick = () => { detailsTableRows.push({particular:'',target:'',tat:'',compliance:''}); renderDetailsTableRows(); };
+    renderDetailsTableRows();
+
+    // Handle form submit
+    const facultyDetailsForm = document.getElementById('facultyDetailsForm');
+    if (facultyDetailsForm) {
+      facultyDetailsForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const form = e.target;
+
+        // Get values from the form
+        const employeeId = form.elements['EmployeeID'].value;
+        const name = form.elements['Name'].value;
+        const department = form.elements['Department'].value;
+        const designation = form.elements['Designation'].value;
+        const email = form.elements['email'].value;
+        const username = form.elements['Username'].value;
+        const password = form.elements['Password'].value;
+        const salary = form.elements['Salary'].value;
+        const experience = form.elements['Experience'].value;
+        const qualification = form.elements['Qualification'].value;
+
+        // Image upload
+        const imageFile = document.getElementById("imageUpload").files[0] || null;
+        let uploadImage = null;
+        if (imageFile) {
+          const ts = Date.now();
+          try {
+            uploadImage = await uploadImageToStorage(imageFile, `faculty_${ts}_${imageFile.name}`);
+          } catch (uploadErr) {
+            alert("Image was not uploaded to the bucket. Please try again.");
+            return;
+          }
+        } else {
+          // Always set a decoded default image URL if no image is uploaded
+          let defaultUrl = 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
+          try {
+            uploadImage = decodeURIComponent(defaultUrl);
+          } catch (e) {
+            uploadImage = defaultUrl;
+          }
+        }
+
+        // Get Yes/No for each form
+        const form1 = form.elements['form1'] ? form.elements['form1'].value : null;
+        const form2 = form.elements['form2'] ? form.elements['form2'].value : null;
+        const form3 = form.elements['form3'] ? form.elements['form3'].value : null;
+        const form4 = form.elements['form4'] ? form.elements['form4'].value : null;
+        const form5 = form.elements['form5'] ? form.elements['form5'].value : null;
+        const form6 = form.elements['form6'] ? form.elements['form6'].value : null;
+        const form7 = form.elements['form7'] ? form.elements['form7'].value : null;
+        const form8 = form.elements['form8'] ? form.elements['form8'].value : null;
+
+        // Compose row as per schema
+        const row = {
+          "EmployeeID": employeeId,
+          "department": department,
+          "email": email,
+          "Name": name,
+          "Username": username,
+          "password": password,
+          "Upload Image": uploadImage,
+          "Designation": designation,
+          "Salary": salary,
+          "Experience": experience,
+          "Qualification": qualification,
+          "SEM_SUBJECT_CLASS": JSON.stringify(semSubjectClassRows),
+          "DETAILS_TABLE": JSON.stringify(detailsTableRows),
+          form1,
+          form2,
+          form3,
+          form4,
+          form5,
+          form6,
+          form7,
+          form8
+        };
+
+        // Insert row into Supabase table
+        const { data, error } = await supabaseClient
+          .from("Faculty")
+          .insert([row]);
+
+        if (error) {
+          console.error("DB Insert error:", error.message);
+          alert("Submission failed: " + error.message);
+        } else {
+          alert("Faculty details submitted successfully!");
+          form.reset();
+          previewImage.classList.add("hidden");
+          uploadText.style.display = '';
+          semSubjectClassRows = [];
+          detailsTableRows = [];
+          renderSemSubjectClassRows();
+          renderDetailsTableRows();
+        }
+      });
+    }
+  </script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> © All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>, IV CSE 2022-2026.<br/> 
+    </p>
+  </footer>
+
+</body>
+</html>
