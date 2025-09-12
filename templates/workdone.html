@@ -774,7 +774,7 @@
           .from('hod-workdone')
           .select('*')
           .eq('department', department)
-          .order('verified_at', { ascending: false });
+          .order('verified_at', { ascending: false }); // Sort by verification time, newest first
 
         if (error) {
           console.error('Error loading verified workdone:', error);

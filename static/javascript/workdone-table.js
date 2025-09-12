@@ -141,6 +141,34 @@ class WorkdoneTable {
       errorBox.classList.add("hidden");
     }
 
+    // Sort by timestamp - recently submitted/updated records first
+    allRows.sort((a, b) => {
+      // Try multiple timestamp fields (created_at, updated_at, etc.)
+      const getTimestamp = (row) => {
+        const fields = ['updated_at', 'created_at', 'submission_date', 'date_submitted', 'timestamp', 'last_modified'];
+        for (const field of fields) {
+          if (row[field]) {
+            const date = new Date(row[field]);
+            if (!isNaN(date.getTime())) {
+              return date.getTime();
+            }
+          }
+        }
+        
+        // Fallback: use current time (newest records will appear first)
+        // This ensures recently processed records appear at top
+        return Date.now();
+      };
+      
+      const timestampA = getTimestamp(a);
+      const timestampB = getTimestamp(b);
+      
+      // Sort in descending order (newest first)
+      return timestampB - timestampA;
+    });
+    
+    console.log('Sorted faculty workdone records - most recent submissions first');
+
     this.workdoneRows = allRows;
     return allRows;
   }
@@ -270,6 +298,34 @@ class WorkdoneTable {
     } else if (errorBox) {
       errorBox.classList.add("hidden");
     }
+
+    // Sort by timestamp - recently submitted/updated records first
+    allRows.sort((a, b) => {
+      // Try multiple timestamp fields (created_at, updated_at, etc.)
+      const getTimestamp = (row) => {
+        const fields = ['updated_at', 'created_at', 'submission_date', 'date_submitted', 'timestamp', 'last_modified'];
+        for (const field of fields) {
+          if (row[field]) {
+            const date = new Date(row[field]);
+            if (!isNaN(date.getTime())) {
+              return date.getTime();
+            }
+          }
+        }
+        
+        // Fallback: use current time (newest records will appear first)
+        // This ensures recently processed records appear at top
+        return Date.now();
+      };
+      
+      const timestampA = getTimestamp(a);
+      const timestampB = getTimestamp(b);
+      
+      // Sort in descending order (newest first)
+      return timestampB - timestampA;
+    });
+    
+    console.log('Sorted workdone records - most recent submissions first');
 
     this.workdoneRows = allRows;
     return allRows;
