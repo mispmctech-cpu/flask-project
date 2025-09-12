@@ -52,18 +52,53 @@ document.addEventListener('DOMContentLoaded', function() {
     <title>PMC Tech Faculty - Form 8</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+            <style>
+                .upload-indicator {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    margin-top: 0.5rem;
+                }
+                .upload-indicator span {
+                    color: green;
+                    font-weight: bold;
+                }
+                .upload-indicator button {
+                    background: #e53e3e;
+                    color: white;
+                    border: none;
+                    border-radius: 0.375rem;
+                    padding: 0.25rem 0.75rem;
+                    cursor: pointer;
+                    font-size: 0.9rem;
+                }
+                .loading-spinner {
+                    border: 2px solid #f3f3f3;
+                    border-top: 2px solid #3498db;
+                    border-radius: 50%;
+                    width: 16px;
+                    height: 16px;
+                    animation: spin 1s linear infinite;
+                    display: inline-block;
+                    margin-right: 8px;
+                }
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                .submit-btn-loading {
+                    opacity: 0.7;
+                    cursor: not-allowed;
+                    pointer-events: none;
+                }
+            </style>
 </head>
 <body>
     <!-- Header -->
     <header class="bg-purple-800 text-white flex justify-between items-center px-6 py-3 shadow-md">
         <div class="flex items-center">
             <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 rounded shadow-md">
-        </div>
-        <div class="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-lg shadow">
-            <span class="font-bold text-lg text-purple-800">Username</span>
-            <span class="user-icon flex items-center justify-center bg-purple-100 rounded-full p-1 shadow border border-purple-700">
-                <img src="/static/img/person-circle.svg" alt="person-circle" height="28" width="28" class="min-w-[28px] min-h-[28px]" />
-            </span>
         </div>
     </header>
     <div class="form-container mx-auto max-w-6xl px-4">
@@ -188,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             </div>
-            <button type="submit" class="mt-8 bg-purple-800 hover:from-purple-400 hover:to-orange-500 text-white font-bold py-3 px-10 rounded-xl shadow-lg text-lg tracking-wide transition-all duration-200 mx-auto block">Submit</button>
+            <button type="submit" id="submitBtnWeekly" class="mt-8 bg-purple-800 hover:from-purple-400 hover:to-orange-500 text-white font-bold py-3 px-10 rounded-xl shadow-lg text-lg tracking-wide transition-all duration-200 mx-auto block">Submit</button>
         </form>
             <!-- Direct DB Entry: form4-once in a month -->
             <section style="margin: 2rem 0;">
@@ -306,12 +341,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                     </div>
-                    <button type="submit" class="mt-8 bg-purple-800 hover:from-purple-400 hover:to-orange-500 text-white font-bold py-3 px-10 rounded-xl shadow-lg text-lg tracking-wide transition-all duration-200 mx-auto block">Submit</button>
+                    <button type="submit" id="submitBtn3Months" class="mt-8 bg-purple-800 hover:from-purple-400 hover:to-orange-500 text-white font-bold py-3 px-10 rounded-xl shadow-lg text-lg tracking-wide transition-all duration-200 mx-auto block">Submit</button>
                 </form>
             </section>
             <!-- Direct DB Entry: form3-once in a semester -->
             <section style="margin: 2rem 0;">
-                <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">Facilities & Technical support Member (Lab Member): Once in a Semester</h2>
+                <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">8.Facilities & Technical support Member (Lab Member): Once in a Semester</h2>
                 <form id="semesterForm4" class="bg-white shadow-lg rounded-xl max-w-5xl mx-auto px-6 py-8 mb-10 border border-purple-200">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div class="flex flex-col">
@@ -592,7 +627,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">9. Department Library File</div>
                         <div class="flex flex-col">
                             <label for="o3m-status9" class="font-semibold text-gray-700 mb-1">Status_9:</label>
-                            <select id="o3m-status9" name="Status_1" class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                            <select id="o3m-status9" name="Status_9" class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
                                 <option value="" disabled selected>Select</option>
                                 <option>Completed and Updated</option>
                                 <option>Yet to be Completed</option>
@@ -605,16 +640,16 @@ document.addEventListener('DOMContentLoaded', function() {
                             <input id="o3m-desc9" name="Description_9" class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
                         </div>
                         <div class="flex flex-col">
-                            <label for="o3m-upload9" class="font-semibold text-gray-700 mb-1">Upload The Scanned File_9:</label>
+                            <label class="font-semibold text-gray-700 mb-1">Upload The Scanned File_9:</label>
                             <div class="flex items-center gap-2 w-full">
                                 <label class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
                                     <span class="inline-flex items-center gap-1">Upload <img src="/static/img/upload.svg" alt="upload" height="20" width="24" class="inline-block align-middle" /></span>
-                                    <input id="o3m-upload1" name="file1" type="file" class="ml-2 hidden" />
+                                    <input id="o3m-upload9" name="file9" type="file" class="ml-2 hidden" />
                                 </label>
                             </div>
                         </div>
                     </div>
-                    <button type="submit" class="mt-8 bg-purple-800 hover:from-purple-400 hover:to-orange-500 text-white font-bold py-3 px-10 rounded-xl shadow-lg text-lg tracking-wide transition-all duration-200 mx-auto block">Submit</button>
+                    <button type="submit" id="submitBtnSemester" class="mt-8 bg-purple-800 hover:from-purple-400 hover:to-orange-500 text-white font-bold py-3 px-10 rounded-xl shadow-lg text-lg tracking-wide transition-all duration-200 mx-auto block">Submit</button>
                 </form>
             </section>
     <!-- Removed: 2. Class Advisor Form: Weekly -->
@@ -675,6 +710,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     form8WeeklyForm.addEventListener('submit', async function(e) {
                         e.preventDefault();
                         const form = e.target;
+                        const submitBtn = document.getElementById('submitBtnWeekly');
+                        
+                        // Prevent multiple submissions and show loading
+                        if (submitBtn.classList.contains('submit-btn-loading')) return;
+                        submitBtn.classList.add('submit-btn-loading');
+                        const originalText = submitBtn.innerHTML;
+                        submitBtn.innerHTML = '<div class="loading-spinner"></div>Submitting...';
+                        
                         async function uploadFileToStorage(file, path) {
                             if (!file) return null;
                             const bucket = 'form8-files';
@@ -721,6 +764,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             .from('form8-weekly')
                             .insert([row]);
                         if (error) {
+                            submitBtn.classList.remove('submit-btn-loading');
+                            submitBtn.innerHTML = originalText;
                             window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
                         } else {
                             window.location.href = 'notification.html?status=success';
@@ -734,6 +779,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     once3MonthsForm8.addEventListener('submit', async function(e) {
                         e.preventDefault();
                         const form = e.target;
+                        const submitBtn = document.getElementById('submitBtn3Months');
+                        
+                        // Prevent multiple submissions and show loading
+                        if (submitBtn.classList.contains('submit-btn-loading')) return;
+                        submitBtn.classList.add('submit-btn-loading');
+                        const originalText = submitBtn.innerHTML;
+                        submitBtn.innerHTML = '<div class="loading-spinner"></div>Submitting...';
+                        
                         async function uploadFileToStorage(file, path) {
                             if (!file) return null;
                             const bucket = 'form8-files';
@@ -780,6 +833,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             .from('form8-once in 3 Months')
                             .insert([row]);
                         if (error) {
+                            submitBtn.classList.remove('submit-btn-loading');
+                            submitBtn.innerHTML = originalText;
                             window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
                         } else {
                             window.location.href = 'notification.html?status=success';
@@ -795,6 +850,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     semesterForm4.addEventListener('submit', async function(e) {
                         e.preventDefault();
                         const form = e.target;
+                        const submitBtn = document.getElementById('submitBtnSemester');
+                        
+                        // Prevent multiple submissions and show loading
+                        if (submitBtn.classList.contains('submit-btn-loading')) return;
+                        submitBtn.classList.add('submit-btn-loading');
+                        const originalText = submitBtn.innerHTML;
+                        submitBtn.innerHTML = '<div class="loading-spinner"></div>Submitting...';
+                        
                         async function uploadFileToStorage(file, path) {
                             if (!file) return null;
                             const bucket = 'form8-files';
@@ -811,7 +874,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             return publicUrlData.publicUrl;
                         }
                         const ts = Date.now();
-                        let file1Url = null, file2Url = null, file3Url = null, file4Url = null, file5Url = null, file6Url = null, file7Url = null, file8Url = null;
+                        let file1Url = null, file2Url = null, file3Url = null, file4Url = null, file5Url = null, file6Url = null, file7Url = null, file8Url = null, file9Url = null;
                         try {
                             const file1 = form.querySelector("input[name='file1']")?.files?.[0] || null;
                             if (file1) file1Url = await uploadFileToStorage(file1, `file1/${ts}_${file1.name}`);
@@ -829,6 +892,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (file7) file7Url = await uploadFileToStorage(file7, `file7/${ts}_${file7.name}`);
                             const file8 = form.querySelector("input[name='file8']")?.files?.[0] || null;
                             if (file8) file8Url = await uploadFileToStorage(file8, `file8/${ts}_${file8.name}`);
+                            const file9 = form.querySelector("input[name='file9']")?.files?.[0] || null;
+                            if (file9) file9Url = await uploadFileToStorage(file9, `file9/${ts}_${file9.name}`);
                         } catch (uploadErr) {
                             return;
                         }
@@ -863,12 +928,17 @@ document.addEventListener('DOMContentLoaded', function() {
                             "Upload The Scanned File_7": file7Url,
                             "Status_8": form["Status_8"].value,
                             "Description_8": form["Description_8"].value,
-                            "Upload The Scanned File_8": file8Url
+                            "Upload The Scanned File_8": file8Url,
+                            "Status_9": form["Status_9"]?.value || '',
+                            "Description_9": form["Description_9"]?.value || '',
+                            "Upload The Scanned File_9": file9Url
                         };
                         const { data, error } = await supabaseClient
                             .from('form8-Once in Semester')
                             .insert([row]);
                         if (error) {
+                            submitBtn.classList.remove('submit-btn-loading');
+                            submitBtn.innerHTML = originalText;
                             window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
                         } else {
                             window.location.href = 'notification.html?status=success';
@@ -894,9 +964,62 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
     <script src="/javascript/faculty-form.js"></script>
 
+    <script>
+    // Upload indication logic for all file upload fields
+    document.addEventListener('DOMContentLoaded', function() {
+        function setupUploadIndication(formId, fileInputNames) {
+            var form = document.getElementById(formId);
+            if (!form) return;
+            fileInputNames.forEach(function(name) {
+                var input = form.querySelector(`input[name='${name}']`);
+                if (!input) return;
+                // Find the label to append indicator (robust: look for parent label or direct parent)
+                var label = input.closest('label');
+                if (!label) {
+                    // Try to find the label in the parent div
+                    var parentDiv = input.parentNode;
+                    var labels = parentDiv.querySelectorAll('label');
+                    label = Array.from(labels).find(l => l.contains(input));
+                }
+                if (!label) return;
+                // Create indicator container
+                var indicator = document.createElement('div');
+                indicator.className = 'upload-indicator';
+                indicator.style.display = 'none';
+                var uploadedSpan = document.createElement('span');
+                uploadedSpan.textContent = 'Uploaded';
+                var cancelBtn = document.createElement('button');
+                cancelBtn.type = 'button';
+                cancelBtn.textContent = 'Cancel';
+                indicator.appendChild(uploadedSpan);
+                indicator.appendChild(cancelBtn);
+                label.parentNode.appendChild(indicator);
+                // Show indicator and hide label on file select
+                input.addEventListener('change', function() {
+                    if (input.files && input.files.length > 0) {
+                        indicator.style.display = 'flex';
+                        label.style.display = 'none';
+                    } else {
+                        indicator.style.display = 'none';
+                        label.style.display = '';
+                    }
+                });
+                // Cancel button logic
+                cancelBtn.addEventListener('click', function() {
+                    input.value = '';
+                    indicator.style.display = 'none';
+                    label.style.display = '';
+                });
+            });
+        }
+        // Weekly form (unchanged, still shows label)
+        setupUploadIndication('form8WeeklyForm', ['file1', 'file2']);
+        // Once in 3 Months form (hide label on upload)
+        setupUploadIndication('once3MonthsForm8', ['file1', 'file2']);
+        // Semester form (hide label on upload)
+        setupUploadIndication('semesterForm4', ['file1', 'file2', 'file3', 'file4', 'file5', 'file6', 'file7', 'file8', 'file9']);
+    });
+    </script>
+
 </body>
 </html>
-
-
-
-
