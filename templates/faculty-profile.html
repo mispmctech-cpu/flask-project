@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Faculty Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../static/javascript/form-modal-mapper.js"></script>
+  <script src="../static/javascript/workdone-table.js"></script>
+  </head>
+  <body class="bg-pmcBg min-h-screen">
+    <header class="bg-purple-700 text-white">
+      <div
+        class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-3">
+          <img
+            src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3"
+            alt="PMC Logo"
+            class="h-12 mr-4 rounded shadow bg-white p-1"
+          />
+          <nav
+            class="hidden sm:flex gap-6 ml-6 text-sm font-medium items-center"
+          >
+            <a href="hod.html" class="opacity-90 hover:opacity-100">Back</a>
+            <span class="underline decoration-2 underline-offset-4"
+              >Faculty Profile</span
+            >
+            <button
+              onclick="window.location.href='/logout'"
+              aria-label="Logout"
+              class="ml-4 focus:outline-none"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-7 h-7 text-white hover:text-red-400 transition"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3"
+                />
+              </svg>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main class="max-w-6xl mx-auto px-4 py-8">
+      <section class="bg-white rounded-xl card-shadow p-6 mb-8">
+        <!-- Update Password Button -->
+        <div class="flex justify-end mb-4">
+          <button id="updatePasswordBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded font-semibold">Update Password</button>
+        </div>
+        <div class="flex flex-col md:flex-row items-start gap-8">
+          <div class="flex-shrink-0 text-center w-full md:w-auto">
+            <div class="relative inline-block">
+              <img
+                id="facultyImage"
+                class="w-40 h-40 object-cover shadow border-4 border-pmcPurple mx-auto"
+                style="border-radius: 16px"
+                src=""
+                alt="Faculty Image"
+              />
+              <div class="mt-2 text-center">
+                <input type="file" id="facultyImageInput" accept="image/*" class="hidden" />
+                <button type="button" id="editImageBtn" class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded mt-2">Edit Image</button>
+              </div>
+            </div>
+          </div>
+          <div class="flex-1 w-full">
+            <form id="facultyEditForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="text-sm font-medium text-gray-600">Employee ID</label>
+                <input id="facultyEmployeeID" name="EmployeeID" type="text" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-pmcPurple" disabled />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Name</label>
+                <input id="facultyName" name="Name" type="text" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-lg font-bold text-pmcPurple" disabled />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Department</label>
+                <input id="facultyDepartment" name="department" type="text" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-pmcPurple" disabled />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Email ID</label>
+                <input id="facultyEmail" name="email" type="email" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600" disabled />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Designation</label>
+                <input id="facultyDesignation" name="Designation" type="text" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-pmcPurpleDark font-semibold" disabled />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Username</label>
+                <input id="facultyUsername" name="Username" type="text" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600" disabled />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Salary</label>
+                <input id="facultySalary" name="Salary" type="text" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600" disabled />
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Experience</label>
+                <input id="facultyExperience" name="Experience" type="text" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600" disabled />
+              </div>
+              <div class="md:col-span-2">
+                <label class="text-sm font-medium text-gray-600">Qualification</label>
+                <input id="facultyQualification" name="Qualification" type="text" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600" disabled />
+              </div>
+              <div class="md:col-span-2 flex gap-4 mt-2">
+                <button type="button" id="editProfileBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-semibold hidden">Edit</button>
+                <button type="submit" id="saveProfileBtn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-semibold hidden">Save</button>
+                <span id="editStatusMsg" class="ml-4 text-sm"></span>
+              </div>
+            </form>
+          </div>
+        </div>
+        <!-- SEM, SUBJECT, CLASS Table -->
+        <div class="mt-8">
+          <label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-1">SUBJECT ALLOTTED</label>
+          <div id="facultySemSubjectClassTable" class="mt-1"></div>
+        </div>
+        <!-- Details Table -->
+        <div class="mt-8">
+          <label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-1">FACULTY MANDATORY SCOPE IN RESEARCH, INNOVATIONS AND EXTENSION ACTIVITY/FACULTY CONTRIBUTIONS</label>
+          <div id="facultyDetailsTable" class="mt-1"></div>
+        </div>
+      </section>
+      <section class="card-shadow rounded-xl overflow-hidden mb-8">
+        <div class="bg-white p-4">
+          <div class="mb-6">
+            <h2 class="text-lg font-bold text-pmcPurple mb-2">
+              DEPARTMENT PORTFOLIO
+            </h2>
+            <table class="min-w-full text-sm">
+              <thead class="bg-purple-700">
+                <tr class="text-left text-white">
+                  <th class="p-4 w-16">S.No</th>
+                  <th class="p-4">Role Name</th>
+                  <th class="p-4 w-60">Link</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y" id="facultyFormsDept"></tbody>
+            </table>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-pmcPurple mb-2">
+              FACULTY CORE SCOPE
+            </h2>
+            <table class="min-w-full text-sm">
+              <thead class="bg-purple-700">
+                <tr class="text-left text-white">
+                  <th class="p-4 w-16">S.No</th>
+                  <th class="p-4">Form Name</th>
+                  <th class="p-4 w-60">Link</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y" id="facultyFormsCore"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <!-- Workdone Section -->
+      <section class="card-shadow rounded-xl overflow-hidden">
+        <div class="bg-white p-4">
+          <h2 class="text-lg font-bold text-pmcPurple mb-4 uppercase">WORKDONE</h2>
+          <div class="overflow-x-auto">
+            <table
+              class="min-w-full bg-white shadow text-sm border border-gray-300"
+            >
+              <thead
+                class="bg-gradient-to-r from-purple-700 to-purple-500 text-white"
+              >
+                <tr>
+                  <th class="p-3 border-b border-gray-300">Department</th>
+                  <th class="p-3 border-b border-gray-300">Portfolio Name</th>
+                  <th class="p-3 border-b border-gray-300">
+                    Portfolio Member Name
+                  </th>
+                  <th class="p-3 border-b border-gray-300">Status</th>
+                  <th class="p-3 border-b border-gray-300">View</th>
+          <th class="p-3 border-b border-gray-300">Delete</th>
+                </tr>
+              </thead>
+              <tbody
+                id="facultyWorkdoneTable"
+                class="divide-y divide-gray-200"
+              ></tbody>
+            </table>
+          </div>
+          <div
+            id="workdoneErrorBox"
+            class="hidden mt-4 p-3 rounded bg-red-100 text-red-700 font-semibold"
+          ></div>
+          <div
+            id="workdoneLoadingBox"
+            class="mt-4 p-3 rounded bg-blue-100 text-blue-800 font-semibold"
+            style="display: none"
+          >
+            Loading workdone data, please wait...
+          </div>
+        </div>
+      </section>
+    </main>
+    <!-- Update Password Modal -->
+    <div id="updatePasswordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
+        <button onclick="closeUpdatePasswordModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <h3 class="text-xl font-bold mb-4 text-yellow-700">Update Password</h3>
+        <form id="updatePasswordForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Old Password</label>
+            <input type="password" id="oldPassword" name="oldPassword" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2" required />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">New Password</label>
+            <input type="password" id="newPassword" name="newPassword" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2" required />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Re-enter New Password</label>
+            <input type="password" id="confirmNewPassword" name="confirmNewPassword" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2" required />
+          </div>
+          <div id="updatePasswordStatus" class="text-sm mt-2"></div>
+          <div class="flex gap-4 mt-2">
+            <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded font-semibold">Update</button>
+            <button type="button" onclick="closeUpdatePasswordModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded font-semibold">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script>
+      // Update Password Modal Logic
+      document.getElementById('updatePasswordBtn').addEventListener('click', function() {
+        if (confirm('Are you sure you want to update your password?')) {
+          document.getElementById('updatePasswordModal').classList.remove('hidden');
+        }
+      });
+      function closeUpdatePasswordModal() {
+        document.getElementById('updatePasswordModal').classList.add('hidden');
+        document.getElementById('updatePasswordForm').reset();
+        document.getElementById('updatePasswordStatus').textContent = '';
+      }
+      document.getElementById('updatePasswordForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('facultyEmail').value;
+        const oldPassword = document.getElementById('oldPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+        const statusBox = document.getElementById('updatePasswordStatus');
+        statusBox.textContent = '';
+        if (!email) {
+          statusBox.textContent = 'Email not found.';
+          return;
+        }
+        if (newPassword !== confirmNewPassword) {
+          statusBox.textContent = 'New passwords do not match.';
+          return;
+        }
+        statusBox.textContent = 'Verifying old password...';
+        // Fetch faculty row by email
+        const { data, error } = await supabaseClient
+          .from('Faculty')
+          .select('password')
+          .eq('email', email)
+          .single();
+        if (error || !data) {
+          statusBox.textContent = 'User not found.';
+          return;
+        }
+        // NOTE: This is plain text check. For production, use hashed passwords!
+        if (data.password !== oldPassword) {
+          statusBox.textContent = 'Old password is incorrect.';
+          return;
+        }
+        statusBox.textContent = 'Updating password...';
+        // Update password
+        const { error: updateError } = await supabaseClient
+          .from('Faculty')
+          .update({ password: newPassword })
+          .eq('email', email);
+        if (updateError) {
+          statusBox.textContent = 'Password update failed: ' + (updateError.message || updateError);
+        } else {
+          statusBox.textContent = 'Password updated successfully!';
+          setTimeout(closeUpdatePasswordModal, 1500);
+        }
+      });
+    </script>
+    <script>
+      // Image edit logic
+      document.getElementById('editImageBtn').addEventListener('click', function() {
+        document.getElementById('facultyImageInput').click();
+      });
+      document.getElementById('facultyImageInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            document.getElementById('facultyImage').src = evt.target.result;
+            document.getElementById('saveProfileBtn').classList.remove('hidden');
+            document.getElementById('editStatusMsg').textContent = 'Image selected. Click Save to upload.';
+            window._facultyProfileImageFile = file;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+      // Get email from query param
+      function getQueryParam(name) {
+        const url = new URL(window.location.href);
+        return url.searchParams.get(name);
+      }
+      const email = getQueryParam("email");
+      const supabaseClient = window.supabase.createClient(
+        "https://cbhodgwaazmjszkujrti.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+      );
+      async function loadFacultyProfile() {
+        if (!email) {
+          document.body.innerHTML = '<div class="text-center mt-20 text-red-500">No faculty selected.</div>';
+          return;
+        }
+        const { data, error } = await supabaseClient
+          .from("Faculty")
+          .select("*")
+          .eq("email", email)
+          .single();
+        if (error || !data) {
+          document.body.innerHTML = '<div class="text-center mt-20 text-red-500">Faculty not found.</div>';
+          return;
+        }
+        document.getElementById("facultyImage").src = data["Upload Image"] || "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80";
+        document.getElementById("facultyEmployeeID").value = data["EmployeeID"] || "";
+        document.getElementById("facultyName").value = data["Name"] || "";
+        document.getElementById("facultyDesignation").value = data["Designation"] || "";
+        document.getElementById("facultyDepartment").value = data["department"] || "";
+        document.getElementById("facultyEmail").value = data["email"] || "";
+        document.getElementById("facultyUsername").value = data["Username"] || "";
+        document.getElementById("facultySalary").value = data["Salary"] || "";
+        document.getElementById("facultyExperience").value = data["Experience"] || "";
+        document.getElementById("facultyQualification").value = data["Qualification"] || "";
+        // Store original data for change detection
+        window._facultyProfileOriginal = {
+          EmployeeID: data["EmployeeID"] || "",
+          Name: data["Name"] || "",
+          department: data["department"] || "",
+          email: data["email"] || "",
+          Designation: data["Designation"] || "",
+          Username: data["Username"] || "",
+          Salary: data["Salary"] || "",
+          Experience: data["Experience"] || "",
+          Qualification: data["Qualification"] || ""
+        };
+        // Reset form state
+        setEditMode(false);
+
+        // Assigned Institution Forms Section (with Open Form button)
+        let assignedFormsArr = [];
+        try {
+          assignedFormsArr = data["assigned_forms"] ? JSON.parse(data["assigned_forms"]) : [];
+        } catch (e) {}
+        // Map form names to HTML file links (keep in sync with principal-select-faculty.html)
+        const formNameToFile = {
+          'Director – Students welfare & Admission': 'institution-form1.html',
+          'Head - HR': 'institution-form2.html',
+          'Principal': 'institution-form3.html',
+          'Dean - IQAC': 'institution-form4.html',
+          'Director - Academics': 'institution-form5.html',
+          'Controller of Examinations': 'institution-form6.html',
+          'Executive Dean – International Affairs': 'institution-form7.html',
+          'Head - Placements': 'institution-form8.html',
+          'Placement officer': 'institution-form9.html',
+          'Head – Training': 'institution-form10.html',
+          'Training officer': 'institution-form11.html',
+          'Head - RISE': 'institution-form12.html',
+          'IT Infra – Coordinator': 'institution-form13.html',
+          'Website – Coordinator': 'institution-form14.html',
+          'ERP Coordinator': 'institution-form15.html',
+          'Public Relations officer': 'institution-form16.html',
+          'Logistics Coordinator': 'institution-form17.html',
+        };
+        let assignedFormsHtml = '';
+        if (Array.isArray(assignedFormsArr) && assignedFormsArr.length > 0) {
+          assignedFormsHtml = `<div class="mt-8">
+            <label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-1">Institution Forms</label>
+            <table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white">
+              <thead class='bg-purple-700 text-white'>
+                <tr><th class="px-4 py-2">Form Name</th><th class="px-4 py-2">Faculty Name</th><th class="px-4 py-2">Open</th></tr>
+              </thead>
+              <tbody>
+                ${assignedFormsArr.map(f => {
+                  const file = formNameToFile[f] || '#';
+                  const formId = file.replace('.html', '');
+                  return `<tr><td class="px-4 py-2">${f}</td><td class="px-4 py-2">${data['Name'] || ''}</td><td class="px-4 py-2"><button onclick="openForm('${file}', '${data['department']}', '${f}', '${data['Name']}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button></td></tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>`;
+        } else {
+          assignedFormsHtml = '<div class="mt-8"><label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-1">Institution Forms</label><div class="text-gray-400">No forms assigned.</div></div>';
+        }
+        // Insert below FACULTY CORE SCOPE section
+        const facultyCoreScopeSection = document.querySelector('#facultyFormsCore');
+        if (facultyCoreScopeSection) {
+          // Insert after the table (tbody) for core scope
+          facultyCoreScopeSection.parentElement.insertAdjacentHTML('afterend', assignedFormsHtml);
+        }
+
+        // SEM, SUBJECT, CLASS Table
+        let semSubjectClassArr = [];
+        try {
+          semSubjectClassArr = data["SEM_SUBJECT_CLASS"]
+            ? JSON.parse(data["SEM_SUBJECT_CLASS"])
+            : [];
+        } catch (e) {}
+        let semTableHtml = "";
+      // Edit/Save logic for profile
+      function setEditMode(editable) {
+        const form = document.getElementById('facultyEditForm');
+        Array.from(form.elements).forEach(el => {
+          if (el.tagName === 'INPUT') {
+            el.disabled = !editable;
+          }
+        });
+        document.getElementById('editProfileBtn').style.display = editable ? 'none' : '';
+        document.getElementById('saveProfileBtn').classList.toggle('hidden', !editable);
+        document.getElementById('editStatusMsg').textContent = '';
+      }
+      document.getElementById('editProfileBtn').addEventListener('click', function() {
+        setEditMode(true);
+      });
+      document.getElementById('facultyEditForm').addEventListener('input', function() {
+        // Show save button if any field changed
+        const orig = window._facultyProfileOriginal;
+        let changed = false;
+        for (const key in orig) {
+          const el = document.getElementsByName(key)[0];
+          if (el && el.value !== orig[key]) {
+            changed = true;
+            break;
+          }
+        }
+        document.getElementById('saveProfileBtn').classList.toggle('hidden', !changed);
+      });
+      document.getElementById('facultyEditForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const updateData = {};
+        const orig = window._facultyProfileOriginal;
+        let changed = false;
+        for (const key in orig) {
+          const el = form.elements[key];
+          if (el && el.value !== orig[key]) {
+            updateData[key] = el.value;
+            changed = true;
+          }
+        }
+        // Handle image upload if changed
+        let imageUrl = null;
+        if (window._facultyProfileImageFile) {
+          document.getElementById('editStatusMsg').textContent = 'Uploading image...';
+          const file = window._facultyProfileImageFile;
+          const fileExt = file.name.split('.').pop();
+          const fileName = `faculty_${orig.email.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.${fileExt}`;
+          const { data: uploadData, error: uploadError } = await supabaseClient.storage.from('faculty-images').upload(fileName, file, { upsert: true });
+          if (uploadError) {
+            document.getElementById('editStatusMsg').textContent = 'Image upload failed: ' + (uploadError.message || uploadError);
+            document.getElementById('saveProfileBtn').disabled = false;
+            return;
+          }
+          // Get public URL
+          const { data: publicUrlData } = supabaseClient.storage.from('faculty-images').getPublicUrl(fileName);
+          imageUrl = publicUrlData.publicUrl;
+          updateData['Upload Image'] = imageUrl;
+          changed = true;
+        }
+        if (!changed) {
+          setEditMode(false);
+          return;
+        }
+        document.getElementById('saveProfileBtn').disabled = true;
+        document.getElementById('editStatusMsg').textContent = 'Saving...';
+        // Update Faculty table by email
+        const { error } = await supabaseClient
+          .from('Faculty')
+          .update(updateData)
+          .eq('email', orig.email);
+        if (error) {
+          document.getElementById('editStatusMsg').textContent = 'Update failed: ' + (error.message || error);
+          document.getElementById('saveProfileBtn').disabled = false;
+        } else {
+          document.getElementById('editStatusMsg').textContent = 'Profile updated successfully!';
+          // Update original data
+          for (const key in updateData) {
+            orig[key] = updateData[key];
+          }
+          if (imageUrl) {
+            document.getElementById('facultyImage').src = imageUrl;
+            window._facultyProfileImageFile = null;
+          }
+          setEditMode(false);
+        }
+      });
+        if (
+          Array.isArray(semSubjectClassArr) &&
+          semSubjectClassArr.length > 0
+        ) {
+          semTableHtml =
+            `<div class="overflow-x-auto"><table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white">
+          <thead class='bg-purple-700 text-white'>
+            <tr><th class="px-4 py-2">SEM</th><th class="px-4 py-2">SUBJECT</th><th class="px-4 py-2">CLASS</th></tr>
+          </thead>
+          <tbody>` +
+            semSubjectClassArr
+              .map(
+                (row, idx) =>
+                  `<tr class="${
+                    idx % 2 === 0 ? "bg-gray-50" : "bg-white"
+                  }"><td class="px-2 py-2">${
+                    row.sem || ""
+                  }</td><td class="px-2 py-2">${
+                    row.subject || ""
+                  }</td><td class="px-2 py-2">${row.class || ""}</td></tr>`
+              )
+              .join("") +
+            `</tbody></table></div>`;
+        } else {
+          semTableHtml = '<div class="text-gray-400">No data</div>';
+        }
+        document.getElementById("facultySemSubjectClassTable").innerHTML =
+          semTableHtml;
+        // Details Table
+        let detailsTableArr = [];
+        try {
+          detailsTableArr = data["DETAILS_TABLE"]
+            ? JSON.parse(data["DETAILS_TABLE"])
+            : [];
+        } catch (e) {}
+
+        // --- Begin: Compliance per SCOPE from ap/asp/prof_compliance table ---
+        async function getCoreComplianceDetails() {
+          let designation = (data["Designation"] || "").toString().trim().toUpperCase();
+          let table = null;
+          if (designation === "AP") table = "ap_compliance";
+          else if (designation === "ASP") table = "asp_compliance";
+          else if (designation === "PROF" || designation === "PROFESSOR") table = "prof_compliance";
+          if (!table) return [null, 'No compliance table for designation'];
+          const { data: complianceRows, error } = await supabaseClient
+            .from(table)
+            .select('*')
+            .eq('department', data["department"])
+            .eq('faculty_email', data["email"])
+            .eq('faculty_name', data["Name"])
+            .order('created_at', { ascending: false });
+          if (error || !complianceRows || complianceRows.length === 0) {
+            return [null, 'No compliance data'];
+          }
+          let row = complianceRows[0];
+          return [row, null];
+        }
+
+        (async function renderDetailsTable() {
+          let [coreCompliance, complianceError] = await getCoreComplianceDetails();
+          let detailsTableHtml = "";
+          if (Array.isArray(detailsTableArr) && detailsTableArr.length > 0) {
+            detailsTableHtml =
+              `<div class="overflow-x-auto"><table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white">
+            <thead class='bg-purple-700 text-white'>
+              <tr><th class="px-4 py-2">S. NO</th><th class="px-4 py-2">PARTICULAR</th><th class="px-4 py-2">TARGET</th><th class="px-4 py-2">TAT</th><th class="px-4 py-2">Compliance</th></tr>
+            </thead>
+            <tbody>` +
+                detailsTableArr
+                  .map(
+                    (row, idx) => {
+                      let complianceVal = '';
+                      if (coreCompliance) {
+                        let compField = `compliance_${idx + 1}`;
+                        complianceVal = coreCompliance[compField] || '<span class="text-gray-400">-</span>';
+                      } else if (complianceError) {
+                        complianceVal = `<span class='text-gray-400'>${complianceError}</span>`;
+                      } else {
+                        complianceVal = '<span class="text-gray-400">-</span>';
+                      }
+                      return `<tr class="${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}"><td class="px-2 py-2">${idx + 1}</td><td class="px-2 py-2">${row.particular || ""}</td><td class="px-2 py-2">${row.target || ""}</td><td class="px-2 py-2">${row.tat || ""}</td><td class="px-2 py-2">${complianceVal}</td></tr>`;
+                    }
+                  )
+                  .join("") +
+                `</tbody></table></div>`;
+          } else {
+            detailsTableHtml = '<div class="text-gray-400">No data</div>';
+          }
+          document.getElementById("facultyDetailsTable").innerHTML =
+            detailsTableHtml;
+        })();
+        // --- End: Compliance per SCOPE from ap/asp/prof_compliance table ---
+        // Forms assigned: show only 'yes' as table rows with real names and links
+        const formNames = [
+          "Students Performance in Training & Placement Member",
+          "Class Advisor",
+          "Faculty Information & Contribution Member",
+          "Course Outcome & Program Outcome Member (Exam Cell)",
+          "Continuous Improvement Member (Program Member)",
+          "Teaching & Learning Process Member (IQAC)",
+          "Student Support System Member (Discipline & Extra Curricular)",
+          "Facilities & Technical Support Member (Lab Member)",
+        ];
+        const formLinks = [
+          "faculty-form1.html",
+          "faculty-form2.html",
+          "faculty-form3.html",
+          "faculty-form4.html",
+          "faculty-form5.html",
+          "faculty-form6.html",
+          "faculty-form7.html",
+          "faculty-form8.html",
+        ];
+        let formsHtmlDept = "";
+        let formsHtmlCore = "";
+        let countDept = 1;
+        let countCore = 1;
+        for (let i = 1; i <= 8; i++) {
+          if (data[`form${i}`] && data[`form${i}`].toLowerCase() === "yes") {
+            // Compose portfolio name with frequency for auto-fill
+            let portfolioName = formNames[i - 1];
+            let frequency = '';
+            if (formLinks[i - 1].includes('form1')) frequency = ' (Weekly)';
+            if (formLinks[i - 1].includes('form2')) frequency = ' (Daily)';
+            if (formLinks[i - 1].includes('form3')) frequency = ' (Weekly)';
+            if (formLinks[i - 1].includes('form4')) frequency = ' (Weekly)';
+            if (formLinks[i - 1].includes('form5')) frequency = ' (Weekly)';
+            if (formLinks[i - 1].includes('form6')) frequency = ' (Weekly)';
+            if (formLinks[i - 1].includes('form7')) frequency = ' (Weekly)';
+            if (formLinks[i - 1].includes('form8')) frequency = ' (Weekly)';
+            let fullPortfolio = portfolioName + frequency;
+            formsHtmlDept += `<tr><td class="p-4 align-top">${countDept}</td><td class="p-4 align-top">${portfolioName}</td><td class="p-4 align-top"><button onclick="openForm('${formLinks[i - 1]}', '${data['department']}', '${fullPortfolio}', '${data['Name']}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button></td></tr>`;
+            countDept++;
+          }
+        }
+        // Add the 9th form based on Designation
+        let designation = (data["Designation"] || "")
+          .toString()
+          .trim()
+          .toUpperCase();
+        let ninthFormName = "";
+        let ninthFormLink = "";
+        if (designation === "AP") {
+          ninthFormName = "AP Core Scope Form";
+          ninthFormLink = "form-ap.html";
+        } else if (designation === "ASP") {
+          ninthFormName = "ASP Core Scope Form";
+          ninthFormLink = "form-asp.html";
+        } else if (designation === "PROF" || designation === "PROFESSOR") {
+          ninthFormName = "Professor Core Scope Form";
+          ninthFormLink = "form-prof.html";
+        }
+        if (ninthFormName && ninthFormLink) {
+          formsHtmlCore += `<tr><td class="px-4 py-2">1</td><td class="px-4 py-2">${ninthFormName}</td><td class="px-4 py-2"><button onclick="openForm('${ninthFormLink}', '${data['department']}', '${ninthFormName}', '${data['Name']}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button></td></tr>`;
+        }
+        document.getElementById("facultyFormsDept").innerHTML =
+          formsHtmlDept ||
+          '<tr><td colspan="3" class="text-gray-400 text-center p-4">No roles assigned.</td></tr>';
+        document.getElementById("facultyFormsCore").innerHTML =
+          formsHtmlCore ||
+          '<tr><td colspan="3" class="text-gray-400 text-center p-4">No core scope form assigned.</td></tr>';
+      // Auto-fetch Open Form logic with form status check
+      window.openForm = async function(formUrl, department, portfolio, memberName) {
+        try {
+          // Extract form identifier from URL
+          let formId = formUrl.replace('.html', '');
+          
+          // Check form status from formstatus table
+          const { data: formStatus, error } = await supabaseClient
+            .from('formstatus')
+            .select('is_open, form_title')
+            .eq('form_name', formId)
+            .single();
+
+          if (error) {
+            console.warn('Could not check form status:', error);
+            // If we can't check status, allow form to open (fallback)
+            localStorage.setItem('selectedDepartment', department);
+            localStorage.setItem('selectedPortfolio', portfolio);
+            localStorage.setItem('selectedMemberName', memberName);
+            window.location.href = formUrl;
+            return;
+          }
+
+          // Check if form is open
+          if (formStatus && formStatus.is_open === false) {
+            // Show closed message
+            showFormClosedModal(formStatus.form_title || formId);
+            return;
+          }
+
+          // Form is open, proceed normally
+          localStorage.setItem('selectedDepartment', department);
+          localStorage.setItem('selectedPortfolio', portfolio);
+          localStorage.setItem('selectedMemberName', memberName);
+          window.location.href = formUrl;
+
+        } catch (error) {
+          console.error('Error checking form status:', error);
+          // Fallback: allow form to open
+          localStorage.setItem('selectedDepartment', department);
+          localStorage.setItem('selectedPortfolio', portfolio);
+          localStorage.setItem('selectedMemberName', memberName);
+          window.location.href = formUrl;
+        }
+      }
+
+      // Show form closed modal
+      function showFormClosedModal(formTitle) {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+        modal.innerHTML = `
+          <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
+            <div class="text-center">
+              <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <i class="fas fa-lock text-red-600 text-xl"></i>
+              </div>
+              <h3 class="text-lg font-medium text-gray-900 mb-2">Form Closed</h3>
+              <p class="text-sm text-gray-500 mb-6">
+                The form "<strong>${formTitle}</strong>" is currently closed and not accepting submissions.
+                <br><br>
+                Please contact the administrator for more information.
+              </p>
+              <button onclick="this.closest('.fixed').remove()" 
+                      class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium">
+                OK
+              </button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      }
+        // Load Workdone Section using centralized JS
+        const workdoneTable = new WorkdoneTable(supabaseClient);
+        workdoneTable.initWorkdoneSection(data["Name"], data["Designation"]);
+      }
+
+      loadFacultyProfile();
+    </script>
+
+    <!-- View Modal for Workdone Details -->
+    <div id="viewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+        <button onclick="closeViewModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <div id="viewModalContent"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-8">
+      <p class="text-gray-400 text-sm">
+        © All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>, IV CSE 2022-2026.<br/> 
+      </p>
+    </footer>
+  </body>
+</html>
+        

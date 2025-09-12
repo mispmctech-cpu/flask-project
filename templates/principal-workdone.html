@@ -1,0 +1,359 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Principal Verified Workdone</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script src="../static/javascript/form-modal-mapper.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body class="bg-pmcBg min-h-screen">
+  <header class="bg-purple-800 text-white shadow-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+      <a href="principal.html" class="flex items-center">
+        <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 mr-4 rounded shadow" />
+      </a>
+      <h1 class="text-2xl font-bold">Verified Workdone</h1>
+      <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+        </svg>
+      </button>
+    </div>
+  </header>
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
+      <input id="acceptedWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-blue-700" placeholder="Search by Portfolio or Member" oninput="filterTable('acceptedWorkdoneTable', 'acceptedWorkdoneSearch')" />
+      <button onclick="exportTableToExcel('acceptedWorkdoneTable', 'Accepted_Workdone')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+        Export to Excel
+      </button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white shadow-lg text-sm border border-gray-300">
+        <thead class="bg-gradient-to-r from-blue-700 to-blue-500 text-white">
+          <tr>
+            <th class="p-3 border-b border-gray-300">Department</th>
+            <th class="p-3 border-b border-gray-300">Portfolio Name</th>
+            <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
+            <th class="p-3 border-b border-gray-300">Status</th>
+            <th class="p-3 border-b border-gray-300">Verified By</th>
+            <th class="p-3 border-b border-gray-300">Verified At</th>
+            <th class="p-3 border-b border-gray-300">Accepted By</th>
+            <th class="p-3 border-b border-gray-300">Accepted At</th>
+            <th class="p-3 border-b border-gray-300">View</th>
+          </tr>
+        </thead>
+        <tbody id="acceptedWorkdoneTable" class="divide-y divide-gray-200"></tbody>
+      </table>
+      <div class="flex justify-center items-center mt-4" id="acceptedWorkdonePagination"></div>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    // Export to Excel for any table by id
+    function exportTableToExcel(tbodyId, filenamePrefix) {
+      const tbody = document.getElementById(tbodyId);
+      if (!tbody) return;
+      const table = tbody.closest('table');
+      const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => row.style.display !== 'none');
+      if (rows.length === 0) {
+        alert('No data to export!');
+        return;
+      }
+      // Get headers, but skip Accept and View columns (last 2 columns)
+      let headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
+      if (headers.length > 2) {
+        headers = headers.slice(0, -2); // Remove last 2 columns (Accept/View)
+      }
+      const data = [headers];
+      rows.forEach(row => {
+        // Only take the first N-2 cells (ignore Accept/View buttons)
+        const tds = Array.from(row.querySelectorAll('td'));
+        let cells = tds.slice(0, tds.length - 2).map(td => {
+          if (td.querySelectorAll && td.querySelectorAll('a').length > 0) {
+            return Array.from(td.querySelectorAll('a')).map(a => a.href).join(', ');
+          } else {
+            return td.innerText.trim();
+          }
+        });
+        data.push(cells);
+      });
+      // Create worksheet and workbook
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
+      XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+    }
+    // Supabase client
+    const supabaseClient = window.supabase.createClient(
+      "https://cbhodgwaazmjszkujrti.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+    // Render accepted workdone table
+    function renderAcceptedWorkdoneTable(rows) {
+      // Pagination for Accepted Workdone table
+      let acceptedCurrentPage = 1;
+      let acceptedRowsPerPage = 10;
+      let _acceptedRowsAll = [];
+      window._acceptedRowsAll = rows;
+      window._acceptedRows = rows;
+      renderAcceptedWorkdoneTablePage(acceptedCurrentPage);
+      renderAcceptedWorkdonePagination();
+      window.changeAcceptedPage = function(page) {
+        const totalRows = window._acceptedRowsAll.length;
+        const totalPages = Math.ceil(totalRows / acceptedRowsPerPage);
+        if (page < 1 || page > totalPages) return;
+        acceptedCurrentPage = page;
+        renderAcceptedWorkdoneTablePage(page);
+        renderAcceptedWorkdonePagination();
+      }
+      function renderAcceptedWorkdoneTablePage(page) {
+        const tbody = document.getElementById('acceptedWorkdoneTable');
+        let start = (page - 1) * acceptedRowsPerPage;
+        let end = start + acceptedRowsPerPage;
+        let pageRows = window._acceptedRowsAll.slice(start, end);
+        tbody.innerHTML = pageRows.length > 0 ? pageRows.map((r, idx) => {
+          let globalIdx = start + idx;
+          let statusText = (r.status || '').toString().toUpperCase();
+          let statusClass = '';
+          if (statusText === 'COMPLETED') {
+            statusClass = 'text-green-600 font-bold uppercase';
+          } else if (statusText === 'PENDING') {
+            statusClass = 'text-red-600 font-bold uppercase';
+          } else {
+            statusClass = 'font-bold uppercase';
+          }
+          return `
+          <tr class="hover:bg-blue-50 transition border-b border-gray-200" data-accepted-idx="${globalIdx}">
+            <td class='p-3 border-r border-gray-200'>${r.department}</td>
+            <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
+            <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
+            <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
+            <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
+            <td class='p-3 border-r border-gray-200'>${r.verified_at ? new Date(r.verified_at).toLocaleString() : ''}</td>
+            <td class='p-3 border-r border-gray-200'>${r.accepted_by}</td>
+            <td class='p-3 border-r border-gray-200'>${r.accepted_at ? new Date(r.accepted_at).toLocaleString() : ''}</td>
+            <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewAcceptedRowDetails(${globalIdx})">View</button></td>
+          </tr>
+          `;
+        }).join('') : `<tr><td colspan='9' class='text-center text-gray-400 p-4'>No accepted records found.</td></tr>`;
+      }
+      function renderAcceptedWorkdonePagination() {
+        const totalRows = window._acceptedRowsAll.length;
+        const totalPages = Math.ceil(totalRows / acceptedRowsPerPage);
+        const container = document.getElementById('acceptedWorkdonePagination');
+        if (totalPages <= 1) {
+          container.innerHTML = '';
+          return;
+        }
+        let html = `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${acceptedCurrentPage === 1 ? 'disabled' : ''} onclick='changeAcceptedPage(${acceptedCurrentPage - 1})'>Prev</button>`;
+        for (let i = 1; i <= totalPages; i++) {
+          html += `<button class='px-3 py-1 mx-1 rounded ${i === acceptedCurrentPage ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}' onclick='changeAcceptedPage(${i})'>${i}</button>`;
+        }
+        html += `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${acceptedCurrentPage === totalPages ? 'disabled' : ''} onclick='changeAcceptedPage(${acceptedCurrentPage + 1})'>Next</button>`;
+        container.innerHTML = html;
+      }
+    }
+    // Modal logic for viewing Accepted Workdone row details
+    function viewAcceptedRowDetails(idx) {
+      const row = window._acceptedRowsAll && window._acceptedRowsAll[idx];
+      if (!row) return;
+      
+      // Lookup form table for portfolio
+      const formTables = [
+        {table: 'form1-once in a year', portfolio: 'Students Performance in Training & Placement Member (Yearly)'},
+        {table: 'form1-Weekly', portfolio: 'Students Performance in Training & Placement Member (Weekly)'},
+        {table: 'form1-once in 15 days', portfolio: 'Students Performance in Training & Placement Member (Bi-weekly)'},
+        {table: 'form1-once in a semester', portfolio: 'Students Performance in Training & Placement Member (Semester)'},
+        {table: 'form2-daily', portfolio: 'Class Advisor (Daily)'},
+        {table: 'form2-weekly', portfolio: 'Class Advisor (Weekly)'},
+        {table: 'form2-once in a month', portfolio: 'Class Advisor (Monthly)'},
+        {table: 'form2-once in a semester', portfolio: 'Class Advisor (Semester)'},
+        {table: 'form3-Weekly', portfolio: 'Faculty Information & Contribution Member (Weekly)'},
+        {table: 'form3- once in 15 days', portfolio: 'Faculty Information & Contribution Member (Bi-weekly)'},
+        {table: 'form3-once in a semester', portfolio: 'Faculty Information & Contribution Member (Semester)'},
+        {table: 'form4-Weekly', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell) (Weekly)'},
+        {table: 'form4-once in a month', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell) (Monthly)'},
+        {table: 'form4-once in a semester', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell) (Semester)'},
+        {table: 'form5-weekly', portfolio: 'Continuous Improvement Member (Program Member) (Weekly)'},
+        {table: 'form5-Once in a 3 Months', portfolio: 'Continuous Improvement Member (Program Member) (Quarterly)'},
+        {table: 'form5-once in a semester', portfolio: 'Continuous Improvement Member (Program Member) (Semester)'},
+        {table: 'form6-once in a semester', portfolio: 'Teaching & Learning Process Member (IQAC) (Semester)'},
+        {table: 'form7-Once in a Semester', portfolio: 'Student Support System Member (Discipline & Extra Curricular) (Semester)'},
+        {table: 'form7-Once in 2 Months', portfolio: 'Student Support System Member (Discipline & Extra Curricular) (Bi-monthly)'},
+        {table: 'form7-Weekly', portfolio: 'Student Support System Member (Discipline & Extra Curricular) (Weekly)'},
+        {table: 'form8-weekly', portfolio: 'Facilities & Technical Support Member (Lab Member) (Weekly)'},
+        {table: 'form8-once in 3 Months', portfolio: 'Facilities & Technical Support Member (Lab Member) (Quarterly)'},
+        {table: 'form8-Once in Semester', portfolio: 'Facilities & Technical Support Member (Lab Member) (Semester)'},
+        {table: 'ASP', portfolio: 'ASP Core Scope Form'},
+        {table: 'AP', portfolio: 'AP Core Scope Form'},
+        {table: 'Prof', portfolio: 'Professor Core Scope Form'}
+      ];
+      
+      let matchTable = null;
+      let matchPortfolio = (row.portfolio_name || '').toLowerCase();
+      let portfolioLabel = row.portfolio_name || '';
+      
+      // Find matching table
+      for (const ft of formTables) {
+        if ((ft.portfolio || '').toLowerCase() === matchPortfolio) {
+          matchTable = ft.table;
+          portfolioLabel = ft.portfolio;
+          break;
+        }
+      }
+      
+      // If no exact match, try partial match
+      if (!matchTable) {
+        for (const ft of formTables) {
+          if (matchPortfolio.includes((ft.portfolio || '').toLowerCase().split('(')[0].trim())) {
+            matchTable = ft.table;
+            portfolioLabel = ft.portfolio;
+            break;
+          }
+        }
+      }
+      
+      if (matchTable) {
+        // Try different possible column name variations
+        const possibleQueries = [
+          // Try original case
+          { dept: 'Department', member: 'Portfolio Member Name' },
+          // Try lowercase
+          { dept: 'department', member: 'portfolio member name' },
+          // Try underscore format
+          { dept: 'department', member: 'portfolio_member_name' },
+          // Try other common variations
+          { dept: 'dept', member: 'member_name' },
+          { dept: 'Department', member: 'Member Name' }
+        ];
+        
+        async function tryQuery(queryIndex = 0) {
+          if (queryIndex >= possibleQueries.length) {
+            // All queries failed, show error
+            showModal(`<div class="text-red-500">
+              <h4 class="text-lg font-semibold text-blue-700 mb-3">${portfolioLabel}</h4>
+              <p>Could not find matching records in ${matchTable} table.</p>
+              <p class="mt-2">Department: ${row.department}</p>
+              <p>Portfolio Member: ${row.portfolio_member_name}</p>
+              <p class="mt-2 text-sm text-gray-400">The table structure might be different or the record might not exist.</p>
+            </div>`);
+            return;
+          }
+          
+          const query = possibleQueries[queryIndex];
+          
+          try {
+            const { data: origRows, error } = await supabaseClient
+              .from(matchTable)
+              .select('*')
+              .eq(query.dept, row.department)
+              .eq(query.member, row.portfolio_member_name);
+              
+            if (error) {
+              console.log(`Query ${queryIndex + 1} failed:`, error.message);
+              // Try next query variation
+              tryQuery(queryIndex + 1);
+              return;
+            }
+            
+            if (origRows && origRows.length > 0) {
+              // Found original form data
+              const orig = origRows[0];
+              const modalContext = {
+                portfolio: portfolioLabel,
+                table: matchTable,
+                department: row.department,
+                member: row.portfolio_member_name
+              };
+              
+              // Use the form modal content generator to show complete form structure
+              let html = getFormModalContent(modalContext, orig);
+              showModal(html);
+            } else {
+              // No records found with this query, try next
+              console.log(`Query ${queryIndex + 1} returned no results`);
+              tryQuery(queryIndex + 1);
+            }
+          } catch (err) {
+            console.log(`Query ${queryIndex + 1} exception:`, err.message);
+            // Try next query variation
+            tryQuery(queryIndex + 1);
+          }
+        }
+        
+        // Start with the first query variation
+        tryQuery(0);
+      } else {
+        // No matching table found
+        showModal(`<div class="text-gray-500">
+          <h4 class="text-lg font-semibold text-blue-700 mb-3">Workdone Details</h4>
+          <p>Unable to determine source form table for portfolio: <strong>${row.portfolio_name}</strong></p>
+          <p class="mt-2">Department: ${row.department}</p>
+          <p>Portfolio Member: ${row.portfolio_member_name}</p>
+          <p class="mt-2 text-sm text-gray-400">Portfolio mapping might need to be updated.</p>
+        </div>`);
+      }
+    }
+    
+    // Modal display logic (shared)
+    function showModal(html) {
+      const modal = document.getElementById('viewModal');
+      const modalContent = document.getElementById('viewModalContent');
+      if (modal && modalContent) {
+        modalContent.innerHTML = html;
+        modal.classList.remove('hidden');
+      }
+    }
+    
+    function closeViewModal() {
+      const modal = document.getElementById('viewModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        const modalContent = document.getElementById('viewModalContent');
+        if (modalContent) modalContent.innerHTML = '';
+      }
+    }
+    // Generic table filter function for search bar
+    function filterTable(tbodyId, searchInputId) {
+      const search = document.getElementById(searchInputId).value.toLowerCase();
+      const rows = Array.from(document.getElementById(tbodyId).querySelectorAll('tr'));
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(search) ? '' : 'none';
+      });
+    }
+    // Fetch accepted workdone from iqac-workdone table
+    async function loadAcceptedWorkdone() {
+      const { data, error } = await supabaseClient
+        .from('iqac-workdone')
+        .select('*')
+        .order('accepted_at', { ascending: false });
+      if (error) {
+        document.getElementById('acceptedWorkdoneTable').innerHTML = `<tr><td colspan='8' class='text-center text-red-500 p-4'>Failed to load accepted workdone: ${error.message}</td></tr>`;
+        return;
+      }
+      renderAcceptedWorkdoneTable(data || []);
+    }
+    // Initial load
+    loadAcceptedWorkdone();
+  </script>
+
+  <!-- View Modal for Workdone Details -->
+  <div id="viewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+    <div class="bg-white rounded-lg shadow-lg max-w-4xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeViewModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+      <h3 class="text-xl font-bold mb-4 text-blue-700">Workdone Details</h3>
+      <div id="viewModalContent" class="overflow-y-auto text-sm"></div>
+    </div>
+  </div>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> © All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>, IV CSE 2022-2026.<br/> 
+    </p>
+  </footer>
+
+</body>
+</html>

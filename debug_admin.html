@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Admin Login</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+    .error { color: red; }
+    .success { color: green; }
+    .info { color: blue; }
+    input, button { padding: 8px; margin: 5px; }
+    button { background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>Admin Login Debug Tool</h1>
+  
+  <div class="debug-section">
+    <h2>1. Check All Admin Records</h2>
+    <button onclick="checkAllAdmins()">List All Admins</button>
+    <div id="admin-list"></div>
+  </div>
+
+  <div class="debug-section">
+    <h2>2. Test Specific Login</h2>
+    <input type="email" id="test-email" placeholder="Enter admin email">
+    <input type="password" id="test-password" placeholder="Enter password">
+    <button onclick="testLogin()">Test Login</button>
+    <div id="login-result"></div>
+  </div>
+
+  <div class="debug-section">
+    <h2>3. Create Test Admin (if needed)</h2>
+    <input type="text" id="admin-name" placeholder="Admin Name">
+    <input type="email" id="admin-email" placeholder="Admin Email">
+    <input type="password" id="admin-password" placeholder="Password">
+    <button onclick="createAdmin()">Create Admin</button>
+    <div id="create-result"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://cbhodgwaazmjszkujrti.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU";
+    
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function checkAllAdmins() {
+      const resultDiv = document.getElementById('admin-list');
+      resultDiv.innerHTML = '<p class="info">Checking Admin table...</p>';
+      
+      try {
+        const { data, error } = await supabaseClient
+          .from('"Admin"')
+          .select('*');
+        
+        if (error) {
+          resultDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+          return;
+        }
+        
+        if (!data || data.length === 0) {
+          resultDiv.innerHTML = '<p class="info">No admin records found in the database.</p>';
+          return;
+        }
+        
+        let html = `<p class="success">Found ${data.length} admin record(s):</p><pre>`;
+        data.forEach((admin, index) => {
+          html += `Admin ${index + 1}:\n`;
+          html += `  ID: ${admin.id}\n`;
+          html += `  Name: ${admin.name}\n`;
+          html += `  Email: ${admin.email}\n`;
+          html += `  Role: ${admin.role}\n`;
+          html += `  Department: ${admin.department}\n`;
+          html += `  Is Active: ${admin.is_active}\n`;
+          html += `  Created At: ${admin.created_at}\n`;
+          html += `  Last Login: ${admin.last_login || 'Never'}\n\n`;
+        });
+        html += '</pre>';
+        resultDiv.innerHTML = html;
+        
+      } catch (err) {
+        resultDiv.innerHTML = `<p class="error">Unexpected error: ${err.message}</p>`;
+      }
+    }
+
+    async function testLogin() {
+      const email = document.getElementById('test-email').value.trim();
+      const password = document.getElementById('test-password').value.trim();
+      const resultDiv = document.getElementById('login-result');
+      
+      if (!email || !password) {
+        resultDiv.innerHTML = '<p class="error">Please enter both email and password</p>';
+        return;
+      }
+      
+      resultDiv.innerHTML = '<p class="info">Testing login...</p>';
+      
+      try {
+        const { data, error } = await supabaseClient
+          .from('"Admin"')
+          .select('*')
+          .eq('email', email)
+          .eq('password', password)
+          .eq('is_active', true)
+          .maybeSingle();
+        
+        if (error) {
+          resultDiv.innerHTML = `<p class="error">Database Error: ${error.message}</p>`;
+          return;
+        }
+        
+        if (!data) {
+          // Let's check if the email exists but with different conditions
+          const { data: emailCheck, error: emailError } = await supabaseClient
+            .from('"Admin"')
+            .select('*')
+            .eq('email', email)
+            .maybeSingle();
+          
+          if (emailError) {
+            resultDiv.innerHTML = `<p class="error">Error checking email: ${emailError.message}</p>`;
+            return;
+          }
+          
+          if (!emailCheck) {
+            resultDiv.innerHTML = '<p class="error">No admin found with this email address.</p>';
+          } else {
+            let reason = '';
+            if (emailCheck.password !== password) reason += 'Wrong password. ';
+            if (!emailCheck.is_active) reason += 'Account is inactive. ';
+            
+            resultDiv.innerHTML = `<p class="error">Login failed: ${reason}</p>
+                                   <p class="info">Found admin with email but: ${reason}</p>
+                                   <pre>Admin Details:\n${JSON.stringify(emailCheck, null, 2)}</pre>`;
+          }
+          return;
+        }
+        
+        resultDiv.innerHTML = `<p class="success">Login successful!</p>
+                               <pre>Admin Details:\n${JSON.stringify(data, null, 2)}</pre>`;
+        
+      } catch (err) {
+        resultDiv.innerHTML = `<p class="error">Unexpected error: ${err.message}</p>`;
+      }
+    }
+
+    async function createAdmin() {
+      const name = document.getElementById('admin-name').value.trim();
+      const email = document.getElementById('admin-email').value.trim();
+      const password = document.getElementById('admin-password').value.trim();
+      const resultDiv = document.getElementById('create-result');
+      
+      if (!name || !email || !password) {
+        resultDiv.innerHTML = '<p class="error">Please fill all fields</p>';
+        return;
+      }
+      
+      resultDiv.innerHTML = '<p class="info">Creating admin...</p>';
+      
+      try {
+        const { data, error } = await supabaseClient
+          .from('"Admin"')
+          .insert([
+            {
+              name: name,
+              email: email,
+              password: password,
+              role: 'SUPER_ADMIN',
+              department: 'ADMINISTRATION',
+              is_active: true
+            }
+          ])
+          .select();
+        
+        if (error) {
+          resultDiv.innerHTML = `<p class="error">Error creating admin: ${error.message}</p>`;
+          return;
+        }
+        
+        resultDiv.innerHTML = `<p class="success">Admin created successfully!</p>
+                               <pre>${JSON.stringify(data[0], null, 2)}</pre>`;
+        
+      } catch (err) {
+        resultDiv.innerHTML = `<p class="error">Unexpected error: ${err.message}</p>`;
+      }
+    }
+  </script>
+</body>
+</html>

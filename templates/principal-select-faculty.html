@@ -1,0 +1,245 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assign Faculty to Forms</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="max-w-3xl mx-auto py-10">
+    <h1 class="text-3xl font-bold mb-8 text-center text-purple-800">Assign Faculty to Institution Forms</h1>
+    <div id="formsList" class="space-y-4"></div>
+  </div>
+
+  <!-- Modal -->
+  <div id="facultyModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+      <h2 class="text-xl font-bold mb-4">Select Faculty</h2>
+      <input type="text" id="facultySearch" placeholder="Search faculty..." class="w-full border px-3 py-2 rounded mb-3" />
+      <div id="facultyList" class="max-h-60 overflow-y-auto mb-4"></div>
+      <div class="flex justify-end gap-2">
+        <button id="closeModalBtn" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+        <button id="saveFacultyBtn" class="px-4 py-2 bg-purple-700 text-white rounded" disabled>Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // List of forms and their table names (updated with names from image)
+    const forms = [
+      { name: 'Director – Students welfare & Admission', table: 'Institution-form1-monthly' },
+      { name: 'Head - HR', table: 'Institution-form2' },
+      { name: 'Principal', table: 'Institution-form3' },
+      { name: 'Dean - IQAC', table: 'Institution-form4' },
+      { name: 'Director - Academics', table: 'Institution-form5' },
+      { name: 'Controller of Examinations', table: 'Institution-form6' },
+      { name: 'Executive Dean – International Affairs', table: 'Institution-form7' },
+      { name: 'Head - Placements', table: 'Institution-form8' },
+      { name: 'Placement officer', table: 'Institution-form9' },
+      { name: 'Head – Training', table: 'Institution-form10' },
+      { name: 'Training officer', table: 'Institution-form11' },
+      { name: 'Head - RISE', table: 'Institution-form12' },
+      { name: 'IT Infra – Coordinator', table: 'Institution-form13' },
+      { name: 'Website – Coordinator', table: 'Institution-form14' },
+      { name: 'ERP Coordinator', table: 'Institution-form15' },
+      { name: 'Public Relations officer', table: 'Institution-form16' },
+      { name: 'Logistics Coordinator', table: 'Institution-form17' },
+    ];
+
+    // Supabase setup
+    const supabase = window.supabase.createClient(
+      "https://cbhodgwaazmjszkujrti.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+
+    let facultyData = [];
+    let selectedFormIdx = null;
+    let selectedFaculty = null;
+
+    // Render forms list with assigned faculty (from Faculty.assigned_forms)
+    function renderForms(assignmentsMap = {}) {
+      const container = document.getElementById('formsList');
+      container.innerHTML = '';
+      forms.forEach((form, idx) => {
+        let assigned = '';
+        if (assignmentsMap[form.name]) {
+          assigned = assignmentsMap[form.name];
+        }
+        const div = document.createElement('div');
+        div.className = 'flex items-center bg-white rounded shadow px-4 py-3';
+        div.innerHTML = `
+          <span class="font-semibold text-lg flex-1">${form.name}</span>
+          <span id="selectedFaculty${idx}" class="ml-4 text-green-700 font-semibold">${assigned ? assigned : ''}</span>
+          <div class="flex flex-row gap-2 ml-auto">
+            <button class="selectFacultyBtn bg-purple-700 text-white px-4 py-2 rounded ${assigned ? 'opacity-50 cursor-not-allowed' : ''}" data-idx="${idx}" ${assigned ? 'disabled' : ''}>Select</button>
+            ${assigned ? `<button class=\"deleteFacultyBtn bg-red-600 text-white px-3 py-1 rounded\" data-idx=\"${idx}\">Delete</button>` : ''}
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // Fetch faculty list from Supabase
+    async function fetchFaculty() {
+      const { data, error } = await supabase.from('Faculty').select('input_id, Name, "EmployeeID"');
+      if (!error && data && data.length > 0) {
+        facultyData = data;
+      } else {
+        facultyData = [];
+        document.getElementById('formsList').innerHTML = '<div class="text-red-600 text-center py-8">No faculty found in the database.</div>';
+      }
+    }
+
+    // Show modal with faculty list
+    function showFacultyModal(formIdx) {
+      selectedFormIdx = formIdx;
+      selectedFaculty = null;
+      document.getElementById('facultySearch').value = '';
+      renderFacultyList('');
+      document.getElementById('facultyModal').classList.remove('hidden');
+      document.getElementById('saveFacultyBtn').disabled = true;
+    }
+
+    // Render faculty list in modal
+    function renderFacultyList(filter) {
+      const list = document.getElementById('facultyList');
+      list.innerHTML = '';
+      const filterLower = filter.toLowerCase();
+      facultyData.filter(f => {
+        const name = (f.Name || '').toLowerCase();
+        const empId = (f.EmployeeID || '').toLowerCase();
+        return name.includes(filterLower) || empId.includes(filterLower);
+      }).forEach(fac => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'block w-full text-left px-3 py-2 hover:bg-purple-100 rounded';
+        btn.innerHTML = `<span class='font-semibold'>${fac.Name || ''}</span> <span class='text-xs text-gray-500'>(ID: ${fac.EmployeeID || ''})</span>`;
+        btn.onclick = () => {
+          selectedFaculty = fac;
+          document.getElementById('saveFacultyBtn').disabled = false;
+          // Highlight selected
+          Array.from(list.children).forEach(child => child.classList.remove('bg-purple-200'));
+          btn.classList.add('bg-purple-200');
+        };
+        list.appendChild(btn);
+      });
+      if (facultyData.length === 0) {
+        list.innerHTML = '<div class="text-gray-500 text-center py-4">No faculty available.</div>';
+      }
+    }
+
+    // Save selected faculty for the form (update Faculty.assigned_forms)
+    async function saveFacultyAssignment() {
+      if (selectedFormIdx === null || !selectedFaculty) return;
+      const formName = forms[selectedFormIdx].name;
+      // Check if already assigned to any faculty
+      const { data: facultyRows } = await supabase.from('Faculty').select('input_id, assigned_forms');
+      let alreadyAssigned = false;
+      if (facultyRows && Array.isArray(facultyRows)) {
+        for (const row of facultyRows) {
+          if (row.assigned_forms) {
+            let arr = [];
+            try { arr = JSON.parse(row.assigned_forms); } catch {}
+            if (Array.isArray(arr) && arr.includes(formName)) {
+              alreadyAssigned = true;
+              break;
+            }
+          }
+        }
+      }
+      if (alreadyAssigned) {
+        alert('A faculty is already assigned for this form.');
+        document.getElementById('facultyModal').classList.add('hidden');
+        return;
+      }
+      // Assign to selected faculty
+      let arr = [];
+      if (selectedFaculty.assigned_forms) {
+        try { arr = JSON.parse(selectedFaculty.assigned_forms); } catch {}
+      }
+      if (!Array.isArray(arr)) arr = [];
+      arr.push(formName);
+      await supabase.from('Faculty').update({ assigned_forms: JSON.stringify(arr) }).eq('input_id', selectedFaculty.input_id);
+      await loadAssignmentsAndRender();
+      document.getElementById('facultyModal').classList.add('hidden');
+    }
+
+    // Delete assigned faculty for a form
+    async function deleteFacultyAssignment(formIdx) {
+      const formName = forms[formIdx].name;
+      // Find the faculty assigned to this form
+      const { data: facultyRows } = await supabase.from('Faculty').select('input_id, assigned_forms');
+      if (facultyRows && Array.isArray(facultyRows)) {
+        for (const row of facultyRows) {
+          if (row.assigned_forms) {
+            let arr = [];
+            try { arr = JSON.parse(row.assigned_forms); } catch {}
+            if (Array.isArray(arr) && arr.includes(formName)) {
+              // Remove the form from assigned_forms
+              const newArr = arr.filter(f => f !== formName);
+              await supabase.from('Faculty').update({ assigned_forms: JSON.stringify(newArr) }).eq('input_id', row.input_id);
+              break;
+            }
+          }
+        }
+      }
+      await loadAssignmentsAndRender();
+    }
+
+    // Load assignments and render forms (from Faculty.assigned_forms)
+    async function loadAssignmentsAndRender() {
+      await fetchFaculty();
+      // Fetch all faculty and their assigned_forms
+      const { data: facultyRows, error: assignErr } = await supabase
+        .from('Faculty')
+        .select('Name, assigned_forms');
+      const assignmentsMap = {};
+      if (facultyRows && Array.isArray(facultyRows)) {
+        facultyRows.forEach(row => {
+          if (row.assigned_forms) {
+            let arr = [];
+            try { arr = JSON.parse(row.assigned_forms); } catch {}
+            if (Array.isArray(arr)) {
+              arr.forEach(formName => {
+                assignmentsMap[formName] = row.Name;
+              });
+            }
+          }
+        });
+      }
+      renderForms(assignmentsMap);
+    }
+
+    // Event listeners
+    loadAssignmentsAndRender();
+    document.getElementById('formsList').addEventListener('click', function(e) {
+      if (e.target.classList.contains('selectFacultyBtn') && !e.target.disabled) {
+        const idx = e.target.getAttribute('data-idx');
+        showFacultyModal(idx);
+      }
+      if (e.target.classList.contains('deleteFacultyBtn')) {
+        const idx = e.target.getAttribute('data-idx');
+        if (confirm('Are you sure you want to delete the assigned faculty for this form?')) {
+          deleteFacultyAssignment(idx);
+        }
+      }
+    });
+    document.getElementById('facultySearch').addEventListener('input', function(e) {
+      renderFacultyList(e.target.value);
+    });
+    document.getElementById('closeModalBtn').onclick = () => {
+      document.getElementById('facultyModal').classList.add('hidden');
+    };
+    document.getElementById('saveFacultyBtn').onclick = saveFacultyAssignment;
+  });
+  </script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> © All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>, IV CSE 2022-2026.<br/> 
+    </p>
+  </footer>
+
+</body>
+</html>

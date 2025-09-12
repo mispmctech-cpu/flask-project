@@ -1,0 +1,555 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Principal Dashboard - PMC Tech</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    .chart-container {
+      position: relative;
+      height: 300px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Header -->
+  <header class="bg-white shadow-sm border-b">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16">
+        <div class="flex items-center">
+          <img src="../static/img/pmc.jpg" alt="PMC Tech" class="h-10 w-auto rounded-lg">
+          <div class="ml-4">
+            <h1 class="text-xl font-bold text-gray-900">Principal Dashboard</h1>
+          </div>
+        </div>
+        <div class="flex items-center space-x-4">
+          <button onclick="window.location.href='/logout'" aria-label="Logout" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition">
+            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Stats Cards from Admin Reports -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="bg-white p-6 rounded-lg shadow border">
+        <div class="text-3xl font-bold text-blue-600" id="totalUsers">-</div>
+        <div class="text-sm text-gray-600">Total Users</div>
+      </div>
+      <div class="bg-white p-6 rounded-lg shadow border">
+        <div class="text-3xl font-bold text-green-600" id="activeForms">-</div>
+        <div class="text-sm text-gray-600">Form Submissions</div>
+      </div>
+      <div class="bg-white p-6 rounded-lg shadow border">
+        <div class="text-3xl font-bold text-purple-600" id="totalDepartments">-</div>
+        <div class="text-sm text-gray-600">Departments</div>
+      </div>
+    </div>
+
+    <!-- Form Categories Distribution Chart from Admin Reports -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+      <h3 class="text-lg font-semibold mb-4">Forms Available by Category</h3>
+      <div class="chart-container">
+        <canvas id="formCategoriesChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Top: Department Status Distribution (large) -->
+    <div class="mb-8">
+      <h2 class="text-xl font-bold mb-2 text-purple-700">Department Status Distribution</h2>
+      <div class="w-full md:w-3/4 mx-auto" style="min-height:360px;max-height:360px;">
+        <canvas id="deptStatusBarChart" style="height:340px;min-height:340px;max-height:340px;"></canvas>
+      </div>
+    </div>
+    <!-- Below: Overall Submission Status (large) -->
+    <div class="mb-8">
+      <h2 class="text-xl font-bold mb-2 text-purple-700">Overall Submission Status</h2>
+      <div class="w-full md:w-3/4 mx-auto" style="min-height:360px;max-height:360px;">
+        <canvas id="overallChart" style="height:340px;min-height:340px;max-height:340px;"></canvas>
+      </div>
+    </div>
+    <!-- Filters -->
+    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex flex-col md:flex-row gap-4 items-center">
+        <label class="font-semibold text-black">Department:</label>
+        <select id="departmentDropdown" class="p-2 border border-gray-300 rounded-md w-64"></select>
+        <label class="font-semibold text-black">Portfolio Name:</label>
+        <select id="portfolioDropdown" class="p-2 border border-gray-300 rounded-md w-64"></select>
+      </div>
+    </div>
+    <!-- Bottom: Two small bar charts in a row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div>
+        <h2 class="text-base font-bold mb-2 text-purple-700">Department-wise Submission Status</h2>
+        <div class="w-full">
+          <canvas id="departmentChart" style="height:200px;"></canvas>
+        </div>
+      </div>
+      <div>
+        <h2 class="text-base font-bold mb-2 text-purple-700">Portfolio Name-wise Submission Status</h2>
+        <div class="w-full">
+          <canvas id="portfolioChart" style="height:200px;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report Generation Section from Admin Reports -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+      <h3 class="text-lg font-semibold mb-4">Generate Reports</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="border border-gray-200 rounded-lg p-4">
+          <h4 class="font-medium mb-2">User Report</h4>
+          <p class="text-sm text-gray-600 mb-3">Complete user data across all roles</p>
+          <button onclick="generateUserReport()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition">
+            Generate CSV
+          </button>
+        </div>
+        <div class="border border-gray-200 rounded-lg p-4">
+          <h4 class="font-medium mb-2">Department Report</h4>
+          <p class="text-sm text-gray-600 mb-3">Department-wise statistics and data</p>
+          <button onclick="generateDepartmentReport()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded transition">
+            Generate CSV
+          </button>
+        </div>
+        <div class="border border-gray-200 rounded-lg p-4">
+          <h4 class="font-medium mb-2">Form Status Report</h4>
+          <p class="text-sm text-gray-600 mb-3">Current status of all forms</p>
+          <button onclick="generateFormReport()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded transition">
+            Generate CSV
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="loadingBox" class="mt-8 p-3 rounded bg-blue-100 text-blue-800 font-semibold">Loading data, please wait...</div>
+    <div id="errorBox" class="hidden mt-4 p-3 rounded bg-red-100 text-red-700 font-semibold"></div>
+  </main>
+  <script>
+    // Supabase client (anon key from your forms)
+    const supabaseClient = window.supabase.createClient(
+      "https://cbhodgwaazmjszkujrti.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+    // All form tables
+    const FORM_TABLES = [
+      'form1-Weekly', 'form1-once in 15 days', 'form1-once in a semester', 'form1-once in a year',
+      'form2-daily', 'form2-weekly', 'form2-once in a month', 'form2-once in a semester',
+      'form3-Weekly', 'form3- once in 15 days', 'form3-once in a semester',
+      'form4-Weekly', 'form4-once in a month', 'form4-once in a semester',
+      'form5-weekly', 'form5-Once in a 3 Months', 'form5-once in a semester',
+      'form6-weekly', 'form6-once in 2 month', 'form6-once in a semester',
+      'form7-Weekly', 'form7-Once in 2 Months', 'form7-Once in a Semester',
+      'form8-weekly', 'form8-once in 3 Months', 'form8-Once in Semester'
+    ];
+    // Status categories
+    const STATUS_CATEGORIES = {
+      completed: ['completed', 'uploaded'],
+      notcompleted: ['yet to be completed'],
+      process: ['under process']
+    };
+    // Data holders
+    let allRows = [];
+    let departments = new Set();
+    let portfolios = new Set();
+    // Helper: classify status
+    function classifyStatus(row) {
+      let statusFields = Object.keys(row).filter(key => key.toLowerCase().includes('status'));
+      let hasNotCompleted = false;
+      let hasProcess = false;
+      let allCompleted = true;
+      for (const key of statusFields) {
+        const val = (row[key] || '').toLowerCase();
+        if (STATUS_CATEGORIES.notcompleted.some(s => val.includes(s))) {
+          hasNotCompleted = true;
+          allCompleted = false;
+        } else if (STATUS_CATEGORIES.process.some(s => val.includes(s))) {
+          hasProcess = true;
+          allCompleted = false;
+        } else if (!STATUS_CATEGORIES.completed.some(s => val.includes(s))) {
+          allCompleted = false;
+        }
+      }
+      if (hasNotCompleted) return 'Not Completed';
+      if (allCompleted && statusFields.length > 0) return 'Completed/Uploaded';
+      if (hasProcess) return 'Under Process';
+      return 'Not Completed';
+    }
+    // Fetch all data
+    async function fetchAllData() {
+      document.getElementById('loadingBox').style.display = '';
+      document.getElementById('errorBox').classList.add('hidden');
+      allRows = [];
+      departments.clear();
+      portfolios.clear();
+      for (const table of FORM_TABLES) {
+        let { data, error } = await supabaseClient.from(table).select('*');
+        if (error) {
+          document.getElementById('errorBox').textContent = `Error fetching ${table}: ${error.message}`;
+          document.getElementById('errorBox').classList.remove('hidden');
+          continue;
+        }
+        for (const row of data) {
+          // Try to get department and portfolio name fields
+          let dept = row['Department'] || row['department'] || row['Department:'] || row['department:'] || '';
+          let portfolio = row['Portfolio Name'] || row['portfolio_name'] || '';
+          let status = classifyStatus(row);
+          allRows.push({ ...row, department: dept, portfolio, status });
+          if (dept) departments.add(dept);
+          if (portfolio) portfolios.add(portfolio);
+        }
+      }
+      document.getElementById('loadingBox').style.display = 'none';
+      updateDropdowns();
+      renderCharts();
+    }
+    // Populate dropdowns
+    function updateDropdowns() {
+      const deptSel = document.getElementById('departmentDropdown');
+      deptSel.innerHTML = '<option value="">All Departments</option>' + Array.from(departments).map(d => `<option value="${d}">${d}</option>`).join('');
+      const portSel = document.getElementById('portfolioDropdown');
+      portSel.innerHTML = '<option value="">All Portfolios</option>' + Array.from(portfolios).map(p => `<option value="${p}">${p}</option>`).join('');
+    }
+    // Chart rendering
+    let overallChart, departmentChart, portfolioChart, deptStatusBarChart;
+    function renderCharts() {
+      // Overall
+      const overallCounts = { 'Completed/Uploaded': 0, 'Not Completed': 0, 'Under Process': 0 };
+      allRows.forEach(r => { if (overallCounts[r.status] !== undefined) overallCounts[r.status]++; });
+      renderBarChart('overallChart', overallCounts, 'Overall Submission Status');
+      // Department-wise
+      const dept = document.getElementById('departmentDropdown').value;
+      const deptCounts = { 'Completed/Uploaded': 0, 'Not Completed': 0, 'Under Process': 0 };
+      allRows.filter(r => !dept || r.department === dept).forEach(r => { if (deptCounts[r.status] !== undefined) deptCounts[r.status]++; });
+      renderBarChart('departmentChart', deptCounts, 'Department-wise Submission Status');
+      // Portfolio-wise
+      const port = document.getElementById('portfolioDropdown').value;
+      const portCounts = { 'Completed/Uploaded': 0, 'Not Completed': 0, 'Under Process': 0 };
+      allRows.filter(r => !port || r.portfolio === port).forEach(r => { if (portCounts[r.status] !== undefined) portCounts[r.status]++; });
+      renderBarChart('portfolioChart', portCounts, 'Portfolio Name-wise Submission Status');
+
+      // Department Status Distribution (grouped bar)
+      renderDeptStatusBarChart();
+    }
+
+    function renderDeptStatusBarChart() {
+      const labels = Array.from(departments);
+  const statusTypes = ['Completed/Uploaded', 'Not Completed', 'Under Process'];
+      // Build data for each status
+      const dataByStatus = statusTypes.map(status =>
+        labels.map(dept => allRows.filter(r => r.department === dept && r.status === status).length)
+      );
+      const ctx = document.getElementById('deptStatusBarChart').getContext('2d');
+      if (deptStatusBarChart) deptStatusBarChart.destroy();
+      deptStatusBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Completed/Uploaded',
+              data: dataByStatus[0],
+              backgroundColor: 'rgba(34,197,94,0.7)',
+              borderColor: 'rgba(34,197,94,1)',
+              borderWidth: 1
+            },
+            {
+              label: 'Not Completed',
+              data: dataByStatus[1],
+              backgroundColor: 'rgba(239,68,68,0.7)', // red
+              borderColor: 'rgba(239,68,68,1)',
+              borderWidth: 1
+            },
+            {
+              label: 'Under Process',
+              data: dataByStatus[2],
+              backgroundColor: 'rgba(59,130,246,0.7)',
+              borderColor: 'rgba(59,130,246,1)',
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: true } },
+          scales: {
+            x: { stacked: false },
+            y: { beginAtZero: true, precision: 0 }
+          }
+        }
+      });
+    }
+    function renderBarChart(canvasId, counts, label) {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      if (window[canvasId + '_instance']) window[canvasId + '_instance'].destroy();
+      window[canvasId + '_instance'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(counts),
+          datasets: [{
+            label: label,
+            data: Object.values(counts),
+            backgroundColor: [
+              'rgba(34,197,94,0.7)', // green
+              'rgba(239,68,68,0.7)', // red
+              'rgba(59,130,246,0.7)' // blue
+            ],
+            borderColor: [
+              'rgba(34,197,94,1)',
+              'rgba(239,68,68,1)',
+              'rgba(59,130,246,1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, precision: 0 } }
+        }
+      });
+    }
+    document.getElementById('departmentDropdown').addEventListener('change', renderCharts);
+    document.getElementById('portfolioDropdown').addEventListener('change', renderCharts);
+
+    // Functions from admin-reports for stats and form categories chart
+    let chartInstances = {};
+
+    // Create form categories distribution chart
+    async function createFormCategoriesChart() {
+      console.log('Creating form categories chart...');
+      
+      const ctx = document.getElementById('formCategoriesChart').getContext('2d');
+      
+      if (chartInstances.formCategories) {
+        chartInstances.formCategories.destroy();
+      }
+
+      const formCategories = {
+        'Institution Forms': 17,
+        'Faculty Forms': 8,  
+        'Faculty Core Forms': 3
+      };
+
+      const labels = Object.keys(formCategories);
+      const data = Object.values(formCategories);
+      
+      const colors = ['#3B82F6', '#10B981', '#F59E0B'];
+
+      chartInstances.formCategories = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: colors,
+            borderColor: '#ffffff',
+            borderWidth: 3,
+            hoverBorderWidth: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 15,
+                usePointStyle: true,
+                font: { size: 12, weight: 'bold' },
+                generateLabels: function(chart) {
+                  const data = chart.data;
+                  if (data.labels.length && data.datasets.length) {
+                    return data.labels.map((label, i) => ({
+                      text: `${label}: ${data.datasets[0].data[i]} forms`,
+                      fillStyle: data.datasets[0].backgroundColor[i],
+                      strokeStyle: data.datasets[0].borderColor,
+                      lineWidth: data.datasets[0].borderWidth,
+                      pointStyle: 'circle',
+                      index: i
+                    }));
+                  }
+                  return [];
+                }
+              }
+            },
+            title: {
+              display: true,
+              text: 'Forms Available by Category',
+              padding: 20,
+              font: { size: 16, weight: 'bold' }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = ((value / total) * 100).toFixed(1);
+                  return `${label}: ${value} forms (${percentage}%)`;
+                }
+              },
+              titleFont: { size: 14, weight: 'bold' },
+              bodyFont: { size: 13 }
+            }
+          },
+          elements: {
+            arc: { borderRadius: 8 }
+          }
+        }
+      });
+
+      const totalForms = data.reduce((sum, count) => sum + count, 0);
+      console.log(`Form categories chart created: ${totalForms} total forms`);
+    }
+
+    // Load stats data from admin-reports logic
+    async function loadStatsData() {
+      try {
+        // Load users data from all user tables  
+        const { data: faculty } = await supabaseClient.from('Faculty').select('department, "Name", email, "Designation", "EmployeeID"');
+        const { data: hods } = await supabaseClient.from('HOD').select('department, "Name", email, "Designation"');
+        const { data: principals } = await supabaseClient.from('Principal').select('"Name", email');
+        const { data: iqac } = await supabaseClient.from('IQAC').select('*');
+        const { data: management } = await supabaseClient.from('Management').select('*');
+        const { data: admin } = await supabaseClient.from('Admin').select('*');
+
+        // Load form submission data
+        let totalFormSubmissions = 0;
+        try {
+          const { data: form2Daily } = await supabaseClient.from('form2-daily').select('input_id');
+          totalFormSubmissions += form2Daily?.length || 0;
+        } catch (e) {}
+        try {
+          const { data: form2Weekly } = await supabaseClient.from('form2-weekly').select('id');
+          totalFormSubmissions += form2Weekly?.length || 0;
+        } catch (e) {}
+
+        // Update stats
+        const totalUsers = (faculty?.length || 0) + (hods?.length || 0) + (principals?.length || 0) + 
+                         (iqac?.length || 0) + (management?.length || 0) + (admin?.length || 0);
+        document.getElementById('totalUsers').textContent = totalUsers;
+        document.getElementById('activeForms').textContent = totalFormSubmissions;
+        
+        // Get unique departments
+        const facultyDepartments = faculty?.map(f => f.department).filter(d => d && d.trim() !== '' && d.toLowerCase() !== 'null') || [];
+        const hodDepartments = hods?.map(h => h.department || h.Department).filter(d => d && d.trim() !== '' && d.toLowerCase() !== 'null') || [];
+        const allDepartments = [...facultyDepartments, ...hodDepartments];
+        const departments = [...new Set(allDepartments)];
+        document.getElementById('totalDepartments').textContent = departments.length;
+
+        console.log('Stats loaded:', { totalUsers, totalFormSubmissions, departments: departments.length });
+      } catch (error) {
+        console.error('Error loading stats:', error);
+        document.getElementById('totalUsers').textContent = 'Error';
+        document.getElementById('activeForms').textContent = 'Error';
+        document.getElementById('totalDepartments').textContent = 'Error';
+      }
+    }
+
+    // Report generation functions from admin-reports
+    async function generateUserReport() {
+      try {
+        const { data: faculty } = await supabaseClient.from('Faculty').select('*');
+        const { data: hods } = await supabaseClient.from('HOD').select('*');
+        const { data: principals } = await supabaseClient.from('Principal').select('*');
+        const { data: iqac } = await supabaseClient.from('IQAC').select('*');
+        const { data: management } = await supabaseClient.from('Management').select('*');
+        const { data: admin } = await supabaseClient.from('Admin').select('*');
+
+        const allUsers = [
+          ...(faculty || []).map(u => ({ ...u, role: 'Faculty', Name: u.Name || 'Unknown', email: u.email || 'No email' })),
+          ...(hods || []).map(u => ({ ...u, role: 'HOD', Name: u.Name || 'Unknown', email: u.email || 'No email' })),
+          ...(principals || []).map(u => ({ ...u, role: 'Principal', Name: u.Name || 'Unknown', email: u.email || 'No email' })),
+          ...(iqac || []).map(u => ({ ...u, role: 'IQAC', Name: u.Name || 'Unknown', email: u.email || 'No email' })),
+          ...(management || []).map(u => ({ ...u, role: 'Management', Name: u.Name || 'Unknown', email: u.email || 'No email' })),
+          ...(admin || []).map(u => ({ ...u, role: 'Admin', Name: u.Name || 'Administrator', email: u.email || 'No email' }))
+        ];
+
+        const csvContent = "data:text/csv;charset=utf-8," + 
+          "Name,Email,Role,Department,Mobile,EmployeeID,Designation,Experience,Qualification,Status\n" +
+          allUsers.map(user => 
+            `"${user.Name || ''}","${user.email || ''}","${user.role}","${user.Department || user.department || ''}","${user.Mobile || ''}","${user.EmployeeID || ''}","${user.Designation || ''}","${user.Experience || ''}","${user.Qualification || ''}","${user.Status || 'Active'}"`
+          ).join("\n");
+
+        downloadCSV(csvContent, 'user_report');
+      } catch (error) {
+        alert('Error generating user report: ' + error.message);
+      }
+    }
+
+    async function generateDepartmentReport() {
+      try {
+        const { data: faculty } = await supabaseClient.from('Faculty').select('department, "Name", "Designation"');
+        const { data: hods } = await supabaseClient.from('HOD').select('department, "Name", "Designation"');
+
+        const deptStats = {};
+        (faculty || []).forEach(f => {
+          const dept = f.department;
+          if (dept && dept.trim() !== '') {
+            if (!deptStats[dept]) deptStats[dept] = { faculty: 0, hod: 'No' };
+            deptStats[dept].faculty++;
+          }
+        });
+
+        (hods || []).forEach(h => {
+          const dept = h.department || h.Department;
+          if (dept && deptStats[dept]) deptStats[dept].hod = 'Yes';
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8," + 
+          "Department,Faculty Count,Has HOD\n" +
+          Object.entries(deptStats).map(([dept, stats]) => 
+            `"${dept}","${stats.faculty}","${stats.hod}"`
+          ).join("\n");
+
+        downloadCSV(csvContent, 'department_report');
+      } catch (error) {
+        alert('Error generating department report: ' + error.message);
+      }
+    }
+
+    async function generateFormReport() {
+      try {
+        // Implementation similar to admin-reports
+        alert('Form report generation - check console for details');
+        console.log('Form report would be generated here');
+      } catch (error) {
+        alert('Error generating form report: ' + error.message);
+      }
+    }
+
+    function downloadCSV(csvContent, filename) {
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `${filename}_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Initialize both original and new functionality
+    async function initializeDashboard() {
+      await fetchAllData(); // Original principal dashboard data
+      await loadStatsData(); // Admin reports stats
+      await createFormCategoriesChart(); // Admin reports form categories chart
+    }
+
+    initializeDashboard();
+  </script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> © All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>, IV CSE 2022-2026.<br/> 
+    </p>
+  </footer>
+
+</body>
+</html>
