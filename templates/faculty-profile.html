@@ -51,6 +51,7 @@
       </div>
     </header>
     <main class="max-w-6xl mx-auto px-4 py-8">
+      
       <section class="bg-white rounded-xl card-shadow p-6 mb-8">
         <!-- Update Password Button -->
         <div class="flex justify-end mb-4">
@@ -204,6 +205,38 @@
           </div>
         </div>
       </section>
+      <!-- Rejected Workdone Section (moved below Workdone) -->
+      <section class="card-shadow rounded-xl overflow-hidden mb-8">
+        <div class="bg-white p-4">
+          <h2 class="text-lg font-bold text-red-700 mb-4 uppercase">Rejected Workdone</h2>
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
+            <input id="rejectedWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-red-700" placeholder="Search by Portfolio or Member" oninput="filterRejectedWorkdoneTable()" />
+            <button onclick="exportTableToExcel('rejectedWorkdoneTable', 'Rejected_Workdone')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
+              Export to Excel
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full bg-white shadow-lg text-sm border border-gray-300">
+              <thead class="bg-gradient-to-r from-red-700 to-red-500 text-white">
+                <tr>
+                  <th class="p-3 border-b border-gray-300">Department</th>
+                  <th class="p-3 border-b border-gray-300">Portfolio Name</th>
+                  <th class="p-3 border-b border-gray-300">Member Name</th>
+                  <th class="p-3 border-b border-gray-300">Status</th>
+                  <th class="p-3 border-b border-gray-300">Rejected By</th>
+                  <th class="p-3 border-b border-gray-300">Rejected At</th>
+                  <th class="p-3 border-b border-gray-300">Commands</th>
+                  <th class="p-3 border-b border-gray-300">View</th>
+                </tr>
+              </thead>
+              <tbody id="rejectedWorkdoneTable" class="divide-y divide-gray-200"></tbody>
+            </table>
+          </div>
+          <div class="flex justify-center items-center mt-4" id="rejectedWorkdonePagination"></div>
+        </div>
+      </section>
+        </div>
+      </section>
     </main>
     <!-- Update Password Modal -->
     <div id="updatePasswordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
@@ -233,6 +266,239 @@
     </div>
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
     <script>
+      // Rejected Workdone Table Logic
+      let rejectedCurrentPage = 1;
+      let rejectedRowsPerPage = 10;
+      function filterRejectedWorkdoneTable() {
+        const search = document.getElementById('rejectedWorkdoneSearch').value.toLowerCase();
+        if (!window._allRejectedRows) return;
+        if (search.trim() === '') {
+          window._filteredRejectedRows = window._allRejectedRows;
+        } else {
+          window._filteredRejectedRows = window._allRejectedRows.filter(row => {
+            const portfolio = (row.portfolio_name || '').toLowerCase();
+            const member = (row.portfolio_member_name || '').toLowerCase();
+            return portfolio.includes(search) || member.includes(search);
+          });
+        }
+        window._workingRejectedRows = window._filteredRejectedRows || window._allRejectedRows;
+        renderRejectedWorkdoneTableWithPagination(1);
+      }
+
+      function renderRejectedWorkdoneTableWithPagination(page = 1) {
+        if (!window._allRejectedRows || window._allRejectedRows.length === 0) {
+          const tbody = document.getElementById('rejectedWorkdoneTable');
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan='8' class='text-center text-gray-400 p-4'>No rejected records found.</td></tr>`;
+          }
+          return;
+        }
+        rejectedCurrentPage = page;
+        const startIdx = (page - 1) * rejectedRowsPerPage;
+        const endIdx = startIdx + rejectedRowsPerPage;
+        const pageRows = window._workingRejectedRows.slice(startIdx, endIdx);
+        const tbody = document.getElementById('rejectedWorkdoneTable');
+        if (!tbody) return;
+        let html = "";
+        pageRows.forEach((r, idx) => {
+          const globalIdx = startIdx + idx;
+          let statusText = (r.status || '').toUpperCase();
+          let statusClass = '';
+          if (statusText === 'PENDING') {
+            statusClass = 'text-red-600 font-bold';
+          } else if (statusText === 'COMPLETED') {
+            statusClass = 'text-green-600 font-bold';
+          } else {
+            statusClass = 'font-bold';
+          }
+          const rejectedAt = new Date(r.rejected_at || r.created_at).toLocaleDateString();
+          const commands = r.Commands || r.commands || '';
+          html += `
+          <tr class="hover:bg-red-50 transition border-b border-gray-200" data-rejected-idx="${globalIdx}">
+            <td class='p-3 border-r border-gray-200'>${r.department}</td>
+            <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
+            <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
+            <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
+            <td class='p-3 border-r border-gray-200'>${r.rejected_by}</td>
+            <td class='p-3 border-r border-gray-200'>${rejectedAt}</td>
+            <td class='p-3 border-r border-gray-200'>${commands}</td>
+            <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewRejectedRowDetails(${globalIdx})">View</button></td>
+          </tr>`;
+        });
+        tbody.innerHTML = html;
+        renderRejectedWorkdonePagination();
+      }
+
+      function renderRejectedWorkdonePagination() {
+        const container = document.getElementById('rejectedWorkdonePagination');
+        if (!container || !window._workingRejectedRows) return;
+        const totalRows = window._workingRejectedRows.length;
+        const totalPages = Math.ceil(totalRows / rejectedRowsPerPage);
+        if (totalPages <= 1) {
+          container.innerHTML = '';
+          return;
+        }
+        let html = `
+          <div class="flex items-center space-x-1">
+            <button 
+              onclick="changeRejectedPage(${rejectedCurrentPage - 1})" 
+              ${rejectedCurrentPage === 1 ? 'disabled' : ''} 
+              class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 ${rejectedCurrentPage === 1 ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
+              Previous
+            </button>
+        `;
+        const maxVisiblePages = 5;
+        let startPage = Math.max(1, rejectedCurrentPage - Math.floor(maxVisiblePages / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+        if (endPage - startPage + 1 < maxVisiblePages) {
+          startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+        for (let i = startPage; i <= endPage; i++) {
+          const isActive = i === rejectedCurrentPage;
+          html += `
+            <button 
+              onclick="changeRejectedPage(${i})" 
+              class="px-3 py-2 text-sm font-medium ${isActive ? 'text-red-600 bg-red-50 border-red-300' : 'text-gray-500 bg-white border-gray-300 hover:bg-gray-50 hover:text-gray-700'} border">
+              ${i}
+            </button>
+          `;
+        }
+        html += `
+            <button 
+              onclick="changeRejectedPage(${rejectedCurrentPage + 1})" 
+              ${rejectedCurrentPage === totalPages ? 'disabled' : ''} 
+              class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 ${rejectedCurrentPage === totalPages ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
+              Next
+            </button>
+          </div>
+          <div class="text-sm text-gray-700 ml-4">
+            Showing ${Math.min((rejectedCurrentPage - 1) * rejectedRowsPerPage + 1, totalRows)} to ${Math.min(rejectedCurrentPage * rejectedRowsPerPage, totalRows)} of ${totalRows} entries
+          </div>
+        `;
+        container.innerHTML = html;
+      }
+
+      function changeRejectedPage(page) {
+        if (!window._workingRejectedRows) return;
+        const totalPages = Math.ceil(window._workingRejectedRows.length / rejectedRowsPerPage);
+        if (page < 1 || page > totalPages) return;
+        renderRejectedWorkdoneTableWithPagination(page);
+      }
+
+      async function loadRejectedWorkdone() {
+        try {
+          const { data, error } = await supabaseClient
+            .from('hod-workdone_reject')
+            .select('*')
+            .eq('department', window._facultyProfileOriginal.department)
+            .order('rejected_at', { ascending: false });
+          if (error) {
+            document.getElementById('rejectedWorkdoneTable').innerHTML = `<tr><td colspan='8' class='text-center text-red-500 p-4'>Failed to load rejected workdone: ${error.message}</td></tr>`;
+            return;
+          }
+          // Filter by faculty name (case-insensitive, trimmed)
+          const facultyName = (window._facultyProfileOriginal.Name || '').toString().trim().toLowerCase();
+          const filteredRows = (data || []).filter(row => {
+            const rowName = (row.portfolio_member_name || '').toString().trim().toLowerCase();
+            return rowName === facultyName;
+          });
+          // Deduplicate by input_id
+          const uniqueRows = [];
+          const seenInputIds = new Set();
+          if (filteredRows.length > 0) {
+            for (const row of filteredRows) {
+              if (row.input_id && !seenInputIds.has(row.input_id)) {
+                uniqueRows.push(row);
+                seenInputIds.add(row.input_id);
+              } else if (!row.input_id) {
+                const key = `${row.department}_${row.portfolio_name}_${row.portfolio_member_name}_${row.rejected_at}`;
+                if (!seenInputIds.has(key)) {
+                  uniqueRows.push(row);
+                  seenInputIds.add(key);
+                }
+              }
+            }
+          }
+          window._allRejectedRows = uniqueRows;
+          window._filteredRejectedRows = uniqueRows;
+          window._workingRejectedRows = uniqueRows;
+          renderRejectedWorkdoneTableWithPagination(1);
+        } catch (err) {
+          document.getElementById('rejectedWorkdoneTable').innerHTML = `<tr><td colspan='8' class='text-center text-red-500 p-4'>Error loading rejected workdone: ${err.message}</td></tr>`;
+        }
+      }
+
+      // Export to Excel for rejected table
+      function exportTableToExcel(tbodyId, filenamePrefix) {
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        const table = tbody.closest('table');
+        const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => row.style.display !== 'none');
+        if (rows.length === 0) {
+          alert('No data to export!');
+          return;
+        }
+        let headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
+        if (headers.length > 2) {
+          headers = headers.slice(0, -2);
+        }
+        const data = [headers];
+        rows.forEach(row => {
+          const tds = Array.from(row.querySelectorAll('td'));
+          let cells = tds.slice(0, tds.length - 2).map(td => td.innerText.trim());
+          data.push(cells);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
+        XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+      }
+
+      // View modal for rejected workdone
+      function viewRejectedRowDetails(idx) {
+        if (!window._workingRejectedRows || !window._workingRejectedRows[idx]) {
+          alert('Error: Rejected record not found');
+          return;
+        }
+        const rejectedRow = window._workingRejectedRows[idx];
+        const modal = document.getElementById('viewModal');
+        const modalContent = document.getElementById('viewModalContent');
+        if (modalContent && modal) {
+          modalContent.innerHTML = `<div class=\"p-4 text-center\">Loading rejected record details...</div>`;
+          modal.classList.remove('hidden');
+        }
+        setTimeout(() => {
+          if (modalContent) {
+            modalContent.innerHTML = `
+              <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded">
+                <h4 class="font-bold text-red-800">❌ Rejected Record</h4>
+                <p class="text-sm text-red-600">Rejected by: ${rejectedRow.rejected_by} on ${new Date(rejectedRow.rejected_at).toLocaleString()}</p>
+                <p class="text-sm text-gray-500">Source: ${rejectedRow.table_name || 'N/A'} (input_id: ${rejectedRow.input_id || 'N/A'})</p>
+              </div>
+              <div class="text-left text-sm">
+                <p><strong>Portfolio:</strong> ${rejectedRow.portfolio_name}</p>
+                <p><strong>Member:</strong> ${rejectedRow.portfolio_member_name}</p>
+                <p><strong>Department:</strong> ${rejectedRow.department}</p>
+                <p><strong>Status:</strong> ${rejectedRow.status}</p>
+                <p><strong>Table:</strong> ${rejectedRow.table_name}</p>
+                <p><strong>Input ID:</strong> ${rejectedRow.input_id || 'N/A'}</p>
+                <p><strong>Rejected By:</strong> ${rejectedRow.rejected_by}</p>
+                <p><strong>Rejected At:</strong> ${new Date(rejectedRow.rejected_at).toLocaleString()}</p>
+                <p><strong>Commands:</strong> ${rejectedRow.Commands || rejectedRow.commands || ''}</p>
+              </div>
+            `;
+          }
+        }, 500);
+      }
+
+      // Load rejected workdone after profile is loaded
+      window.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+          if (window._facultyProfileOriginal && window._facultyProfileOriginal.Name) {
+            loadRejectedWorkdone();
+          }
+        }, 1000);
+      });
       // Update Password Modal Logic
       document.getElementById('updatePasswordBtn').addEventListener('click', function() {
         if (confirm('Are you sure you want to update your password?')) {
