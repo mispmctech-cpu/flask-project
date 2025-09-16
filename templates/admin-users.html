@@ -1026,7 +1026,7 @@
                 };
                 
                 const { error: backupError } = await supabaseClient
-                    .from('deleted_faculty')
+                    .from('deleted_faculty_backup')
                     .insert([deletedRecord]);
                 
                 if (backupError) {
