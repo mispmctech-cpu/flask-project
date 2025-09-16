@@ -91,12 +91,61 @@
       </div>
     </div>
 
+    <!-- Rejected Workdone Section -->
+    <div class="mt-10">
+      <h2 class="text-lg font-bold mb-2 text-red-700">Rejected Workdone</h2>
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
+        <input id="rejectedWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-red-700" placeholder="Search by Portfolio or Member" oninput="filterRejectedWorkdoneTable()" />
+        <button onclick="exportTableToExcel('rejectedWorkdoneTable', 'Rejected_Workdone')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+          Export to Excel
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white shadow-lg text-sm border border-gray-300">
+          <thead class="bg-gradient-to-r from-red-700 to-red-500 text-white">
+            <tr>
+              <th class="p-3 border-b border-gray-300">Department</th>
+              <th class="p-3 border-b border-gray-300">Portfolio Name</th>
+              <th class="p-3 border-b border-gray-300">Member Name</th>
+              <th class="p-3 border-b border-gray-300">Status</th>
+              <th class="p-3 border-b border-gray-300">Rejected By</th>
+              <th class="p-3 border-b border-gray-300">Rejected At</th>
+              <th class="p-3 border-b border-gray-300">Commands</th>
+              <th class="p-3 border-b border-gray-300">View</th>
+            </tr>
+          </thead>
+          <tbody id="rejectedWorkdoneTable" class="divide-y divide-gray-200"></tbody>
+        </table>
+        <div class="flex justify-center items-center mt-4" id="rejectedWorkdonePagination"></div>
+      </div>
+    </div>
+
     <!-- Modal for viewing row details -->
     <div id="viewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
       <div class="bg-white rounded-lg shadow-lg max-w-4xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
         <button onclick="closeViewModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
         <h3 class="text-xl font-bold mb-4 text-purple-700">Workdone Details</h3>
         <div id="viewModalContent" class="overflow-y-auto max-h-[70vh] text-sm"></div>
+      </div>
+    </div>
+
+    <!-- Add modal for reject description -->
+    <div id="rejectModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
+        <button onclick="closeRejectModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <h3 class="text-xl font-bold mb-4 text-red-700">Reject Workdone</h3>
+        <form id="rejectForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Reason / Commands</label>
+            <textarea id="rejectCommands" name="rejectCommands" rows="3" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2" required></textarea>
+          </div>
+          <div id="rejectStatus" class="text-sm mt-2"></div>
+          <div class="flex gap-4 mt-2">
+            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded font-semibold">Reject</button>
+            <button type="button" onclick="closeRejectModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded font-semibold">Cancel</button>
+          </div>
+        </form>
       </div>
     </div>
   </main>
@@ -151,6 +200,14 @@
       if (modalContent) modalContent.innerHTML = '';
     }
 
+    // Reject modal close function
+    function closeRejectModal() {
+      document.getElementById('rejectModal').classList.add('hidden');
+      document.getElementById('rejectForm').reset();
+      document.getElementById('rejectStatus').textContent = '';
+      _rejectIdx = null;
+    }
+
     // Supabase client
     const supabaseClient = window.supabase.createClient(
       "https://cbhodgwaazmjszkujrti.supabase.co",
@@ -179,15 +236,58 @@
     // Load workdone data for the department using new WorkdoneTable
     async function loadWorkdone() {
       try {
+        // Fetch all workdone rows
         const rows = await workdoneTable.initHodWorkdoneSection(department);
         console.log(`Loaded ${rows.length} workdone records for department: ${department}`);
-        
-        // Store all rows globally for pagination and filtering
-        window._allWorkdoneRows = rows;
-        window._filteredWorkdoneRows = rows;
-        window._workingWorkdoneRows = rows;
-        window._workdoneRows = rows;
-        
+
+        // Fetch all rejected records for department
+        let rejectedRows = [];
+        try {
+          const { data: rejectedData, error: rejectedError } = await supabaseClient
+            .from('hod-workdone_reject')
+            .select('input_id, department, portfolio_name, portfolio_member_name, rejected_at')
+            .eq('department', department);
+          if (rejectedError) {
+            console.warn('Error fetching rejected records:', rejectedError);
+          } else {
+            rejectedRows = rejectedData || [];
+          }
+        } catch (err) {
+          console.warn('Exception fetching rejected records:', err);
+        }
+
+        // Build a set of rejected input_ids and fallback keys
+        const rejectedInputIds = new Set();
+        const rejectedKeys = new Set();
+        for (const r of rejectedRows) {
+          if (r.input_id) {
+            rejectedInputIds.add(r.input_id);
+          } else {
+            // Fallback key: department + portfolio_name + portfolio_member_name + rejected_at
+            const key = `${r.department}_${r.portfolio_name}_${r.portfolio_member_name}_${r.rejected_at}`;
+            rejectedKeys.add(key);
+          }
+        }
+
+        // Filter out rejected rows from main table
+        const filteredRows = rows.filter(row => {
+          if (row.input_id && rejectedInputIds.has(row.input_id)) {
+            return false;
+          }
+          // Fallback match if no input_id
+          const key = `${row.department}_${row.portfolio}_${row.member}_${row.rejected_at || ''}`;
+          if (rejectedKeys.has(key)) {
+            return false;
+          }
+          return true;
+        });
+
+        // Store filtered rows globally for pagination and filtering
+        window._allWorkdoneRows = filteredRows;
+        window._filteredWorkdoneRows = filteredRows;
+        window._workingWorkdoneRows = filteredRows;
+        window._workdoneRows = filteredRows;
+
         // Render with pagination
         renderHodWorkdoneTableWithPagination(1);
       } catch (error) {
@@ -264,13 +364,13 @@
         }
 
         const verifyButtonHtml = `<button class="bg-green-500 hover:bg-green-700 text-white px-3 py-1 rounded text-sm" onclick="verifyRow(this, ${globalIdx})">Verify</button>`;
-        
+        const rejectButtonHtml = `<button class="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded text-sm" onclick="rejectRow(this, ${globalIdx})">Reject</button>`;
         html += `<tr class="hover:bg-purple-50 transition border-b border-gray-200" data-row-idx="${globalIdx}">
           <td class='p-3 border-r border-gray-200'>${row.department}</td>
           <td class='p-3 border-r border-gray-200'>${row.portfolio}</td>
           <td class='p-3 border-r border-gray-200'>${row.member}</td>
           <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
-          <td class='p-3 text-center'>${verifyButtonHtml}</td>
+          <td class='p-3 text-center flex gap-2 justify-center'>${verifyButtonHtml}${rejectButtonHtml}</td>
           <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewRowDetails(${globalIdx})">View</button></td>
         </tr>`;
       });
@@ -385,6 +485,10 @@
     let verifiedCurrentPage = 1;
     let verifiedRowsPerPage = 10;
 
+    // Pagination variables for rejected workdone table  
+    let rejectedCurrentPage = 1;
+    let rejectedRowsPerPage = 10;
+
     // Enhanced renderHodWorkdoneTable with pagination (override the one in workdone-table.js for this page)
     function renderHodWorkdoneTableWithPagination(page = 1) {
       if (!window._allWorkdoneRows || window._allWorkdoneRows.length === 0) {
@@ -417,13 +521,14 @@
         }
 
         const verifyButtonHtml = `<button class="bg-green-500 hover:bg-green-700 text-white px-3 py-1 rounded text-sm" onclick="verifyRow(this, ${globalIdx})">Verify</button>`;
+        const rejectButtonHtml = `<button class="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded text-sm" onclick="rejectRow(this, ${globalIdx})">Reject</button>`;
         
         html += `<tr class="hover:bg-purple-50 transition border-b border-gray-200" data-row-idx="${globalIdx}">
           <td class='p-3 border-r border-gray-200'>${row.department}</td>
           <td class='p-3 border-r border-gray-200'>${row.portfolio}</td>
           <td class='p-3 border-r border-gray-200'>${row.member}</td>
           <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
-          <td class='p-3 text-center'>${verifyButtonHtml}</td>
+          <td class='p-3 text-center'>${verifyButtonHtml}${rejectButtonHtml}</td>
           <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewRowDetails(${globalIdx})">View</button></td>
         </tr>`;
       });
@@ -542,160 +647,12 @@
           <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
           <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
           <td class='p-3 border-r border-gray-200'>${verifiedAt}</td>
-          <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewVerifiedRowDetails(${globalIdx})">View</button></td>
+          <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewRowDetails(${globalIdx})">View</button></td>
         </tr>`;
       });
 
       tbody.innerHTML = html;
       renderVerifiedWorkdonePagination();
-    }
-
-    // Enhanced filter function for verified workdone that works with pagination
-    function filterVerifiedWorkdoneTable() {
-      const search = document.getElementById('verifiedWorkdoneSearch').value.toLowerCase();
-      
-      if (!window._allVerifiedRows) return;
-      
-      if (search.trim() === '') {
-        // Show all rows if no search term
-        window._filteredVerifiedRows = window._allVerifiedRows;
-      } else {
-        // Filter rows based on search term
-        window._filteredVerifiedRows = window._allVerifiedRows.filter(row => {
-          const department = (row.department || '').toLowerCase();
-          const portfolio = (row.portfolio_name || '').toLowerCase();
-          const member = (row.portfolio_member_name || '').toLowerCase();
-          const status = (row.status || '').toLowerCase();
-          const verifiedBy = (row.verified_by || '').toLowerCase();
-          
-          return department.includes(search) || portfolio.includes(search) || member.includes(search) || 
-                 status.includes(search) || verifiedBy.includes(search);
-        });
-      }
-      
-      // Update the working set for pagination
-      window._workingVerifiedRows = window._filteredVerifiedRows || window._allVerifiedRows;
-      
-      // Reset to first page and re-render
-      renderFilteredVerifiedTable(1);
-    }
-
-    // Render filtered verified table with pagination
-    function renderFilteredVerifiedTable(page = 1) {
-      const workingRows = window._workingVerifiedRows || window._allVerifiedRows || [];
-      
-      if (workingRows.length === 0) {
-        const tbody = document.getElementById("verifiedWorkdoneTable");
-        if (tbody) {
-          tbody.innerHTML = `<tr><td colspan='7' class='text-center text-gray-400 p-4'>No verified records found matching your search.</td></tr>`;
-        }
-        const container = document.getElementById('verifiedWorkdonePagination');
-        if (container) container.innerHTML = '';
-        return;
-      }
-
-      verifiedCurrentPage = page;
-      const startIdx = (page - 1) * verifiedRowsPerPage;
-      const endIdx = startIdx + verifiedRowsPerPage;
-      const pageRows = workingRows.slice(startIdx, endIdx);
-
-      const tbody = document.getElementById("verifiedWorkdoneTable");
-      if (!tbody) return;
-
-      let html = "";
-      pageRows.forEach((r, idx) => {
-        // Find the global index in the original array for the view function
-        const globalIdx = window._allVerifiedRows.findIndex(row => 
-          row.department === r.department && 
-          row.portfolio_name === r.portfolio_name && 
-          row.portfolio_member_name === r.portfolio_member_name && 
-          row.verified_at === r.verified_at
-        );
-
-        let statusText = (r.status || '').toUpperCase();
-        let statusClass = '';
-        if (statusText === 'PENDING') {
-          statusClass = 'text-red-600 font-bold';
-        } else if (statusText === 'COMPLETED') {
-          statusClass = 'text-green-600 font-bold';
-        } else {
-          statusClass = 'font-bold';
-        }
-        
-        const verifiedAt = new Date(r.verified_at || r.created_at).toLocaleDateString();
-        
-        html += `<tr class="hover:bg-green-50 transition border-b border-gray-200" data-verified-idx="${globalIdx}">
-          <td class='p-3 border-r border-gray-200'>${r.department}</td>
-          <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
-          <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
-          <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
-          <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
-          <td class='p-3 border-r border-gray-200'>${verifiedAt}</td>
-          <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewVerifiedRowDetails(${globalIdx})">View</button></td>
-        </tr>`;
-      });
-
-      tbody.innerHTML = html;
-      renderFilteredVerifiedPagination();
-    }
-
-    // Render pagination for filtered verified results
-    function renderFilteredVerifiedPagination() {
-      const container = document.getElementById('verifiedWorkdonePagination');
-      if (!container) return;
-
-      const workingRows = window._workingVerifiedRows || window._allVerifiedRows || [];
-      const totalRows = workingRows.length;
-      const totalPages = Math.ceil(totalRows / verifiedRowsPerPage);
-
-      if (totalPages <= 1) {
-        container.innerHTML = totalRows > 0 ? `<div class="text-sm text-gray-700">Showing all ${totalRows} entries</div>` : '';
-        return;
-      }
-
-      let html = `
-        <div class="flex items-center space-x-1">
-          <button 
-            onclick="renderFilteredVerifiedTable(${verifiedCurrentPage - 1})" 
-            ${verifiedCurrentPage === 1 ? 'disabled' : ''} 
-            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 ${verifiedCurrentPage === 1 ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
-            Previous
-          </button>
-      `;
-
-      const maxVisiblePages = 5;
-      let startPage = Math.max(1, verifiedCurrentPage - Math.floor(maxVisiblePages / 2));
-      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-      
-      if (endPage - startPage + 1 < maxVisiblePages) {
-        startPage = Math.max(1, endPage - maxVisiblePages + 1);
-      }
-
-      for (let i = startPage; i <= endPage; i++) {
-        const isActive = i === verifiedCurrentPage;
-        html += `
-          <button 
-            onclick="renderFilteredVerifiedTable(${i})" 
-            class="px-3 py-2 text-sm font-medium ${isActive ? 'text-green-600 bg-green-50 border-green-300' : 'text-gray-500 bg-white border-gray-300 hover:bg-gray-50 hover:text-gray-700'} border">
-            ${i}
-          </button>
-        `;
-      }
-
-      html += `
-          <button 
-            onclick="renderFilteredVerifiedTable(${verifiedCurrentPage + 1})" 
-            ${verifiedCurrentPage === totalPages ? 'disabled' : ''} 
-            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 ${verifiedCurrentPage === totalPages ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
-            Next
-          </button>
-        </div>
-        <div class="text-sm text-gray-700 ml-4">
-          Showing ${Math.min((verifiedCurrentPage - 1) * verifiedRowsPerPage + 1, totalRows)} to ${Math.min(verifiedCurrentPage * verifiedRowsPerPage, totalRows)} of ${totalRows} entries
-        </div>
-      `;
-
-      container.innerHTML = html;
     }
 
     // Render verified workdone pagination
@@ -767,6 +724,115 @@
       renderVerifiedWorkdoneTableWithPagination(page);
     }
 
+    // Render rejected workdone table with pagination
+    function renderRejectedWorkdoneTableWithPagination(page = 1) {
+      if (!window._allRejectedRows || window._allRejectedRows.length === 0) {
+        const tbody = document.getElementById('rejectedWorkdoneTable');
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan='7' class='text-center text-gray-400 p-4'>No rejected records found.</td></tr>`;
+        }
+        return;
+      }
+
+      rejectedCurrentPage = page;
+      const startIdx = (page - 1) * rejectedRowsPerPage;
+      const endIdx = startIdx + rejectedRowsPerPage;
+      const pageRows = window._allRejectedRows.slice(startIdx, endIdx);
+
+      const tbody = document.getElementById('rejectedWorkdoneTable');
+      if (!tbody) return;
+
+      let html = "";
+      pageRows.forEach((r, idx) => {
+        const globalIdx = startIdx + idx;
+        let statusText = (r.status || '').toUpperCase();
+        let statusClass = '';
+        if (statusText === 'PENDING') {
+          statusClass = 'text-red-600 font-bold';
+        } else if (statusText === 'COMPLETED') {
+          statusClass = 'text-green-600 font-bold';
+        } else {
+          statusClass = 'font-bold';
+        }
+        const rejectedAt = new Date(r.rejected_at || r.created_at).toLocaleDateString();
+        const commands = r.Commands || r.commands || '';
+        html += `
+        <tr class="hover:bg-red-50 transition border-b border-gray-200" data-rejected-idx="${globalIdx}">
+          <td class='p-3 border-r border-gray-200'>${r.department}</td>
+          <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
+          <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
+          <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
+          <td class='p-3 border-r border-gray-200'>${r.rejected_by}</td>
+          <td class='p-3 border-r border-gray-200'>${rejectedAt}</td>
+          <td class='p-3 border-r border-gray-200'>${commands}</td>
+          <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewRejectedRowDetails(${globalIdx})">View</button></td>
+        </tr>`;
+      });
+
+      tbody.innerHTML = html;
+      renderRejectedWorkdonePagination();
+    }
+
+    // Render rejected workdone pagination
+    function renderRejectedWorkdonePagination() {
+      const container = document.getElementById('rejectedWorkdonePagination');
+      if (!container || !window._allRejectedRows) return;
+      const totalRows = window._allRejectedRows.length;
+      const totalPages = Math.ceil(totalRows / rejectedRowsPerPage);
+      if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+      let html = `
+        <div class="flex items-center space-x-1">
+          <button 
+            onclick="changeRejectedPage(${rejectedCurrentPage - 1})" 
+            ${rejectedCurrentPage === 1 ? 'disabled' : ''} 
+            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 ${rejectedCurrentPage === 1 ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
+            Previous
+          </button>
+      `;
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, rejectedCurrentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+      for (let i = startPage; i <= endPage; i++) {
+        const isActive = i === rejectedCurrentPage;
+        html += `
+          <button 
+            onclick="changeRejectedPage(${i})" 
+            class="px-3 py-2 text-sm font-medium ${isActive ? 'text-red-600 bg-red-50 border-red-300' : 'text-gray-500 bg-white border-gray-300 hover:bg-gray-50 hover:text-gray-700'} border">
+            ${i}
+          </button>
+        `;
+      }
+      html += `
+          <button 
+            onclick="changeRejectedPage(${rejectedCurrentPage + 1})" 
+            ${rejectedCurrentPage === totalPages ? 'disabled' : ''} 
+            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 ${rejectedCurrentPage === totalPages ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
+            Next
+          </button>
+        </div>
+        <div class="text-sm text-gray-700 ml-4">
+          Showing ${Math.min((rejectedCurrentPage - 1) * rejectedRowsPerPage + 1, totalRows)} to ${Math.min(rejectedCurrentPage * rejectedRowsPerPage, totalRows)} of ${totalRows} entries
+        </div>
+      `;
+      container.innerHTML = html;
+    }
+
+    // Change rejected workdone page
+    function changeRejectedPage(page) {
+      if (!window._allRejectedRows) return;
+      
+      const totalPages = Math.ceil(window._allRejectedRows.length / rejectedRowsPerPage);
+      if (page < 1 || page > totalPages) return;
+      
+      renderRejectedWorkdoneTableWithPagination(page);
+    }
+
     // Fetch verified workdone from hod-workdone table
     async function loadVerifiedWorkdone() {
       try {
@@ -788,6 +854,53 @@
         console.error('Exception loading verified workdone:', err);
         document.getElementById('verifiedWorkdoneTable').innerHTML = `<tr><td colspan='7' class='text-center text-red-500 p-4'>Error loading verified workdone: ${err.message}</td></tr>`;
       }
+    }
+
+    // Fetch rejected workdone from hod-workdone_reject table
+    async function loadRejectedWorkdone() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('hod-workdone_reject')
+          .select('*')
+          .eq('department', department)
+          .order('rejected_at', { ascending: false });
+
+        if (error) {
+          console.error('Error loading rejected workdone:', error);
+          document.getElementById('rejectedWorkdoneTable').innerHTML = `<tr><td colspan='7' class='text-center text-red-500 p-4'>Failed to load rejected workdone: ${error.message}</td></tr>`;
+          return;
+        }
+
+        renderRejectedWorkdoneTable(data || []);
+      } catch (err) {
+        console.error('Exception loading rejected workdone:', err);
+        document.getElementById('rejectedWorkdoneTable').innerHTML = `<tr><td colspan='7' class='text-center text-red-500 p-4'>Error loading rejected workdone: ${err.message}</td></tr>`;
+      }
+    }
+
+    // Ensure renderRejectedWorkdoneTable is defined before loadRejectedWorkdone is called
+    function renderRejectedWorkdoneTable(rows) {
+      const uniqueRows = [];
+      const seenInputIds = new Set();
+      if (rows && rows.length > 0) {
+        for (const row of rows) {
+          if (row.input_id && !seenInputIds.has(row.input_id)) {
+            uniqueRows.push(row);
+            seenInputIds.add(row.input_id);
+          } else if (!row.input_id) {
+            const key = `${row.department}_${row.portfolio_name}_${row.portfolio_member_name}_${row.rejected_at}`;
+            if (!seenInputIds.has(key)) {
+              uniqueRows.push(row);
+              seenInputIds.add(key);
+            }
+          }
+        }
+      }
+      window._allRejectedRows = uniqueRows;
+      window._filteredRejectedRows = uniqueRows;
+      window._workingRejectedRows = uniqueRows;
+      window._rejectedRows = uniqueRows;
+      renderRejectedWorkdoneTableWithPagination(1);
     }
 
     // Modal logic for viewing verified row details
@@ -951,6 +1064,197 @@
       }
     }
 
+    // Modal logic for viewing rejected row details
+    async function viewRejectedRowDetails(idx) {
+      if (!window._rejectedRows || !window._rejectedRows[idx]) {
+        alert('Error: Rejected record not found');
+        return;
+      }
+      const rejectedRow = window._rejectedRows[idx];
+      const modal = document.getElementById('viewModal');
+      const modalContent = document.getElementById('viewModalContent');
+      if (modalContent && modal) {
+        modalContent.innerHTML = `<div class=\"p-4 text-center\">Loading rejected record details...</div>`;
+        modal.classList.remove('hidden');
+      }
+      // Try to fetch original data from the source table using input_id and table_name
+      let originalData = null;
+      if (rejectedRow.input_id && rejectedRow.table_name) {
+        try {
+          const { data, error } = await supabaseClient
+            .from(rejectedRow.table_name)
+            .select('*')
+            .eq('input_id', rejectedRow.input_id)
+            .single();
+          if (!error && data) {
+            originalData = data;
+          }
+        } catch (err) {
+          // fallback: ignore error
+        }
+      }
+      // Fallback: try strict matching if no data found
+      if (!originalData && rejectedRow.table_name) {
+        try {
+          const { data, error } = await supabaseClient
+            .from(rejectedRow.table_name)
+            .select('*');
+          if (!error && data && data.length > 0) {
+            const filtered = data.filter(row => {
+              const rowDept = row['Department'] || row['Department:'] || row['department'] || row['department:'] || '';
+              const rowMember = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+              const deptMatch = rowDept.toString().trim().toLowerCase() === rejectedRow.department.toString().trim().toLowerCase();
+              const memberMatch = rowMember.toString().trim().toLowerCase() === rejectedRow.portfolio_member_name.toString().trim().toLowerCase();
+              return deptMatch && memberMatch;
+            });
+            if (filtered.length > 0) {
+              originalData = filtered[0];
+            }
+          }
+        } catch (err) {
+          // fallback: ignore error
+        }
+      }
+      // Compose modal content using getFormModalContent if available
+      if (typeof getFormModalContent === 'function' && originalData) {
+        const rowContext = {
+          portfolio: rejectedRow.portfolio_name,
+          table: rejectedRow.table_name,
+          department: rejectedRow.department,
+          member: rejectedRow.portfolio_member_name,
+          status: rejectedRow.status,
+          _original: originalData
+        };
+        const html = getFormModalContent(rowContext, originalData);
+        if (modalContent && modal) {
+          modalContent.innerHTML = `
+            <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded">
+              <h4 class="font-bold text-red-800">❌ Rejected Record</h4>
+              <p class="text-sm text-red-600">Rejected by: ${rejectedRow.rejected_by} on ${new Date(rejectedRow.rejected_at).toLocaleString()}</p>
+              <p class="text-sm text-gray-500">Source: ${rejectedRow.table_name || 'N/A'} (input_id: ${rejectedRow.input_id || 'N/A'})</p>
+            </div>
+            ${html}
+          `;
+          modal.classList.remove('hidden');
+        }
+      } else {
+        // Fallback: show basic info if no original data
+        if (modalContent) {
+          modalContent.innerHTML = `
+            <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded">
+              <h4 class="font-bold text-red-800">❌ Rejected Record</h4>
+              <p class="text-sm text-red-600">Rejected by: ${rejectedRow.rejected_by} on ${new Date(rejectedRow.rejected_at).toLocaleString()}</p>
+              <p class="text-sm text-gray-500">Source: ${rejectedRow.table_name || 'N/A'} (input_id: ${rejectedRow.input_id || 'N/A'})</p>
+            </div>
+            <div class="text-left text-sm">
+              <p><strong>Portfolio:</strong> ${rejectedRow.portfolio_name}</p>
+              <p><strong>Member:</strong> ${rejectedRow.portfolio_member_name}</p>
+              <p><strong>Department:</strong> ${rejectedRow.department}</p>
+              <p><strong>Status:</strong> ${rejectedRow.status}</p>
+              <p><strong>Table:</strong> ${rejectedRow.table_name}</p>
+              <p><strong>Input ID:</strong> ${rejectedRow.input_id || 'N/A'}</p>
+              <p><strong>Rejected By:</strong> ${rejectedRow.rejected_by}</p>
+              <p><strong>Rejected At:</strong> ${new Date(rejectedRow.rejected_at).toLocaleString()}</p>
+              <p><strong>Commands:</strong> ${rejectedRow.Commands || rejectedRow.commands || ''}</p>
+            </div>
+          `;
+          modal.classList.remove('hidden');
+        }
+      }
+    }
+
+    // Add JS logic for reject modal
+    let _rejectIdx = null;
+    function rejectRow(btn, idx) {
+      _rejectIdx = idx;
+      document.getElementById('rejectModal').classList.remove('hidden');
+    }
+
+    document.getElementById('rejectForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const commands = document.getElementById('rejectCommands').value.trim();
+      const statusBox = document.getElementById('rejectStatus');
+      statusBox.textContent = '';
+      if (!commands) {
+        statusBox.textContent = 'Please enter a reason or commands.';
+        return;
+      }
+      if (_rejectIdx === null || !window._allWorkdoneRows || !window._allWorkdoneRows[_rejectIdx]) {
+        statusBox.textContent = 'Error: Workdone record not found.';
+        return;
+      }
+      const btn = document.querySelector(`button[onclick="rejectRow(this, ${_rejectIdx})"]`);
+      if (btn) btn.disabled = true;
+      statusBox.textContent = 'Rejecting...';
+      try {
+        const row = window._allWorkdoneRows[_rejectIdx];
+        const rejectData = {
+          department: row.department,
+          portfolio_name: row.portfolio,
+          portfolio_member_name: row.member,
+          status: row.status,
+          rejected_by: localStorage.getItem('hod_name') || 'HOD',
+          rejected_at: new Date().toISOString(),
+          documents: row.documents || null,
+          view_link: row.view_link || null,
+          input_id: row.input_id || null,
+          table_name: row.table_name || null,
+          Commands: commands
+        };
+        // In rejectForm submit handler, replace insert logic:
+        let result;
+        try {
+          result = await safeInsertRejectedRecord(rejectData);
+        } catch (error) {
+          statusBox.textContent = 'Failed to reject record: ' + error.message;
+          if (btn) btn.disabled = false;
+          return;
+        }
+        if (result.error) {
+          statusBox.textContent = 'Failed to reject record: ' + result.error.message;
+          if (btn) btn.disabled = false;
+          return;
+        }
+        // Hide row from table
+        window._allWorkdoneRows.splice(_rejectIdx, 1);
+        window._filteredWorkdoneRows = window._allWorkdoneRows;
+        window._workingWorkdoneRows = window._allWorkdoneRows;
+        renderFilteredWorkdoneTable(workdoneCurrentPage);
+        closeRejectModal();
+      } catch (err) {
+        statusBox.textContent = 'Error rejecting record: ' + err.message;
+        if (btn) btn.disabled = false;
+      }
+    });
+
+    // Helper for safe reject insert
+    async function safeInsertRejectedRecord(rejectData) {
+      if (rejectData.input_id) {
+        const { data: existing } = await supabaseClient
+          .from('hod-workdone_reject')
+          .select('id')
+          .eq('input_id', rejectData.input_id)
+          .single();
+        if (existing) {
+          // Update the existing record with new rejection info
+          return await supabaseClient
+            .from('hod-workdone_reject')
+            .update(rejectData)
+            .eq('input_id', rejectData.input_id);
+        } else {
+          // No duplicate, safe to insert
+          return await supabaseClient
+            .from('hod-workdone_reject')
+            .insert([rejectData]);
+        }
+      } else {
+        // No input_id, safe to insert
+        return await supabaseClient
+          .from('hod-workdone_reject')
+          .insert([rejectData]);
+      }
+    }
+
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
       console.log('DOM loaded, checking functions...');
@@ -960,6 +1264,7 @@
       
       loadWorkdone();
       loadVerifiedWorkdone();
+      loadRejectedWorkdone();
     });
   </script>  <!-- Footer -->
   <footer class="text-center py-4 mt-8">

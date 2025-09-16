@@ -183,10 +183,12 @@
     let iqacRowsPerPage = 10;
     let _iqacRowsAll = [];
     function renderIQACWorkdoneTable(rows) {
-      _iqacRowsAll = rows;
-      window._iqacRows = rows;
-      renderIQACWorkdoneTablePage(iqacCurrentPage);
-      renderIQACWorkdonePagination();
+  // Exclude 'Class Advisor (Daily) (Daily)' from the table
+  const filteredRows = rows.filter(r => (r.portfolio_name || '').trim().toLowerCase() !== 'class advisor (daily) (daily)');
+  _iqacRowsAll = filteredRows;
+  window._iqacRows = filteredRows;
+  renderIQACWorkdoneTablePage(iqacCurrentPage);
+  renderIQACWorkdonePagination();
     }
     function renderIQACWorkdoneTablePage(page) {
       const tbody = document.getElementById('iqacWorkdoneTable');
