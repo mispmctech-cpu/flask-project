@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Principal Dashboard - PMC Tech</title>
+  <title>Dashboard - PMC Tech</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
@@ -24,7 +24,7 @@
         <div class="flex items-center">
           <img src="../static/img/pmc.jpg" alt="PMC Tech" class="h-10 w-auto rounded-lg">
           <div class="ml-4">
-            <h1 class="text-xl font-bold text-gray-900">Principal Dashboard</h1>
+            <h1 class="text-xl font-bold text-gray-900">Dashboard</h1>
           </div>
         </div>
         <div class="flex items-center space-x-4">
@@ -37,14 +37,10 @@
   </header>
   <main class="max-w-7xl mx-auto px-4 py-8">
     <!-- Stats Cards from Admin Reports -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
       <div class="bg-white p-6 rounded-lg shadow border">
         <div class="text-3xl font-bold text-blue-600" id="totalUsers">-</div>
         <div class="text-sm text-gray-600">Total Users</div>
-      </div>
-      <div class="bg-white p-6 rounded-lg shadow border">
-        <div class="text-3xl font-bold text-green-600" id="activeForms">-</div>
-        <div class="text-sm text-gray-600">Form Submissions</div>
       </div>
       <div class="bg-white p-6 rounded-lg shadow border">
         <div class="text-3xl font-bold text-purple-600" id="totalDepartments">-</div>
@@ -436,15 +432,14 @@
         // Update stats
         const totalUsers = (faculty?.length || 0) + (hods?.length || 0) + (principals?.length || 0) + 
                          (iqac?.length || 0) + (management?.length || 0) + (admin?.length || 0);
-        document.getElementById('totalUsers').textContent = totalUsers;
-        document.getElementById('activeForms').textContent = totalFormSubmissions;
-        
-        // Get unique departments
-        const facultyDepartments = faculty?.map(f => f.department).filter(d => d && d.trim() !== '' && d.toLowerCase() !== 'null') || [];
-        const hodDepartments = hods?.map(h => h.department || h.Department).filter(d => d && d.trim() !== '' && d.toLowerCase() !== 'null') || [];
-        const allDepartments = [...facultyDepartments, ...hodDepartments];
-        const departments = [...new Set(allDepartments)];
-        document.getElementById('totalDepartments').textContent = departments.length;
+  document.getElementById('totalUsers').textContent = totalUsers;
+  // Removed: document.getElementById('activeForms').textContent = totalFormSubmissions;
+  // Get unique departments
+  const facultyDepartments = faculty?.map(f => f.department).filter(d => d && d.trim() !== '' && d.toLowerCase() !== 'null') || [];
+  const hodDepartments = hods?.map(h => h.department || h.Department).filter(d => d && d.trim() !== '' && d.toLowerCase() !== 'null') || [];
+  const allDepartments = [...facultyDepartments, ...hodDepartments];
+  const departments = [...new Set(allDepartments)];
+  document.getElementById('totalDepartments').textContent = departments.length;
 
         console.log('Stats loaded:', { totalUsers, totalFormSubmissions, departments: departments.length });
       } catch (error) {
