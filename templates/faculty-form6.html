@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                         <!-- 2 -->
-                        <div class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">2. Feedback from Parenst File</div>
+                        <div class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">2. Feedback from Parents File</div>
                         <div class="flex flex-col">
                             <label class="font-semibold text-gray-700 mb-1">Status_2:</label>
                             <select name="Status_2" class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
@@ -695,7 +695,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                         <!-- 3 -->
-                        <div class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">3. Students Satisfaction Survey</div>
+                        <div class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">3. Students Satisfication Survey</div>
                         <div class="flex flex-col">
                             <label class="font-semibold text-gray-700 mb-1">Status_3:</label>
                             <select name="Status_3" class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
@@ -778,13 +778,11 @@ window.addEventListener('DOMContentLoaded', function() {
             "https://cbhodgwaazmjszkujrti.supabase.co",
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
         );
-        // ...existing code for weekly and once in 2 months forms...
 
-        // --- FACULTY FORM 6 - ONCE IN A SEMESTER LOGIC ---
-        const semesterForm6 = document.getElementById('semesterForm6');
-        if (semesterForm6) {
-            console.log('Semester Form 6 JS loaded and ready.');
-            semesterForm6.addEventListener('submit', async function(e) {
+        // --- FACULTY FORM 6 - WEEKLY LOGIC ---
+        const weeklyForm6 = document.getElementById('directDbForm');
+        if (weeklyForm6) {
+            weeklyForm6.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const form = e.target;
                 async function uploadFileToStorage(file, path) {
@@ -793,23 +791,24 @@ window.addEventListener('DOMContentLoaded', function() {
                     const { data, error } = await supabaseClient.storage.from(bucket).upload(path, file, { upsert: true });
                     if (error) {
                         window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
-                        return;
+                        return null;
                     }
-                    // Return the decoded URL (public URL) for the uploaded file, as in weekly/2months forms
                     const { data: publicUrlData } = supabaseClient.storage.from(bucket).getPublicUrl(path);
                     return publicUrlData && publicUrlData.publicUrl ? publicUrlData.publicUrl : null;
                 }
+                // Upload all 9 files
                 const fileUrls = [];
-                for (let i = 1; i <= 3; i++) {
+                for (let i = 1; i <= 9; i++) {
                     const fileInput = form[`file${i}`];
                     const file = fileInput && fileInput.files && fileInput.files[0];
                     let fileUrl = null;
                     if (file) {
-                        const path = `form6/${form["Department"].value}/${form["Portfolio Name"].value}/${form["Portfolio Member Name"].value}/week_${form["Week no"].value}/${file.name}`;
+                        const path = `weekly/${form["Department"].value}/${form["Portfolio Name"].value}/${form["Portfolio Member Name"].value}/week_${form["Week no"].value}/file${i}_${Date.now()}_${file.name}`;
                         fileUrl = await uploadFileToStorage(file, path);
                     }
                     fileUrls.push(fileUrl);
                 }
+                // Prepare row for form6_weekly table
                 const row = {
                     "Department": form["Department"].value,
                     "Portfolio Name": form["Portfolio Name"].value,
@@ -826,10 +825,28 @@ window.addEventListener('DOMContentLoaded', function() {
                     "Upload The Scanned File_2": fileUrls[1],
                     "Status_3": form["Status_3"].value,
                     "Description_3": form["Description_3"].value,
-                    "Upload The Scanned File_3": fileUrls[2]
+                    "Upload The Scanned File_3": fileUrls[2],
+                    "Status_4": form["Status_4"].value,
+                    "Description_4": form["Description_4"].value,
+                    "Upload The Scanned File_4": fileUrls[3],
+                    "Status_5": form["Status_5"].value,
+                    "Description_5": form["Description_5"].value,
+                    "Upload The Scanned File_5": fileUrls[4],
+                    "Status_6": form["Status_6"].value,
+                    "Description_6": form["Description_6"].value,
+                    "Upload The Scanned File_6": fileUrls[5],
+                    "Status_7": form["Status_7"].value,
+                    "Description_7": form["Description_7"].value,
+                    "Upload The Scanned File_7": fileUrls[6],
+                    "Status_8": form["Status_8"].value,
+                    "Description_8": form["Description_8"].value,
+                    "Upload The Scanned File_8": fileUrls[7],
+                    "Status_9": form["Status_9"].value,
+                    "Description_9": form["Description_9"].value,
+                    "Upload The Scanned File_9": fileUrls[8]
                 };
                 const { data, error } = await supabaseClient
-                    .from('form6-once in a semester')
+                    .from('form6_weekly')
                     .insert([row]);
                 if (error) {
                     window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
@@ -839,7 +856,128 @@ window.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
-        // ...existing code for other forms...
+        // ...existing code for other forms (once in 2 months, semester)...
+            // --- FACULTY FORM 6 - ONCE IN 2 MONTHS LOGIC ---
+            const once2MonthForm6 = document.getElementById('once2MonthForm6');
+            if (once2MonthForm6) {
+                once2MonthForm6.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const form = e.target;
+                    async function uploadFileToStorage(file, path) {
+                        if (!file) return null;
+                        const bucket = 'form6-files';
+                        const { data, error } = await supabaseClient.storage.from(bucket).upload(path, file, { upsert: true });
+                        if (error) {
+                            window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
+                            return null;
+                        }
+                        const { data: publicUrlData } = supabaseClient.storage.from(bucket).getPublicUrl(path);
+                        return publicUrlData && publicUrlData.publicUrl ? publicUrlData.publicUrl : null;
+                    }
+                    // Upload all 4 files
+                    const fileUrls = [];
+                    for (let i = 1; i <= 4; i++) {
+                        const fileInput = form[`file${i}`];
+                        const file = fileInput && fileInput.files && fileInput.files[0];
+                        let fileUrl = null;
+                        if (file) {
+                            const path = `once2month/${form["Department"].value}/${form["Portfolio Name"].value}/${form["Portfolio Member Name"].value}/week_${form["Week no"].value}/file${i}_${Date.now()}_${file.name}`;
+                            fileUrl = await uploadFileToStorage(file, path);
+                        }
+                        fileUrls.push(fileUrl);
+                    }
+                    // Prepare row for form6-once in 2 month table
+                    const row = {
+                        "Department": form["Department"].value,
+                        "Portfolio Name": form["Portfolio Name"].value,
+                        "Portfolio Member Name": form["Portfolio Member Name"].value,
+                        "Month": form["Month"].value,
+                        "Week no": form["Week no"].value,
+                        "Week Starting Date": form["Week Starting Date"].value,
+                        "Week Ending Date": form["Week Ending Date"].value,
+                        "Status_1": form["Status_1"].value,
+                        "Description_1": form["Description_1"].value,
+                        "Upload The Scanned File_1": fileUrls[0],
+                        "Status_2": form["Status_2"].value,
+                        "Description_2": form["Description_2"].value,
+                        "Upload The Scanned File_2": fileUrls[1],
+                        "Status_3": form["Status_3"].value,
+                        "Description_3": form["Description_3"].value,
+                        "Upload The Scanned File_3": fileUrls[2],
+                        "Status_4": form["Status_4"].value,
+                        "Description_4": form["Description_4"].value,
+                        "Upload The Scanned File_4": fileUrls[3]
+                    };
+                    const { data, error } = await supabaseClient
+                        .from('form6-once in 2 month')
+                        .insert([row]);
+                    if (error) {
+                        window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
+                    } else {
+                        window.location.href = 'notification.html?status=success';
+                        form.reset();
+                    }
+                });
+            }
+            // --- FACULTY FORM 6 - ONCE IN A SEMESTER LOGIC ---
+            const semesterForm6 = document.getElementById('semesterForm6');
+            if (semesterForm6) {
+                semesterForm6.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const form = e.target;
+                    async function uploadFileToStorage(file, path) {
+                        if (!file) return null;
+                        const bucket = 'form6-files';
+                        const { data, error } = await supabaseClient.storage.from(bucket).upload(path, file, { upsert: true });
+                        if (error) {
+                            window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
+                            return null;
+                        }
+                        const { data: publicUrlData } = supabaseClient.storage.from(bucket).getPublicUrl(path);
+                        return publicUrlData && publicUrlData.publicUrl ? publicUrlData.publicUrl : null;
+                    }
+                    // Upload all 3 files
+                    const fileUrls = [];
+                    for (let i = 1; i <= 3; i++) {
+                        const fileInput = form[`file${i}`];
+                        const file = fileInput && fileInput.files && fileInput.files[0];
+                        let fileUrl = null;
+                        if (file) {
+                            const path = `semester/${form["Department"].value}/${form["Portfolio Name"].value}/${form["Portfolio Member Name"].value}/week_${form["Week no"].value}/file${i}_${Date.now()}_${file.name}`;
+                            fileUrl = await uploadFileToStorage(file, path);
+                        }
+                        fileUrls.push(fileUrl);
+                    }
+                    // Prepare row for form6_once_in_a_semester table
+                    const row = {
+                        "Department": form["Department"].value,
+                        "Portfolio Name": form["Portfolio Name"].value,
+                        "Portfolio Member Name": form["Portfolio Member Name"].value,
+                        "Month": form["Month"].value,
+                        "Week no": form["Week no"].value,
+                        "Week Starting Date": form["Week Starting Date"].value,
+                        "Week Ending Date": form["Week Ending Date"].value,
+                        "Status_1": form["Status_1"].value,
+                        "Description_1": form["Description_1"].value,
+                        "Upload The Scanned File_1": fileUrls[0],
+                        "Status_2": form["Status_2"].value,
+                        "Description_2": form["Description_2"].value,
+                        "Upload The Scanned File_2": fileUrls[1],
+                        "Status_3": form["Status_3"].value,
+                        "Description_3": form["Description_3"].value,
+                        "Upload The Scanned File_3": fileUrls[2]
+                    };
+                    const { data, error } = await supabaseClient
+                        .from('form6-once in a semester')
+                        .insert([row]);
+                    if (error) {
+                        window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
+                    } else {
+                        window.location.href = 'notification.html?status=success';
+                        form.reset();
+                    }
+                });
+            }
     } else {
         console.error('Supabase script not loaded!');
     }

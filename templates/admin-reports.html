@@ -524,30 +524,24 @@
                 // Use actual form submissions count
                 document.getElementById('activeForms').textContent = totalFormSubmissions;
                 
-                // Get unique departments from both faculty and HOD data
-                const facultyDepartments = faculty?.map(f => f.department).filter(d => d && d.trim() !== '' && d.toLowerCase() !== 'null') || [];
-                const hodDepartments = hods?.map(h => h.department || h.Department).filter(d => d && d.trim() !== '' && d.toLowerCase() !== 'null') || [];
-                const allDepartments = [...facultyDepartments, ...hodDepartments];
-                const departments = [...new Set(allDepartments)];
-                console.log('Department calculation DEBUG:', {
-                    facultyLength: faculty?.length || 0,
-                    hodsLength: hods?.length || 0,
-                    facultyDepts: facultyDepartments,
-                    hodDepts: hodDepartments,
-                    uniqueDepts: departments,
-                    totalUnique: departments.length
-                });
-                
-                // Log individual faculty departments for debugging
-                if (faculty) {
-                    faculty.forEach((f, index) => {
-                        if (index < 3) { // Log first 3 only
-                            console.log(`Faculty ${index + 1}: Name="${f.Name}", Dept="${f.department}"`);
-                        }
-                    });
+                // Get unique, valid departments from Faculty and HOD tables (strict normalization)
+                function normalizeDept(dept) {
+                    return (dept || '').trim().toLowerCase();
                 }
-                
-                document.getElementById('totalDepartments').textContent = departments.length;
+
+                const facultyDepartments = (faculty || [])
+                    .map(f => normalizeDept(f.department))
+                    .filter(d => d && d !== 'null' && d !== 'unassigned' && d !== '');
+
+                const hodDepartments = (hods || [])
+                    .map(h => normalizeDept(h.department || h.Department))
+                    .filter(d => d && d !== 'null' && d !== 'unassigned' && d !== '');
+
+                // Combine and deduplicate
+                const allDepartments = [...facultyDepartments, ...hodDepartments];
+                const validDepartments = Array.from(new Set(allDepartments));
+
+                document.getElementById('totalDepartments').textContent = validDepartments.length;
 
                 // Create charts with actual data
                 await createFormCategoriesChart(); // Show form categories distribution
@@ -577,7 +571,7 @@
         async function createFacultyChart() {
             const ctx = document.getElementById('facultyChart').getContext('2d');
             
-            console.log('Creating faculty chart - fetching from Faculty table...');
+            console.log('Creating faculty chart - fetching f=om Faculty table...');
             
             if (chartInstances.faculty) {
                 chartInstances.faculty.destroy();
@@ -696,9 +690,14 @@
             }
 
             // Sort departments by faculty count for better visualization
-            const sortedDepts = Object.entries(deptCount)
+            let sortedDepts = Object.entries(deptCount)
                 .sort(([,a], [,b]) => b - a)
                 .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+
+            // Remove 'Information Technology' from the department list if present
+            if (sortedDepts['Information Technology']) {
+                delete sortedDepts['Information Technology'];
+            }
 
             const labels = Object.keys(sortedDepts);
             const data = Object.values(sortedDepts);
