@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HOD Dashboard - Faculty Core Scope Compliance</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+</head>
+<body class="bg-pmcBg min-h-screen">
+  <header class="bg-purple-700 text-white w-full">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+      <div class="flex items-center">
+        <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 rounded shadow bg-white p-1" />
+        <span class="ml-4 text-xl font-bold">HOD Dashboard</span>
+      </div>
+    </div>
+  </header>
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <h2 class="text-2xl font-bold text-purple-700 mb-6">Faculty Core Scope Compliance Table</h2>
+    <div class="mb-6">
+      <label for="designationFilter" class="font-medium text-purple-700 mr-2">Filter by Designation:</label>
+      <select id="designationFilter" class="p-2 border rounded">
+        <option value="All">All</option>
+        <option value="AP">Assistant Professor (AP)</option>
+        <option value="ASP">Associate Professor (ASP)</option>
+        <option value="Prof">Professor (Prof)</option>
+      </select>
+    </div>
+    <div id="dashboardTableContainer" class="overflow-x-auto"></div>
+  <!-- Department Portfolios Table -->
+  <div id="departmentPortfoliosContainer" class="overflow-x-auto mt-10"></div>
+    <!-- Modal for viewing original form -->
+    <div id="viewFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+        <button onclick="closeViewFormModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <h3 id="viewFormModalTitle" class="text-xl font-bold mb-4 text-purple-700">Faculty Form Details</h3>
+        <div id="viewFormModalContent"></div>
+      </div>
+    </div>
+  </main>
+  <script src="/static/javascript/form-modal-mapper.js"></script>
+  <script>
+    // Fetch and render department portfolios table
+    async function loadDepartmentPortfolios() {
+      // Fetch all faculty
+      const { data, error } = await supabaseClient
+        .from('Faculty')
+        .select('*');
+      if (error || !data || data.length === 0) {
+        document.getElementById('departmentPortfoliosContainer').innerHTML = '<div class="text-red-500">Failed to load department portfolios.</div>';
+        return;
+      }
+      // Filter for current department only
+      const currentDept = department;
+      const facultyList = data.filter(fac => (fac.department || 'Unknown') === currentDept);
+      let html = '<h3 class="text-xl font-bold text-orange-500 mb-4">Department Portfolios</h3>';
+      html += '<table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white"><thead class="bg-orange-100 text-orange-700"><tr>';
+      html += '<th class="px-4 py-2">Department</th>';
+      const portfolioHeaders = [
+        "1. Students Performance in Training & Placement Member",
+        "2. Class Advisor",
+        "3. Faculty Information & Contribution Member",
+        "4. Course Outcome & Program Outcome Member (Exam Cell)",
+        "5. Continuous Improvement Member (Program Member)",
+        "6. Teaching & Learning Process Member (IQAC)",
+        "7. Student Support System Member (Discipline & Extra Curricular)",
+        "8. Facilities & Technical Support Member (Lab Member)"
+      ];
+      for (let i = 0; i < portfolioHeaders.length; i++) html += `<th class="px-4 py-2">${portfolioHeaders[i]}</th>`;
+      html += '</tr></thead><tbody>';
+      html += `<tr><td class="px-2 py-2 font-semibold text-purple-700">${currentDept}</td>`;
+      for (let i = 1; i <= 8; i++) {
+        const formKey = `form${i}`;
+        const assignedList = facultyList.filter(fac => (fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes'));
+        if (assignedList.length > 0) {
+          html += `<td class="px-2 py-2">`;
+          for (const fac of assignedList) {
+            const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
+            html += `<div class="flex items-center gap-2">${facultyName} <span id="portfolio-status-${i}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}" class="inline-block"></span></div>`;
+          }
+          html += `</td>`;
+        } else {
+          html += `<td class="px-2 py-2">-</td>`;
+        }
+      }
+      html += '</tr>';
+      html += '</tbody></table>';
+      document.getElementById('departmentPortfoliosContainer').innerHTML = html;
+
+      // For each assigned faculty/form, check weekly form completion and update tick/cross
+      // Only use the specified weekly form tables
+      const weeklyFormTables = [
+        'form1-Weekly',
+        'form2-weekly',
+        'form3-Weekly',
+        'form4-Weekly',
+        'form5-weekly',
+        'form6_weekly',
+        'form7-Weekly',
+        'form8-weekly'
+      ];
+      for (let i = 1; i <= 8; i++) {
+        const formKey = `form${i}`;
+        const assignedList = facultyList.filter(fac => (fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes'));
+        for (const fac of assignedList) {
+          const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
+          const statusSpanId = `portfolio-status-${i}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
+          // Async check for weekly form completion ONLY in specified tables
+          (async () => {
+            const tableName = weeklyFormTables[i-1];
+            const { data, error } = await supabaseClient
+              .from(tableName)
+              .select('*')
+              .eq('Department', currentDept);
+            let filled = false;
+            if (!error && data && data.length > 0) {
+              // Get current week range
+              const now = new Date();
+              const dayOfWeek = now.getDay(); // 0 (Sun) - 6 (Sat)
+              const startOfWeek = new Date(now);
+              startOfWeek.setHours(0,0,0,0);
+              startOfWeek.setDate(now.getDate() - dayOfWeek);
+              const endOfWeek = new Date(startOfWeek);
+              endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+              // Check if any entry matches faculty name AND submitted_at is within current week
+              filled = data.some(row => {
+                const rowName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+                const submittedAt = row['submitted_at'] ? new Date(row['submitted_at']) : null;
+                return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase()
+                  && submittedAt && submittedAt >= startOfWeek && submittedAt <= endOfWeek;
+              });
+            }
+            const statusSpan = document.getElementById(statusSpanId);
+            if (statusSpan) {
+              statusSpan.innerHTML = filled
+                ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`
+                : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`;
+            }
+          })();
+        }
+      }
+    }
+    const supabaseClient = window.supabase.createClient(
+      "https://cbhodgwaazmjszkujrti.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+    // Get department from query param or localStorage
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+    const departmentParam = getQueryParam('department');
+    const department = departmentParam || localStorage.getItem('department') || '';
+    // Fetch all faculty for department
+    async function loadDashboardTable() {
+      if (!department) {
+        document.getElementById('dashboardTableContainer').innerHTML = '<div class="text-gray-500">No department selected.</div>';
+        return;
+      }
+      const { data, error } = await supabaseClient
+        .from('Faculty')
+        .select('*')
+        .eq('department', department);
+      if (error || !data || data.length === 0) {
+        document.getElementById('dashboardTableContainer').innerHTML = '<div class="text-red-500">Failed to load faculty data.</div>';
+        return;
+      }
+      renderDashboardTable(data);
+    }
+    // Render table for all faculty, grouped by designation
+  function renderDashboardTable(facultyList) {
+      const designationFilter = document.getElementById('designationFilter').value;
+      // Group by designation
+      const groups = { AP: [], ASP: [], Prof: [] };
+      facultyList.forEach(fac => {
+        const desig = (fac.Designation || '').toUpperCase();
+        if (desig === 'AP' || desig === 'ASSISTANT PROFESSOR') groups.AP.push(fac);
+        else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') groups.ASP.push(fac);
+        else if (desig === 'PROF' || desig === 'PROFESSOR') groups.Prof.push(fac);
+      });
+      let html = '';
+      // Map particulars for each designation
+      const particularsMap = {
+        AP: [
+          'Present at Conferences.',
+          'Guide student research and final-year projects.',
+          'Attend FDPs / workshop/Seminars',
+          'NPTEL/ MOOC certifications 2/Sem',
+          'Facilitate industry-institute interaction through guest lectures, internships.',
+          'Engage in extension activities, and social outreach programs.',
+          'Membership in professional body'
+        ],
+        ASP: [
+          'Research Publications',
+          'Innovations',
+          'Extension Activities',
+          'Faculty Development',
+          'Student Mentoring',
+          'Curriculum Development',
+          'Other Contributions',
+          'Leadership Roles'
+        ],
+        Prof: [
+          'Research Publications',
+          'Innovations',
+          'Extension Activities',
+          'Faculty Development',
+          'Student Mentoring',
+          'Curriculum Development',
+          'Other Contributions',
+          'Leadership Roles'
+        ]
+      };
+
+      (async function renderDashboardAsync() {
+        // Preload all compliance data for department
+        const [apRes, aspRes, profRes] = await Promise.all([
+          supabaseClient.from('ap_compliance').select('*').eq('department', department),
+          supabaseClient.from('asp_compliance').select('*').eq('department', department),
+          supabaseClient.from('prof_compliance').select('*').eq('department', department)
+        ]);
+        // For each faculty, keep only the latest entry (highest id) per email
+        function getLatestRows(data) {
+          const latest = {};
+          data.forEach(row => {
+            const email = row.faculty_email;
+            if (!latest[email] || row.id > latest[email].id) {
+              latest[email] = row;
+            }
+          });
+          return Object.values(latest);
+        }
+        const apDataLatest = getLatestRows(apRes.data || []);
+        const aspDataLatest = getLatestRows(aspRes.data || []);
+        const profDataLatest = getLatestRows(profRes.data || []);
+        for (const key of ['AP', 'ASP', 'Prof']) {
+          if (designationFilter !== 'All' && designationFilter !== key) continue;
+          const group = groups[key];
+          if (group.length === 0) continue;
+          html += `<h3 class="text-xl font-semibold text-purple-700 mt-8 mb-2">${key === 'AP' ? 'Assistant Professor (AP)' : key === 'ASP' ? 'Associate Professor (ASP)' : 'Professor (Prof)'}</h3>`;
+          const particulars = particularsMap[key];
+          // Table header: first column is 'Faculty Name', then particulars
+          html += `<div class="overflow-x-auto mb-6"><table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white"><thead class="bg-purple-700 text-white"><tr><th class="px-4 py-2">Faculty Name</th>`;
+          particulars.forEach(particular => {
+            html += `<th class="px-4 py-2">${particular}</th>`;
+          });
+          html += `</tr></thead><tbody>`;
+          // For each faculty, show compliance for each particular
+          for (const fac of group) {
+            html += `<tr><td class=\"px-2 py-2 font-medium text-purple-700 cursor-pointer underline\" onclick=\"viewFacultyForm('${fac.email}','${key}','${fac.Name ? fac.Name.replace(/'/g, "\'") : ''}')\">${fac.Name || ''}</td>`;
+            let complianceRow = null;
+            if (key === 'AP') complianceRow = apDataLatest.find(r => r.faculty_email === fac.email);
+            else if (key === 'ASP') complianceRow = aspDataLatest.find(r => r.faculty_email === fac.email);
+            else if (key === 'Prof') complianceRow = profDataLatest.find(r => r.faculty_email === fac.email);
+            for (let i = 0; i < particulars.length; i++) {
+              let compliance = complianceRow ? complianceRow[`compliance_${i+1}`] : null;
+              let complianceClass = '';
+              let display = '-';
+              if (compliance) {
+                const val = compliance.trim().toLowerCase();
+                if (val === 'yes' || val === 'completed') {
+                  complianceClass = 'text-green-600 font-bold';
+                  display = 'Completed';
+                } else if (val === 'no' || val === 'incomplete') {
+                  complianceClass = 'text-red-600 font-bold';
+                  display = 'Incomplete';
+                } else {
+                  complianceClass = 'text-gray-500';
+                  display = val;
+                }
+              } else {
+                complianceClass = 'text-gray-500';
+              }
+              html += `<td class=\"px-2 py-2 ${complianceClass}\">${display}</td>`;
+            }
+            html += `</tr>`;
+          }
+          html += `</tbody></table></div>`;
+        }
+        document.getElementById('dashboardTableContainer').innerHTML = html || '<div class="text-gray-500">No compliance data found.</div>';
+      })();
+    }
+    document.getElementById('designationFilter').addEventListener('change', () => {
+      loadDashboardTable();
+    });
+    loadDashboardTable();
+  loadDepartmentPortfolios();
+  loadDepartmentPortfolios();
+    // Modal logic
+    function closeViewFormModal() {
+      document.getElementById('viewFormModal').classList.add('hidden');
+      document.getElementById('viewFormModalContent').innerHTML = '';
+      document.getElementById('viewFormModalTitle').textContent = 'Faculty Form Details';
+    }
+
+    // View faculty form logic
+    async function viewFacultyForm(email, designation, facultyName) {
+      document.getElementById('viewFormModal').classList.remove('hidden');
+      document.getElementById('viewFormModalContent').innerHTML = '<div class="text-center text-gray-500">Loading form data...</div>';
+      let tableName = '';
+      if (designation === 'AP') tableName = 'AP';
+      else if (designation === 'ASP') tableName = 'ASP';
+      else if (designation === 'Prof') tableName = 'Prof';
+      else {
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Unknown designation.</div>';
+        return;
+      }
+      // Fetch all entries for this department from AP/ASP/Prof table
+      const { data, error } = await supabaseClient
+        .from(tableName)
+        .select('*')
+        .eq('Department', department);
+      if (error || !data || data.length === 0) {
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Form data not found.</div>';
+        return;
+      }
+      // Find latest entry by faculty name
+      const nameTrimmed = (facultyName || '').toString().trim().toLowerCase();
+      let filtered = data.filter(row => {
+        let rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+        return rowName === nameTrimmed;
+      });
+      if (filtered.length === 0) {
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">No form data found for this faculty name.</div>';
+        return;
+      }
+      // Get latest by id
+      filtered.sort((a, b) => (b.id || 0) - (a.id || 0));
+      const row = filtered[0];
+      // Render modal with section headers from form HTML
+      let html = '';
+      // Top info
+      html += `<div class="mb-4">
+        <div class="font-semibold text-purple-700">Department:</div>
+        <div class="mb-2">${row['Department'] || row['Department:'] || ''}</div>
+        <div class="font-semibold text-purple-700">Portfolio Name:</div>
+        <div class="mb-2">${row['Portfolio Name'] || row['Portfolio Name:'] || ''}</div>
+        <div class="font-semibold text-purple-700">Portfolio Member Name:</div>
+        <div class="mb-2">${row['Portfolio Member Name'] || ''}</div>
+      </div>`;
+      // Section headings and fields
+      let sections = [];
+      if (designation === 'AP') {
+        sections = [
+          'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+          'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+          'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+          'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+          'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
+          'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
+          'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+          'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
+          'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
+          'Research and Development: Present at conferences.',
+          'Research and Development: Guide student research and final-year projects',
+          'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
+          'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
+          'Institutional Development: Serve on academic and administrative committees.',
+          'Professional Development: Attend FDP/ workshops/ seminar.',
+          'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.',
+          'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
+          'Community and Industry Engagement: Engage in extension activities, and social outreach Programs.',
+          'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
+          'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
+          'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.'
+        ];
+      } else if (designation === 'ASP' || designation === 'Prof') {
+        // For ASP and Prof, you can add their respective section headings here
+        // For brevity, using AP headings as placeholder
+        sections = [
+          'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+          'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+          'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+          'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+          'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
+          'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
+          'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+          'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
+          'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
+          'Research and Development: Present at conferences.',
+          'Research and Development: Guide student research and final-year projects',
+          'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
+          'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
+          'Institutional Development: Serve on academic and administrative committees.',
+          'Professional Development: Attend FDP/ workshops/ seminar.',
+          'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.',
+          'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
+          'Community and Industry Engagement: Engage in extension activities, and social outreach Programs.',
+          'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
+          'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
+          'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.'
+        ];
+      }
+      // Render each section with heading
+      html += `<div class="space-y-4">`;
+      for (let i = 1; i <= sections.length; i++) {
+        html += `<div class="border-b pb-2 mb-2">
+          <div class="font-semibold text-orange-500 mb-1">${i}. ${sections[i-1]}</div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div><span class="font-medium text-purple-700">Status:</span> ${row[`Status_${i}`] || '-'}</div>
+            <div><span class="font-medium text-purple-700">Description:</span> ${row[`Description_${i}`] || '-'}</div>
+            <div><span class="font-medium text-purple-700">Upload:</span> ${row[`Upload The Scanned File_${i}`] || row[`Upload the scanned file_${i}`] || '-'}</div>
+          </div>
+        </div>`;
+      }
+      html += `</div>`;
+      document.getElementById('viewFormModalContent').innerHTML = html;
+      document.getElementById('viewFormModalTitle').textContent = `${designation} Form Details`;
+    }
+  </script>
+  <footer class="text-center py-4 mt-8">
+    <p class="text-gray-400 text-sm"> © All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>, IV CSE 2022-2026.<br/> 
+    </p>
+  </footer>
+</body>
+</html>
