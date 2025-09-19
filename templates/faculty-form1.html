@@ -1016,17 +1016,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 semesterForm1.addEventListener('submit', async function (e) {
                     e.preventDefault();
                     const form = e.target;
+                    let statusMsg = document.getElementById('semesterForm1-status-msg');
+                    if (!statusMsg) {
+                        statusMsg = document.createElement('div');
+                        statusMsg.id = 'semesterForm1-status-msg';
+                        statusMsg.className = 'my-4 text-center text-lg font-semibold';
+                        form.insertBefore(statusMsg, form.firstChild);
+                    }
+                    statusMsg.textContent = '';
+                    statusMsg.style.display = 'none';
+
                     async function uploadFileToStorage(file, path) {
                         if (!file) return null;
                         const bucket = 'form1-files';
                         const { data, error } = await supabaseClient.storage.from(bucket).upload(path, file, { upsert: true });
                         if (error) {
-                            window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
+                            statusMsg.textContent = 'File upload failed: ' + error.message;
+                            statusMsg.className += ' text-red-600';
+                            statusMsg.style.display = 'block';
                             throw error;
                         }
                         const { data: publicUrlData, error: urlError } = supabaseClient.storage.from(bucket).getPublicUrl(path);
                         if (urlError) {
-                            window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(urlError.message);
+                            statusMsg.textContent = 'Failed to get file URL: ' + urlError.message;
+                            statusMsg.className += ' text-red-600';
+                            statusMsg.style.display = 'block';
                             throw urlError;
                         }
                         return decodeURIComponent(publicUrlData.publicUrl);
@@ -1056,6 +1070,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const file10 = form.querySelector("input[name='file10']")?.files?.[0] || null;
                         if (file10) file10Url = await uploadFileToStorage(file10, `file10/${ts}_${file10.name}`);
                     } catch (uploadErr) {
+                        // Error already shown in statusMsg
                         return;
                     }
 
@@ -1102,9 +1117,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         .from('form1-once in a semester')
                         .insert([row]);
                     if (error) {
-                        window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
+                        statusMsg.textContent = 'Submission failed: ' + error.message;
+                        statusMsg.className += ' text-red-600';
+                        statusMsg.style.display = 'block';
                     } else {
-                        window.location.href = 'notification.html?status=success';
+                        statusMsg.textContent = 'Form submitted successfully!';
+                        statusMsg.className = 'my-4 text-center text-lg font-semibold text-green-600';
+                        statusMsg.style.display = 'block';
                         form.reset();
                     }
                 });

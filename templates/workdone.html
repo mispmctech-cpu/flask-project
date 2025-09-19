@@ -66,7 +66,7 @@
       <h2 class="text-lg font-bold mb-2 text-purple-700">Verified Workdone</h2>
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
         <input id="verifiedWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-green-700" placeholder="Search by Portfolio or Member" oninput="filterVerifiedWorkdoneTable()" />
-  <button onclick="exportVerifiedWorkdoneToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
+        <button onclick="exportTableToExcel('verifiedWorkdoneTable', 'Verified_Workdone')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
           Export to Excel
         </button>
@@ -96,7 +96,7 @@
       <h2 class="text-lg font-bold mb-2 text-red-700">Rejected Workdone</h2>
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
         <input id="rejectedWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-red-700" placeholder="Search by Portfolio or Member" oninput="filterRejectedWorkdoneTable()" />
-  <button onclick="exportRejectedWorkdoneToExcel()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
+        <button onclick="exportTableToExcel('rejectedWorkdoneTable', 'Rejected_Workdone')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
           Export to Excel
         </button>
@@ -152,132 +152,28 @@
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>
-    // Export function for verified workdone table (ALL rows)
-    function exportVerifiedWorkdoneToExcel() {
-      const allRows = window._filteredVerifiedRows || window._allVerifiedRows || [];
-      const tbody = document.getElementById('verifiedWorkdoneTable');
-      let headers = [];
-      if (tbody) {
-        const table = tbody.closest('table');
-        if (table) {
-          headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
-          if (headers.length > 1) {
-            headers = headers.slice(0, -1); // Remove last column (View)
-          }
-        }
-      }
-      if (allRows.length === 0) {
-        alert('No data to export!');
-        return;
-      }
-      let data = [headers];
-      allRows.forEach(row => {
-        let cells = [
-          row.department || '',
-          row.portfolio_name || '',
-          row.portfolio_member_name || '',
-          (row.status || '').toString().toUpperCase(),
-          row.verified_by || '',
-          row.verified_at ? new Date(row.verified_at).toLocaleDateString() : ''
-        ];
-        data.push(cells);
-      });
-      const ws = XLSX.utils.aoa_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Verified_Workdone');
-      XLSX.writeFile(wb, 'Verified_Workdone.xlsx');
-    }
-
-    // Export function for rejected workdone table (ALL rows)
-    function exportRejectedWorkdoneToExcel() {
-      const allRows = window._filteredRejectedRows || window._allRejectedRows || [];
-      const tbody = document.getElementById('rejectedWorkdoneTable');
-      let headers = [];
-      if (tbody) {
-        const table = tbody.closest('table');
-        if (table) {
-          headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
-          if (headers.length > 1) {
-            headers = headers.slice(0, -1); // Remove last column (View)
-          }
-        }
-      }
-      if (allRows.length === 0) {
-        alert('No data to export!');
-        return;
-      }
-      let data = [headers];
-      allRows.forEach(row => {
-        let cells = [
-          row.department || '',
-          row.portfolio_name || '',
-          row.portfolio_member_name || '',
-          (row.status || '').toString().toUpperCase(),
-          row.rejected_by || '',
-          row.rejected_at ? new Date(row.rejected_at).toLocaleDateString() : '',
-          row.Commands || row.commands || ''
-        ];
-        data.push(cells);
-      });
-      const ws = XLSX.utils.aoa_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Rejected_Workdone');
-      XLSX.writeFile(wb, 'Rejected_Workdone.xlsx');
-    }
     // Export to Excel for any table by id
-    function exportTableToExcel(tbodyId, filenamePrefix, allRows = null, headersOverride = null) {
-      let data = [];
-      let headers = [];
-      if (allRows && Array.isArray(allRows) && allRows.length > 0) {
-        // Use provided headers or default
-        if (headersOverride && Array.isArray(headersOverride)) {
-          headers = headersOverride;
-        } else {
-          // Fallback: get headers from the table DOM
-          const tbody = document.getElementById(tbodyId);
-          if (tbody) {
-            const table = tbody.closest('table');
-            if (table) {
-              headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
-              if (headers.length > 2) {
-                headers = headers.slice(0, -2); // Remove last 2 columns (Verify/View)
-              }
-            }
-          }
-        }
-        data.push(headers);
-        // Map allRows to Excel data
-        allRows.forEach(row => {
-          // For main workdone table: department, portfolio, member, status
-          let cells = [
-            row.department || '',
-            row.portfolio || '',
-            row.member || '',
-            (row.status || '').toString().toUpperCase()
-          ];
-          data.push(cells);
-        });
-      } else {
-        // Fallback: export only visible rows in DOM (old behavior)
-        const tbody = document.getElementById(tbodyId);
-        if (!tbody) return;
-        const table = tbody.closest('table');
-        const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => row.style.display !== 'none');
-        if (rows.length === 0) {
-          alert('No data to export!');
-          return;
-        }
-        headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
-        if (headers.length > 2) {
-          headers = headers.slice(0, -2); // Remove last 2 columns (Verify/View)
-        }
-        data = [headers];
-        rows.forEach(row => {
-          const tds = Array.from(row.querySelectorAll('td'));
-          let cells = tds.slice(0, tds.length - 2).map(td => td.innerText.trim());
-          data.push(cells);
-        });
+    function exportTableToExcel(tbodyId, filenamePrefix) {
+      const tbody = document.getElementById(tbodyId);
+      if (!tbody) return;
+      const table = tbody.closest('table');
+      const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => row.style.display !== 'none');
+      if (rows.length === 0) {
+        alert('No data to export!');
+        return;
       }
+      // Get headers, but skip Verify and View columns (last 2 columns)
+      let headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
+      if (headers.length > 2) {
+        headers = headers.slice(0, -2); // Remove last 2 columns (Verify/View)
+      }
+      const data = [headers];
+      rows.forEach(row => {
+        // Only take the first N-2 cells (ignore Verify/View buttons)
+        const tds = Array.from(row.querySelectorAll('td'));
+        let cells = tds.slice(0, tds.length - 2).map(td => td.innerText.trim());
+        data.push(cells);
+      });
       // Create worksheet and workbook
       const ws = XLSX.utils.aoa_to_sheet(data);
       const wb = XLSX.utils.book_new();
@@ -542,27 +438,9 @@
       container.innerHTML = html;
     }
 
-    // Export function for workdone table (exports ALL rows, not just current page)
+    // Export function for workdone table
     function exportWorkdoneToExcel() {
-      // Use all filtered rows (ignoring pagination)
-      const allRows = window._filteredWorkdoneRows || window._allWorkdoneRows || [];
-      // Get headers from table
-      const tbody = document.getElementById('workdoneTable');
-      let headers = [];
-      if (tbody) {
-        const table = tbody.closest('table');
-        if (table) {
-          headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
-          if (headers.length > 2) {
-            headers = headers.slice(0, -2); // Remove last 2 columns (Verify/View)
-          }
-        }
-      }
-      if (allRows.length === 0) {
-        alert('No data to export!');
-        return;
-      }
-      exportTableToExcel('workdoneTable', 'Workdone_Overview', allRows, headers);
+      exportTableToExcel('workdoneTable', 'Workdone_Overview');
     }
 
     // Render verified workdone table (keeping existing functionality)

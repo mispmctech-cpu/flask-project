@@ -84,6 +84,7 @@
       <!-- Nav links -->
       <nav id="mainNav" class="hidden sm:flex gap-6 text-base font-medium items-center">
         <a href="#" class="border-b-2 border-white pb-1">Department List</a>
+        <a href="iqac-dashboard.html" class="hover:underline text-orange-500">IQAC Dashboard</a>
         <a href="iqac-workdone.html" class="hover:underline">Work Done</a>
         <a href="add-hod.html" class="hover:underline">Add HOD</a>
         <button onclick="openMessagingModal()" aria-label="Messages" class="relative focus:outline-none">
@@ -97,6 +98,7 @@
     <div id="mobileNav" class="sm:hidden hidden px-4 pb-4">
       <nav class="flex flex-col gap-3 text-base font-medium bg-pmcPurple rounded shadow">
         <a href="#" class="border-b-2 border-white pb-1">Department List</a>
+        <a href="iqac-dashboard.html" class="hover:underline text-orange-500">IQAC Dashboard</a>
         <a href="iqac-workdone.html" class="hover:underline">Work Done</a>
         <a href="add-hod.html" class="hover:underline">Add HOD</a>
         <button onclick="openMessagingModal()" aria-label="Messages" class="relative focus:outline-none py-2 text-left">
@@ -331,4 +333,21 @@
 
 </body>
 
+  <script src="/static/javascript/notification-system.js"></script>
+</body>
+  <!-- Messaging Modal -->
+  <div id="messagingModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+    <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
+      <button onclick="closeMessagingModal()" class="absolute top-2 right-2 text-gray-400 hover:text-pmcPurple text-2xl font-bold">&times;</button>
+      <h3 class="text-xl font-bold mb-4 text-pmcPurple">Messages</h3>
+      <div id="messageList" class="max-h-64 overflow-y-auto mb-4"></div>
+      <div class="flex gap-2">
+        <input id="messageInput" type="text" class="flex-1 border rounded px-2 py-1" placeholder="Type a message..." />
+        <button onclick="sendMessage()" class="bg-pmcPurple text-white px-4 py-1 rounded">Send</button>
+      </div>
+      <button onclick="clearMessages()" class="mt-4 text-sm text-red-500 hover:text-red-700">Clear All (IQAC/Principal/Management only)</button>
+    </div>
+  </div>
+  <script src="/static/javascript/notification-system.js"></script>
+</body>
 </html>
