@@ -744,7 +744,7 @@ window.verifyRow = function(btn, idx) {
 
   // Insert into hod-workdone table
   const verificationData = {
-    input_id: row.input_id, // Store the original record's input_id
+  input_id: parseInt(row.input_id), // Ensure input_id is integer for hod-workdone
     table_name: row.table, // Store the source table name
     department: row.department,
     portfolio_name: row.portfolio,
@@ -755,10 +755,10 @@ window.verifyRow = function(btn, idx) {
   };
 
   if (typeof supabaseClient !== 'undefined') {
-    // First try to insert without original_data to check if column exists
+    // Use upsert to avoid duplicate key errors
     supabaseClient
       .from('hod-workdone')
-      .insert([verificationData])
+      .upsert([verificationData], { onConflict: ['input_id'] })
       .then(({ data, error }) => {
         if (error) {
           console.error('Verification error:', error);

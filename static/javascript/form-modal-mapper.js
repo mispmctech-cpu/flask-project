@@ -308,8 +308,15 @@ function getFormModalContent(row, details) {
       html += `<div><span class="font-semibold text-gray-700">Week no:</span> <span>${details['Week no'] || '-'}</span></div>`;
       html += `<div><span class="font-semibold text-gray-700">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
       html += `<div><span class="font-semibold text-gray-700">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
-      html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>Semester Status Blocks</div>`;
-      // If you have dynamic blocks, you can add them here
+      html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>Semester Workdone Details</div>`;
+      // Dynamically show all status/desc/file blocks for semester
+      for (let i = 1; i <= 10; i++) {
+  html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>${i}. Workdone Block</div>`;
+  html += `<div><span class='font-semibold text-gray-700'>Status-${i}:</span> <span>${details[`Status-${i}`] || '-'}</span></div>`;
+  html += `<div><span class='font-semibold text-gray-700'>Description-${i}:</span> <span>${details[`Description-${i}`] || '-'}</span></div>`;
+  let fileUrl = details[`Upload The Scanned File-${i}`] || '';
+  html += `<div><span class='font-semibold text-gray-700'>Upload The Scanned File-${i}:</span> <span>${fileUrl ? `<a href='${fileUrl}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+      }
     }
     html += `</div>`;
     return html;
