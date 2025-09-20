@@ -658,12 +658,26 @@ function attachExportButtons() {
       }
       html += `<div class="space-y-4">`;
       for (let i = 1; i <= sections.length; i++) {
+        const statusVal = row[`Status_${i}`] || '-';
+        const descVal = row[`Description_${i}`] || '-';
+        let uploadVal = row[`Upload The Scanned File_${i}`] || row[`Upload the scanned file_${i}`] || '-';
+        let uploadHtml = '-';
+        if (uploadVal && uploadVal !== '-' && typeof uploadVal === 'string') {
+          // Check if it's a valid URL or file path
+          const isUrl = uploadVal.startsWith('http://') || uploadVal.startsWith('https://');
+          const isFile = uploadVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i);
+          if (isUrl || isFile) {
+            uploadHtml = `<a href="${uploadVal}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block">View</a>`;
+          } else {
+            uploadHtml = uploadVal;
+          }
+        }
         html += `<div class="border-b pb-2 mb-2">
           <div class="font-semibold text-orange-500 mb-1">${i}. ${sections[i-1]}</div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-            <div><span class="font-medium text-purple-700">Status:</span> ${row[`Status_${i}`] || '-'}</div>
-            <div><span class="font-medium text-purple-700">Description:</span> ${row[`Description_${i}`] || '-'}</div>
-            <div><span class="font-medium text-purple-700">Upload:</span> ${row[`Upload The Scanned File_${i}`] || row[`Upload the scanned file_${i}`] || '-'}</div>
+            <div><span class="font-medium text-purple-700">Status:</span> ${statusVal}</div>
+            <div><span class="font-medium text-purple-700">Description:</span> ${descVal}</div>
+            <div><span class="font-medium text-purple-700">Upload:</span> ${uploadHtml}</div>
           </div>
         </div>`;
       }
