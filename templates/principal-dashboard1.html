@@ -49,7 +49,7 @@
     </div>
     <div id="dashboardTableContainer" class="overflow-x-auto"></div>
     <!-- Department Portfolios Table -->
-    <div class="flex flex-wrap gap-4 items-center mb-4">
+    <div id="departmentPortfoliosStickyHeader" class="flex flex-wrap gap-4 items-center mb-4 bg-white z-20" style="position:sticky; top:0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
       <label for="portfolioDepartmentFilter" class="font-medium text-orange-700 mr-2">Filter by Department:</label>
       <select id="portfolioDepartmentFilter" class="p-2 border rounded"></select>
       <label for="portfolioStatusFilter" class="font-medium text-orange-700 mr-2">Show:</label>
@@ -184,13 +184,90 @@ function attachExportButtons() {
         }
       }, 600);
     }
-    const portfoliosTable = document.querySelector('#departmentPortfoliosContainer table');
-    if (portfoliosTable) {
-      document.getElementById('exportDepartmentPortfoliosBtn').onclick = () => {
-        exportTableToExcelById(portfoliosTable.id || 'portfoliosTableExport', 'IQAC_Portfolios');
-      };
-      portfoliosTable.id = portfoliosTable.id || 'portfoliosTableExport';
-    }
+    document.getElementById('exportDepartmentPortfoliosBtn').onclick = async () => {
+      // Fetch all faculty data for all departments
+      const { data, error } = await supabaseClient
+        .from('Faculty')
+        .select('*');
+      if (error || !data || data.length === 0) {
+        alert('Failed to load department portfolios for export.');
+        return;
+      }
+      // Get all unique departments
+      const departments = Array.from(new Set(data.map(row => row.department).filter(Boolean)));
+      const portfolioHeaders = [
+        "1. Training & Placement",
+        "2. Class Advisor",
+        "3. Info & Contribution",
+        "4. Outcome & Exam Cell",
+        "5. Continuous Improvement",
+        "6. T&L Process (IQAC)",
+        "7. Student Support",
+        "8. Facilities & Lab"
+      ];
+      const headers = ["Department", ...portfolioHeaders];
+      const weeklyFormTables = [
+        'form1-Weekly',
+        'form2-weekly',
+        'form3-Weekly',
+        'form4-Weekly',
+        'form5-weekly',
+        'form6_weekly',
+        'form7-Weekly',
+        'form8-weekly'
+      ];
+      // Fetch all weekly form data for all portfolios
+      const weeklyData = [];
+      for (let i = 0; i < weeklyFormTables.length; i++) {
+        const { data: wdata } = await supabaseClient
+          .from(weeklyFormTables[i])
+          .select('*');
+        weeklyData.push(wdata || []);
+      }
+      const exportRows = [];
+      for (const dept of departments) {
+        const facultyList = data.filter(fac => (fac.department || 'Unknown') === dept);
+        const row = [dept];
+        for (let i = 1; i <= 8; i++) {
+          const formKey = `form${i}`;
+          const assignedList = facultyList.filter(fac => (fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes'));
+          if (assignedList.length > 0) {
+            let names = [];
+            for (const fac of assignedList) {
+              const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
+              // Check weekly form completion for tick/cross
+              let filled = false;
+              const wdata = weeklyData[i-1];
+              if (wdata && wdata.length > 0) {
+                // Get current week range
+                const now = new Date();
+                const dayOfWeek = now.getDay();
+                const startOfWeek = new Date(now);
+                startOfWeek.setHours(0,0,0,0);
+                startOfWeek.setDate(now.getDate() - dayOfWeek);
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                filled = wdata.some(row => {
+                  const rowName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+                  const submittedAt = row['submitted_at'] ? new Date(row['submitted_at']) : null;
+                  return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase()
+                    && submittedAt && submittedAt >= startOfWeek && submittedAt <= endOfWeek;
+                });
+              }
+              names.push(facultyName + (filled ? ' (C)' : ' (N)'));
+            }
+            row.push(names.join(', '));
+          } else {
+            row.push('-');
+          }
+        }
+        exportRows.push(row);
+      }
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...exportRows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Portfolios');
+      XLSX.writeFile(wb, 'IQAC_Portfolios_All_Departments.xlsx');
+    };
   }, 500);
 }
   // Fetch and render department portfolios table (IQAC)
@@ -218,13 +295,13 @@ function attachExportButtons() {
       const selectedStatus = statusFilter.options[statusFilter.selectedIndex]?.value || 'All';
 
   let html = '';
-  html += '<div style="position:relative;">';
-  html += '<div id="portfolioStickyHeader" style="position:sticky; top:0; z-index:20; background:#fff;">';
-  html += '<h3 class="text-xl font-bold text-orange-500 mb-0" style="padding-top:8px; padding-bottom:4px; background:#fff;">Department Portfolios</h3>';
-  html += '<table class="w-full text-xs border-b border-gray-400 bg-white" style="table-layout:fixed; font-size:12px; margin-bottom:0;">';
+  html += '<div style="position:sticky; top:0; z-index:30; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.04);">';
+  html += '<h3 class="text-xl font-bold text-orange-500 mb-2">Department Portfolios</h3>';
+  // Removed duplicate controls under Department Portfolios heading
+  html += '<table class="w-full text-xs border border-gray-400 rounded-lg overflow-hidden shadow-sm bg-white" style="table-layout:fixed; font-size:12px;">';
   html += '<thead class="bg-orange-100 text-orange-700">';
-  html += '<tr>';
-  html += '<th class="px-1 py-1 border border-gray-400" style="width:90px; background:#FEF3C7;">Department</th>';
+  html += '<tr style="position:sticky; top:56px; background:#FEF3C7; z-index:20;">';
+  html += '<th class="px-1 py-1 border border-gray-400" style="width:90px; position:sticky; top:56px; background:#FEF3C7; z-index:21;">Department</th>';
   const portfolioHeaders = [
     "1. Training & Placement",
     "2. Class Advisor",
@@ -235,17 +312,17 @@ function attachExportButtons() {
     "7. Student Support",
     "8. Facilities & Lab"
   ];
-  for (let i = 0; i < portfolioHeaders.length; i++) html += `<th class="px-1 py-1 border border-gray-400" style="width:120px; background:#FEF3C7;">${portfolioHeaders[i]}</th>`;
+  for (let i = 0; i < portfolioHeaders.length; i++) html += `<th class="px-1 py-1 border border-gray-400" style="width:120px; position:sticky; top:56px; background:#FEF3C7; z-index:21;">${portfolioHeaders[i]}</th>`;
   html += '</tr></thead></table>';
   html += '</div>';
-  html += '<div style="overflow-x:auto; max-height:500px;">';
-  html += '<table class="w-full text-xs border border-gray-400 rounded-lg overflow-hidden shadow-sm bg-white" style="table-layout:fixed; font-size:12px;">';
+  html += '<div style="overflow-x:auto; max-height:500px; overflow-y:auto;">';
+  html += '<table class="w-full text-xs border border-gray-400 rounded-lg overflow-hidden shadow-sm bg-white" style="table-layout:fixed; font-size:12px; margin-top:-1px;">';
   html += '<tbody>';
       for (const dept of departments) {
         if (selectedDept !== 'All' && dept !== selectedDept) continue;
         const facultyList = data.filter(fac => (fac.department || 'Unknown') === dept);
-  html += `<tr>`;
-  html += `<td class="px-1 py-1 font-semibold text-purple-700 border border-gray-400" style="word-break:break-word;">${dept}</td>`;
+        html += `<tr>`;
+        html += `<td class="px-1 py-1 font-semibold text-purple-700 border border-gray-400" style="word-break:break-word;">${dept}</td>`;
         for (let i = 1; i <= 8; i++) {
           const formKey = `form${i}`;
           const assignedList = facultyList.filter(fac => (fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes'));
@@ -262,7 +339,7 @@ function attachExportButtons() {
         }
         html += '</tr>';
       }
-  html += '</tbody></table></div></div>';
+  html += '</tbody></table></div>';
   document.getElementById('departmentPortfoliosContainer').innerHTML = html;
 
       // Only use the specified weekly form tables
