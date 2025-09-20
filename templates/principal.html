@@ -89,7 +89,7 @@
         <a href="principal-dashboard.html" class="hover:underline">Dashboard1</a>
         <a href="principal-dashboard1.html" class="hover:underline">Dashboard2</a>
         <a href="principal-workdone.html" class="hover:underline">Verified Workdone</a>
-        <button onclick="openMessagingModal()" aria-label="Messages" class="relative focus:outline-none">
+  <button onclick="openNotificationModal()" aria-label="Messages" class="relative focus:outline-none">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-blue-400 transition">
             <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z" />
           </svg>
@@ -108,7 +108,7 @@
         <a href="principal-select-faculty.html" class="hover:underline">Institution Forms</a>
         <a href="principal-dashboard.html" class="hover:underline">Dashboard</a>
         <a href="principal-workdone.html" class="hover:underline">Verified Workdone</a>
-        <button onclick="openMessagingModal()" aria-label="Messages" class="relative focus:outline-none py-2 text-left">
+  <button onclick="openNotificationModal()" aria-label="Messages" class="relative focus:outline-none py-2 text-left">
           <span class="inline-flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-blue-400 transition">
               <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z" />
@@ -139,23 +139,27 @@
   </header>
   
   <!-- Messaging Modal -->
+  <!-- Supabase Notification Modal -->
   <div id="messagingModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-      <button onclick="closeMessagingModal()" class="absolute top-2 right-2 text-gray-400 hover:text-pmcPurple text-2xl font-bold">&times;</button>
+      <button onclick="document.getElementById('messagingModal').classList.add('hidden')" class="absolute top-2 right-2 text-gray-400 hover:text-pmcPurple text-2xl font-bold">&times;</button>
       <h2 class="text-xl font-bold text-pmcPurple mb-4 flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 inline-block">
           <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a2.25 2.25 0 01-4.07 0M21 19.5a1.5 1.5 0 01-1.5-1.5V11a7.5 7.5 0 10-15 0v7a1.5 1.5 0 01-1.5 1.5h18z" />
         </svg>
-        Messages
+        Notifications
       </h2>
-      <div id="messageList" class="h-48 overflow-y-auto border rounded p-2 mb-4 bg-gray-50"></div>
+      <div id="notificationList" class="h-48 overflow-y-auto border rounded p-2 mb-4 bg-gray-50"></div>
       <div class="flex gap-2">
-        <input id="messageInput" type="text" class="flex-1 border border-pmcPurple rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pmcPurple text-black" placeholder="Type a message..." onkeydown="if(event.key==='Enter'){sendMessage()}" />
-        <button onclick="sendMessage()" class="bg-pmcPurple hover:bg-pmcPurpleDark text-white px-4 py-2 rounded font-semibold">Send</button>
+        <input id="messageInput" type="text" class="flex-1 border border-pmcPurple rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pmcPurple text-black" placeholder="Type a notification..." onkeydown="if(event.key==='Enter'){postNotification()}" />
+        <button onclick="postNotification()" class="bg-pmcPurple hover:bg-pmcPurpleDark text-white px-4 py-2 rounded font-semibold">Send</button>
       </div>
     </div>
+  <!-- Add a button to open the notification modal -->
+  <button onclick="openNotificationModal()" class="bg-pmcPurple text-white px-4 py-2 rounded font-semibold mt-4">Show Notifications</button>
   </div>
-  <script src="/static/javascript/messaging.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/static/javascript/supabase-notifications.js"></script>
   <!-- HOD List Content (same as faculty-list, but for HODs) -->
   <div class="max-w-6xl mx-auto mt-8 px-4">
     <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
@@ -354,19 +358,6 @@
 
   <script src="/static/javascript/notification-system.js"></script>
 </body>
-  <!-- Messaging Modal -->
-  <div id="messagingModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
-    <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
-      <button onclick="closeMessagingModal()" class="absolute top-2 right-2 text-gray-400 hover:text-pmcPurple text-2xl font-bold">&times;</button>
-      <h3 class="text-xl font-bold mb-4 text-pmcPurple">Messages</h3>
-      <div id="messageList" class="max-h-64 overflow-y-auto mb-4"></div>
-      <div class="flex gap-2">
-        <input id="messageInput" type="text" class="flex-1 border rounded px-2 py-1" placeholder="Type a message..." />
-        <button onclick="sendMessage()" class="bg-pmcPurple text-white px-4 py-1 rounded">Send</button>
-      </div>
-      <button onclick="clearMessages()" class="mt-4 text-sm text-red-500 hover:text-red-700">Clear All (IQAC/Principal/Management only)</button>
-    </div>
-  </div>
   <script src="/static/javascript/notification-system.js"></script>
 </body>
 </html>

@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let portfolioFields = document.querySelectorAll("input[name='Portfolio Name'], input[name='Portfolio Name:']");
     portfolioFields.forEach(function(field) {
         field.value = portfolio;
-        field.readOnly = true;
         field.required = true;
         field.disabled = false;
     });

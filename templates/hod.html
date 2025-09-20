@@ -149,6 +149,11 @@
           <a href="#" class="border-b-2 border-white pb-1">Faculty List</a>
           <a href="workdone.html?role=HOD&department=" class="hover:underline" id="workdoneLink">Workdone</a>
           <a href="add-faculty.html" class="hover:underline">Add Faculty</a>
+          <button onclick="openNotificationModal()" aria-label="Notifications" class="focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-blue-400 transition">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z" />
+            </svg>
+          </button>
           <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
@@ -162,6 +167,14 @@
           <a href="#" class="border-b-2 border-white pb-1">Faculty List</a>
           <a href="workdone.html?role=HOD&department=" class="hover:underline" id="workdoneLinkMobile">Workdone</a>
           <a href="add-faculty.html" class="hover:underline">Add Faculty</a>
+          <button onclick="openNotificationModal()" aria-label="Notifications" class="focus:outline-none py-2 text-left">
+            <span class="inline-flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-blue-400 transition">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z" />
+              </svg>
+              Notifications
+            </span>
+          </button>
           <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none py-2 text-left">
             <span class="inline-flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
@@ -203,55 +216,20 @@
       </script>
     </header>
 
-    <!-- Messaging Modal -->
-    <div
-      id="messagingModal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden"
-    >
+    <!-- Supabase Notification Modal -->
+    <div id="messagingModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
       <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-        <button
-          onclick="closeMessagingModal()"
-          class="absolute top-2 right-2 text-gray-400 hover:text-pmcPurple text-2xl font-bold"
-        >
-          &times;
-        </button>
-        <h2
-          class="text-xl font-bold text-pmcPurple mb-4 flex items-center gap-2"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="w-6 h-6 inline-block"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M14.857 17.082a2.25 2.25 0 01-4.07 0M21 19.5a1.5 1.5 0 01-1.5-1.5V11a7.5 7.5 0 10-15 0v7a1.5 1.5 0 01-1.5 1.5h18z"
-            />
+        <button type="button" onclick="document.getElementById('messagingModal').classList.add('hidden')" class="absolute top-2 right-2 text-gray-400 hover:text-pmcPurple text-2xl font-bold">&times;</button>
+        <h2 class="text-xl font-bold text-pmcPurple mb-4 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 inline-block">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a2.25 2.25 0 01-4.07 0M21 19.5a1.5 1.5 0 01-1.5-1.5V11a7.5 7.5 0 10-15 0v7a1.5 1.5 0 01-1.5 1.5h18z" />
           </svg>
-          Messages
+          Notifications
         </h2>
-        <div
-          id="messageList"
-          class="h-48 overflow-y-auto border rounded p-2 mb-4 bg-gray-50"
-        ></div>
+        <div id="notificationList" class="h-48 overflow-y-auto border rounded p-2 mb-4 bg-gray-50"></div>
         <div class="flex gap-2">
-          <input
-            id="messageInput"
-            type="text"
-            class="flex-1 border border-pmcPurple rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pmcPurple text-black"
-            placeholder="Type your message..."
-            onkeydown="if(event.key==='Enter'){sendMessage()}"
-          />
-          <button
-            onclick="sendMessage()"
-            class="bg-pmcPurple hover:bg-pmcPurpleDark text-white px-4 py-2 rounded font-semibold"
-          >
-            Send
-          </button>
+          <input id="messageInput" type="text" class="flex-1 border border-pmcPurple rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pmcPurple text-black" placeholder="Type a notification..." onkeydown="if(event.key==='Enter'){postNotification()}" />
+          <button onclick="postNotification()" class="bg-pmcPurple hover:bg-pmcPurpleDark text-white px-4 py-2 rounded font-semibold">Send</button>
         </div>
       </div>
     </div>
@@ -413,28 +391,32 @@
     </div>
     <!-- SheetJS (xlsx) CDN for Excel export -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="/static/javascript/messaging.js"></script>  <!-- Footer -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="/static/javascript/supabase-notifications.js"></script>  <!-- Footer -->
   <footer class="text-center py-4 mt-8">
     <p class="text-gray-400 text-sm"> © All Rights Reserved <a href="https://pmctech.org" target="_blank" class="text-gray-400 hover:text-gray-600 underline">PMC TECH</a>, IV CSE 2022-2026.<br/> 
     </p>
   </footer>
 
   </body>
-  <script src="/static/javascript/notification-system.js"></script>
+  <!-- Remove old notification-system.js -->
 </body>
-  <!-- Messaging Modal -->
+  <!-- Supabase Notification Modal -->
   <div id="messagingModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
-    <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
-      <button onclick="closeMessagingModal()" class="absolute top-2 right-2 text-gray-400 hover:text-pmcPurple text-2xl font-bold">&times;</button>
-      <h3 class="text-xl font-bold mb-4 text-pmcPurple">Messages</h3>
-      <div id="messageList" class="max-h-64 overflow-y-auto mb-4"></div>
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+      <button onclick="document.getElementById('messagingModal').classList.add('hidden')" class="absolute top-2 right-2 text-gray-400 hover:text-pmcPurple text-2xl font-bold">&times;</button>
+      <h2 class="text-xl font-bold text-pmcPurple mb-4 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 inline-block">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a2.25 2.25 0 01-4.07 0M21 19.5a1.5 1.5 0 01-1.5-1.5V11a7.5 7.5 0 10-15 0v7a1.5 1.5 0 01-1.5 1.5h18z" />
+        </svg>
+        Notifications
+      </h2>
+      <div id="notificationList" class="h-48 overflow-y-auto border rounded p-2 mb-4 bg-gray-50"></div>
       <div class="flex gap-2">
-        <input id="messageInput" type="text" class="flex-1 border rounded px-2 py-1" placeholder="Type a message..." />
-        <button onclick="sendMessage()" class="bg-pmcPurple text-white px-4 py-1 rounded">Send</button>
+        <input id="messageInput" type="text" class="flex-1 border border-pmcPurple rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pmcPurple text-black" placeholder="Type a notification..." onkeydown="if(event.key==='Enter'){postNotification()}" />
+        <button onclick="postNotification()" class="bg-pmcPurple hover:bg-pmcPurpleDark text-white px-4 py-2 rounded font-semibold">Send</button>
       </div>
-      <button onclick="clearMessages()" class="mt-4 text-sm text-red-500 hover:text-red-700">Clear All (IQAC/Principal/Management only)</button>
     </div>
   </div>
-  <script src="/static/javascript/notification-system.js"></script>
 </body>
 </html>
