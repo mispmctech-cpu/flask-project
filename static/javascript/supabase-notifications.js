@@ -12,15 +12,62 @@ function getUsername() {
 }
 
 function getRole() {
-  if (window.location.href.includes('as=hod')) return 'HOD';
+  if (window.location.href.includes('as=hod')) {
+    let dept = '';
+    const urlParams = new URLSearchParams(window.location.search);
+    dept = urlParams.get('department') || localStorage.getItem('department') || '';
+    if (dept) {
+      return `HOD-${dept}`;
+    }
+    return 'HOD';
+  }
+  if (window.location.href.includes('faculty')) {
+    // Try to get faculty name from localStorage, else fetch from Supabase using email
+    let name = localStorage.getItem('pmc_faculty_name') || '';
+    if (!name) {
+      const email = localStorage.getItem('pmc_username') || '';
+      if (email) {
+        // Synchronous fallback: set placeholder, fetch async
+        name = 'Faculty';
+        fetchFacultyNameFromSupabase(email);
+      } else {
+        name = 'Faculty';
+      }
+    }
+    return name;
+  }
   if (window.location.href.includes('iqac')) return 'IQAC';
-  if (window.location.href.includes('faculty')) return 'Faculty';
   if (window.location.href.includes('principal')) return 'Principal';
   if (window.location.href.includes('management')) return 'Management';
   return 'User';
+
+}
+
+// Helper: fetch faculty name from Supabase and cache in localStorage
+async function fetchFacultyNameFromSupabase(email) {
+  if (!email) return;
+  try {
+    const { data, error } = await supabase
+      .from('Faculty')
+      .select('Name')
+      .eq('email', email)
+      .limit(1);
+    if (!error && data && data.length > 0 && data[0].Name) {
+      localStorage.setItem('pmc_faculty_name', data[0].Name);
+    }
+  } catch (e) {
+    // Ignore errors
+  }
 }
 
 async function postNotification() {
+  // Always refresh faculty name from DOM before posting
+  if (window.location.href.includes('faculty')) {
+    var nameInput = document.getElementById('facultyName');
+    if (nameInput && nameInput.value) {
+      localStorage.setItem('pmc_faculty_name', nameInput.value);
+    }
+  }
   const input = document.getElementById('messageInput');
   const text = input.value.trim();
   const errorDivId = 'notificationErrorDiv';

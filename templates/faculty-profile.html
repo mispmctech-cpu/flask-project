@@ -9,19 +9,11 @@
   <script src="../static/javascript/workdone-table.js"></script>
   </head>
   <body class="bg-pmcBg min-h-screen">
-    <header class="bg-purple-700 text-white">
-      <div
-        class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between"
-      >
+    <header class="bg-purple-800 text-white">
+      <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <img
-            src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3"
-            alt="PMC Logo"
-            class="h-12 mr-4 rounded shadow bg-white p-1"
-          />
-          <nav
-            class="hidden sm:flex gap-6 ml-6 text-sm font-medium items-center"
-          >
+          <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 mr-4 rounded shadow bg-white p-1" />
+          <nav class="hidden sm:flex gap-6 ml-6 text-sm font-medium items-center">
             <a href="hod.html" class="opacity-90 hover:opacity-100">Back</a>
             <span class="underline decoration-2 underline-offset-4">Faculty Profile</span>
             <button onclick="openNotificationModal()" aria-label="Messages" class="ml-4 focus:outline-none">
@@ -29,29 +21,51 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z" />
               </svg>
             </button>
-            <button
-              onclick="window.location.href='/logout'"
-              aria-label="Logout"
-              class="ml-4 focus:outline-none"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-                class="w-7 h-7 text-white hover:text-red-400 transition"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3"
-                />
+            <button onclick="window.location.href='/logout'" aria-label="Logout" class="ml-4 focus:outline-none">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-white hover:text-red-400 transition">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
               </svg>
+            </button>
+          </nav>
+          <!-- Mobile menu button -->
+          <button id="menuBtn" class="sm:hidden ml-2 p-2 rounded focus:outline-none focus:ring-2 focus:ring-white" aria-label="Open Menu">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </button>
+        </div>
+        <!-- Mobile nav links -->
+        <div id="mobileNav" class="sm:hidden hidden px-4 pb-4 w-full">
+          <nav class="flex flex-col gap-3 text-base font-medium bg-purple-800 rounded shadow">
+            <a href="hod.html" class="opacity-90 hover:opacity-100 py-2">Back</a>
+            <span class="underline decoration-2 underline-offset-4 py-2">Faculty Profile</span>
+            <button onclick="openNotificationModal()" aria-label="Messages" class="focus:outline-none py-2 text-left">
+              <span class="inline-flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-white hover:text-orange-400 transition">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z" />
+                </svg>
+                Notifications
+              </span>
+            </button>
+            <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none py-2 text-left">
+              <span class="inline-flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-white hover:text-red-400 transition">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+                </svg>
+                Logout
+              </span>
             </button>
           </nav>
         </div>
       </div>
+      <script>
+        // Toggle mobile nav
+        document.addEventListener('DOMContentLoaded', function() {
+          const menuBtn = document.getElementById('menuBtn');
+          const mobileNav = document.getElementById('mobileNav');
+          menuBtn.addEventListener('click', function() {
+            mobileNav.classList.toggle('hidden');
+          });
+        });
+      </script>
     </header>
     <main class="max-w-6xl mx-auto px-4 py-8">
       
@@ -1011,6 +1025,13 @@
       }
 
       loadFacultyProfile();
+      // After profile loads, cache faculty name for notifications
+      document.addEventListener('DOMContentLoaded', function() {
+        var nameInput = document.getElementById('facultyName');
+        if (nameInput && nameInput.value) {
+          localStorage.setItem('pmc_faculty_name', nameInput.value);
+        }
+      });
     </script>
 
     <!-- View Modal for Workdone Details -->
@@ -1044,7 +1065,7 @@
       <div id="notificationList" class="h-48 overflow-y-auto border rounded p-2 mb-4 bg-gray-50"></div>
       <div class="flex gap-2">
         <input id="messageInput" type="text" class="flex-1 border border-pmcPurple rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pmcPurple text-black" placeholder="Type a notification..." onkeydown="if(event.key==='Enter'){postNotification()}" />
-        <button onclick="postNotification()" class="bg-pmcPurple hover:bg-pmcPurpleDark text-white px-4 py-2 rounded font-semibold">Send</button>
+        <button onclick="postNotification()" class="bg-purple-800 hover:bg-green-900 text-white px-4 py-2 rounded font-semibold">Send</button>
       </div>
     </div>
   </div>
