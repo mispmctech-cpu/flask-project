@@ -55,6 +55,32 @@ function getFormModalContent(row, details) {
     html += `</div>`;
     return html;
   }
+    // Institution-form7.html
+    if (row.table && row.table.toLowerCase().includes('institution-form7')) {
+      html += `<div class="mb-4"><span class="text-3xl font-extrabold text-[#7d4c9e] tracking-wide">EXECUTIVE DEAN : MONTHLY</span></div>`;
+      html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">`;
+      html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name:'] || '-'}</span></div>`;
+      html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || '-'}</span></div>`;
+      html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month:'] || '-'}</span></div>`;
+      html += `</div>`;
+      const fileLabels = [
+        'Roadmap for internalization and its Progress File',
+        'Policy for International Partnership with University & Research Centers',
+        'Global Partnership MOU File',
+        'Students Mobility Programs File',
+        'International Students Admission File',
+        'Global Ranking Applications File'
+      ];
+      html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+      for (let i = 1; i <= 6; i++) {
+        html += `<div class='col-span-2 mt-4 mb-2'><span class="text-lg font-bold text-purple-700">${i}. ${fileLabels[i-1]}</span></div>`;
+        html += `<div><span class="font-semibold text-gray-700">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+        html += `<div><span class="font-semibold text-gray-700">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+        html += `<div><span class="font-semibold text-gray-700">Upload The Scanned File_${i}:</span> <span>${details[`Upload The Scanned File_${i}`] ? `<a href='${details[`Upload The Scanned File_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+      }
+      html += `</div>`;
+      return html;
+    }
   // Faculty-form7.html
   if (portfolio.includes('student support system member')) {
     let freq = '';
