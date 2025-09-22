@@ -363,47 +363,36 @@ function attachExportButtons() {
             const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
             const statusSpanId = `portfolio-status-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${i}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
             // Async check for weekly form completion ONLY in specified tables
-            (async () => {
-              const tableName = weeklyFormTables[i-1];
-              const { data: formData, error } = await supabaseClient
-                .from(tableName)
-                .select('*')
-                .eq('Department', dept);
-              let filled = false;
-              if (!error && formData && formData.length > 0) {
-                // Get current week range
-                const now = new Date();
-                const dayOfWeek = now.getDay(); // 0 (Sun) - 6 (Sat)
-                const startOfWeek = new Date(now);
-                startOfWeek.setHours(0,0,0,0);
-                startOfWeek.setDate(now.getDate() - dayOfWeek);
-                const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-                // Check if any entry matches faculty name AND submitted_at is within current week
-                filled = formData.some(row => {
-                  const rowName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
-                  const submittedAt = row['submitted_at'] ? new Date(row['submitted_at']) : null;
-                  return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase()
-                    && submittedAt && submittedAt >= startOfWeek && submittedAt <= endOfWeek;
-                });
-              }
-              const statusSpan = document.getElementById(statusSpanId);
-              if (statusSpan) {
-                // Filter by status
-                if (selectedStatus === 'Completed' && !filled) {
-                  statusSpan.parentElement.style.display = 'none';
-                  return;
+              (async () => {
+                const tableName = weeklyFormTables[i-1];
+                const { data: formData, error } = await supabaseClient
+                  .from(tableName)
+                  .select('*')
+                  .eq('Department', dept);
+                let filled = false;
+                if (!error && formData && formData.length > 0) {
+                  // Check if any entry matches faculty name (no week filter)
+                  filled = formData.some(row => {
+                    const rowName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+                    return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase();
+                  });
                 }
-                if (selectedStatus === 'Pending' && filled) {
-                  statusSpan.parentElement.style.display = 'none';
-                  return;
+                const statusSpan = document.getElementById(statusSpanId);
+                if (statusSpan) {
+                  // Filter by status
+                  if (selectedStatus === 'Completed' && !filled) {
+                    statusSpan.parentElement.style.display = 'none';
+                    return;
+                  }
+                  if (selectedStatus === 'Pending' && filled) {
+                    statusSpan.parentElement.style.display = 'none';
+                    return;
+                  }
+                  statusSpan.innerHTML = filled
+                    ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`
+                    : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`;
                 }
-                statusSpan.innerHTML = filled
-                  ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`
-                  : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`;
-              }
-            })();
+              })();
           }
         }
       }
