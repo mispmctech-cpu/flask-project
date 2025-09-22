@@ -692,7 +692,12 @@ function getFormModalContent(row, details) {
         html += `<div class='col-span-2 mt-4 mb-2'><span class="text-lg font-bold text-purple-700">${i}. ${fileLabels[i-1]}</span></div>`;
         html += `<div><span class="font-semibold text-gray-700">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
         html += `<div><span class="font-semibold text-gray-700">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
-        html += `<div><span class="font-semibold text-gray-700">Upload The Scanned File_${i}:</span> <span>${details[`Upload The Scanned File_${i}`] ? `<a href='${details[`Upload The Scanned File_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+        let fileVal = details[`Upload the scanned file_${i}`];
+        let fileHtml = '-';
+        if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
+          fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
+        }
+        html += `<div><span class="font-semibold text-gray-700">Upload the scanned file_${i}:</span> <span>${fileHtml}</span></div>`;
       }
       html += `</div>`;
       return html;
@@ -761,65 +766,45 @@ function getFormModalContent(row, details) {
 
   // Faculty-form4.html - Course Outcome & Program Outcome Member (Exam Cell)
   if (portfolio.includes('course outcome & program outcome member')) {
-    let freq = '';
-    let tableName = row.table || '';
-    
-    // Detect frequency from table name or portfolio
-    if (tableName.includes('weekly') || tableName.includes('Weekly') || portfolio.includes('weekly')) freq = 'weekly';
-    else if (tableName.includes('month') || portfolio.includes('month')) freq = 'monthly';
-    else if (tableName.includes('semester') || portfolio.includes('semester')) freq = 'semester';
-    else freq = 'weekly'; // default
-    
-    html += `<div class="mb-4"><span class="text-lg font-bold text-purple-700">Course Outcome & Program Outcome Member (Exam Cell) (${freq.charAt(0).toUpperCase() + freq.slice(1)})</span></div>`;
-    html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
-    html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
-    html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || details['Portfolio Memeber Name'] || details['faculty_name'] || details['Faculty Name'] || details['Name'] || '-'}</span></div>`;
-    html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
-    html += `<div><span class="font-semibold text-gray-700">Week no:</span> <span>${details['Week no'] || details['Week No'] || '-'}</span></div>`;
-    html += `<div><span class="font-semibold text-gray-700">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
-    html += `<div><span class="font-semibold text-gray-700">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
-    if (freq === 'weekly') {
-      const weeklyFiles = [
-        "Lab Student Entry Register File for all labs",
-        "Lab Observation and Record audit Report (2 Labs per week)"
-      ];
-      for (let i = 1; i <= 2; i++) {
-        html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>${i}. ${weeklyFiles[i-1]}</div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Upload The Scanned File_${i}:</span> <span>${details[`Upload The Scanned File_${i}`] ? `<a href='${details[`Upload The Scanned File_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
-      }
-    } else if (freq === '3months') {
-      const threeMonthFiles = [
-        "Non-Teaching Faculty File",
-        "Non-Teaching Faculty Training File"
-      ];
-      for (let i = 1; i <= 2; i++) {
-        html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>${i}. ${threeMonthFiles[i-1]}</div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Upload The Scanned File_${i}:</span> <span>${details[`Upload The Scanned File_${i}`] ? `<a href='${details[`Upload The Scanned File_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
-      }
-    } else if (freq === 'semester') {
-      const semesterFiles = [
-        "List of Equipment's File for all Labs",
-        "Lab manual, Master Lab Manual with Readings Sample Observations & Records",
-        "Stock Register",
-        "Maintenance Register",
-        "Calibration Register",
-        "Infrastructure File (Lab, Class, Seminar, Hall Details with Geotag Photo)",
-        "New Lab Facility Created File",
-        "Library Book requirements File",
-        "Department Library File"
-      ];
-      for (let i = 1; i <= 9; i++) {
-        html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>${i}. ${semesterFiles[i-1]}</div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Upload The Scanned File_${i}:</span> <span>${details[`Upload The Scanned File_${i}`] ? `<a href='${details[`Upload The Scanned File_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
-      }
-    }
+    let tableName = (row.table || '').toLowerCase();
+    let html = `<div class=\"mb-4\"><span class=\"text-2xl font-bold text-purple-700\">Course Outcome & Program Outcome Member</span></div>`;
+    html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-6\">`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Department:</span> <span>${details['Department'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Memeber Name'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Week no:</span> <span>${details['Week no'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
     html += `</div>`;
+
+    // Weekly: only 1 status/desc/file
+    if (tableName.includes('weekly')) {
+      html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+      html += `<div><span class=\"font-semibold text-orange-700\">Status:</span> <span>${details['Status_1'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-orange-700\">Description:</span> <span>${details['Description_1'] || '-'}</span></div>`;
+      let fileVal = details['Upload Scanned File_1'] || details['Upload The Scanned File_1'] || '-';
+      let fileHtml = '-';
+      if (fileVal && fileVal !== '-' && typeof fileVal === 'string' && (fileVal.startsWith('http://') || fileVal.startsWith('https://') || fileVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i))) {
+        fileHtml = `<a href=\"${fileVal}\" target=\"_blank\" class=\"bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block\">View File</a>`;
+      }
+      html += `<div><span class=\"font-semibold text-orange-700\">Upload:</span> ${fileHtml}</div>`;
+      html += `</div>`;
+    } else {
+      // Once in a month or semester: 8 status/desc/file fields
+      html += `<div class='space-y-4'>`;
+      for (let i = 1; i <= 8; i++) {
+        html += `<div class=\"border-b pb-2 mb-2\">\n          <div class=\"font-semibold text-orange-500 mb-1\">${i}. Course Outcome & Program Outcome</div>\n          <div class=\"grid grid-cols-1 md:grid-cols-3 gap-2\">\n            <div><span class=\"font-medium text-purple-700\">Status:</span> ${details[`Status_${i}`] || '-'}</div>\n            <div><span class=\"font-medium text-purple-700\">Description:</span> ${details[`Description_${i}`] || '-'}</div>\n            <div><span class=\"font-medium text-purple-700\">Upload:</span> `;
+        let fileVal = details[`Upload The Scanned File_${i}`] || details[`Upload Scanned File_${i}`] || '-';
+        if (fileVal && fileVal !== '-' && typeof fileVal === 'string' && (fileVal.startsWith('http://') || fileVal.startsWith('https://') || fileVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i))) {
+          html += `<a href=\"${fileVal}\" target=\"_blank\" class=\"bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block\">View File</a>`;
+        } else {
+          html += '-';
+        }
+        html += `</div>\n          </div>\n        </div>`;
+      }
+      html += `</div>`;
+    }
     return html;
   }
 
@@ -918,7 +903,12 @@ function getFormModalContent(row, details) {
       html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>4. Training File</div>`;
       html += `<div><span class="font-semibold text-gray-700">Status_4:</span> <span>${details['Status_4'] || '-'}</span></div>`;
       html += `<div><span class="font-semibold text-gray-700">Description_4:</span> <span>${details['Description_4'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Upload the scanned file_4:</span> <span>${details['Upload the scanned file_4'] ? `<a href='${details['Upload the scanned file_4']}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+      let uploadVal = details['Upload the scanned file_4'];
+      let uploadHtml = '-';
+      if (uploadVal && typeof uploadVal === 'string' && uploadVal !== 'null' && uploadVal.trim() !== '') {
+        uploadHtml = `<a href='${uploadVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
+      }
+      html += `<div><span class="font-semibold text-gray-700">Upload the scanned file_4:</span> <span>${uploadHtml}</span></div>`;
     } else if (freq === '15days') {
       html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
       html += `<div><span class="font-semibold text-gray-700">Week no:</span> <span>${details['Week no'] || '-'}</span></div>`;
@@ -1013,7 +1003,6 @@ function getFormModalContent(row, details) {
       html += `<div><span class="font-semibold text-gray-700">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
       // 8 status/desc/upload blocks
       const monthFiles = [
-        'Master Attendence',
         'Attendence Report To Parents',
         'ERP Attendence Entry',
         'Test Report to Parents',
@@ -1308,7 +1297,7 @@ function getFormModalContent(row, details) {
     html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
     html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
     html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
-    html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || details['Portfolio Member Name:'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || details['Portfolio Member Name'] || '-'}</span></div>`;
     html += `</div>`;
     html += `<div class='mt-4'>`;
     // SCOPE blocks (22 rows)
@@ -1340,7 +1329,12 @@ function getFormModalContent(row, details) {
       html += `<div class='col-span-2 mt-4 mb-2'><span class="text-lg font-bold text-purple-700">${i}. ${scopes[i-1]}</span></div>`;
       html += `<div><span class="font-semibold text-gray-700">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
       html += `<div><span class="font-semibold text-gray-700">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Upload The Scanned File_${i}:</span> <span>${details[`Upload The Scanned File_${i}`] ? `<a href='${details[`Upload The Scanned File_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+      let fileVal = details[`Upload the scanned file_${i}`];
+      let fileHtml = '-';
+      if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
+        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
+      }
+      html += `<div><span class="font-semibold text-gray-700">Upload the scanned file_${i}:</span> <span>${fileHtml}</span></div>`;
     }
     html += `</div>`;
     return html;
@@ -1356,7 +1350,7 @@ function getFormModalContent(row, details) {
     html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
     html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
     html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
-    html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || details['Portfolio Member Name:'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || details['Portfolio Member Name'] || '-'}</span></div>`;
     html += `</div>`;
     html += `<div class='mt-4'>`;
     // SCOPE blocks (22 rows)
@@ -1388,7 +1382,12 @@ function getFormModalContent(row, details) {
       html += `<div class='col-span-2 mt-4 mb-2'><span class="text-lg font-bold text-purple-700">${i}. ${scopes[i-1]}</span></div>`;
       html += `<div><span class="font-semibold text-gray-700">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
       html += `<div><span class="font-semibold text-gray-700">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Upload The Scanned File_${i}:</span> <span>${details[`Upload The Scanned File_${i}`] ? `<a href='${details[`Upload The Scanned File_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+      let fileVal = details[`Upload the scanned file_${i}`];
+      let fileHtml = '-';
+      if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
+        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
+      }
+      html += `<div><span class="font-semibold text-gray-700">Upload the scanned file_${i}:</span> <span>${fileHtml}</span></div>`;
     }
     html += `</div>`;
     return html;
