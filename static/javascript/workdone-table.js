@@ -9,6 +9,10 @@ class WorkdoneTable {
     
     // Institution Level Forms (using exact table names provided)
     this.formTables = [
+      // Add Form 6 Once in 2 Months for IQAC workdone
+  { table: "form6_once_in_2_month", portfolio: "Teaching & Learning Process Member (IQAC) (Once in 2 Months)" },
+      // Add Form 6 Weekly for IQAC workdone
+      { table: "form6_weekly", portfolio: "Teaching & Learning Process Member (IQAC) (Weekly)" },
       { table: "Institution-form1-monthly", portfolio: "Director – Students welfare & Admission (Monthly)" },
       { table: "Institution-form1-once in six months", portfolio: "Director – Students welfare & Admission (Once in Six Months)" },
       { table: "Institution-form10", portfolio: "Head – Training" },
