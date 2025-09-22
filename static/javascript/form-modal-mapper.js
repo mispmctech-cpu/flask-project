@@ -55,6 +55,622 @@ function getFormModalContent(row, details) {
     html += `</div>`;
     return html;
   }
+    // Institution-form8.html
+    if (row.table && row.table.toLowerCase().includes('institution-form8')) {
+      html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">PLACEMENT CELL : MONTHLY</span></div>`;
+      html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+      html += `</div>`;
+      const fileLabels = [
+        'Placement File',
+        'Paid Internship File',
+        'On/Off Campus Recruitments File',
+        'Higher Studies File',
+        'Entrepreneurship File',
+        'Competitive Exams File',
+        'Career Guidance Programs File',
+        'Alumni Feedback on placed company',
+        'Industry Feedback File'
+      ];
+      html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+      for (let i = 1; i <= fileLabels.length; i++) {
+        html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${fileLabels[i-1]}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+      }
+      html += `</div>`;
+      return html;
+    }
+    // Institution-form9.html
+    if (row.table && row.table.toLowerCase().includes('institution-form9')) {
+      html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">PLACEMENT OFFICER : ONCE IN A MONTH</span></div>`;
+      html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+      html += `</div>`;
+      const fileLabels = [
+        'Campus placement schedule file',
+        'Company database file',
+        'Job profile file',
+        'Placement records and statistics',
+        'Students profile file',
+        'Company feedback file',
+        'MOU file(for Placement and internship)',
+        'Placement policy file',
+        'Aptitude ,technical and soft skill file',
+        'Mock interview file',
+        'Resume building workshop file',
+        'GD file',
+        'Skill gap identification file',
+        'Placement reports file (On bar off campus)',
+        'Offer letter file',
+        'Placement Grievances file'
+      ];
+      html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+      for (let i = 1; i <= fileLabels.length; i++) {
+        html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${fileLabels[i-1]}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+      }
+      html += `</div>`;
+      return html;
+    }
+      // Institution-form10.html
+      if (row.table && row.table.toLowerCase().includes('institution-form10')) {
+        let isSixMonths = row.table.toLowerCase().includes('once in six months');
+        if (!isSixMonths) {
+          html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">HEAD PLACEMENT : MONTHLY</span></div>`;
+          html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+          html += `</div>`;
+          const fileLabels = [
+            'Placement File',
+            'Paid Internship File',
+            'On/Off Campus Recruitments File',
+            'Industry Visit File',
+            'HR Conclave File',
+            'Placement Orientation Programs File'
+          ];
+          html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+          for (let i = 1; i <= fileLabels.length; i++) {
+            html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${fileLabels[i-1]}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+          }
+          html += `</div>`;
+        } else {
+          html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">HEAD-TRAINING: ONCE IN SIX MONTHS</span></div>`;
+          html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Person Name:</span> <span>${details['Portfolio Person Name:'] || details['Portfolio Person Name'] || '-'}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+          html += `</div>`;
+          const fileLabels = [
+            'Budget File',
+            'Vendor Database & Quotations File'
+          ];
+          html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+          for (let i = 1; i <= fileLabels.length; i++) {
+            html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i + 6}. ${fileLabels[i-1]}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Discription_${i}:</span> <span>${details[`Discription_${i}`] || '-'}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+          }
+          html += `</div>`;
+        }
+        return html;
+      }
+      // Institution-form11.html
+      if (row.table && row.table.toLowerCase().includes('institution-form11')) {
+        html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">TRAINING OFFICER : ONCE IN A MONTH</span></div>`;
+        html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+        html += `</div>`;
+        const fileLabels = [
+          'Training calendar file',
+          'Students categorization file',
+          'Gap analysis file',
+          'Industry expectations file',
+          'Training reports file',
+          'MOU File(training)',
+          'Budget file',
+          'Students analysis file',
+          'Mapping file(NBA&NAAC)'
+        ];
+        html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+        for (let i = 1; i <= fileLabels.length; i++) {
+          html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${fileLabels[i-1]}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+        }
+        html += `</div>`;
+        return html;
+      }
+        // Institution-form12.html
+        if (row.table && row.table.toLowerCase().includes('institution-form12')) {
+          html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">HEAD RISE : MONTHLY</span></div>`;
+          html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+          html += `</div>`;
+          const fileLabels = [
+            'Roadmap File',
+            'Establishment of Research Labs File',
+            'Funding Agencies, Research Calls and its Submission Status File',
+            'Innovation Programs Calendar & its Execution File',
+            'Innovation Product File',
+            'Innovation Bootcamp File',
+            'Publications File',
+            'Patents File',
+            'Research Proposal Submission status File',
+            'Incubation Centre Status File',
+            'Startups File',
+            'Alumni networks for mentorship, funding, and collaboration File',
+            'Consultancy File',
+            'Industry Database file',
+            'Research Centre Database file',
+            'Scientists Database File',
+            'Research Advisory Committee File',
+            'Seed Money File',
+            'Entrepreneurship Development Cell File'
+          ];
+          html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+          for (let i = 1; i <= fileLabels.length; i++) {
+            html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${fileLabels[i-1]}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+          }
+          html += `</div>`;
+          return html;
+        }
+        // Institution-form13.html
+        if (row.table && row.table.toLowerCase().includes('institution-form13')) {
+          let isSixMonths = row.table.toLowerCase().includes('oncein6months') || row.table.toLowerCase().includes('once in six months');
+          if (!isSixMonths) {
+            html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">IT INFRA COORDINATOR: MONTHLY</span></div>`;
+            html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+            html += `</div>`;
+            const fileLabels = [
+              'IT Infrastructure Planning File',
+              'Security & Compliance File',
+              'Vendor & AMC Management File',
+              'Disaster Recovery & Backup File',
+              'Performance Monitoring File',
+              'Inventory of IT assets File',
+              'IT audits File',
+              'IT Training sessions File'
+            ];
+            html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+            for (let i = 1; i <= fileLabels.length; i++) {
+              html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${fileLabels[i-1]}</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+            }
+            html += `</div>`;
+          } else {
+            html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">IT INFRA COORDINATOR: ONCE IN SIX MONTHS</span></div>`;
+            html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+            html += `</div>`;
+            html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+            html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">9. Budget File</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Status_1:</span> <span>${details['Status_1'] || '-'}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Description_1:</span> <span>${details['Description_1'] || '-'}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_1:</span> <span>${details['Upload the scanned file_1'] ? `<a href='${details['Upload the scanned file_1']}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+            html += `</div>`;
+          }
+          return html;
+        }
+          // Institution-form14.html
+          if (row.table && row.table.toLowerCase().includes('institution-form14')) {
+            let isSixMonths = row.table.toLowerCase().includes('oncein6months') || row.table.toLowerCase().includes('once in six months');
+            if (!isSixMonths) {
+              html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">WEBSITE COORDINATOR: MONTHLY</span></div>`;
+              html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+              html += `</div>`;
+              const fileLabels = [
+                'Website updation File',
+                'Data security updates file',
+                'No of Viewers File',
+                'Student portals, fee payment gateways, and ERP integrations updates File',
+                'Newsletters, magazines, alumni testimonials updates File',
+                'Audit File',
+                'Department Page update status File'
+              ];
+              html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+              for (let i = 1; i <= fileLabels.length; i++) {
+                html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${fileLabels[i-1]}</span></div>`;
+                html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+                html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+                html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+              }
+              html += `</div>`;
+            } else {
+              html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">WEBSITE COORDINATOR: ONCE IN SIX MONTHS</span></div>`;
+              html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+              html += `</div>`;
+              html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+              html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">8. Budget File</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Status_1:</span> <span>${details['Status_1'] || '-'}</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Description_1:</span> <span>${details['Description_1'] || '-'}</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_1:</span> <span>${details['Upload the scanned file_1'] ? `<a href='${details['Upload the scanned file_1']}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+              html += `</div>`;
+            }
+            return html;
+          }
+          // Institution-form15.html
+          if (row.table && row.table.toLowerCase().includes('institution-form15')) {
+            html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">ERP COORDINATOR : MONTHLY</span></div>`;
+            html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+            html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+            html += `</div>`;
+            const fileLabels = [
+              'Academic ERP File',
+              'Finance ERP File',
+              'Administrative HR ERP  File',
+              'Exam ERP File',
+              'Ranking framework file(NBA,NAAC,NIRF)',
+              'Data security & access control file',
+              'Academic module audit file',
+              'Administrative HR audit file',
+              'Academic ERP audit file',
+              'Finance ERP audit file',
+              'Administrative HR ERP audit file',
+              'Exam ERP audit file',
+              'Reporting and analytics file',
+              'User manual file',
+              'Training file',
+              'System integration and Maintenance file',
+              'Budget file'
+            ];
+            html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+            for (let i = 1; i <= fileLabels.length; i++) {
+              html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${fileLabels[i-1]}</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+            }
+            html += `</div>`;
+            return html;
+          }
+            // Institution-form16.html
+            if (row.table && row.table.toLowerCase().includes('institution-form16')) {
+              html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">PRO : MONTHLY</span></div>`;
+              html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+              html += `</div>`;
+              const fileLabels = [
+                'Media Relations File',
+                'Institutional Branding File',
+                'Stakeholder Communication File',
+                'Event Coordination File',
+                'Digital Presence Management File',
+                'Crisis Communication File',
+                'Collaboration with Schools File',
+                'Collaboration with Local; Officers File',
+                'Collaboration with District Administration File'
+              ];
+              html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+              for (let i = 1; i <= fileLabels.length; i++) {
+                html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${fileLabels[i-1]}</span></div>`;
+                html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+                html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+                html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+              }
+              html += `</div>`;
+              return html;
+            }
+            // Institution-form17.html
+            if (row.table && row.table.toLowerCase().includes('institution-form17')) {
+              html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">LOGISTICS COORDINATOR: MONTHLY</span></div>`;
+              html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+              html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+              html += `</div>`;
+              const fileLabels = [
+                'Transport and Database file',
+                'Logistics Maintenance file',
+                'Logistics logbook file',
+                'BUS requirement file',
+                'Grievances file',
+                'IV/Sports/Village visit file'
+              ];
+              html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+              for (let i = 1; i <= fileLabels.length; i++) {
+                html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${fileLabels[i-1]}</span></div>`;
+                html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+                html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+                html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+              }
+              html += `</div>`;
+              return html;
+            }
+    // Institution-form6.html (monthly and once in six months)
+    if (row.table && row.table.toLowerCase().includes('institution-form6')) {
+      html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">COE</span></div>`;
+      html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+      html += `</div>`;
+      let fileLabels = [];
+      let startIdx = 1;
+      let endIdx = 5;
+      if (row.table.toLowerCase().includes('oncein6months')) {
+        fileLabels = [
+          'UGC, AICTE, AU Regulatory Compliance and Reporting',
+          'Remuneration Settlement File',
+          'Purchase File',
+          'Finance Committee File',
+          'Hall Ticket Updates File',
+          'Semester Result Analysis File',
+          'Discontinued, Debarred, Transfer, Shortage of Students Attendance File',
+          'Budget File'
+        ];
+        startIdx = 6;
+        endIdx = 13;
+      } else {
+        fileLabels = [
+          'Academic Schedule & Its Execution Status File',
+          'Question Paper Collection Progress File',
+          'Certificate Printing process File',
+          'Malpractice Prevention and Redressal',
+          'Technology and Reforms Once in Six Months'
+        ];
+      }
+      html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+      for (let i = startIdx; i <= endIdx; i++) {
+        html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${fileLabels[i-startIdx]}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+      }
+      html += `</div>`;
+      return html;
+    }
+    // Institution-form5.html
+    if (row.table && row.table.toLowerCase().includes('institution-form5')) {
+      html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">DIRECTOR - ACADEMICS : MONTHLY</span></div>`;
+      html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+      html += `</div>`;
+      const acadRows = [
+        'Autonomous Regulations & Curriculum File',
+        'AICTE Communications File',
+        'UGC Communications File',
+        'AU Communications File',
+        'Order for Nominees of BOS, Academic council, Governing Council, Finance Committee from AU File',
+        'Governing Council File & Its Implementations File',
+        'Academic Council File & Its Implementations File',
+        'BOS Minutes & Implementation File',
+        'Proposal of New Program Introduction with supporting Documents',
+        'OBE Promotion Programs for Faculty',
+        'Institution Academic Calendar Its Execution Status File',
+        'Result Analysis File',
+        'New Faculty orientation Programs File',
+        'New Faculty Mentoring File',
+        'FDP/Workshop/Seminar Programs on UGC Mandate File',
+        'Internal Compliance Committee File',
+        'Planning and Monitoring File',
+        'PO Attainment File (For all Programs)'
+      ];
+      html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+      for (let i = 1; i <= acadRows.length; i++) {
+        html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${acadRows[i-1]}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+      }
+      html += `</div>`;
+      return html;
+    }
+    // Institution-form4.html (monthly and once in six months)
+    if (row.table && row.table.toLowerCase().includes('institution-form4')) {
+      html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">DEAN - IQAC</span></div>`;
+      html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+      html += `</div>`;
+      let fileLabels = [];
+      let startIdx = 1;
+      let endIdx = 6;
+      if (row.table.toLowerCase().includes('once in six months')) {
+        fileLabels = [
+          'Students Satisfaction Survey File',
+          'Academic Administrative Audit File',
+          'AQAR Submission Status File'
+        ];
+        startIdx = 7;
+        endIdx = 9;
+      } else {
+        fileLabels = [
+          'Audit Calendar & Its Execution Status File',
+          'Internal Audit File',
+          'External Audit File',
+          'FDP/Workshop/Training on Quality File',
+          'Feedback File',
+          'Faculty Grievances File'
+        ];
+      }
+      html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+      for (let i = startIdx; i <= endIdx; i++) {
+        html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${fileLabels[i-startIdx]}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+      }
+      html += `</div>`;
+      return html;
+    }
+    // Institution-form3.html
+    if (row.table && row.table.toLowerCase().includes('institution-form3')) {
+      html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">PRINCIPAL</span></div>`;
+      html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+      html += `</div>`;
+      const principalRows = [
+        'Strategic Planning and Vision File',
+        'Compliance with statutory bodies like AICTE, UGC, and AU File',
+        'Budget File',
+        'NBA, NAAC, ISO Reports and Certifications  File',
+        'Stakeholder Visit Feedback Note'
+      ];
+      html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+      for (let i = 1; i <= principalRows.length; i++) {
+        html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${principalRows[i-1]}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+      }
+      html += `</div>`;
+      return html;
+    }
+    // Institution-form2.html
+    if (row.table && row.table.toLowerCase().includes('institution-form2')) {
+      html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">HEAD-HR</span></div>`;
+      html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+      html += `</div>`;
+      const hrSections = [
+        { title: '1.FACULTY RECORDS ( FACULTY GREEN FILE)', rows: [
+          'Appointment letters and joining reports',
+          'Qualification documents (degrees, certifications)',
+          'Experience certificates',
+          'Promotion and increment records'
+        ] },
+        { title: '2.STAFF RECORDS', rows: [
+          'Attendance registers or biometric logs',
+          'Leave records and approvals',
+          'Training and development participation',
+          'Disciplinary actions (if any)'
+        ] },
+        { title: '3.RECRUITMENT DOCUMENTATION', rows: [
+          'Recruitment advertisements and selection criteria',
+          'Interview panel reports and score sheets',
+          'Offer letters and acceptance records'
+        ] },
+        { title: '4.COMPLIANCE &STATUTORY FILES', rows: [
+          'Employment contracts and service rules',
+          'Equal opportunity and diversity policies'
+        ] },
+        { title: '5.POLICY & GOVERNANCE DOCUMENTS', rows: [
+          'HR policy manual',
+          'Code of conduct',
+          'Grievance redressal procedures',
+          'Exit interview formats and resignation records'
+        ] },
+        { title: '6.TRAINING &DEVELOPMENT', rows: [
+          'Faculty development program records',
+          'Skill enhancement workshops',
+          'Feedback and impact analysis reports'
+        ] },
+        { title: '7.PERFORMANCE ASSESMENT', rows: [
+          'Monthly compliance record',
+          'Performance appraisal reports'
+        ] }
+      ];
+      let sn = 1;
+      html += `<div class='grid grid-cols-1'>`;
+      hrSections.forEach(section => {
+        html += `<div class='col-span-2 mt-6 mb-2 font-bold text-orange-700 text-lg'>${section.title}</div>`;
+        section.rows.forEach((name, i) => {
+          html += `<div class='col-span-2 mt-2 mb-1'><span class=\"text-lg font-bold text-purple-700\">${sn}. ${name}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Status_${sn}:</span> <span>${details[`Status_${sn}`] || '-'}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Description_${sn}:</span> <span>${details[`Description_${sn}`] || '-'}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${sn}:</span> <span>${details[`Upload the scanned file_${sn}`] ? `<a href='${details[`Upload the scanned file_${sn}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+          sn++;
+        });
+      });
+      html += `</div>`;
+      return html;
+    }
+    // Institution-form1.html (monthly and once in six months)
+    if (row.table && row.table.toLowerCase().includes('institution-form1')) {
+      html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">Director – Students Welfare & Admissions</span></div>`;
+      html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-8\">`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+      html += `</div>`;
+      let fileLabels = [];
+      let startIdx = 1;
+      let endIdx = 21;
+      if (row.table.toLowerCase().includes('once in six months')) {
+        fileLabels = ['Induction Program for First Year Students'];
+        startIdx = 22;
+        endIdx = 22;
+      } else {
+        fileLabels = [
+          'Students External Counselling File',
+          'Medical Facilities File',
+          'Students Grievances',
+          'Institution Level Cultural',
+          'Institution Level Sports',
+          'Institution Level Extra Curricular Activities',
+          'Students Clubs',
+          'Orientation Program for Students',
+          'Hostel Mess File',
+          'Hostel Students Attendance',
+          'Hostel Certifications',
+          'Hotel Grievance Redressal',
+          'Scholarship File',
+          'Students Welfare schemes File',
+          'Campus Discipline',
+          'Institution Policy and Code of Conduct for Students',
+          'Outreach programs',
+          'School Visit File',
+          'Marketing Progress',
+          'Admission File',
+          'Admission Process'
+        ];
+      }
+      html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+      for (let i = startIdx; i <= endIdx; i++) {
+        html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${fileLabels[i-startIdx]}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+      }
+      html += `</div>`;
+      return html;
+    }
     // Institution-form7.html
     if (row.table && row.table.toLowerCase().includes('institution-form7')) {
       html += `<div class="mb-4"><span class="text-3xl font-extrabold text-[#7d4c9e] tracking-wide">EXECUTIVE DEAN : MONTHLY</span></div>`;
