@@ -235,23 +235,13 @@ function attachExportButtons() {
             let names = [];
             for (const fac of assignedList) {
               const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
-              // Check weekly form completion for tick/cross
+              // Check weekly form completion for tick/cross (any submission, not just current week)
               let filled = false;
               const wdata = weeklyData[i-1];
               if (wdata && wdata.length > 0) {
-                // Get current week range
-                const now = new Date();
-                const dayOfWeek = now.getDay();
-                const startOfWeek = new Date(now);
-                startOfWeek.setHours(0,0,0,0);
-                startOfWeek.setDate(now.getDate() - dayOfWeek);
-                const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(startOfWeek.getDate() + 6);
                 filled = wdata.some(row => {
                   const rowName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
-                  const submittedAt = row['submitted_at'] ? new Date(row['submitted_at']) : null;
-                  return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase()
-                    && submittedAt && submittedAt >= startOfWeek && submittedAt <= endOfWeek;
+                  return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase();
                 });
               }
               names.push(facultyName + (filled ? ' (C)' : ' (N)'));
