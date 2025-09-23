@@ -917,7 +917,7 @@ window.addEventListener('DOMContentLoaded', function() {
                     "Upload The Scanned File_4": fileUrls[3]
                 };
                 const { data, error } = await supabaseClient
-                    .from('form6 - once in 2 month')
+                    .from('form6-once in 2 month')
                     .insert([row]);
                 if (error) {
                     window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
