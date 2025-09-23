@@ -7,9 +7,37 @@ class WorkdoneTable {
     this.supabaseClient = supabaseClient;
     this.workdoneRows = [];
     
-    // Complete form tables mapping
+    // Institution Level Forms (using exact table names provided)
     this.formTables = [
-      // Department Portfolio Forms
+      // Add Form 6 Once in 2 Months for IQAC workdone
+  { table: "form6_once_in_2_month", portfolio: "Teaching & Learning Process Member (IQAC) (Once in 2 Months)" },
+      // Add Form 6 Weekly for IQAC workdone
+      { table: "form6_weekly", portfolio: "Teaching & Learning Process Member (IQAC) (Weekly)" },
+      { table: "Institution-form1-monthly", portfolio: "Director – Students welfare & Admission (Monthly)" },
+      { table: "Institution-form1-once in six months", portfolio: "Director – Students welfare & Admission (Once in Six Months)" },
+      { table: "Institution-form10", portfolio: "Head – Training" },
+      { table: "Institution-form10 once in six months", portfolio: "Head – Training (Once in Six Months)" },
+      { table: "Institution-form11", portfolio: "Training officer" },
+      { table: "Institution-form12", portfolio: "Head - RISE" },
+      { table: "Institution-form13-monthly", portfolio: "IT Infra – Coordinator (Monthly)" },
+      { table: "Institution-form13-once in year", portfolio: "IT Infra – Coordinator (Once in Year)" },
+      { table: "Institution-form13-oncein6months", portfolio: "IT Infra – Coordinator (Once in Six Months)" },
+      { table: "Institution-form14-monthly", portfolio: "Website – Coordinator (Monthly)" },
+      { table: "Institution-form14-oncein6months", portfolio: "Website – Coordinator (Once in Six Months)" },
+      { table: "Institution-form15", portfolio: "ERP Coordinator" },
+      { table: "Institution-form16", portfolio: "Public Relations officer" },
+      { table: "Institution-form17", portfolio: "Logistics Coordinator" },
+      { table: "Institution-form2", portfolio: "Head - HR" },
+      { table: "Institution-form3", portfolio: "Principal" },
+      { table: "Institution-form4-monthly", portfolio: "Dean - IQAC (Monthly)" },
+      { table: "Institution-form4-once in six months", portfolio: "Dean - IQAC (Once in Six Months)" },
+      { table: "Institution-form5", portfolio: "Director - Academics" },
+      { table: "Institution-form6-monthly", portfolio: "Controller of Examinations (Monthly)" },
+      { table: "Institution-form6-oncein6months", portfolio: "Controller of Examinations (Once in Six Months)" },
+      { table: "Institution-form7-monthly", portfolio: "Executive Dean – International Affairs (Monthly)" },
+      { table: "Institution-form8", portfolio: "Head - Placements" },
+      { table: "Institution-form9", portfolio: "Placement officer" },
+      // Department Portfolio Forms (existing)
       { table: "form1-once in a year", portfolio: "Students Performance in Training & Placement Member (Yearly)" },
       { table: "form1-Weekly", portfolio: "Students Performance in Training & Placement Member (Weekly)" },
       { table: "form1-once in 15 days", portfolio: "Students Performance in Training & Placement Member (Bi-weekly)" },
@@ -99,9 +127,9 @@ class WorkdoneTable {
         }
 
         if (data && data.length > 0) {
-          // Filter by faculty name (Portfolio Member Name field)
+          // Filter by faculty name (Portfolio Member Name field, with and without colon)
           const filtered = data.filter(row => {
-            const memberName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+            const memberName = row['Portfolio Member Name:'] || row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
             return this.eq(memberName, facultyName);
           });
 
