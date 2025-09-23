@@ -927,6 +927,67 @@ window.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
+        // --- FACULTY FORM 6 - ONCE IN A SEMESTER LOGIC ---
+        const semesterForm6 = document.getElementById('semesterForm6');
+        if (semesterForm6) {
+            semesterForm6.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const form = e.target;
+                async function uploadFileToStorage(file, path) {
+                    if (!file) return null;
+                    const bucket = 'form6-files';
+                    const { data, error } = await supabaseClient.storage.from(bucket).upload(path, file, { upsert: true });
+                    if (error) {
+                        window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
+                        return null;
+                    }
+                    const { data: publicUrlData } = supabaseClient.storage.from(bucket).getPublicUrl(path);
+                    return publicUrlData && publicUrlData.publicUrl ? publicUrlData.publicUrl : null;
+                }
+                const ts = Date.now();
+                let fileUrls = Array(3).fill(null);
+                try {
+                    for (let i = 1; i <= 3; i++) {
+                        const fileInput = form[`file${i}`];
+                        const file = fileInput && fileInput.files && fileInput.files[0];
+                        if (file) {
+                            const path = `semester/${form["Department"].value}/${form["Portfolio Name"].value}/${form["Portfolio Member Name"].value}/week_${form["Week no"].value}/${ts}_${file.name}`;
+                            fileUrls[i-1] = await uploadFileToStorage(file, path);
+                        }
+                    }
+                } catch (uploadErr) {
+                    window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent('File upload failed: ' + uploadErr.message);
+                    return;
+                }
+                const row = {
+                    "Department": form["Department"].value,
+                    "Portfolio Name": form["Portfolio Name"].value,
+                    "Portfolio Member Name": form["Portfolio Member Name"].value,
+                    "Month": form["Month"].value,
+                    "Week no": form["Week no"].value ? parseInt(form["Week no"].value) : null,
+                    "Week Starting Date": form["Week Starting Date"].value || null,
+                    "Week Ending Date": form["Week Ending Date"].value || null,
+                    "Status_1": form["Status_1"].value,
+                    "Description_1": form["Description_1"].value,
+                    "Upload The Scanned File_1": fileUrls[0],
+                    "Status_2": form["Status_2"].value,
+                    "Description_2": form["Description_2"].value,
+                    "Upload The Scanned File_2": fileUrls[1],
+                    "Status_3": form["Status_3"].value,
+                    "Description_3": form["Description_3"].value,
+                    "Upload The Scanned File_3": fileUrls[2]
+                };
+                const { data, error } = await supabaseClient
+                    .from('form6-once in a semester')
+                    .insert([row]);
+                if (error) {
+                    window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
+                } else {
+                    window.location.href = 'notification.html?status=success';
+                    form.reset();
+                }
+            });
+        }
     } else {
         console.error('Supabase script not loaded!');
     }
