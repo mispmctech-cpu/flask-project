@@ -8,6 +8,46 @@ function getFormModalContent(row, details) {
   // Detect form type
   let portfolio = row.portfolio ? row.portfolio.toLowerCase() : '';
   let html = '';
+  // Custom view for form1-once in a semester
+  if (row.table && row.table.toLowerCase() === 'form1-once in a semester') {
+    const customFields = [
+      'Department Budget File',
+      'PAC File',
+      'DAAC File',
+      'BOS File',
+      'Department Academic Calendar File',
+      'Subject Allocation File',
+      'Workload File',
+      'Time Table',
+      'Vision, Mission, PO, PEO Process & Dissemination File',
+      'Syllabus & Regulations File'
+    ];
+    html += `<div class=\"mb-4\"><span class=\"text-2xl font-bold text-purple-700\">Department Semester Workdone Details</span></div>`;
+    html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || details['Portfolio Memeber Name'] || details['faculty_name'] || details['Faculty Name'] || details['Name'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Semester:</span> <span>${details['Semester'] || '-'}</span></div>`;
+    html += `</div>`;
+    html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4 mt-4'>`;
+    customFields.forEach((label, i) => {
+      const idx = i + 1;
+      html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${label}</span></div>`;
+      // Use correct field names from schema
+      const statusKey = `Status-${idx}`;
+      const descKey = `Description-${idx}`;
+      const fileKey = `Upload The Scanned File-${idx}`;
+      html += `<div><span class=\"font-semibold text-gray-700\">${statusKey}:</span> <span>${details[statusKey] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">${descKey}:</span> <span>${details[descKey] || '-'}</span></div>`;
+      let fileVal = details[fileKey];
+      let fileHtml = '-';
+      if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
+        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
+      }
+      html += `<div><span class=\"font-semibold text-gray-700\">${fileKey}:</span> <span>${fileHtml}</span></div>`;
+    });
+    html += `</div>`;
+    return html;
+  }
 
     // form-ap.html
   if (
@@ -767,7 +807,7 @@ function getFormModalContent(row, details) {
   // Faculty-form4.html - Course Outcome & Program Outcome Member (Exam Cell)
   if (portfolio.includes('course outcome & program outcome member')) {
     let tableName = (row.table || '').toLowerCase();
-    let html = `<div class=\"mb-4\"><span class=\"text-2xl font-bold text-purple-700\">Course Outcome & Program Outcome Member</span></div>`;
+    html += `<div class=\"mb-4\"><span class=\"text-2xl font-bold text-purple-700\">Course Outcome & Program Outcome Member</span></div>`;
     html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-6\">`;
     html += `<div><span class=\"font-semibold text-gray-700\">Department:</span> <span>${details['Department'] || '-'}</span></div>`;
     html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name'] || '-'}</span></div>`;
@@ -1030,6 +1070,7 @@ function getFormModalContent(row, details) {
       html += `<div><span class="font-semibold text-gray-700">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
       // 8 status/desc/upload blocks
       const monthFiles = [
+        'Master Log Book',
         'Attendence Report To Parents',
         'ERP Attendence Entry',
         'Test Report to Parents',
