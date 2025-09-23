@@ -68,6 +68,7 @@
     function renderRejectedIQACWorkdoneTable(rows) {
       _rejectedIQACRowsAll = rows;
       window._rejectedIQACRows = rows;
+      window._rejectedIQACRowsAll = rows; // <-- Ensure global for export
       renderRejectedIQACWorkdoneTablePage(rejectedIQACCurrentPage);
       renderRejectedIQACWorkdonePagination();
     }
@@ -938,13 +939,51 @@
         headers = [
           'Department', 'Portfolio Name', 'Portfolio Member Name', 'Status', 'Verified By', 'Verified At', 'Accepted By', 'Accepted At', 'View'
         ];
-        // ...existing code...
+        // Build data for allRows
+        const data = [headers];
+        allRows.forEach(r => {
+          data.push([
+            r.department,
+            r.portfolio_name,
+            r.portfolio_member_name,
+            r.status,
+            r.verified_by,
+            r.verified_at ? new Date(r.verified_at).toLocaleString() : '',
+            r.accepted_by,
+            r.accepted_at ? new Date(r.accepted_at).toLocaleString() : '',
+            'View'
+          ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
+        XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+        return;
       } else if (tbodyId === 'rejectedIQACWorkdoneTable' && window._rejectedIQACRowsAll) {
         allRows = window._rejectedIQACRowsAll;
         headers = [
           'Department', 'Portfolio Name', 'Portfolio Member Name', 'Status', 'Rejected By', 'Rejected At', 'Commands', 'Documents', 'View'
         ];
-        // ...existing code...
+        // Build data for allRows
+        const data = [headers];
+        allRows.forEach(r => {
+          data.push([
+            r.department,
+            r.portfolio_name,
+            r.portfolio_member_name,
+            r.status,
+            r.rejected_by,
+            r.rejected_at ? new Date(r.rejected_at).toLocaleString() : '',
+            r.commands || '-',
+            r.documents || '-',
+            'View'
+          ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
+        XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+        return;
       } else {
         // Fallback: export only visible rows
         const tbody = document.getElementById(tbodyId);
