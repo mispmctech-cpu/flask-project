@@ -805,70 +805,39 @@ function getFormModalContent(row, details) {
   }
 
   // Faculty-form4.html - Course Outcome & Program Outcome Member (Exam Cell)
-  if (portfolio.includes('course outcome & program outcome member')) {
-    let tableName = (row.table || '').toLowerCase();
-    html += `<div class=\"mb-4\"><span class=\"text-2xl font-bold text-purple-700\">Course Outcome & Program Outcome Member</span></div>`;
+  // Faculty-form4.html - Course Outcome & Program Outcome Member (Exam Cell) (Monthly, form4-once in a month)
+  if (portfolio.includes('course outcome & program outcome member') && (row.table || '').toLowerCase().includes('form4-once in a month')) {
+    html += `<div class=\"mb-4\"><span class=\"text-2xl font-bold text-purple-700\">Course Outcome & Program Outcome Member (Exam Cell) - Monthly</span></div>`;
     html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-6\">`;
-    html += `<div><span class=\"font-semibold text-gray-700\">Department:</span> <span>${details['Department'] || '-'}</span></div>`;
-    html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name'] || '-'}</span></div>`;
-    html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Memeber Name'] || details['Portfolio Member Name'] || '-'}</span></div>`;
-    html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month'] || '-'}</span></div>`;
-    html += `<div><span class=\"font-semibold text-gray-700\">Week no:</span> <span>${details['Week no'] || '-'}</span></div>`;
-    html += `<div><span class=\"font-semibold text-gray-700\">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
-    html += `<div><span class=\"font-semibold text-gray-700\">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Memeber Name'] || details['Portfolio Member Name'] || details['faculty_name'] || details['Faculty Name'] || details['Name'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
     html += `</div>`;
-
-    // Weekly: only 1 status/desc/file
-    if (tableName.includes('weekly')) {
-      html += `<div class='space-y-4'>`;
-      html += `<div class="border-b pb-2 mb-2">
-        <div class="font-semibold text-orange-500 mb-1">1. Slip Test File</div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-          <div class="flex flex-col"><span class="font-medium text-purple-700">Status:</span> <span>${details['Status_1'] || '-'}</span></div>
-          <div class="flex flex-col"><span class="font-medium text-purple-700">Description:</span> <span>${details['Description_1'] || '-'}</span></div>
-          <div class="flex flex-col"><span class="font-medium text-purple-700">Upload:</span> `;
-      let fileVal = details['Upload Scanned File_1'] || details['Upload The Scanned File_1'] || '-';
-      if (fileVal && fileVal !== '-' && typeof fileVal === 'string' && (fileVal.startsWith('http://') || fileVal.startsWith('https://') || fileVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i))) {
-        html += `<a href="${fileVal}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block">View File</a>`;
-      } else {
-        html += '-';
+    // Only 8 required fields
+    const labels = [
+      'Exam TimeTable File',
+      'Internal Exam Question Paper File With Answer Key',
+      'Result Analysis File',
+      'Question Bank',
+      'Slow Learner Couching File',
+      'Action taken for Internal Test Failures File',
+      'Result File',
+      'ERP internal Mark Entry File'
+    ];
+    html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4 mt-4'>`;
+    for (let i = 1; i <= labels.length; i++) {
+      html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${labels[i-1]}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+      let fileVal = details[`Upload The Scanned File_${i}`];
+      let fileHtml = '-';
+      if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
+        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
       }
-      html += `</div>
-        </div>
-      </div>`;
-      html += `</div>`;
-    } else {
-      // Once in a month or semester: 8 status/desc/file fields
-      const rowHeaders = [
-        'Slip Test File',
-        'Exam TimeTable File',
-        'Internal Exam Question Paper File With Answer Key',
-        'Result Analysis File',
-        'Question Bank',
-        'Assignment File',
-        'Lab Manual File',
-        'Project File'
-      ];
-      html += `<div class='space-y-4'>`;
-      for (let i = 1; i <= 8; i++) {
-        html += `<div class="border-b pb-2 mb-2">
-          <div class="font-semibold text-orange-500 mb-1">${i}. ${rowHeaders[i-1]}</div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div class="flex flex-col"><span class="font-medium text-purple-700">Status:</span> <span>${details[`Status_${i}`] || '-'}</span></div>
-            <div class="flex flex-col"><span class="font-medium text-purple-700">Description:</span> <span>${details[`Description_${i}`] || '-'}</span></div>
-            <div class="flex flex-col"><span class="font-medium text-purple-700">Upload:</span> `;
-        let fileVal = details[`Upload The Scanned File_${i}`] || details[`Upload Scanned File_${i}`] || '-';
-        if (fileVal && fileVal !== '-' && typeof fileVal === 'string' && (fileVal.startsWith('http://') || fileVal.startsWith('https://') || fileVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i))) {
-          html += `<a href="${fileVal}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block">View File</a>`;
-        } else {
-          html += '-';
-        }
-        html += `</div>
-          </div>
-        </div>`;
-      }
-      html += `</div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Upload The Scanned File_${i}:</span> <span>${fileHtml}</span></div>`;
     }
+    html += `</div>`;
     return html;
   }
 
