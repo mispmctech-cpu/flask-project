@@ -154,6 +154,72 @@
   <script>
     // Export to Excel for any table by id
     function exportTableToExcel(tbodyId, filenamePrefix) {
+      let allRows = [];
+      let headers = [];
+      if (tbodyId === 'workdoneTable' && window._allWorkdoneRows) {
+        allRows = window._allWorkdoneRows;
+        headers = [
+          'Department', 'Portfolio Name', 'Portfolio Member Name', 'Status'
+        ];
+        const data = [headers];
+        allRows.forEach(r => {
+          data.push([
+            r.department,
+            r.portfolio,
+            r.member,
+            r.status
+          ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
+        XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+        return;
+      } else if (tbodyId === 'verifiedWorkdoneTable' && window._allVerifiedRows) {
+        allRows = window._allVerifiedRows;
+        headers = [
+          'Department', 'Portfolio Name', 'Member Name', 'Status', 'Verified By', 'Verified At'
+        ];
+        const data = [headers];
+        allRows.forEach(r => {
+          data.push([
+            r.department,
+            r.portfolio_name,
+            r.portfolio_member_name,
+            r.status,
+            r.verified_by,
+            r.verified_at ? new Date(r.verified_at).toLocaleString() : ''
+          ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
+        XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+        return;
+      } else if (tbodyId === 'rejectedWorkdoneTable' && window._allRejectedRows) {
+        allRows = window._allRejectedRows;
+        headers = [
+          'Department', 'Portfolio Name', 'Member Name', 'Status', 'Rejected By', 'Rejected At', 'Commands'
+        ];
+        const data = [headers];
+        allRows.forEach(r => {
+          data.push([
+            r.department,
+            r.portfolio_name,
+            r.portfolio_member_name,
+            r.status,
+            r.rejected_by,
+            r.rejected_at ? new Date(r.rejected_at).toLocaleString() : '',
+            r.Commands || r.commands || ''
+          ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
+        XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+        return;
+      }
+      // Fallback: export only visible rows
       const tbody = document.getElementById(tbodyId);
       if (!tbody) return;
       const table = tbody.closest('table');
@@ -162,19 +228,16 @@
         alert('No data to export!');
         return;
       }
-      // Get headers, but skip Verify and View columns (last 2 columns)
-      let headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
-      if (headers.length > 2) {
-        headers = headers.slice(0, -2); // Remove last 2 columns (Verify/View)
+      let fallbackHeaders = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
+      if (fallbackHeaders.length > 2) {
+        fallbackHeaders = fallbackHeaders.slice(0, -2);
       }
-      const data = [headers];
+      const data = [fallbackHeaders];
       rows.forEach(row => {
-        // Only take the first N-2 cells (ignore Verify/View buttons)
         const tds = Array.from(row.querySelectorAll('td'));
         let cells = tds.slice(0, tds.length - 2).map(td => td.innerText.trim());
         data.push(cells);
       });
-      // Create worksheet and workbook
       const ws = XLSX.utils.aoa_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
