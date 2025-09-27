@@ -401,8 +401,18 @@ class WorkdoneTable {
                           document.title.includes('Faculty Profile') && 
                           document.querySelector('#editProfileBtn'); // Check for edit button
 
+    // Add submitted_at column to header
+    const thead = tbody.parentElement.querySelector('thead tr');
+    if (thead && !Array.from(thead.children).find(th => th.textContent.trim() === 'Submitted At')) {
+      // Insert after Portfolio Member Name
+      const submittedAtTh = document.createElement('th');
+      submittedAtTh.className = 'p-3 border-b border-gray-300';
+      submittedAtTh.textContent = 'Submitted At';
+      thead.insertBefore(submittedAtTh, thead.children[3]);
+    }
+
     if (!rows || rows.length === 0) {
-      const colspan = isEditablePage ? '6' : '5'; // Extra column for delete button
+      const colspan = isEditablePage ? '7' : '6'; // Extra column for delete button
       tbody.innerHTML = `<tr><td colspan='${colspan}' class='text-center text-gray-400 p-4'>No workdone records found for this faculty.</td></tr>`;
       return;
     }
@@ -410,40 +420,47 @@ class WorkdoneTable {
     let html = "";
     rows.forEach((row, idx) => {
       const statusClass = row.status === 'COMPLETED' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-      
-       // For institution forms, hide department cell
-       const isInstitutionForm = row.table && row.table.toLowerCase().startsWith('institution-');
-       let departmentCell = '';
-       if (!isInstitutionForm) {
-         const department = row['Department'] || row['Department:'] || 'CSE';
-         departmentCell = `<td class="px-4 py-2 border-b">${department}</td>`;
-       } else {
-         departmentCell = `<td class="px-4 py-2 border-b"></td>`;
-       }
-      
+      // For institution forms, hide department cell
+      const isInstitutionForm = row.table && row.table.toLowerCase().startsWith('institution-');
+      let departmentCell = '';
+      if (!isInstitutionForm) {
+        const department = row['Department'] || row['Department:'] || 'CSE';
+        departmentCell = `<td class="px-4 py-2 border-b">${department}</td>`;
+      } else {
+        departmentCell = `<td class="px-4 py-2 border-b"></td>`;
+      }
+      // Format submitted_at
+      let submittedAt = row.submitted_at || row.created_at || row.updated_at || '';
+      if (submittedAt) {
+        const d = new Date(submittedAt);
+        if (!isNaN(d)) {
+          submittedAt = d.toLocaleString();
+        }
+      } else {
+        submittedAt = '<span class="text-gray-400">-</span>';
+      }
       html += `<tr class="hover:bg-gray-50">
          ${departmentCell}
         <td class="px-4 py-2 border-b">${row.portfolio || '-'}</td>
         <td class="px-4 py-2 border-b">${row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['Faculty Name'] || row['Name'] || '-'}</td>
+        <td class="px-4 py-2 border-b">${submittedAt}</td>
         <td class="px-4 py-2 border-b">
           <span class="px-2 py-1 rounded text-xs font-medium ${statusClass}">${row.status || 'PENDING'}</span>
         </td>
         <td class="px-4 py-2 border-b">
           <button onclick="viewRowDetails(${idx})" class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">View</button>
         </td>`;
-      
       // Add delete button only for faculty-profile.html
       if (isEditablePage) {
         html += `<td class="px-4 py-2 border-b">
           <button onclick="deleteWorkdoneRow(${idx})" class="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Delete</button>
         </td>`;
       }
-      
       html += `</tr>`;
     });
 
     tbody.innerHTML = html;
-    
+
     // Apply filter if search exists
     this.filterWorkdoneTable();
   }

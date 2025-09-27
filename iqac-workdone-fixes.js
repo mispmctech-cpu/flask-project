@@ -198,6 +198,10 @@ function acceptRowFixed(btn) {
   // Get accepted_by (from localStorage or fallback)
   const accepted_by = localStorage.getItem('Name') || localStorage.getItem('name') || 'IQAC';
   
+  // Robust mapping for submitted_at
+  let submitted_at = row.submitted_at || row.created_at || row.timestamp || row.updated_at || row.submission_date || row.date_submitted;
+  if (!submitted_at) submitted_at = new Date().toISOString();
+  
   // Insert into iqac-workdone table (with input_id)
   supabaseClient
     .from('iqac-workdone')
@@ -210,7 +214,8 @@ function acceptRowFixed(btn) {
       verified_by: row.verified_by,
       verified_at: row.verified_at,
       accepted_by: accepted_by,
-      accepted_at: new Date().toISOString()
+      accepted_at: new Date().toISOString(),
+      submitted_at: submitted_at
     }])
     .then(({ error }) => {
       if (error) {
@@ -234,8 +239,64 @@ function acceptRowFixed(btn) {
     });
 }
 
+// Improved reject function for IQAC workdone
+function rejectRowFixed(btn) {
+  let row;
+  try {
+    row = JSON.parse(btn.getAttribute('data-row').replace(/&#39;/g, "'"));
+  } catch (e) {
+    alert('Failed to parse row data.');
+    return;
+  }
+  // Show confirmation dialog
+  const confirmMsg = `Are you sure you want to reject this workdone record?\n\nPortfolio: ${row.portfolio_name}\nMember: ${row.portfolio_member_name}\nDepartment: ${row.department}`;
+  if (!confirm(confirmMsg)) {
+    return;
+  }
+  // Disable button and show loading state
+  btn.disabled = true;
+  btn.textContent = 'Rejecting...';
+  btn.classList.remove('bg-red-600', 'hover:bg-red-800');
+  btn.classList.add('bg-gray-400');
+  // Get rejected_by (from localStorage or fallback)
+  const rejected_by = localStorage.getItem('Name') || localStorage.getItem('name') || 'IQAC';
+  // Robust mapping for submitted_at
+  let submitted_at = row.submitted_at || row.created_at || row.timestamp || row.updated_at || row.submission_date || row.date_submitted;
+  if (!submitted_at) submitted_at = new Date().toISOString();
+  // Insert into iqac-workdone-reject table
+  supabaseClient
+    .from('iqac-workdone-reject')
+    .insert([{
+      input_id: row.input_id,
+      department: row.department,
+      portfolio_name: row.portfolio_name,
+      portfolio_member_name: row.portfolio_member_name,
+      status: row.status,
+      rejected_by: rejected_by,
+      rejected_at: new Date().toISOString(),
+      submitted_at: submitted_at,
+      commands: row.commands || null,
+      documents: row.documents || null
+    }])
+    .then(({ error }) => {
+      if (error) {
+        console.error('Rejection error:', error);
+        alert('Failed to record rejection: ' + (error.message || error));
+        btn.disabled = false;
+        btn.textContent = 'Reject';
+        btn.classList.remove('bg-gray-400');
+        btn.classList.add('bg-red-600', 'hover:bg-red-800');
+      } else {
+        console.log('Rejection successful');
+        btn.closest('tr').remove();
+        loadRejectedIQACWorkdone();
+      }
+    });
+}
+
 // Instructions for implementation:
 console.log('IQAC Workdone Fixes loaded. To implement:');
 console.log('1. Run sql/add_input_id_to_iqac_workdone.sql in Supabase');
 console.log('2. Replace viewIQACRowDetails with viewIQACRowDetailsFixed');
 console.log('3. Replace acceptRow with acceptRowFixed');
+console.log('4. Replace rejectRow with rejectRowFixed');
