@@ -52,6 +52,17 @@
     <div id="departmentPortfoliosStickyHeader" class="flex flex-wrap gap-4 items-center mb-4 bg-white z-20" style="position:sticky; top:0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
       <label for="portfolioDepartmentFilter" class="font-medium text-orange-700 mr-2">Filter by Department:</label>
       <select id="portfolioDepartmentFilter" class="p-2 border rounded"></select>
+      <label for="portfolioFrequencyFilter" class="font-medium text-orange-700 mr-2">Frequency:</label>
+      <select id="portfolioFrequencyFilter" class="p-2 border rounded">
+  <option value="Weekly">Weekly</option>
+  <option value="Monthly">Monthly</option>
+  <option value="OnceIn3Months">Once in 3 Months</option>
+  <option value="OnceIn2Months">Once in 2 Months</option>
+  <option value="OnceIn15Days">Once in 15 Days</option>
+  <option value="Semester">Once in a Semester</option>
+  <option value="Year">Once in a Year</option>
+  <option value="All">All</option>
+      </select>
       <label for="portfolioStatusFilter" class="font-medium text-orange-700 mr-2">Show:</label>
       <select id="portfolioStatusFilter" class="p-2 border rounded">
         <option value="All">All</option>
@@ -185,7 +196,14 @@ function attachExportButtons() {
       }, 600);
     }
     document.getElementById('exportDepartmentPortfoliosBtn').onclick = async () => {
-      // Fetch all faculty data for all departments
+      // Export based on current filter
+      const frequencyFilter = document.getElementById('portfolioFrequencyFilter');
+      const selectedFrequency = frequencyFilter ? frequencyFilter.value : 'Weekly';
+      const statusFilter = document.getElementById('portfolioStatusFilter');
+      const selectedStatus = statusFilter ? statusFilter.value : 'All';
+      const deptFilter = document.getElementById('portfolioDepartmentFilter');
+      const selectedDept = deptFilter ? deptFilter.value : 'All';
+      // Fetch all faculty data
       const { data, error } = await supabaseClient
         .from('Faculty')
         .select('*');
@@ -194,69 +212,56 @@ function attachExportButtons() {
         return;
       }
       // Get all unique departments
-      const departments = Array.from(new Set(data.map(row => row.department).filter(Boolean)));
-      const portfolioHeaders = [
-        "1. Training & Placement",
-        "2. Class Advisor",
-        "3. Info & Contribution",
-        "4. Outcome & Exam Cell",
-        "5. Continuous Improvement",
-        "6. T&L Process (IQAC)",
-        "7. Student Support",
-        "8. Facilities & Lab"
-      ];
-      const headers = ["Department", ...portfolioHeaders];
-      const weeklyFormTables = [
-        'form1-Weekly',
-        'form2-weekly',
-        'form3-Weekly',
-        'form4-Weekly',
-        'form5-weekly',
-        'form6_weekly',
-        'form7-Weekly',
-        'form8-weekly'
-      ];
-      // Fetch all weekly form data for all portfolios
-      const weeklyData = [];
-      for (let i = 0; i < weeklyFormTables.length; i++) {
-        const { data: wdata } = await supabaseClient
-          .from(weeklyFormTables[i])
+      let departments = Array.from(new Set(data.map(row => row.department).filter(Boolean)));
+      if (selectedDept !== 'All') departments = [selectedDept];
+      // Get headers and table mapping for selected frequency
+      const portfolioHeadersMap = window._iqacPortfolioHeadersMap;
+      const headersConfig = portfolioHeadersMap[selectedFrequency] || [];
+      const headers = ["Department", ...headersConfig.map(h => h.label)];
+      // Fetch all relevant form data for each portfolio column
+      const tableMap = window._iqacTableMap;
+      const formTableNames = headersConfig.map(h => h.table);
+      const formTableData = {};
+      for (const tableName of formTableNames) {
+        const { data: tdata } = await supabaseClient
+          .from(tableName)
           .select('*');
-        weeklyData.push(wdata || []);
+        formTableData[tableName] = tdata || [];
       }
       const exportRows = [];
       for (const dept of departments) {
         const facultyList = data.filter(fac => (fac.department || 'Unknown') === dept);
         const row = [dept];
-        for (let i = 1; i <= 8; i++) {
-          const formKey = `form${i}`;
+        for (let hIdx = 0; hIdx < headersConfig.length; hIdx++) {
+          const h = headersConfig[hIdx];
+          const formKey = h.label.match(/\d+/) ? `form${h.label.match(/\d+/)[0]}` : '';
+          const tableName = h.table;
           const assignedList = facultyList.filter(fac => (fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes'));
-          if (assignedList.length > 0) {
-            let names = [];
-            for (const fac of assignedList) {
-              const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
-              // Check weekly form completion for tick/cross (any submission, not just current week)
-              let filled = false;
-              const wdata = weeklyData[i-1];
-              if (wdata && wdata.length > 0) {
-                filled = wdata.some(row => {
-                  const rowName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
-                  return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase();
-                });
-              }
-              names.push(facultyName + (filled ? ' (C)' : ' (N)'));
+          let names = [];
+          for (const fac of assignedList) {
+            const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
+            // Check completion in relevant form table
+            let filled = false;
+            const tdata = formTableData[tableName];
+            if (tdata && tdata.length > 0) {
+              filled = tdata.some(row => {
+                const rowName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+                return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase() && (row['Department'] || row['Department:'] || '').toString().trim().toLowerCase() === dept.toString().trim().toLowerCase();
+              });
             }
-            row.push(names.join(', '));
-          } else {
-            row.push('-');
+            // Filter by status
+            if (selectedStatus === 'Completed' && !filled) continue;
+            if (selectedStatus === 'Pending' && filled) continue;
+            names.push(facultyName + (filled ? ' (C)' : ' (N)'));
           }
+          row.push(names.length > 0 ? names.join(', ') : '-');
         }
         exportRows.push(row);
       }
       const ws = XLSX.utils.aoa_to_sheet([headers, ...exportRows]);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Portfolios');
-      XLSX.writeFile(wb, 'IQAC_Portfolios_All_Departments.xlsx');
+      XLSX.writeFile(wb, `IQAC_Portfolios_${selectedFrequency}_${selectedDept}.xlsx`);
     };
   }, 500);
 }
@@ -284,111 +289,206 @@ function attachExportButtons() {
       const selectedDept = deptFilter.options[deptFilter.selectedIndex]?.value || 'All';
       const selectedStatus = statusFilter.options[statusFilter.selectedIndex]?.value || 'All';
 
+  // Frequency filter logic
+  const frequencyFilter = document.getElementById('portfolioFrequencyFilter');
+  const selectedFrequency = frequencyFilter ? frequencyFilter.value : 'Weekly';
+  // Table mapping for each frequency (declare only once)
+  if (!window._iqacTableMap) {
+    window._iqacTableMap = {
+      Weekly: [
+        'form1-Weekly', 'form2-weekly', 'form3-Weekly', 'form4-Weekly', 'form5-weekly', 'form6_weekly', 'form7-Weekly', 'form8-weekly'
+      ],
+      Monthly: [
+        'form2-once in a month', 'form4-once in a month'
+      ],
+      OnceIn3Months: [
+        'form5-Once in a 3 Months', 'form8-once in 3 Months'
+      ],
+      OnceIn2Months: [
+        'form6-once in 2 month', 'form7-Once in 2 Months'
+      ],
+      OnceIn15Days: [
+        'form1-once in 15 days', 'form3- once in 15 days'
+      ],
+      Semester: [
+        'form1-once in a semester', 'form2-once in a semester', 'form3-once in a semester', 'form4-once in a semester', 'form5-once in a semester', 'form6-once in a semester', 'form7-Once in a Semester', 'form8-Once in Semester'
+      ],
+      Year: [
+        'form1-once in a year'
+      ],
+      All: [
+        'form1-Weekly', 'form2-weekly', 'form3-Weekly', 'form4-Weekly', 'form5-weekly', 'form6_weekly', 'form7-Weekly', 'form8-weekly',
+        'form2-once in a month', 'form4-once in a month',
+        'form5-Once in a 3 Months', 'form8-once in 3 Months',
+        'form6-once in 2 month', 'form7-Once in 2 Months',
+        'form1-once in 15 days', 'form3- once in 15 days',
+        'form1-once in a semester', 'form2-once in a semester', 'form3-once in a semester', 'form4-once in a semester', 'form5-once in a semester', 'form6-once in a semester', 'form7-Once in a Semester', 'form8-Once in Semester',
+        'form1-once in a year'
+      ]
+    };
+  }
+  const tableMap = window._iqacTableMap;
+  // Portfolio headers and their corresponding table for each frequency (declare only once)
+  if (!window._iqacPortfolioHeadersMap) {
+    window._iqacPortfolioHeadersMap = {
+      Weekly: [
+        { label: "1. Training & Placement", table: 'form1-Weekly' },
+        { label: "2. Class Advisor", table: 'form2-weekly' },
+        { label: "3. Info & Contribution", table: 'form3-Weekly' },
+        { label: "4. Outcome & Exam Cell", table: 'form4-Weekly' },
+        { label: "5. Continuous Improvement", table: 'form5-weekly' },
+        { label: "6. T&L Process (IQAC)", table: 'form6_weekly' },
+        { label: "7. Student Support", table: 'form7-Weekly' },
+        { label: "8. Facilities & Lab", table: 'form8-weekly' }
+      ],
+      Monthly: [
+        { label: "2. Class Advisor", table: 'form2-once in a month' },
+        { label: "4. Outcome & Exam Cell", table: 'form4-once in a month' }
+      ],
+      OnceIn3Months: [
+        { label: "5. Continuous Improvement", table: 'form5-Once in a 3 Months' },
+        { label: "8. Facilities & Lab", table: 'form8-once in 3 Months' }
+      ],
+      OnceIn2Months: [
+        { label: "6. T&L Process (IQAC)", table: 'form6-once in 2 month' },
+        { label: "7. Student Support", table: 'form7-Once in 2 Months' }
+      ],
+      OnceIn15Days: [
+        { label: "1. Training & Placement", table: 'form1-once in 15 days' },
+        { label: "3. Info & Contribution", table: 'form3- once in 15 days' }
+      ],
+      Semester: [
+        { label: "1. Training & Placement", table: 'form1-once in a semester' },
+        { label: "2. Class Advisor", table: 'form2-once in a semester' },
+        { label: "3. Info & Contribution", table: 'form3-once in a semester' },
+        { label: "4. Outcome & Exam Cell", table: 'form4-once in a semester' },
+        { label: "5. Continuous Improvement", table: 'form5-once in a semester' },
+        { label: "6. T&L Process (IQAC)", table: 'form6-once in a semester' },
+        { label: "7. Student Support", table: 'form7-Once in a Semester' },
+        { label: "8. Facilities & Lab", table: 'form8-Once in Semester' }
+      ],
+      Year: [
+        { label: "1. Training & Placement", table: 'form1-once in a year' }
+      ],
+      All: [
+        { label: "1. Training & Placement", table: 'form1-Weekly' },
+        { label: "2. Class Advisor", table: 'form2-weekly' },
+        { label: "3. Info & Contribution", table: 'form3-Weekly' },
+        { label: "4. Outcome & Exam Cell", table: 'form4-Weekly' },
+        { label: "5. Continuous Improvement", table: 'form5-weekly' },
+        { label: "6. T&L Process (IQAC)", table: 'form6_weekly' },
+        { label: "7. Student Support", table: 'form7-Weekly' },
+        { label: "8. Facilities & Lab", table: 'form8-weekly' },
+        { label: "2. Class Advisor", table: 'form2-once in a month' },
+        { label: "4. Outcome & Exam Cell", table: 'form4-once in a month' },
+        { label: "5. Continuous Improvement", table: 'form5-Once in a 3 Months' },
+        { label: "8. Facilities & Lab", table: 'form8-once in 3 Months' },
+        { label: "6. T&L Process (IQAC)", table: 'form6-once in 2 month' },
+        { label: "7. Student Support", table: 'form7-Once in 2 Months' },
+        { label: "1. Training & Placement", table: 'form1-once in 15 days' },
+        { label: "3. Info & Contribution", table: 'form3- once in 15 days' },
+        { label: "1. Training & Placement", table: 'form1-once in a semester' },
+        { label: "2. Class Advisor", table: 'form2-once in a semester' },
+        { label: "3. Info & Contribution", table: 'form3-once in a semester' },
+        { label: "4. Outcome & Exam Cell", table: 'form4-once in a semester' },
+        { label: "5. Continuous Improvement", table: 'form5-once in a semester' },
+        { label: "6. T&L Process (IQAC)", table: 'form6-once in a semester' },
+        { label: "7. Student Support", table: 'form7-Once in a Semester' },
+        { label: "8. Facilities & Lab", table: 'form8-Once in Semester' },
+        { label: "1. Training & Placement", table: 'form1-once in a year' }
+      ]
+    };
+  }
+  const portfolioHeadersMap = window._iqacPortfolioHeadersMap;
   let html = '';
   html += '<div style="position:sticky; top:0; z-index:30; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.04);">';
   html += '<h3 class="text-xl font-bold text-orange-500 mb-2">Department Portfolios</h3>';
-  // Removed duplicate controls under Department Portfolios heading
   html += '<table class="w-full text-xs border border-gray-400 rounded-lg overflow-hidden shadow-sm bg-white" style="table-layout:fixed; font-size:12px;">';
   html += '<thead class="bg-orange-100 text-orange-700">';
   html += '<tr style="position:sticky; top:56px; background:#FEF3C7; z-index:20;">';
   html += '<th class="px-1 py-1 border border-gray-400" style="width:90px; position:sticky; top:56px; background:#FEF3C7; z-index:21;">Department</th>';
-  const portfolioHeaders = [
-    "1. Training & Placement",
-    "2. Class Advisor",
-    "3. Info & Contribution",
-    "4. Outcome & Exam Cell",
-    "5. Continuous Improvement",
-    "6. T&L Process (IQAC)",
-    "7. Student Support",
-    "8. Facilities & Lab"
-  ];
-  for (let i = 0; i < portfolioHeaders.length; i++) html += `<th class="px-1 py-1 border border-gray-400" style="width:120px; position:sticky; top:56px; background:#FEF3C7; z-index:21;">${portfolioHeaders[i]}</th>`;
+  const headers = portfolioHeadersMap[selectedFrequency] || [];
+  for (const h of headers) html += `<th class="px-1 py-1 border border-gray-400" style="width:120px; position:sticky; top:56px; background:#FEF3C7; z-index:21;">${h.label}</th>`;
   html += '</tr></thead></table>';
   html += '</div>';
   html += '<div style="overflow-x:auto; max-height:500px; overflow-y:auto;">';
   html += '<table class="w-full text-xs border border-gray-400 rounded-lg overflow-hidden shadow-sm bg-white" style="table-layout:fixed; font-size:12px; margin-top:-1px;">';
   html += '<tbody>';
-      for (const dept of departments) {
-        if (selectedDept !== 'All' && dept !== selectedDept) continue;
-        const facultyList = data.filter(fac => (fac.department || 'Unknown') === dept);
-        html += `<tr>`;
-        html += `<td class="px-1 py-1 font-semibold text-purple-700 border border-gray-400" style="word-break:break-word;">${dept}</td>`;
-        for (let i = 1; i <= 8; i++) {
-          const formKey = `form${i}`;
-          const assignedList = facultyList.filter(fac => (fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes'));
-          if (assignedList.length > 0) {
-            html += `<td class="px-1 py-1 border border-gray-400" style="word-break:break-word;">`;
-            for (const fac of assignedList) {
-              const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
-              html += `<div class="flex items-center gap-1" style="font-size:11px;"><span id="portfolio-status-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${i}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}" class="inline-block"></span>${facultyName}</div>`;
-            }
-            html += `</td>`;
-          } else {
-            html += `<td class="px-1 py-1 border border-gray-400">-</td>`;
-          }
+  for (const dept of departments) {
+    if (selectedDept !== 'All' && dept !== selectedDept) continue;
+    const facultyList = data.filter(fac => (fac.department || 'Unknown') === dept);
+    html += `<tr>`;
+    html += `<td class="px-1 py-1 font-semibold text-purple-700 border border-gray-400" style="word-break:break-word;">${dept}</td>`;
+    for (const h of headers) {
+      // Find which form this header maps to
+      const formKey = h.label.match(/\d+/) ? `form${h.label.match(/\d+/)[0]}` : '';
+      html += `<td class="px-1 py-1 border border-gray-400" style="word-break:break-word;">`;
+      const assignedList = facultyList.filter(fac => (fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes'));
+      if (assignedList.length > 0) {
+        for (const fac of assignedList) {
+          const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
+          // Async check for submission in relevant table
+          html += `<div class="flex items-center gap-1" style="font-size:11px;">
+            <span id="portfolio-status-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}" class="inline-block"></span>
+            ${facultyName}
+          </div>`;
         }
-        html += '</tr>';
+      } else {
+        html += '-';
       }
+      html += `</td>`;
+    }
+    html += '</tr>';
+  }
   html += '</tbody></table></div>';
   document.getElementById('departmentPortfoliosContainer').innerHTML = html;
 
-      // Only use the specified weekly form tables
-      const weeklyFormTables = [
-        'form1-Weekly',
-        'form2-weekly',
-        'form3-Weekly',
-        'form4-Weekly',
-        'form5-weekly',
-        'form6_weekly',
-        'form7-Weekly',
-        'form8-weekly'
-      ];
+      // Async tick/cross logic for assigned faculty
       for (const dept of departments) {
         if (selectedDept !== 'All' && dept !== selectedDept) continue;
         const facultyList = data.filter(fac => (fac.department || 'Unknown') === dept);
-        for (let i = 1; i <= 8; i++) {
-          const formKey = `form${i}`;
+        const headers = portfolioHeadersMap[selectedFrequency] || [];
+        for (const h of headers) {
+          const formKey = h.label.match(/\d+/) ? `form${h.label.match(/\d+/)[0]}` : '';
+          const tableName = h.table;
           const assignedList = facultyList.filter(fac => (fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes'));
           for (const fac of assignedList) {
             const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
-            const statusSpanId = `portfolio-status-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${i}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
-            // Async check for weekly form completion ONLY in specified tables
-              (async () => {
-                const tableName = weeklyFormTables[i-1];
-                const { data: formData, error } = await supabaseClient
-                  .from(tableName)
-                  .select('*')
-                  .eq('Department', dept);
-                let filled = false;
-                if (!error && formData && formData.length > 0) {
-                  // Check if any entry matches faculty name (no week filter)
-                  filled = formData.some(row => {
-                    const rowName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
-                    return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase();
-                  });
+            const statusSpanId = `portfolio-status-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
+            (async () => {
+              let filled = false;
+              const { data: formData, error } = await supabaseClient
+                .from(tableName)
+                .select('*')
+                .eq('Department', dept);
+              if (!error && formData && formData.length > 0) {
+                filled = formData.some(row => {
+                  const rowName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+                  return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase();
+                });
+              }
+              const statusSpan = document.getElementById(statusSpanId);
+              if (statusSpan) {
+                // Filter by status
+                if (selectedStatus === 'Completed' && !filled) {
+                  statusSpan.parentElement.style.display = 'none';
+                  return;
                 }
-                const statusSpan = document.getElementById(statusSpanId);
-                if (statusSpan) {
-                  // Filter by status
-                  if (selectedStatus === 'Completed' && !filled) {
-                    statusSpan.parentElement.style.display = 'none';
-                    return;
-                  }
-                  if (selectedStatus === 'Pending' && filled) {
-                    statusSpan.parentElement.style.display = 'none';
-                    return;
-                  }
-                  statusSpan.innerHTML = filled
-                    ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`
-                    : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`;
+                if (selectedStatus === 'Pending' && filled) {
+                  statusSpan.parentElement.style.display = 'none';
+                  return;
                 }
-              })();
+                statusSpan.innerHTML = filled
+                  ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`
+                  : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`;
+              }
+            })();
           }
         }
       }
 
       // Add filter event listeners
-      deptFilter.onchange = statusFilter.onchange = () => loadDepartmentPortfoliosIQAC();
+  deptFilter.onchange = statusFilter.onchange = frequencyFilter.onchange = () => loadDepartmentPortfoliosIQAC();
     }
   </script>
   <script>
