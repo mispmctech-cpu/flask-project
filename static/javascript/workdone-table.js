@@ -3,6 +3,33 @@
 // Requires: form-modal-mapper.js for getFormModalContent function
 
 class WorkdoneTable {
+  // Initialize workdone section for a faculty
+  async initWorkdoneSection(facultyName, designation = null) {
+    try {
+      window._currentWorkdoneTable = this;
+      const loadedRows = await this.loadFacultyWorkdone(facultyName, designation);
+      this.renderWorkdoneTable(loadedRows);
+
+      // Setup search functionality
+      const searchInputInit = document.getElementById('workdoneSearch');
+      if (searchInputInit) {
+        searchInputInit.addEventListener('input', () => this.filterWorkdoneTable());
+      }
+
+      return loadedRows;
+    } catch (error) {
+      console.error('Error initializing workdone section:', error);
+      const tbody = document.getElementById("facultyWorkdoneTable");
+      if (tbody) {
+        const isEditablePage = window.location.pathname.includes('faculty-profile') || 
+                              document.title.includes('Faculty Profile') && 
+                              document.querySelector('#editProfileBtn');
+        const colspan = isEditablePage ? '6' : '5';
+        tbody.innerHTML = `<tr><td colspan='${colspan}' class='text-center text-red-500 p-4'>Error loading workdone data: ${error.message}</td></tr>`;
+      }
+      return [];
+    }
+  }
   constructor(supabaseClient) {
     this.supabaseClient = supabaseClient;
     this.workdoneRows = [];
@@ -374,8 +401,18 @@ class WorkdoneTable {
                           document.title.includes('Faculty Profile') && 
                           document.querySelector('#editProfileBtn'); // Check for edit button
 
+    // Add submitted_at column to header
+    const thead = tbody.parentElement.querySelector('thead tr');
+    if (thead && !Array.from(thead.children).find(th => th.textContent.trim() === 'Submitted At')) {
+      // Insert after Portfolio Member Name
+      const submittedAtTh = document.createElement('th');
+      submittedAtTh.className = 'p-3 border-b border-gray-300';
+      submittedAtTh.textContent = 'Submitted At';
+      thead.insertBefore(submittedAtTh, thead.children[3]);
+    }
+
     if (!rows || rows.length === 0) {
-      const colspan = isEditablePage ? '6' : '5'; // Extra column for delete button
+      const colspan = isEditablePage ? '7' : '6'; // Extra column for delete button
       tbody.innerHTML = `<tr><td colspan='${colspan}' class='text-center text-gray-400 p-4'>No workdone records found for this faculty.</td></tr>`;
       return;
     }
@@ -383,33 +420,47 @@ class WorkdoneTable {
     let html = "";
     rows.forEach((row, idx) => {
       const statusClass = row.status === 'COMPLETED' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-      
-      // Get department from the row data, fallback to a default
-      const department = row['Department'] || row['Department:'] || 'CSE'; // Default department
-      
+      // For institution forms, hide department cell
+      const isInstitutionForm = row.table && row.table.toLowerCase().startsWith('institution-');
+      let departmentCell = '';
+      if (!isInstitutionForm) {
+        const department = row['Department'] || row['Department:'] || 'CSE';
+        departmentCell = `<td class="px-4 py-2 border-b">${department}</td>`;
+      } else {
+        departmentCell = `<td class="px-4 py-2 border-b"></td>`;
+      }
+      // Format submitted_at
+      let submittedAt = row.submitted_at || row.created_at || row.updated_at || '';
+      if (submittedAt) {
+        const d = new Date(submittedAt);
+        if (!isNaN(d)) {
+          submittedAt = d.toLocaleString();
+        }
+      } else {
+        submittedAt = '<span class="text-gray-400">-</span>';
+      }
       html += `<tr class="hover:bg-gray-50">
-        <td class="px-4 py-2 border-b">${department}</td>
+         ${departmentCell}
         <td class="px-4 py-2 border-b">${row.portfolio || '-'}</td>
         <td class="px-4 py-2 border-b">${row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['Faculty Name'] || row['Name'] || '-'}</td>
+        <td class="px-4 py-2 border-b">${submittedAt}</td>
         <td class="px-4 py-2 border-b">
           <span class="px-2 py-1 rounded text-xs font-medium ${statusClass}">${row.status || 'PENDING'}</span>
         </td>
         <td class="px-4 py-2 border-b">
           <button onclick="viewRowDetails(${idx})" class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">View</button>
         </td>`;
-      
       // Add delete button only for faculty-profile.html
       if (isEditablePage) {
         html += `<td class="px-4 py-2 border-b">
           <button onclick="deleteWorkdoneRow(${idx})" class="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Delete</button>
         </td>`;
       }
-      
       html += `</tr>`;
     });
 
     tbody.innerHTML = html;
-    
+
     // Apply filter if search exists
     this.filterWorkdoneTable();
   }
@@ -468,68 +519,38 @@ class WorkdoneTable {
 
   // Filter workdone table by search
   filterWorkdoneTable() {
-    const searchInput = document.getElementById('workdoneSearch');
-    if (!searchInput) return;
+    const searchInputFilter = document.getElementById('workdoneSearch');
+    if (!searchInputFilter) return;
 
-    const search = searchInput.value.toLowerCase();
-    
+    const searchFilter = searchInputFilter.value.toLowerCase();
+
     // Try both table IDs (facultyWorkdoneTable for faculty profiles, workdoneTable for HOD view)
-    let tableElement = document.getElementById('facultyWorkdoneTable');
-    if (!tableElement) {
-      tableElement = document.getElementById('workdoneTable');
+    let tableElementFilter = document.getElementById('facultyWorkdoneTable');
+    if (!tableElementFilter) {
+      tableElementFilter = document.getElementById('workdoneTable');
     }
-    
-    if (!tableElement) {
+
+    if (!tableElementFilter) {
       console.warn('No workdone table found for filtering');
       return;
     }
-    
-    const rows = Array.from(tableElement.querySelectorAll('tr'));
-    
-    rows.forEach(row => {
+
+    const tableRows = Array.from(tableElementFilter.querySelectorAll('tr'));
+
+    tableRows.forEach(row => {
       const memberCell = row.querySelector('td:nth-child(3)'); // Portfolio Member Name
       const departmentCell = row.querySelector('td:nth-child(1)'); // Department 
       const portfolioCell = row.querySelector('td:nth-child(2)'); // Portfolio Name
-      
+
       if (!memberCell || !departmentCell || !portfolioCell) return;
-      
+
       const memberText = memberCell.textContent.toLowerCase();
       const departmentText = departmentCell.textContent.toLowerCase();
       const portfolioText = portfolioCell.textContent.toLowerCase();
-      const shouldShow = memberText.includes(search) || departmentText.includes(search) || portfolioText.includes(search);
-      
+      const shouldShow = memberText.includes(searchFilter) || departmentText.includes(searchFilter) || portfolioText.includes(searchFilter);
+
       row.style.display = shouldShow ? '' : 'none';
     });
-  }
-
-  // Initialize workdone section for a faculty
-  async initWorkdoneSection(facultyName, designation = null) {
-    try {
-      // Store reference for delete functionality
-      window._currentWorkdoneTable = this;
-      
-      const rows = await this.loadFacultyWorkdone(facultyName, designation);
-      this.renderWorkdoneTable(rows);
-      
-      // Setup search functionality
-      const searchInput = document.getElementById('workdoneSearch');
-      if (searchInput) {
-        searchInput.addEventListener('input', () => this.filterWorkdoneTable());
-      }
-      
-      return rows;
-    } catch (error) {
-      console.error('Error initializing workdone section:', error);
-      const tbody = document.getElementById("facultyWorkdoneTable");
-      if (tbody) {
-        const isEditablePage = window.location.pathname.includes('faculty-profile') || 
-                              document.title.includes('Faculty Profile') && 
-                              document.querySelector('#editProfileBtn');
-        const colspan = isEditablePage ? '6' : '5';
-        tbody.innerHTML = `<tr><td colspan='${colspan}' class='text-center text-red-500 p-4'>Error loading workdone data: ${error.message}</td></tr>`;
-      }
-      return [];
-    }
   }
 
   // Initialize workdone section for HOD department view
@@ -540,21 +561,20 @@ class WorkdoneTable {
       // Store reference for functionality
       window._currentWorkdoneTable = this;
       
-      const rows = await this.loadDepartmentWorkdone(department);
-      console.log('Loaded rows:', rows.length);
-      
-      this.renderHodWorkdoneTable(rows);
-      
+      const loadedRows = await this.loadDepartmentWorkdone(department);
+      console.log('Loaded rows:', loadedRows.length);
+
+      this.renderHodWorkdoneTable(loadedRows);
+
       // Setup search functionality
-      const searchInput = document.getElementById('workdoneSearch');
-      if (searchInput) {
-        console.log('Setting up search functionality');
-        searchInput.addEventListener('input', () => this.filterWorkdoneTable());
+      const searchInputInit = document.getElementById('workdoneSearch');
+      if (searchInputInit) {
+        searchInputInit.addEventListener('input', () => this.filterWorkdoneTable());
       } else {
         console.warn('Search input not found');
       }
-      
-      return rows;
+
+      return loadedRows;
     } catch (error) {
       console.error('Error initializing HOD workdone section:', error);
       const tbody = document.getElementById("workdoneTable");

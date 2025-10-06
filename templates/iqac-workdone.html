@@ -68,6 +68,7 @@
     function renderRejectedIQACWorkdoneTable(rows) {
       _rejectedIQACRowsAll = rows;
       window._rejectedIQACRows = rows;
+      window._rejectedIQACRowsAll = rows; // <-- Ensure global for export
       renderRejectedIQACWorkdoneTablePage(rejectedIQACCurrentPage);
       renderRejectedIQACWorkdonePagination();
     }
@@ -255,14 +256,10 @@
 
       // Build sets of rejected input_ids and fallback keys
       const rejectedInputIds = new Set();
-      const rejectedKeys = new Set();
+      // Only declare rejectedKeys once, use composite key logic below
       for (const r of rejectedRows) {
         if (r.input_id) {
           rejectedInputIds.add(r.input_id);
-        } else {
-          // Fallback key: department + portfolio_name + portfolio_member_name + rejected_at
-          const key = `${r.department}_${r.portfolio_name}_${r.portfolio_member_name}_${r.rejected_at}`;
-          rejectedKeys.add(key);
         }
       }
 
@@ -280,50 +277,37 @@
         document.getElementById('errorBox').classList.add('hidden');
       }
 
-      // Helper to check if a row is already accepted (with 12hr logic for daily forms)
-      function isRowAccepted(rowDept, portfolio, rowName, verifiedAt) {
-        const isDaily = portfolio.toLowerCase().includes('daily');
-        const now = Date.now();
-        for (const v of acceptedRows) {
-          if (
-            (v.department || '').toLowerCase() === (rowDept || '').toLowerCase() &&
-            (v.portfolio_name || '').toLowerCase() === (portfolio || '').toLowerCase() &&
-            (v.portfolio_member_name || '').toLowerCase() === (rowName || '').toLowerCase() &&
-            (v.verified_at || '') === (verifiedAt || '') // Match exact timestamp
-          ) {
-            if (isDaily && v.accepted_at) {
-              const acceptedTime = new Date(v.accepted_at).getTime();
-              if (now - acceptedTime > 12 * 60 * 60 * 1000) {
-                // More than 12 hours ago, allow again
-                continue;
-              } else {
-                // Less than 12 hours, skip
-                return true;
-              }
-            } else {
-              // Not daily, skip if found
-              return true;
-            }
-          }
-        }
-        return false;
+      // Debug: log all loaded records from hod-workdone
+      console.log('Loaded records from hod-workdone:', data);
+
+      // Build composite key sets for accepted and rejected
+      const acceptedKeys = new Set();
+      for (const v of acceptedRows) {
+        const key = `${v.department}|${v.portfolio_name}|${v.portfolio_member_name}|${v.table_name}|${v.submitted_at || v.verified_at || ''}`;
+        acceptedKeys.add(key);
+      }
+      // Only declare rejectedKeys here
+      const rejectedKeys = new Set();
+      for (const r of rejectedRows) {
+        const key = `${r.department}|${r.portfolio_name}|${r.portfolio_member_name}|${r.table_name}|${r.submitted_at || r.rejected_at || ''}`;
+        rejectedKeys.add(key);
       }
 
-      // Filter out rows that are already accepted (with 12hr logic for daily forms)
-      // Also filter out rejected rows
+      // Filter out rows that are already accepted or rejected using composite key
       const filtered = (data || []).filter(row => {
-        const rowDept = row.department || '';
-        const portfolio = row.portfolio_name || '';
-        const rowName = row.portfolio_member_name || '';
-        const verifiedAt = row.verified_at || '';
-        // Exclude if accepted
-        if (isRowAccepted(rowDept, portfolio, rowName, verifiedAt)) return false;
-        // Exclude if rejected
-        if (row.input_id && rejectedInputIds.has(row.input_id)) return false;
-        const key = `${rowDept}_${portfolio}_${rowName}_${row.rejected_at || ''}`;
-        if (rejectedKeys.has(key)) return false;
+        const key = `${row.department}|${row.portfolio_name}|${row.portfolio_member_name}|${row.table_name}|${row.submitted_at || row.verified_at || ''}`;
+        if (acceptedKeys.has(key)) {
+          console.log('Filtered out (already accepted by composite key):', row);
+          return false;
+        }
+        if (rejectedKeys.has(key)) {
+          console.log('Filtered out (rejected by composite key):', row);
+          return false;
+        }
         return true;
       });
+      // Debug: log all records that will be rendered
+      console.log('Records to render in IQAC Workdone table:', filtered);
       renderIQACWorkdoneTable(filtered);
 
       // Render the verified workdone table with color-coded status
@@ -938,13 +922,51 @@
         headers = [
           'Department', 'Portfolio Name', 'Portfolio Member Name', 'Status', 'Verified By', 'Verified At', 'Accepted By', 'Accepted At', 'View'
         ];
-        // ...existing code...
+        // Build data for allRows
+        const data = [headers];
+        allRows.forEach(r => {
+          data.push([
+            r.department,
+            r.portfolio_name,
+            r.portfolio_member_name,
+            r.status,
+            r.verified_by,
+            r.verified_at ? new Date(r.verified_at).toLocaleString() : '',
+            r.accepted_by,
+            r.accepted_at ? new Date(r.accepted_at).toLocaleString() : '',
+            'View'
+          ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
+        XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+        return;
       } else if (tbodyId === 'rejectedIQACWorkdoneTable' && window._rejectedIQACRowsAll) {
         allRows = window._rejectedIQACRowsAll;
         headers = [
           'Department', 'Portfolio Name', 'Portfolio Member Name', 'Status', 'Rejected By', 'Rejected At', 'Commands', 'Documents', 'View'
         ];
-        // ...existing code...
+        // Build data for allRows
+        const data = [headers];
+        allRows.forEach(r => {
+          data.push([
+            r.department,
+            r.portfolio_name,
+            r.portfolio_member_name,
+            r.status,
+            r.rejected_by,
+            r.rejected_at ? new Date(r.rejected_at).toLocaleString() : '',
+            r.commands || '-',
+            r.documents || '-',
+            'View'
+          ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
+        XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+        return;
       } else {
         // Fallback: export only visible rows
         const tbody = document.getElementById(tbodyId);

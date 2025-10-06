@@ -216,6 +216,7 @@
                   <th class="p-3 border-b border-gray-300">Department</th>
                   <th class="p-3 border-b border-gray-300">Portfolio Name</th>
                   <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
+                  <th class="p-3 border-b border-gray-300">Submitted At</th>
                   <th class="p-3 border-b border-gray-300">Status</th>
                   <th class="p-3 border-b border-gray-300 text-center">View</th>
                 </tr>
@@ -636,7 +637,24 @@
           '<tr><td colspan="2" class="text-gray-400 text-center p-4">No core scope form assigned.</td></tr>';
         // Load Workdone Section using centralized JS
         const workdoneTable = new WorkdoneTable(supabaseClient);
-        workdoneTable.initWorkdoneSection(data["Name"], data["Designation"]);
+        // Patch: Add submitted_at column rendering
+        workdoneTable.initWorkdoneSection(data["Name"], data["Designation"], {
+          extraColumns: [
+            {
+              header: "Submitted At",
+              key: "submitted_at",
+              render: (row) => {
+                if (!row.submitted_at) return '<span class="text-gray-400">-</span>';
+                // Format date/time if possible
+                const d = new Date(row.submitted_at);
+                if (!isNaN(d)) {
+                  return d.toLocaleString();
+                }
+                return row.submitted_at;
+              }
+            }
+          ]
+        });
         
         // Hide delete buttons specifically for hod-viewfaculty-details.html
         function hideDeleteButtons() {

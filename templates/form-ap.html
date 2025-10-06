@@ -101,7 +101,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 </table>
             </div>
             <div class="flex justify-center mt-8">
-                <button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
+                <button id="apSubmitBtn" type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
+                <span id="apLoadingSpinner" class="ml-4 hidden"><svg class="animate-spin h-8 w-8 text-purple-800 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg></span>
             </div>
         </form>
     </div>
@@ -179,8 +180,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     document.getElementById('apForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        const form = e.target;
-        const formData = new FormData(form);
+        // Show loading spinner and disable submit button
+        const submitBtn = document.getElementById('apSubmitBtn');
+        const spinner = document.getElementById('apLoadingSpinner');
+        if (submitBtn) submitBtn.disabled = true;
+        if (spinner) spinner.classList.remove('hidden');
+        
+        try {
+            const form = e.target;
+            const formData = new FormData(form);
         // Prepare row object for 21 rows
         const row = {
             "Department": formData.get('Department'),
@@ -259,11 +267,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 .eq('department', row["Department"])
                 .eq('Name', row["Portfolio Member Name"]);
         }
-        if (!error) {
-            await updateFacultyComplianceAP();
-            window.location.href = 'notification.html?status=success';
-        } else {
-            window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
+            if (!error) {
+                await updateFacultyComplianceAP();
+                window.location.href = 'notification.html?status=success';
+            } else {
+                window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
+            }
+        } finally {
+            // Hide spinner and enable button (in case of error or after redirect)
+            if (submitBtn) submitBtn.disabled = false;
+            if (spinner) spinner.classList.add('hidden');
         }
     });
     </script>  <!-- Footer -->

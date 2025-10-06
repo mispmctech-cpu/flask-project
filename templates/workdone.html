@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿    
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -52,6 +53,7 @@
             <th class="p-3 border-b border-gray-300">Portfolio Name</th>
             <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
             <th class="p-3 border-b border-gray-300">Status</th>
+            <th class="p-3 border-b border-gray-300">Submitted At</th>
             <th class="p-3 border-b border-gray-300">Verify</th>
             <th class="p-3 border-b border-gray-300">View</th>
           </tr>
@@ -80,6 +82,7 @@
               <th class="p-3 border-b border-gray-300">Portfolio Name</th>
               <th class="p-3 border-b border-gray-300">Member Name</th>
               <th class="p-3 border-b border-gray-300">Status</th>
+              <th class="p-3 border-b border-gray-300">Submitted At</th>
               <th class="p-3 border-b border-gray-300">Verified By</th>
               <th class="p-3 border-b border-gray-300">Verified At</th>
               <th class="p-3 border-b border-gray-300">View</th>
@@ -109,6 +112,7 @@
               <th class="p-3 border-b border-gray-300">Portfolio Name</th>
               <th class="p-3 border-b border-gray-300">Member Name</th>
               <th class="p-3 border-b border-gray-300">Status</th>
+              <th class="p-3 border-b border-gray-300">Submitted At</th>
               <th class="p-3 border-b border-gray-300">Rejected By</th>
               <th class="p-3 border-b border-gray-300">Rejected At</th>
               <th class="p-3 border-b border-gray-300">Commands</th>
@@ -152,8 +156,238 @@
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>
+    // Filter function for Verified Workdone table
+    function filterVerifiedWorkdoneTable() {
+      const search = document.getElementById('verifiedWorkdoneSearch').value.toLowerCase();
+      if (!window._allVerifiedRows) return;
+      if (search.trim() === '') {
+        window._filteredVerifiedRows = window._allVerifiedRows;
+      } else {
+        window._filteredVerifiedRows = window._allVerifiedRows.filter(row => {
+          const department = (row.department || '').toLowerCase();
+          const portfolio = (row.portfolio_name || '').toLowerCase();
+          const member = (row.portfolio_member_name || '').toLowerCase();
+          return department.includes(search) || portfolio.includes(search) || member.includes(search);
+        });
+      }
+      window._workingVerifiedRows = window._filteredVerifiedRows || window._allVerifiedRows;
+      renderFilteredVerifiedWorkdoneTable(1);
+    }
+
+    // Render filtered Verified Workdone table with pagination
+    function renderFilteredVerifiedWorkdoneTable(page = 1) {
+      const workingRows = window._workingVerifiedRows || window._allVerifiedRows || [];
+      if (workingRows.length === 0) {
+        const tbody = document.getElementById('verifiedWorkdoneTable');
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan='7' class='text-center text-gray-400 p-4'>No records found matching your search.</td></tr>`;
+        }
+        const container = document.getElementById('verifiedWorkdonePagination');
+        if (container) container.innerHTML = '';
+        return;
+      }
+      verifiedCurrentPage = page;
+      const startIdx = (page - 1) * verifiedRowsPerPage;
+      const endIdx = startIdx + verifiedRowsPerPage;
+      const pageRows = workingRows.slice(startIdx, endIdx);
+      const tbody = document.getElementById('verifiedWorkdoneTable');
+      if (!tbody) return;
+      let html = "";
+      pageRows.forEach((r, idx) => {
+        const globalIdx = startIdx + idx;
+        let statusText = (r.status || '').toUpperCase();
+        let statusClass = '';
+        if (statusText === 'PENDING') {
+          statusClass = 'text-red-600 font-bold';
+        } else if (statusText === 'COMPLETED') {
+          statusClass = 'text-green-600 font-bold';
+        } else {
+          statusClass = 'font-bold';
+        }
+        let submittedAt = r.submitted_at || r.created_at || r.timestamp || r.updated_at || r.submission_date || r.date_submitted || '';
+        if (submittedAt) {
+          try {
+            submittedAt = new Date(submittedAt).toLocaleString();
+          } catch (e) {}
+        } else {
+          submittedAt = '-';
+        }
+        const verifiedAt = new Date(r.verified_at || r.created_at).toLocaleDateString();
+        html +=
+          '<tr class="hover:bg-green-50 transition border-b border-gray-200" data-verified-idx="' + globalIdx + '">' +
+          "<td class='p-3 border-r border-gray-200'>" + r.department + "</td>" +
+          "<td class='p-3 border-r border-gray-200'>" + r.portfolio_name + "</td>" +
+          "<td class='p-3 border-r border-gray-200'>" + r.portfolio_member_name + "</td>" +
+          "<td class='p-3 border-r border-gray-200'><span class='" + statusClass + "'>" + statusText + "</span></td>" +
+          "<td class='p-3 border-r border-gray-200'>" + submittedAt + "</td>" +
+          "<td class='p-3 border-r border-gray-200'>" + r.verified_by + "</td>" +
+          "<td class='p-3 border-r border-gray-200'>" + verifiedAt + "</td>" +
+          "<td class='p-3 text-center'><button class='bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded' onclick='viewVerifiedRowDetails(" + globalIdx + ")'>View</button></td>" +
+          "</tr>";
+      });
+      tbody.innerHTML = html;
+      renderVerifiedWorkdonePagination();
+    }
+
+    // Filter function for Rejected Workdone table
+    function filterRejectedWorkdoneTable() {
+      const search = document.getElementById('rejectedWorkdoneSearch').value.toLowerCase();
+      if (!window._allRejectedRows) return;
+      if (search.trim() === '') {
+        window._filteredRejectedRows = window._allRejectedRows;
+      } else {
+        window._filteredRejectedRows = window._allRejectedRows.filter(row => {
+          const department = (row.department || '').toLowerCase();
+          const portfolio = (row.portfolio_name || row.portfolio || '').toLowerCase();
+          const member = (row.portfolio_member_name || row.member || '').toLowerCase();
+          return department.includes(search) || portfolio.includes(search) || member.includes(search);
+        });
+      }
+      window._workingRejectedRows = window._filteredRejectedRows || window._allRejectedRows;
+      renderFilteredRejectedWorkdoneTable(1);
+    }
+
+    // Render filtered Rejected Workdone table with pagination
+    function renderFilteredRejectedWorkdoneTable(page = 1) {
+      const workingRows = window._workingRejectedRows || window._allRejectedRows || [];
+      if (workingRows.length === 0) {
+        const tbody = document.getElementById('rejectedWorkdoneTable');
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan='7' class='text-center text-gray-400 p-4'>No records found matching your search.</td></tr>`;
+        }
+        const container = document.getElementById('rejectedWorkdonePagination');
+        if (container) container.innerHTML = '';
+        return;
+      }
+      rejectedCurrentPage = page;
+      const startIdx = (page - 1) * rejectedRowsPerPage;
+      const endIdx = startIdx + rejectedRowsPerPage;
+      const pageRows = workingRows.slice(startIdx, endIdx);
+      const tbody = document.getElementById('rejectedWorkdoneTable');
+      if (!tbody) return;
+      let html = "";
+      pageRows.forEach((r, idx) => {
+        const globalIdx = startIdx + idx;
+        let statusText = (r.status || '').toUpperCase();
+        let statusClass = '';
+        if (statusText === 'PENDING') {
+          statusClass = 'text-red-600 font-bold';
+        } else if (statusText === 'COMPLETED') {
+          statusClass = 'text-green-600 font-bold';
+        } else {
+          statusClass = 'font-bold';
+        }
+        let submittedAt = r.submitted_at || r.created_at || r.timestamp || r.updated_at || r.submission_date || r.date_submitted || '';
+        if (submittedAt) {
+          try {
+            submittedAt = new Date(submittedAt).toLocaleString();
+          } catch (e) {}
+        } else {
+          submittedAt = '-';
+        }
+        const portfolio = r.portfolio_name || r.portfolio || '-';
+        const member = r.portfolio_member_name || r.member || r['Portfolio Member Name'] || r['Faculty Name'] || r['Name'] || '-';
+        const rejectedAt = new Date(r.rejected_at || r.created_at).toLocaleDateString();
+        const commands = r.Commands || r.commands || '';
+        html +=
+          '<tr class="hover:bg-red-50 transition border-b border-gray-200" data-rejected-idx="' + globalIdx + '">' +
+          "<td class='p-3 border-r border-gray-200'>" + r.department + "</td>" +
+          "<td class='p-3 border-r border-gray-200'>" + portfolio + "</td>" +
+          "<td class='p-3 border-r border-gray-200'>" + member + "</td>" +
+          "<td class='p-3 border-r border-gray-200'><span class='" + statusClass + "'>" + statusText + "</span></td>" +
+          "<td class='p-3 border-r border-gray-200'>" + submittedAt + "</td>" +
+          "<td class='p-3 border-r border-gray-200'>" + r.rejected_by + "</td>" +
+          "<td class='p-3 border-r border-gray-200'>" + rejectedAt + "</td>" +
+          "<td class='p-3 border-r border-gray-200'>" + commands + "</td>" +
+          "<td class='p-3 text-center'><button class='bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded' onclick='viewRejectedRowDetails(" + globalIdx + ")'>View</button></td>" +
+          "</tr>";
+      });
+      tbody.innerHTML = html;
+      renderRejectedWorkdonePagination();
+    }
     // Export to Excel for any table by id
     function exportTableToExcel(tbodyId, filenamePrefix) {
+      let allRows = [];
+      let headers = [];
+      if (tbodyId === 'workdoneTable' && window._allWorkdoneRows) {
+        allRows = window._allWorkdoneRows;
+        headers = [
+          'Department', 'Portfolio Name', 'Portfolio Member Name', 'Status', 'Submitted At'
+        ];
+        const data = [headers];
+        allRows.forEach(r => {
+          let submittedAt = r.submitted_at || r.created_at || r.timestamp || r.updated_at || r.submission_date || r.date_submitted || '';
+          if (submittedAt) {
+            try { submittedAt = new Date(submittedAt).toLocaleString(); } catch (e) {}
+          } else { submittedAt = '-'; }
+          data.push([
+            r.department,
+            r.portfolio,
+            r.member,
+            r.status,
+            submittedAt
+          ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
+        XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+        return;
+      } else if (tbodyId === 'verifiedWorkdoneTable' && window._allVerifiedRows) {
+        allRows = window._allVerifiedRows;
+        headers = [
+          'Department', 'Portfolio Name', 'Member Name', 'Status', 'Submitted At', 'Verified By', 'Verified At'
+        ];
+        const data = [headers];
+        allRows.forEach(r => {
+          let submittedAt = r.submitted_at || r.created_at || r.timestamp || r.updated_at || r.submission_date || r.date_submitted || '';
+          if (submittedAt) {
+            try { submittedAt = new Date(submittedAt).toLocaleString(); } catch (e) {}
+          } else { submittedAt = '-'; }
+          data.push([
+            r.department,
+            r.portfolio_name,
+            r.portfolio_member_name,
+            r.status,
+            submittedAt,
+            r.verified_by,
+            r.verified_at ? new Date(r.verified_at).toLocaleString() : ''
+          ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
+        XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+        return;
+      } else if (tbodyId === 'rejectedWorkdoneTable' && window._allRejectedRows) {
+        allRows = window._allRejectedRows;
+        headers = [
+          'Department', 'Portfolio Name', 'Member Name', 'Status', 'Submitted At', 'Rejected By', 'Rejected At', 'Commands'
+        ];
+        const data = [headers];
+        allRows.forEach(r => {
+          let submittedAt = r.submitted_at || r.created_at || r.timestamp || r.updated_at || r.submission_date || r.date_submitted || '';
+          if (submittedAt) {
+            try { submittedAt = new Date(submittedAt).toLocaleString(); } catch (e) {}
+          } else { submittedAt = '-'; }
+          data.push([
+            r.department,
+            r.portfolio_name || r.portfolio || '-',
+            r.portfolio_member_name || r.member || r['Portfolio Member Name'] || r['Faculty Name'] || r['Name'] || '-',
+            r.status,
+            submittedAt,
+            r.rejected_by,
+            r.rejected_at ? new Date(r.rejected_at).toLocaleString() : '',
+            r.Commands || r.commands || ''
+          ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
+        XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+        return;
+      }
+      // Fallback: export only visible rows
       const tbody = document.getElementById(tbodyId);
       if (!tbody) return;
       const table = tbody.closest('table');
@@ -162,19 +396,16 @@
         alert('No data to export!');
         return;
       }
-      // Get headers, but skip Verify and View columns (last 2 columns)
-      let headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
-      if (headers.length > 2) {
-        headers = headers.slice(0, -2); // Remove last 2 columns (Verify/View)
+      let fallbackHeaders = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
+      if (fallbackHeaders.length > 2) {
+        fallbackHeaders = fallbackHeaders.slice(0, -2);
       }
-      const data = [headers];
+      const data = [fallbackHeaders];
       rows.forEach(row => {
-        // Only take the first N-2 cells (ignore Verify/View buttons)
         const tds = Array.from(row.querySelectorAll('td'));
         let cells = tds.slice(0, tds.length - 2).map(td => td.innerText.trim());
         data.push(cells);
       });
-      // Create worksheet and workbook
       const ws = XLSX.utils.aoa_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
@@ -256,27 +487,45 @@
           console.warn('Exception fetching rejected records:', err);
         }
 
-        // Build a set of rejected input_ids and fallback keys
+        // Fetch all verified records for department
+        let verifiedRows = [];
+        try {
+          const { data: verifiedData, error: verifiedError } = await supabaseClient
+            .from('hod-workdone')
+            .select('input_id, department, portfolio_name, portfolio_member_name, verified_at')
+            .eq('department', department);
+          if (verifiedError) {
+            console.warn('Error fetching verified records:', verifiedError);
+          } else {
+            verifiedRows = verifiedData || [];
+          }
+        } catch (err) {
+          console.warn('Exception fetching verified records:', err);
+        }
+
+        // Build sets for rejected and verified composite keys
         const rejectedInputIds = new Set();
         const rejectedKeys = new Set();
         for (const r of rejectedRows) {
           if (r.input_id) {
             rejectedInputIds.add(r.input_id);
-          } else {
-            // Fallback key: department + portfolio_name + portfolio_member_name + rejected_at
-            const key = `${r.department}_${r.portfolio_name}_${r.portfolio_member_name}_${r.rejected_at}`;
-            rejectedKeys.add(key);
           }
+          // Composite key for rejected
+          const key = `${r.department}|${r.portfolio_name}|${r.portfolio_member_name}|${r.table_name}|${r.submitted_at || ''}`;
+          rejectedKeys.add(key);
+        }
+        const verifiedKeys = new Set();
+        for (const v of verifiedRows) {
+          // Composite key for verified
+          const key = `${v.department}|${v.portfolio_name}|${v.portfolio_member_name}|${v.table_name}|${v.submitted_at || ''}`;
+          verifiedKeys.add(key);
         }
 
-        // Filter out rejected rows from main table
+        // Filter out rejected and verified rows from main table using composite key
         const filteredRows = rows.filter(row => {
-          if (row.input_id && rejectedInputIds.has(row.input_id)) {
-            return false;
-          }
-          // Fallback match if no input_id
-          const key = `${row.department}_${row.portfolio}_${row.member}_${row.rejected_at || ''}`;
-          if (rejectedKeys.has(key)) {
+          // Build composite key for current row
+          const key = `${row.department}|${row.portfolio_name || row.portfolio}|${row.portfolio_member_name || row.member}|${row.table_name || row.table}|${row.submitted_at || ''}`;
+          if (rejectedKeys.has(key) || verifiedKeys.has(key)) {
             return false;
           }
           return true;
@@ -352,7 +601,15 @@
           r.portfolio === row.portfolio && 
           r.member === row.member
         );
-        
+        // Format submitted_at timestamp
+        let submittedAt = row.submitted_at || row.created_at || row.timestamp || '';
+        if (submittedAt) {
+          try {
+            submittedAt = new Date(submittedAt).toLocaleString();
+          } catch (e) {}
+        } else {
+          submittedAt = '-';
+        }
         const statusText = (row.status || '').toString().toUpperCase();
         let statusClass = '';
         if (statusText === 'COMPLETED') {
@@ -362,16 +619,16 @@
         } else {
           statusClass = 'font-bold uppercase';
         }
-
-        const verifyButtonHtml = `<button class="bg-green-500 hover:bg-green-700 text-white px-3 py-1 rounded text-sm" onclick="verifyRow(this, ${globalIdx})">Verify</button>`;
-        const rejectButtonHtml = `<button class="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded text-sm" onclick="rejectRow(this, ${globalIdx})">Reject</button>`;
-        html += `<tr class="hover:bg-purple-50 transition border-b border-gray-200" data-row-idx="${globalIdx}">
+        const verifyButtonHtml = `<button class=\"bg-green-500 hover:bg-green-700 text-white px-3 py-1 rounded text-sm\" onclick=\"verifyRow(this, ${globalIdx})\">Verify</button>`;
+        const rejectButtonHtml = `<button class=\"bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded text-sm\" onclick=\"rejectRow(this, ${globalIdx})\">Reject</button>`;
+        html += `<tr class=\"hover:bg-purple-50 transition border-b border-gray-200\" data-row-idx=\"${globalIdx}\">
           <td class='p-3 border-r border-gray-200'>${row.department}</td>
           <td class='p-3 border-r border-gray-200'>${row.portfolio}</td>
           <td class='p-3 border-r border-gray-200'>${row.member}</td>
           <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
+          <td class='p-3 border-r border-gray-200'>${submittedAt}</td>
           <td class='p-3 text-center flex gap-2 justify-center'>${verifyButtonHtml}${rejectButtonHtml}</td>
-          <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewRowDetails(${globalIdx})">View</button></td>
+          <td class='p-3 text-center'><button class=\"bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded\" onclick=\"viewRowDetails(${globalIdx})\">View</button></td>
         </tr>`;
       });
 
@@ -510,6 +767,15 @@
       let html = "";
       pageRows.forEach((row, idx) => {
         const globalIdx = startIdx + idx;
+        // Format submitted_at timestamp
+        let submittedAt = row.submitted_at || row.created_at || row.timestamp || row.updated_at || row.submission_date || row.date_submitted || '';
+        if (submittedAt) {
+          try {
+            submittedAt = new Date(submittedAt).toLocaleString();
+          } catch (e) {}
+        } else {
+          submittedAt = '-';
+        }
         const statusText = (row.status || '').toString().toUpperCase();
         let statusClass = '';
         if (statusText === 'COMPLETED') {
@@ -519,17 +785,19 @@
         } else {
           statusClass = 'font-bold uppercase';
         }
-
-        const verifyButtonHtml = `<button class="bg-green-500 hover:bg-green-700 text-white px-3 py-1 rounded text-sm" onclick="verifyRow(this, ${globalIdx})">Verify</button>`;
-        const rejectButtonHtml = `<button class="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded text-sm" onclick="rejectRow(this, ${globalIdx})">Reject</button>`;
-        
-        html += `<tr class="hover:bg-purple-50 transition border-b border-gray-200" data-row-idx="${globalIdx}">
+        const verifyButtonHtml = `<button class=\"bg-green-500 hover:bg-green-700 text-white px-3 py-1 rounded text-sm\" onclick=\"verifyRow(this, ${globalIdx})\">Verify</button>`;
+        const rejectButtonHtml = `<button class=\"bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded text-sm\" onclick=\"rejectRow(this, ${globalIdx})\">Reject</button>`;
+        // For portfolio and member fields, use robust mapping:
+        const portfolio = row.portfolio_name || row.portfolio || '-';
+        const member = row.portfolio_member_name || row.member || row['Portfolio Member Name'] || row['Faculty Name'] || row['Name'] || '-';
+        html += `<tr class=\"hover:bg-purple-50 transition border-b border-gray-200\" data-row-idx=\"${globalIdx}\">
           <td class='p-3 border-r border-gray-200'>${row.department}</td>
           <td class='p-3 border-r border-gray-200'>${row.portfolio}</td>
           <td class='p-3 border-r border-gray-200'>${row.member}</td>
           <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
+          <td class='p-3 border-r border-gray-200'>${submittedAt}</td>
           <td class='p-3 text-center'>${verifyButtonHtml}${rejectButtonHtml}</td>
-          <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewRowDetails(${globalIdx})">View</button></td>
+          <td class='p-3 text-center'><button class=\"bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded\" onclick=\"viewRowDetails(${globalIdx})\">View</button></td>
         </tr>`;
       });
 
@@ -636,18 +904,26 @@
         } else {
           statusClass = 'font-bold';
         }
-        
+        // Format submitted_at timestamp
+        let submittedAt = r.submitted_at || r.created_at || r.timestamp || r.updated_at || r.submission_date || r.date_submitted || '';
+        if (submittedAt) {
+          try {
+            submittedAt = new Date(submittedAt).toLocaleString();
+          } catch (e) {}
+        } else {
+          submittedAt = '-';
+        }
         const verifiedAt = new Date(r.verified_at || r.created_at).toLocaleDateString();
-        
         html += `
         <tr class="hover:bg-green-50 transition border-b border-gray-200" data-verified-idx="${globalIdx}">
           <td class='p-3 border-r border-gray-200'>${r.department}</td>
           <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
           <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
           <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
+          <td class='p-3 border-r border-gray-200'>${submittedAt}</td>
           <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
           <td class='p-3 border-r border-gray-200'>${verifiedAt}</td>
-          <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewRowDetails(${globalIdx})">View</button></td>
+          <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewVerifiedRowDetails(${globalIdx})">View</button></td>
         </tr>`;
       });
 
@@ -754,14 +1030,27 @@
         } else {
           statusClass = 'font-bold';
         }
+        // Robust field mapping for submitted_at, portfolio, member
+        let submittedAt = r.submitted_at || r.created_at || r.timestamp || r.updated_at || r.submission_date || r.date_submitted || '';
+        if (submittedAt) {
+          try {
+            submittedAt = new Date(submittedAt).toLocaleString();
+          } catch (e) {}
+        } else {
+          submittedAt = '-';
+        }
+        // For portfolio and member fields, use robust mapping:
+        const portfolio = r.portfolio_name || r.portfolio || '-';
+        const member = r.portfolio_member_name || r.member || r['Portfolio Member Name'] || r['Faculty Name'] || r['Name'] || '-';
         const rejectedAt = new Date(r.rejected_at || r.created_at).toLocaleDateString();
         const commands = r.Commands || r.commands || '';
         html += `
         <tr class="hover:bg-red-50 transition border-b border-gray-200" data-rejected-idx="${globalIdx}">
           <td class='p-3 border-r border-gray-200'>${r.department}</td>
-          <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
-          <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
+          <td class='p-3 border-r border-gray-200'>${portfolio}</td>
+          <td class='p-3 border-r border-gray-200'>${member}</td>
           <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
+          <td class='p-3 border-r border-gray-200'>${submittedAt}</td>
           <td class='p-3 border-r border-gray-200'>${r.rejected_by}</td>
           <td class='p-3 border-r border-gray-200'>${rejectedAt}</td>
           <td class='p-3 border-r border-gray-200'>${commands}</td>
@@ -1163,6 +1452,76 @@
       }
     }
 
+
+    // Add JS logic for verify modal
+    async function verifyRow(btn, idx) {
+      if (!window._allWorkdoneRows || !window._allWorkdoneRows[idx]) {
+        alert('Error: Workdone record not found.');
+        return;
+      }
+      btn.disabled = true;
+      const row = window._allWorkdoneRows[idx];
+      // Prepare verified data
+      const verifiedData = {
+        department: row.department,
+        portfolio_name: row.portfolio,
+        portfolio_member_name: row.member,
+        status: 'COMPLETED',
+        verified_by: localStorage.getItem('hod_name') || 'HOD',
+        verified_at: new Date().toISOString(),
+        documents: row.documents || null,
+        view_link: row.view_link || null,
+        input_id: row.input_id || null,
+        table_name: row.table_name || row.table || null,
+        submitted_at: row.submitted_at || row.created_at || row.timestamp || row.updated_at || row.submission_date || row.date_submitted || null
+      };
+      try {
+        // Insert into hod-workdone table
+        let result;
+        if (verifiedData.input_id) {
+          // Check for existing
+          const { data: existing } = await supabaseClient
+            .from('hod-workdone')
+            .select('id')
+            .eq('input_id', verifiedData.input_id)
+            .single();
+          if (existing) {
+            // Update existing record
+            result = await supabaseClient
+              .from('hod-workdone')
+              .update(verifiedData)
+              .eq('input_id', verifiedData.input_id);
+          } else {
+            // Insert new
+            result = await supabaseClient
+              .from('hod-workdone')
+              .insert([verifiedData]);
+          }
+        } else {
+          // No input_id, safe to insert
+          result = await supabaseClient
+            .from('hod-workdone')
+            .insert([verifiedData]);
+        }
+        if (result.error) {
+          alert('Failed to verify record: ' + result.error.message);
+          btn.disabled = false;
+          return;
+        }
+        // Remove from local array
+        window._allWorkdoneRows.splice(idx, 1);
+        window._filteredWorkdoneRows = window._allWorkdoneRows;
+        window._workingWorkdoneRows = window._allWorkdoneRows;
+        renderFilteredWorkdoneTable(workdoneCurrentPage);
+        // Reload data to ensure backend sync
+        await loadWorkdone();
+        await loadVerifiedWorkdone();
+      } catch (err) {
+        alert('Error verifying record: ' + err.message);
+        btn.disabled = false;
+      }
+    }
+
     // Add JS logic for reject modal
     let _rejectIdx = null;
     function rejectRow(btn, idx) {
@@ -1198,10 +1557,10 @@
           documents: row.documents || null,
           view_link: row.view_link || null,
           input_id: row.input_id || null,
-          table_name: row.table_name || null,
+          table_name: row.table_name || row.table || null,
+          submitted_at: row.submitted_at || row.created_at || row.timestamp || row.updated_at || row.submission_date || row.date_submitted || null,
           Commands: commands
         };
-        // In rejectForm submit handler, replace insert logic:
         let result;
         try {
           result = await safeInsertRejectedRecord(rejectData);
@@ -1215,7 +1574,6 @@
           if (btn) btn.disabled = false;
           return;
         }
-        // Hide row from table
         window._allWorkdoneRows.splice(_rejectIdx, 1);
         window._filteredWorkdoneRows = window._allWorkdoneRows;
         window._workingWorkdoneRows = window._allWorkdoneRows;

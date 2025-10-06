@@ -101,7 +101,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 </table>
             </div>
             <div class="flex justify-center mt-8">
-                <button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
+                <button id="profSubmitBtn" type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
+                <span id="profLoadingSpinner" class="ml-4 hidden"><svg class="animate-spin h-8 w-8 text-purple-800 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg></span>
             </div>
         </form>
     </div>
@@ -171,93 +172,105 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     document.getElementById('profForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        const form = e.target;
-        const formData = new FormData(form);
-        // Prepare row object for 22 rows
-        const row = {
-            "Department:": formData.get('Department:'),
-            "Portfolio Name:": formData.get('Portfolio Name:'),
-            "Portfolio Member Name": formData.get('Portfolio Member Name'),
-        };
-        for (let i = 1; i <= 22; i++) {
-            row[`Status_${i}`] = formData.get(`Status_${i}`);
-            row[`Description_${i}`] = formData.get(`Description_${i}`);
-            const file = formData.get(`Upload the scanned file_${i}`);
-            if (file && file.size > 0) {
-                const ts = Date.now();
-                const path = `professorfile${i}_${ts}_${file.name}`;
-                try {
-                    row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
-                } catch (err) {
-                    window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
-                    return;
-                }
-            } else {
-                row[`Upload the scanned file_${i}`] = null;
-            }
-        }
-        // Insert into prof_compliance table
-        // SCOPE text mapping for compliance fields:
-        // 1. Publish in peer-reviewed journals (idx 10)
-        // 2. Apply for research grants (idx 11)
-        // 3. Guide student research and final-year projects. (idx 12)
-        // 4. Organize FDPs / workshop/Seminars (idx 16)
-        // 5. NPTEL/ MOOC certifications (idx 17)
-        // 6. Facilitate MoU (idx 18)
-        // 7. Engage in Consultancy. (idx 19)
-        // 8. Membership in professional body (idx 22)
-        const complianceMap = [10, 11, 12, 16, 17, 18, 19, 22];
-        let faculty_email = '';
+        // Show loading spinner and disable submit button
+        const submitBtn = document.getElementById('profSubmitBtn');
+        const spinner = document.getElementById('profLoadingSpinner');
+        if (submitBtn) submitBtn.disabled = true;
+        if (spinner) spinner.classList.remove('hidden');
+        
         try {
-            const { data: facultyRows } = await supabase
-                .from('Faculty')
-                .select('email')
-                .eq('department', row["Department:"])
-                .eq('Name', row["Portfolio Member Name"])
-                .limit(1)
-                .single();
-            if (facultyRows && facultyRows.email) faculty_email = facultyRows.email;
-        } catch (e) {}
-        const complianceRow = {
-            department: row["Department:"],
-            faculty_email: faculty_email,
-            faculty_name: row["Portfolio Member Name"],
-            compliance_1: row[`Status_${complianceMap[0]}`] || '',
-            compliance_2: row[`Status_${complianceMap[1]}`] || '',
-            compliance_3: row[`Status_${complianceMap[2]}`] || '',
-            compliance_4: row[`Status_${complianceMap[3]}`] || '',
-            compliance_5: row[`Status_${complianceMap[4]}`] || '',
-            compliance_6: row[`Status_${complianceMap[5]}`] || '',
-            compliance_7: row[`Status_${complianceMap[6]}`] || '',
-            compliance_8: row[`Status_${complianceMap[7]}`] || ''
-        };
-        await supabase.from('prof_compliance').insert([complianceRow]);
-        // Insert into Prof table
-        const { data, error } = await supabase.from('Prof').insert([row]);
-        // --- Compliance logic and Faculty table update ---
-        async function updateFacultyComplianceProf() {
-            let allCompleted = true;
-            let hasStatus = false;
+            const form = e.target;
+            const formData = new FormData(form);
+            // Prepare row object for 22 rows
+            const row = {
+                "Department:": formData.get('Department:'),
+                "Portfolio Name:": formData.get('Portfolio Name:'),
+                "Portfolio Member Name": formData.get('Portfolio Member Name'),
+            };
             for (let i = 1; i <= 22; i++) {
-                if (row.hasOwnProperty(`Status_${i}`)) {
-                    let status = (row[`Status_${i}`] || "").trim().toLowerCase();
-                    if (status) hasStatus = true;
-                    if (status !== "completed and updated" && status !== "not applicable") {
-                        allCompleted = false;
+                row[`Status_${i}`] = formData.get(`Status_${i}`);
+                row[`Description_${i}`] = formData.get(`Description_${i}`);
+                const file = formData.get(`Upload the scanned file_${i}`);
+                if (file && file.size > 0) {
+                    const ts = Date.now();
+                    const path = `professorfile${i}_${ts}_${file.name}`;
+                    try {
+                        row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
+                    } catch (err) {
+                        window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
+                        return;
+                    }
+                } else {
+                    row[`Upload the scanned file_${i}`] = null;
+                }
+            }
+            // Insert into prof_compliance table
+            // SCOPE text mapping for compliance fields:
+            // 1. Publish in peer-reviewed journals (idx 10)
+            // 2. Apply for research grants (idx 11)
+            // 3. Guide student research and final-year projects. (idx 12)
+            // 4. Organize FDPs / workshop/Seminars (idx 16)
+            // 5. NPTEL/ MOOC certifications (idx 17)
+            // 6. Facilitate MoU (idx 18)
+            // 7. Engage in Consultancy. (idx 19)
+            // 8. Membership in professional body (idx 22)
+            const complianceMap = [10, 11, 12, 16, 17, 18, 19, 22];
+            let faculty_email = '';
+            try {
+                const { data: facultyRows } = await supabase
+                    .from('Faculty')
+                    .select('email')
+                    .eq('department', row["Department:"])
+                    .eq('Name', row["Portfolio Member Name"])
+                    .limit(1)
+                    .single();
+                if (facultyRows && facultyRows.email) faculty_email = facultyRows.email;
+            } catch (e) {}
+            const complianceRow = {
+                department: row["Department:"],
+                faculty_email: faculty_email,
+                faculty_name: row["Portfolio Member Name"],
+                compliance_1: row[`Status_${complianceMap[0]}`] || '',
+                compliance_2: row[`Status_${complianceMap[1]}`] || '',
+                compliance_3: row[`Status_${complianceMap[2]}`] || '',
+                compliance_4: row[`Status_${complianceMap[3]}`] || '',
+                compliance_5: row[`Status_${complianceMap[4]}`] || '',
+                compliance_6: row[`Status_${complianceMap[5]}`] || '',
+                compliance_7: row[`Status_${complianceMap[6]}`] || '',
+                compliance_8: row[`Status_${complianceMap[7]}`] || ''
+            };
+            await supabase.from('prof_compliance').insert([complianceRow]);
+            // Insert into Prof table
+            const { data, error } = await supabase.from('Prof').insert([row]);
+            // --- Compliance logic and Faculty table update ---
+            async function updateFacultyComplianceProf() {
+                let allCompleted = true;
+                let hasStatus = false;
+                for (let i = 1; i <= 22; i++) {
+                    if (row.hasOwnProperty(`Status_${i}`)) {
+                        let status = (row[`Status_${i}`] || "").trim().toLowerCase();
+                        if (status) hasStatus = true;
+                        if (status !== "completed and updated" && status !== "not applicable") {
+                            allCompleted = false;
+                        }
                     }
                 }
+                let compliance = hasStatus && allCompleted ? "COMPLETED" : "PENDING";
+                // Update Faculty table (by department and member name) in new compliance column
+                await supabase.from('Faculty').update({ compliance: compliance })
+                    .eq('department', row["Department:"])
+                    .eq('Name', row["Portfolio Member Name"]);
             }
-            let compliance = hasStatus && allCompleted ? "COMPLETED" : "PENDING";
-            // Update Faculty table (by department and member name) in new compliance column
-            await supabase.from('Faculty').update({ compliance: compliance })
-                .eq('department', row["Department:"])
-                .eq('Name', row["Portfolio Member Name"]);
-        }
-        if (!error) {
-            await updateFacultyComplianceProf();
-            window.location.href = 'notification.html?status=success';
-        } else {
-            window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
+            if (!error) {
+                await updateFacultyComplianceProf();
+                window.location.href = 'notification.html?status=success';
+            } else {
+                window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
+            }
+        } finally {
+            // Hide spinner and enable button (in case of error or after redirect)
+            if (submitBtn) submitBtn.disabled = false;
+            if (spinner) spinner.classList.add('hidden');
         }
     });
     </script>  <!-- Footer -->

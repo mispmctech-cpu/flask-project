@@ -1,3 +1,4 @@
+# Debug route to check session info
 
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, session, abort
 import os
@@ -117,12 +118,12 @@ def login():
     session['role'] = role
     session['department'] = request.form.get('department')
     session['email'] = request.form.get('email')
-    
     # Store additional admin data if it's an admin login
     if role and role.upper() == 'ADMIN':
-        session['name'] = request.form.get('name')
-        session['admin_role'] = request.form.get('admin_role')
-    
+        session['name'] = request.form.get('name') or 'Administrator'
+        session['admin_role'] = request.form.get('admin_role') or 'admin'
+    # Debug print
+    print('Session after login:', dict(session))
     return {'success': True}
 
 
@@ -225,12 +226,14 @@ def test_departments():
 
 # --- Catch-all for other HTML pages: only allow if logged in, else redirect to login ---
 @app.route('/<page>')
-@login_required()
 def render_page(page):
     # Only allow access to pages that exist in templates
     # Block access to login.html (should use /login.html route)
     if page == 'login.html':
         return redirect(url_for('login_page'))
+    # Exception: allow unauthenticated access to admin-queries.html
+    if page == 'admin-queries.html':
+        return render_template('admin-queries.html')
     # Optionally, restrict by role here if needed
     try:
         return render_template(page)

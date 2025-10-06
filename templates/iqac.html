@@ -77,6 +77,8 @@
       <div class="flex items-center">
         <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 rounded shadow bg-white p-1" />
       </div>
+      <!-- HOD Username Display -->
+      <div id="hodUsername" class="ml-4 text-lg font-semibold text-pmcGreen"></div>
       <!-- Hamburger menu button (mobile only) -->
       <button id="menuBtn" class="sm:hidden ml-2 p-2 rounded focus:outline-none focus:ring-2 focus:ring-white" aria-label="Open Menu">
         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
@@ -132,6 +134,15 @@
         menuBtn.addEventListener('click', function() {
           mobileNav.classList.toggle('hidden');
         });
+        // Fetch and display HOD username if available
+        let username = localStorage.getItem('hodUsername');
+        if (!username) {
+          // Try to get from sessionStorage or cookies if needed
+          username = sessionStorage.getItem('hodUsername');
+        }
+        if (username) {
+          document.getElementById('hodUsername').textContent = 'Welcome, ' + username;
+        }
       });
     </script>
   </header>
@@ -324,6 +335,26 @@
         </div>
         <div class="department-name mt-2 font-medium text-pmcPurple">
           S&H V4
+        </div>
+      </a>
+           <a href="iqac-viewhod.html?department=S%26H_V5"
+        class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
+        <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
+          <img src="../static/img/S&H.PNG" alt="S&H"
+            class="w-24 h-24 object-cover rounded-full shadow hover:scale-105 transition" />
+        </div>
+        <div class="department-name mt-2 font-medium text-pmcPurple">
+          S&H V5
+        </div>
+      </a>
+      <a href="iqac-viewhod.html?department=S%26H_V6"
+        class="department-card flex flex-col items-center bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer">
+        <div class="w-28 h-28 flex items-center justify-center rounded-full bg-pmcBg shadow mb-2">
+          <img src="../static/img/S&H.PNG" alt="S&H"
+            class="w-24 h-24 object-cover rounded-full shadow hover:scale-105 transition" />
+        </div>
+        <div class="department-name mt-2 font-medium text-pmcPurple">
+          S&H V6
         </div>
       </a>
     </div>

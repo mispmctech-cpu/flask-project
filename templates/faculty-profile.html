@@ -7,6 +7,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="../static/javascript/form-modal-mapper.js"></script>
   <script src="../static/javascript/workdone-table.js"></script>
+  <!-- Cropper.js for image cropping -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   </head>
   <body class="bg-pmcBg min-h-screen">
     <header class="bg-purple-800 text-white">
@@ -195,12 +198,11 @@
                 <tr>
                   <th class="p-3 border-b border-gray-300">Department</th>
                   <th class="p-3 border-b border-gray-300">Portfolio Name</th>
-                  <th class="p-3 border-b border-gray-300">
-                    Portfolio Member Name
-                  </th>
+                  <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
                   <th class="p-3 border-b border-gray-300">Status</th>
+                  <th class="p-3 border-b border-gray-300">Submitted At</th>
                   <th class="p-3 border-b border-gray-300">View</th>
-          <th class="p-3 border-b border-gray-300">Delete</th>
+                  <th class="p-3 border-b border-gray-300">Delete</th>
                 </tr>
               </thead>
               <tbody
@@ -255,6 +257,23 @@
         </div>
       </section>
     </main>
+    <!-- Image Cropper Modal -->
+    <div id="imageCropperModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
+        <button onclick="closeCropperModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <h3 class="text-xl font-bold mb-4 text-purple-700">Crop Your Image</h3>
+        <div class="mb-4">
+          <div id="cropperContainer" class="max-h-80 overflow-hidden">
+            <img id="cropperImage" class="max-w-full" style="display: none;">
+          </div>
+        </div>
+        <div class="flex gap-4 justify-end">
+          <button type="button" onclick="closeCropperModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded font-semibold">Cancel</button>
+          <button type="button" onclick="cropAndSaveImage()" class="bg-blue-500 hover:bg-blue-700 text-white px-6 py-2 rounded font-semibold">Crop & Save</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Update Password Modal -->
     <div id="updatePasswordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
       <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
@@ -283,6 +302,102 @@
     </div>
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
     <script>
+      // Image cropping functionality
+      let cropper = null;
+      let currentImageFile = null;
+
+      function openCropperModal() {
+        document.getElementById('imageCropperModal').classList.remove('hidden');
+      }
+
+      function closeCropperModal() {
+        document.getElementById('imageCropperModal').classList.add('hidden');
+        if (cropper) {
+          cropper.destroy();
+          cropper = null;
+        }
+        document.getElementById('cropperImage').style.display = 'none';
+        currentImageFile = null;
+      }
+
+      function cropAndSaveImage() {
+        if (!cropper) return;
+        
+        // Get cropped canvas
+        const canvas = cropper.getCroppedCanvas({
+          width: 200,
+          height: 200,
+          imageSmoothingEnabled: true,
+          imageSmoothingQuality: 'high',
+        });
+        
+        // Convert canvas to blob
+        canvas.toBlob(function(blob) {
+          // Create a file from the blob
+          const fileName = currentImageFile ? currentImageFile.name : 'cropped_image.jpg';
+          const croppedFile = new File([blob], fileName, { type: 'image/jpeg' });
+          
+          // Update the preview image
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            document.getElementById('facultyImage').src = e.target.result;
+            document.getElementById('saveProfileBtn').classList.remove('hidden');
+            document.getElementById('editStatusMsg').textContent = 'Image cropped. Click Save to upload.';
+            window._facultyProfileImageFile = croppedFile;
+          };
+          reader.readAsDataURL(croppedFile);
+          
+          closeCropperModal();
+        }, 'image/jpeg', 0.9);
+      }
+
+      // Image edit logic
+      document.getElementById('editImageBtn').addEventListener('click', function() {
+        document.getElementById('facultyImageInput').click();
+      });
+      
+      document.getElementById('facultyImageInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          currentImageFile = file;
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            const img = document.getElementById('cropperImage');
+            img.src = evt.target.result;
+            img.style.display = 'block';
+            
+            openCropperModal();
+            
+            // Initialize cropper
+            setTimeout(() => {
+              if (cropper) {
+                cropper.destroy();
+              }
+              cropper = new Cropper(img, {
+                aspectRatio: 1, // Square crop
+                viewMode: 2,
+                dragMode: 'move',
+                autoCropArea: 0.8,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+                modal: true,
+                background: true,
+                responsive: true,
+                checkOrientation: false,
+                scalable: true,
+                zoomable: true,
+              });
+            }, 100);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
       // Rejected Workdone Table Logic
       let rejectedCurrentPage = 1;
       let rejectedRowsPerPage = 10;
@@ -574,23 +689,7 @@
       });
     </script>
     <script>
-      // Image edit logic
-      document.getElementById('editImageBtn').addEventListener('click', function() {
-        document.getElementById('facultyImageInput').click();
-      });
-      document.getElementById('facultyImageInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = function(evt) {
-            document.getElementById('facultyImage').src = evt.target.result;
-            document.getElementById('saveProfileBtn').classList.remove('hidden');
-            document.getElementById('editStatusMsg').textContent = 'Image selected. Click Save to upload.';
-            window._facultyProfileImageFile = file;
-          };
-          reader.readAsDataURL(file);
-        }
-      });
+      // Image edit logic - REMOVED (moved above)
       // Get email from query param
       function getQueryParam(name) {
         const url = new URL(window.location.href);

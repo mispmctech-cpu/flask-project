@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - Queries Table</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-purple-50 min-h-screen flex flex-col items-center justify-center">
+  <!-- Modal Popup for Resolution -->
+  <div id="resolve-modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+      <h2 class="text-lg font-bold mb-2 text-purple-800">Resolve Query</h2>
+      <div class="mb-2">
+        <label class="block text-sm font-semibold mb-1">Resolution Details</label>
+        <textarea id="modal-resolution" class="w-full p-2 border border-gray-300 rounded" rows="3" placeholder="Enter resolution details..."></textarea>
+      </div>
+      <div class="mb-2">
+        <label class="block text-sm font-semibold mb-1">Resolved By (Admin Name)</label>
+        <input type="text" id="modal-resolvedby" class="w-full p-2 border border-gray-300 rounded" placeholder="Enter your name..." />
+      </div>
+      <div class="flex justify-end gap-2 mt-4">
+        <button id="modal-cancel" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+        <button id="modal-submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Submit</button>
+      </div>
+    </div>
+  </div>
+  <!-- Modal Popup for Messages -->
+  <div id="message-modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm text-center">
+      <div id="message-modal-text" class="mb-4 text-purple-800 font-semibold"></div>
+      <button id="message-modal-close" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">OK</button>
+    </div>
+  </div>
+  <header class="w-full max-w-4xl text-center mt-8 mb-4">
+    <h1 class="text-2xl md:text-3xl font-bold text-purple-800 mb-2">FACULTY WORK ASSESSMENT PROGRESSION MANAGEMENT SYSTEM</h1>
+    <h2 class="text-lg text-purple-600 font-semibold mb-4">QUERIES ADMIN VIEW</h2>
+  </header>
+  <div class="bg-white rounded-xl shadow-lg px-8 py-8 w-full max-w-4xl flex flex-col items-center">
+    <!-- Unresolved Queries Card -->
+    <div class="bg-white rounded-xl shadow-lg px-6 py-6 w-full max-w-4xl mb-8">
+      <h3 class="text-xl font-semibold text-purple-700 mb-2 mt-2">Unresolved Queries</h3>
+      <div class="flex flex-wrap gap-4 mb-6 w-full justify-center">
+        <label class="flex flex-col items-start">
+          <span class="mb-1 text-sm text-gray-600">From Date</span>
+          <input type="date" id="filter-created-from" class="p-2 border border-gray-300 rounded-md w-48" />
+        </label>
+        <label class="flex flex-col items-start">
+          <span class="mb-1 text-sm text-gray-600">To Date</span>
+          <input type="date" id="filter-created-to" class="p-2 border border-gray-300 rounded-md w-48" />
+        </label>
+      </div>
+      <!-- Text filters for unresolved queries -->
+      <div class="flex flex-wrap gap-4 mb-4 w-full justify-center">
+        <input type="text" id="filter-name" placeholder="Filter Name" class="p-2 border border-gray-300 rounded-md w-40" />
+        <input type="text" id="filter-department" placeholder="Filter Department" class="p-2 border border-gray-300 rounded-md w-40" />
+        <input type="text" id="filter-mobile" placeholder="Filter Mobile Number" class="p-2 border border-gray-300 rounded-md w-40" />
+        <input type="text" id="filter-mail" placeholder="Filter Mail ID" class="p-2 border border-gray-300 rounded-md w-40" />
+        <input type="text" id="filter-query" placeholder="Filter Query" class="p-2 border border-gray-300 rounded-md w-40" />
+      </div>
+      <div class="overflow-x-auto w-full mb-4">
+        <table class="min-w-full border border-gray-300 rounded-lg">
+          <thead class="bg-purple-800 text-white">
+            <tr>
+              <th class="py-2 px-4">Name</th>
+              <th class="py-2 px-4">Department</th>
+              <th class="py-2 px-4">Mobile Number</th>
+              <th class="py-2 px-4">Mail ID</th>
+              <th class="py-2 px-4">Query</th>
+              <th class="py-2 px-4">Created At</th>
+              <th class="py-2 px-4">Action</th>
+            </tr>
+          </thead>
+          <tbody id="queries-table-body" class="bg-white text-gray-700">
+            <!-- Rows will be injected here -->
+          </tbody>
+        </table>
+      </div>
+      <div id="no-results" class="hidden text-red-600 mt-4 font-semibold">No queries found.</div>
+    </div>
+
+    <!-- Resolved Queries Card -->
+    <div class="bg-white rounded-xl shadow-lg px-6 py-6 w-full max-w-4xl">
+      <h3 class="text-xl font-semibold text-green-700 mb-2 mt-2">Resolved Queries</h3>
+      <div class="flex flex-wrap gap-4 mb-6 w-full justify-center">
+        <label class="flex flex-col items-start">
+          <span class="mb-1 text-sm text-gray-600">From Date</span>
+          <input type="date" id="filter-resolved-from" class="p-2 border border-gray-300 rounded-md w-48" />
+        </label>
+        <label class="flex flex-col items-start">
+          <span class="mb-1 text-sm text-gray-600">To Date</span>
+          <input type="date" id="filter-resolved-to" class="p-2 border border-gray-300 rounded-md w-48" />
+        </label>
+      </div>
+      <!-- Text filters for resolved queries -->
+      <div class="flex flex-wrap gap-4 mb-4 w-full justify-center">
+        <input type="text" id="filter-r-name" placeholder="Filter Name" class="p-2 border border-gray-300 rounded-md w-36" />
+        <input type="text" id="filter-r-department" placeholder="Filter Department" class="p-2 border border-gray-300 rounded-md w-36" />
+        <input type="text" id="filter-r-mobile" placeholder="Filter Mobile Number" class="p-2 border border-gray-300 rounded-md w-36" />
+        <input type="text" id="filter-r-mail" placeholder="Filter Mail ID" class="p-2 border border-gray-300 rounded-md w-36" />
+        <input type="text" id="filter-r-query" placeholder="Filter Query" class="p-2 border border-gray-300 rounded-md w-36" />
+        <input type="text" id="filter-r-resolvedby" placeholder="Filter Resolved By" class="p-2 border border-gray-300 rounded-md w-36" />
+        <input type="text" id="filter-r-resolution" placeholder="Filter Resolution" class="p-2 border border-gray-300 rounded-md w-36" />
+      </div>
+      <div class="overflow-x-auto w-full">
+        <table class="min-w-full border border-gray-300 rounded-lg">
+          <thead class="bg-green-700 text-white">
+            <tr>
+              <th class="py-2 px-4">Name</th>
+              <th class="py-2 px-4">Department</th>
+              <th class="py-2 px-4">Mobile Number</th>
+              <th class="py-2 px-4">Mail ID</th>
+              <th class="py-2 px-4">Query</th>
+              <th class="py-2 px-4">Resolved By</th>
+              <th class="py-2 px-4">Resolution</th>
+              <th class="py-2 px-4">Resolved At</th>
+            </tr>
+          </thead>
+          <tbody id="resolved-table-body" class="bg-white text-gray-700">
+            <!-- Rows will be injected here -->
+          </tbody>
+        </table>
+      </div>
+      <div id="no-resolved-results" class="hidden text-red-600 mt-4 font-semibold">No resolved queries found.</div>
+    </div>
+  </div>
+  <script>
+    const SUPABASE_URL = "https://cbhodgwaazmjszkujrti.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let allQueries = [];
+    let allResolved = [];
+
+    async function fetchQueries() {
+      const { data, error } = await supabaseClient
+        .from('Queries')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) {
+        document.getElementById('no-results').textContent = 'Error fetching queries: ' + (error.message || 'Unknown error');
+        document.getElementById('no-results').classList.remove('hidden');
+        return;
+      }
+      allQueries = data || [];
+      renderTable();
+    }
+
+    async function fetchResolved() {
+      const { data, error } = await supabaseClient
+        .from('ResolvedQueries')
+        .select('*')
+        .order('resolved_at', { ascending: false });
+      if (error) {
+        document.getElementById('no-resolved-results').textContent = 'Error fetching resolved queries: ' + (error.message || 'Unknown error');
+        document.getElementById('no-resolved-results').classList.remove('hidden');
+        return;
+      }
+      allResolved = data || [];
+      renderResolvedTable();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('queries-table-body');
+      tbody.innerHTML = '';
+      const filters = {
+        name: document.getElementById('filter-name').value.trim().toLowerCase(),
+        department: document.getElementById('filter-department').value.trim().toLowerCase(),
+        mobile: document.getElementById('filter-mobile').value.trim().toLowerCase(),
+        mail: document.getElementById('filter-mail').value.trim().toLowerCase(),
+        query: document.getElementById('filter-query').value.trim().toLowerCase(),
+      };
+      const filtered = allQueries.filter(q => {
+        return (!filters.name || (q["Name"]||'').toLowerCase().includes(filters.name)) &&
+               (!filters.department || (q["department"]||'').toLowerCase().includes(filters.department)) &&
+               (!filters.mobile || (q["mobile number"]||'').toLowerCase().includes(filters.mobile)) &&
+               (!filters.mail || (q["mail id"]||'').toLowerCase().includes(filters.mail)) &&
+               (!filters.query || (q["queries"]||'').toLowerCase().includes(filters.query));
+      });
+      if (filtered.length === 0) {
+        document.getElementById('no-results').classList.remove('hidden');
+      } else {
+        document.getElementById('no-results').classList.add('hidden');
+        filtered.forEach(q => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="py-2 px-4">${q["Name"] || ''}</td>
+            <td class="py-2 px-4">${q["department"] || ''}</td>
+            <td class="py-2 px-4">${q["mobile number"] || ''}</td>
+            <td class="py-2 px-4">${q["mail id"] || ''}</td>
+            <td class="py-2 px-4">${q["queries"] || ''}</td>
+            <td class="py-2 px-4">${q.created_at ? new Date(q.created_at).toLocaleString() : ''}</td>
+            <td class="py-2 px-4">
+              <button class="resolve-btn bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded" data-id="${q.id}">Resolve</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        // Attach resolve button listeners
+        document.querySelectorAll('.resolve-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const queryId = this.getAttribute('data-id');
+            const queryObj = allQueries.find(q => q.id == queryId);
+            showResolveModal(queryObj);
+          });
+        });
+      }
+    // Modal logic
+    function showResolveModal(queryObj) {
+      const modal = document.getElementById('resolve-modal');
+      modal.classList.remove('hidden');
+      document.getElementById('modal-resolution').value = '';
+      document.getElementById('modal-resolvedby').value = '';
+      // Submit handler
+      const submitBtn = document.getElementById('modal-submit');
+      const cancelBtn = document.getElementById('modal-cancel');
+      function cleanup() {
+        modal.classList.add('hidden');
+        submitBtn.removeEventListener('click', submitHandler);
+        cancelBtn.removeEventListener('click', cancelHandler);
+      }
+      function submitHandler() {
+        const resolution = document.getElementById('modal-resolution').value.trim();
+        const resolvedBy = document.getElementById('modal-resolvedby').value.trim();
+        if (!resolution) {
+          showMessageModal('Please enter resolution details.');
+          return;
+        }
+        if (!resolvedBy) {
+          showMessageModal('Please specify your name (Resolved By).');
+          return;
+        }
+        // Save admin name to localStorage for future
+        localStorage.setItem('adminName', resolvedBy);
+        // Insert into ResolvedQueries
+        supabaseClient
+          .from('ResolvedQueries')
+          .insert({
+            "Name": queryObj["Name"],
+            "department": queryObj["department"],
+            "mobile number": queryObj["mobile number"],
+            "mail id": queryObj["mail id"],
+            "queries": queryObj["queries"],
+            resolved_by: resolvedBy,
+            resolution: resolution
+          })
+          .then(({ error: insertError }) => {
+            if (insertError) {
+              showMessageModal('Error resolving query: ' + (insertError.message || 'Unknown error'));
+              cleanup();
+              return;
+            }
+            // Delete from Queries
+            supabaseClient
+              .from('Queries')
+              .delete()
+              .eq('id', queryObj.id)
+              .then(({ error: deleteError }) => {
+                if (deleteError) {
+                  showMessageModal('Resolved, but could not remove from Queries: ' + (deleteError.message || 'Unknown error'));
+                } else {
+                  showMessageModal('Query resolved and moved to ResolvedQueries.');
+                  fetchQueries();
+                }
+                cleanup();
+              });
+          });
+      }
+      function cancelHandler() {
+        cleanup();
+      }
+      submitBtn.addEventListener('click', submitHandler);
+      cancelBtn.addEventListener('click', cancelHandler);
+    }
+
+    function showMessageModal(message) {
+      const modal = document.getElementById('message-modal');
+      document.getElementById('message-modal-text').textContent = message;
+      modal.classList.remove('hidden');
+      const closeBtn = document.getElementById('message-modal-close');
+      function closeHandler() {
+        modal.classList.add('hidden');
+        closeBtn.removeEventListener('click', closeHandler);
+      }
+      closeBtn.addEventListener('click', closeHandler);
+    }
+    }
+
+    function renderResolvedTable() {
+      const tbody = document.getElementById('resolved-table-body');
+      tbody.innerHTML = '';
+      const filters = {
+        name: document.getElementById('filter-r-name').value.trim().toLowerCase(),
+        department: document.getElementById('filter-r-department').value.trim().toLowerCase(),
+        mobile: document.getElementById('filter-r-mobile').value.trim().toLowerCase(),
+        mail: document.getElementById('filter-r-mail').value.trim().toLowerCase(),
+        query: document.getElementById('filter-r-query').value.trim().toLowerCase(),
+        resolvedby: document.getElementById('filter-r-resolvedby').value.trim().toLowerCase(),
+        resolution: document.getElementById('filter-r-resolution').value.trim().toLowerCase(),
+      };
+      const filtered = allResolved.filter(q => {
+        return (!filters.name || (q["Name"]||'').toLowerCase().includes(filters.name)) &&
+               (!filters.department || (q["department"]||'').toLowerCase().includes(filters.department)) &&
+               (!filters.mobile || (q["mobile number"]||'').toLowerCase().includes(filters.mobile)) &&
+               (!filters.mail || (q["mail id"]||'').toLowerCase().includes(filters.mail)) &&
+               (!filters.query || (q["queries"]||'').toLowerCase().includes(filters.query)) &&
+               (!filters.resolvedby || (q["resolved_by"]||'').toLowerCase().includes(filters.resolvedby)) &&
+               (!filters.resolution || (q["resolution"]||'').toLowerCase().includes(filters.resolution));
+      });
+      if (filtered.length === 0) {
+        document.getElementById('no-resolved-results').classList.remove('hidden');
+      } else {
+        document.getElementById('no-resolved-results').classList.add('hidden');
+        filtered.forEach(q => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="py-2 px-4">${q["Name"] || ''}</td>
+            <td class="py-2 px-4">${q["department"] || ''}</td>
+            <td class="py-2 px-4">${q["mobile number"] || ''}</td>
+            <td class="py-2 px-4">${q["mail id"] || ''}</td>
+            <td class="py-2 px-4">${q["queries"] || ''}</td>
+            <td class="py-2 px-4">${q["resolved_by"] || ''}</td>
+            <td class="py-2 px-4">${q["resolution"] || ''}</td>
+            <td class="py-2 px-4">${q.resolved_at ? new Date(q.resolved_at).toLocaleString() : ''}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    }
+
+    document.getElementById('filter-name').addEventListener('input', renderTable);
+    document.getElementById('filter-department').addEventListener('input', renderTable);
+    document.getElementById('filter-mobile').addEventListener('input', renderTable);
+    document.getElementById('filter-mail').addEventListener('input', renderTable);
+    document.getElementById('filter-query').addEventListener('input', renderTable);
+    document.getElementById('filter-r-name').addEventListener('input', renderResolvedTable);
+    document.getElementById('filter-r-department').addEventListener('input', renderResolvedTable);
+    document.getElementById('filter-r-mobile').addEventListener('input', renderResolvedTable);
+    document.getElementById('filter-r-mail').addEventListener('input', renderResolvedTable);
+    document.getElementById('filter-r-query').addEventListener('input', renderResolvedTable);
+    fetchQueries();
+    fetchResolved();
+  </script>
+</body>
+</html>

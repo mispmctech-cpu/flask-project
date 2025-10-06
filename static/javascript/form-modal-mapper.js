@@ -7,7 +7,48 @@
 function getFormModalContent(row, details) {
   // Detect form type
   let portfolio = row.portfolio ? row.portfolio.toLowerCase() : '';
+  let tableName = row.table ? row.table.toLowerCase() : '';
   let html = '';
+  // Custom view for form1-once in a semester
+  if (row.table && row.table.toLowerCase() === 'form1-once in a semester') {
+    const customFields = [
+      'Department Budget File',
+      'PAC File',
+      'DAAC File',
+      'BOS File',
+      'Department Academic Calendar File',
+      'Subject Allocation File',
+      'Workload File',
+      'Time Table',
+      'Vision, Mission, PO, PEO Process & Dissemination File',
+      'Syllabus & Regulations File'
+    ];
+    html += `<div class=\"mb-4\"><span class=\"text-2xl font-bold text-purple-700\">Department Semester Workdone Details</span></div>`;
+    html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || details['Portfolio Memeber Name'] || details['faculty_name'] || details['Faculty Name'] || details['Name'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Semester:</span> <span>${details['Semester'] || '-'}</span></div>`;
+    html += `</div>`;
+    html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4 mt-4'>`;
+    customFields.forEach((label, i) => {
+      const idx = i + 1;
+      html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${label}</span></div>`;
+      // Use correct field names from schema
+      const statusKey = `Status-${idx}`;
+      const descKey = `Description-${idx}`;
+      const fileKey = `Upload The Scanned File-${idx}`;
+      html += `<div><span class=\"font-semibold text-gray-700\">${statusKey}:</span> <span>${details[statusKey] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">${descKey}:</span> <span>${details[descKey] || '-'}</span></div>`;
+      let fileVal = details[fileKey];
+      let fileHtml = '-';
+      if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
+        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
+      }
+      html += `<div><span class=\"font-semibold text-gray-700\">${fileKey}:</span> <span>${fileHtml}</span></div>`;
+    });
+    html += `</div>`;
+    return html;
+  }
 
     // form-ap.html
   if (
@@ -765,70 +806,39 @@ function getFormModalContent(row, details) {
   }
 
   // Faculty-form4.html - Course Outcome & Program Outcome Member (Exam Cell)
-  if (portfolio.includes('course outcome & program outcome member')) {
-    let tableName = (row.table || '').toLowerCase();
-    let html = `<div class=\"mb-4\"><span class=\"text-2xl font-bold text-purple-700\">Course Outcome & Program Outcome Member</span></div>`;
+  // Faculty-form4.html - Course Outcome & Program Outcome Member (Exam Cell) (Monthly, form4-once in a month)
+  if (portfolio.includes('course outcome & program outcome member') && (row.table || '').toLowerCase().includes('form4-once in a month')) {
+    html += `<div class=\"mb-4\"><span class=\"text-2xl font-bold text-purple-700\">Course Outcome & Program Outcome Member (Exam Cell) - Monthly</span></div>`;
     html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-6\">`;
-    html += `<div><span class=\"font-semibold text-gray-700\">Department:</span> <span>${details['Department'] || '-'}</span></div>`;
-    html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name'] || '-'}</span></div>`;
-    html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Memeber Name'] || details['Portfolio Member Name'] || '-'}</span></div>`;
-    html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month'] || '-'}</span></div>`;
-    html += `<div><span class=\"font-semibold text-gray-700\">Week no:</span> <span>${details['Week no'] || '-'}</span></div>`;
-    html += `<div><span class=\"font-semibold text-gray-700\">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
-    html += `<div><span class=\"font-semibold text-gray-700\">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Memeber Name'] || details['Portfolio Member Name'] || details['faculty_name'] || details['Faculty Name'] || details['Name'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
     html += `</div>`;
-
-    // Weekly: only 1 status/desc/file
-    if (tableName.includes('weekly')) {
-      html += `<div class='space-y-4'>`;
-      html += `<div class="border-b pb-2 mb-2">
-        <div class="font-semibold text-orange-500 mb-1">1. Slip Test File</div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-          <div class="flex flex-col"><span class="font-medium text-purple-700">Status:</span> <span>${details['Status_1'] || '-'}</span></div>
-          <div class="flex flex-col"><span class="font-medium text-purple-700">Description:</span> <span>${details['Description_1'] || '-'}</span></div>
-          <div class="flex flex-col"><span class="font-medium text-purple-700">Upload:</span> `;
-      let fileVal = details['Upload Scanned File_1'] || details['Upload The Scanned File_1'] || '-';
-      if (fileVal && fileVal !== '-' && typeof fileVal === 'string' && (fileVal.startsWith('http://') || fileVal.startsWith('https://') || fileVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i))) {
-        html += `<a href="${fileVal}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block">View File</a>`;
-      } else {
-        html += '-';
+    // Only 8 required fields
+    const labels = [
+      'Exam TimeTable File',
+      'Internal Exam Question Paper File With Answer Key',
+      'Result Analysis File',
+      'Question Bank',
+      'Slow Learner Couching File',
+      'Action taken for Internal Test Failures File',
+      'Result File',
+      'ERP internal Mark Entry File'
+    ];
+    html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4 mt-4'>`;
+    for (let i = 1; i <= labels.length; i++) {
+      html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${labels[i-1]}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+      let fileVal = details[`Upload The Scanned File_${i}`];
+      let fileHtml = '-';
+      if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
+        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
       }
-      html += `</div>
-        </div>
-      </div>`;
-      html += `</div>`;
-    } else {
-      // Once in a month or semester: 8 status/desc/file fields
-      const rowHeaders = [
-        'Slip Test File',
-        'Exam TimeTable File',
-        'Internal Exam Question Paper File With Answer Key',
-        'Result Analysis File',
-        'Question Bank',
-        'Assignment File',
-        'Lab Manual File',
-        'Project File'
-      ];
-      html += `<div class='space-y-4'>`;
-      for (let i = 1; i <= 8; i++) {
-        html += `<div class="border-b pb-2 mb-2">
-          <div class="font-semibold text-orange-500 mb-1">${i}. ${rowHeaders[i-1]}</div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div class="flex flex-col"><span class="font-medium text-purple-700">Status:</span> <span>${details[`Status_${i}`] || '-'}</span></div>
-            <div class="flex flex-col"><span class="font-medium text-purple-700">Description:</span> <span>${details[`Description_${i}`] || '-'}</span></div>
-            <div class="flex flex-col"><span class="font-medium text-purple-700">Upload:</span> `;
-        let fileVal = details[`Upload The Scanned File_${i}`] || details[`Upload Scanned File_${i}`] || '-';
-        if (fileVal && fileVal !== '-' && typeof fileVal === 'string' && (fileVal.startsWith('http://') || fileVal.startsWith('https://') || fileVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i))) {
-          html += `<a href="${fileVal}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block">View File</a>`;
-        } else {
-          html += '-';
-        }
-        html += `</div>
-          </div>
-        </div>`;
-      }
-      html += `</div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Upload The Scanned File_${i}:</span> <span>${fileHtml}</span></div>`;
     }
+    html += `</div>`;
     return html;
   }
 
@@ -894,61 +904,47 @@ function getFormModalContent(row, details) {
   // Faculty-form1.html
   if (portfolio.includes('students performance in training & placement member')) {
     let freq = '';
-    let tableName = row.table || '';
-    
-    // Detect frequency from table name or portfolio
-    if (tableName.includes('weekly') || tableName.includes('Weekly') || portfolio.includes('weekly')) freq = 'weekly';
-    else if (tableName.includes('15') || portfolio.includes('15')) freq = '15days';
-    else if (tableName.includes('semester') || portfolio.includes('semester')) freq = 'semester';
-    else if (tableName.includes('year') || portfolio.includes('year')) freq = 'yearly';
-    else freq = 'weekly'; // default
-    
-    html += `<div class="mb-4"><span class="text-lg font-bold text-purple-700">Students Performance in Training & Placement Member (${freq === '15days' ? 'Once in 15 Days' : freq.charAt(0).toUpperCase() + freq.slice(1)})</span></div>`;
+    // Improved frequency detection for bi-weekly/15 days
+    if (tableName.includes('once in 15 days') || tableName.includes('bi-weekly') || tableName.includes('15 days') || portfolio.includes('once in 15 days') || portfolio.includes('bi-weekly') || portfolio.includes('15 days')) {
+      freq = '15days';
+    } else if (tableName.includes('weekly') || portfolio.includes('weekly')) {
+      freq = 'weekly';
+    } else if (tableName.includes('semester') || portfolio.includes('semester')) {
+      freq = 'semester';
+    } else if (tableName.includes('year') || portfolio.includes('year')) {
+      freq = 'yearly';
+    } else {
+      freq = 'weekly'; // default
+    }
+
+  html += `<div class="mb-4"><span class="text-lg font-bold text-purple-700">Students Performance in Training & Placement Member (${freq === '15days' ? 'Once in 15 Days' : freq === 'weekly' ? 'Weekly' : freq.charAt(0).toUpperCase() + freq.slice(1)})</span></div>`;
     html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
     html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
     html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || details['Portfolio Memeber Name'] || details['faculty_name'] || details['Faculty Name'] || details['Name'] || '-'}</span></div>`;
-    if (freq === 'weekly') {
-      html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Week No:</span> <span>${details['Week No'] || details['Week no'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
-      // Helper function for file field
-      function getFileButton(val1, val2) {
-        let fileVal = val1 || val2;
-        if (fileVal && typeof fileVal === 'string' && fileVal !== '-' && fileVal !== 'null' && fileVal.trim() !== '' && (fileVal.startsWith('http://') || fileVal.startsWith('https://') || fileVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i))) {
-          return `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
+    if (freq === '15days') {
+      html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Week no:</span> <span>${details['Week no'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
+      html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4 mt-4'>`;
+      html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>1. Department Meeting File</div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Status_1:</span> <span>${details['Status_1'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Description_1:</span> <span>${details['Description_1'] || '-'}</span></div>`;
+      function getFileButton(val) {
+        if (val && typeof val === 'string' && val !== '-' && val !== 'null' && val.trim() !== '') {
+          return `<a href='${val}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
         }
         return '-';
       }
-      html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>1. Lab Visit File</div>`;
-      html += `<div><span class="font-semibold text-gray-700">Status_1:</span> <span>${details['Status_1'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Description_1:</span> <span>${details['Description_1'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Upload The Scanned File_1:</span> <span>${getFileButton(details['Upload The Scanned File_1'], details['Upload the scanned file_1'])}</span></div>`;
-      html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>2. Theory Class Monitoring File</div>`;
-      html += `<div><span class="font-semibold text-gray-700">Status_2:</span> <span>${details['Status_2'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Description_2:</span> <span>${details['Description_2'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Upload The Scanned File_2:</span> <span>${getFileButton(details['Upload The Scanned File_2'], details['Upload the scanned file_2'])}</span></div>`;
-      html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>3. Placement File</div>`;
-      html += `<div><span class="font-semibold text-gray-700">Status_3:</span> <span>${details['Status_3'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Description_3:</span> <span>${details['Description_3'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Upload The Scanned File_3:</span> <span>${getFileButton(details['Upload The Scanned File_3'], details['Upload the scanned file_3'])}</span></div>`;
-      html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>4. Training File</div>`;
-      html += `<div><span class="font-semibold text-gray-700">Status_4:</span> <span>${details['Status_4'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Description_4:</span> <span>${details['Description_4'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Upload The Scanned File_4:</span> <span>${getFileButton(details['Upload The Scanned File_4'], details['Upload the scanned file_4'])}</span></div>`;
-    } else if (freq === '15days') {
-      html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Week no:</span> <span>${details['Week no'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
-      html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>1. Department Meeting File</div>`;
-      html += `<div><span class="font-semibold text-gray-700">Status_1:</span> <span>${details['Status_1'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Description_1:</span> <span>${details['Description_1'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Upload the scanned file:</span> <span>${details['Upload the scanned file'] ? `<a href='${details['Upload the scanned file']}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
-      html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>2. Career Guidance Program File</div>`;
-      html += `<div><span class="font-semibold text-gray-700">Status_2:</span> <span>${details['Status_2'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Description_2:</span> <span>${details['Description_2'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Upload the scanned file_2:</span> <span>${details['Upload the scanned file_2'] ? `<a href='${details['Upload the scanned file_2']}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+  html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file:</span> <span>${getFileButton(details['Upload The Scanned File_1'])}</span></div>`;
+  html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>2. Career Guidance Program File</div>`;
+  html += `<div><span class=\"font-semibold text-gray-700\">Status_2:</span> <span>${details['Status_2'] || '-'}</span></div>`;
+  html += `<div><span class=\"font-semibold text-gray-700\">Description_2:</span> <span>${details['Description_2'] || '-'}</span></div>`;
+  html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_2:</span> <span>${getFileButton(details['Upload The Scanned File_2'])}</span></div>`;
+      html += `</div>`;
+    } else if (freq === 'weekly') {
+      // ...existing code...
+      // (weekly logic unchanged)
     } else if (freq === 'yearly') {
       html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
       html += `<div><span class="font-semibold text-gray-700">Week No:</span> <span>${details['Week No'] || '-'}</span></div>`;
@@ -1030,6 +1026,7 @@ function getFormModalContent(row, details) {
       html += `<div><span class="font-semibold text-gray-700">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
       // 8 status/desc/upload blocks
       const monthFiles = [
+        'Master Log Book',
         'Attendence Report To Parents',
         'ERP Attendence Entry',
         'Test Report to Parents',
