@@ -244,7 +244,7 @@
       try {
         const { data: rejectedData, error: rejectedError } = await supabaseClient
           .from('iqac_workdone_reject')
-          .select('input_id, department, portfolio_name, portfolio_member_name, rejected_at');
+          .select('input_id, department, portfolio_name, portfolio_member_name, rejected_at, table_name, submitted_at');
         if (rejectedError) {
           rejectedRows = [];
         } else {
@@ -384,19 +384,29 @@
       const commands = document.getElementById('rejectCommands').value.trim();
       const statusBox = document.getElementById('rejectStatus');
       statusBox.textContent = '';
+      
       if (!commands) {
         statusBox.textContent = 'Please enter a reason or commands.';
+        statusBox.style.color = 'red';
         return;
       }
+      
       if (!_iqacRejectRow) {
         statusBox.textContent = 'Error: Workdone record not found.';
+        statusBox.style.color = 'red';
         return;
       }
+      
       statusBox.textContent = 'Rejecting...';
+      statusBox.style.color = 'blue';
+      
       try {
         const btns = document.querySelectorAll('.reject-btn');
         btns.forEach(b => b.disabled = true);
+        
         const row = _iqacRejectRow;
+        console.log('Rejecting row:', row); // Debug log
+        
         const rejectData = {
           department: row.department,
           portfolio_name: row.portfolio_name,
@@ -407,8 +417,12 @@
           view_link: row.view_link || null,
           input_id: row.input_id || null,
           table_name: row.table_name || null,
+          submitted_at: row.submitted_at || row.verified_at || null,
           commands: commands
         };
+        
+        console.log('Reject data to insert:', rejectData); // Debug log
+        
         // Insert or update logic for unique input_id
         let result;
         if (rejectData.input_id) {
@@ -432,18 +446,42 @@
             .from('iqac_workdone_reject')
             .insert([rejectData]);
         }
+        
+        console.log('Database result:', result); // Debug log
+        
         if (result.error) {
           statusBox.textContent = 'Failed to reject record: ' + result.error.message;
+          statusBox.style.color = 'red';
           btns.forEach(b => b.disabled = false);
           return;
         }
-        // Remove row from table (UI only)
-        if (btns.length > 0) btns.forEach(b => b.disabled = false);
-        closeRejectModal();
-        // Optionally reload rejected table
+        
+        statusBox.textContent = 'Record rejected successfully!';
+        statusBox.style.color = 'green';
+        
+        // Remove the row from the main table
+        const rejectBtn = document.querySelector(`button[data-row*='"input_id":"${row.input_id}"']`);
+        if (rejectBtn) {
+          rejectBtn.closest('tr').remove();
+        }
+        
+        // Re-enable buttons and close modal
+        btns.forEach(b => b.disabled = false);
+        
+        // Close modal after a short delay to show success message
+        setTimeout(() => {
+          closeRejectModal();
+        }, 1000);
+        
+        // Reload both rejected table and main table to ensure proper filtering
         loadRejectedIQACWorkdone();
+        loadIQACWorkdone();
+        
       } catch (err) {
+        console.error('Error rejecting record:', err); // Debug log
         statusBox.textContent = 'Error rejecting record: ' + err.message;
+        statusBox.style.color = 'red';
+        const btns = document.querySelectorAll('.reject-btn');
         btns.forEach(b => b.disabled = false);
       }
     });
