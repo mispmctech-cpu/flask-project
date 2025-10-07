@@ -28,15 +28,15 @@
 
   <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // List of forms and their table names (updated with names from image)
+    // List of forms and their table names (priority order)
     const forms = [
+      { name: 'Principal', table: 'Institution-form3' },
+      { name: 'Director - Academics', table: 'Institution-form5' },
+      { name: 'Executive Dean – International Affairs', table: 'Institution-form7' },
       { name: 'Director – Students welfare & Admission', table: 'Institution-form1-monthly' },
       { name: 'Head - HR', table: 'Institution-form2' },
-      { name: 'Principal', table: 'Institution-form3' },
       { name: 'Dean - IQAC', table: 'Institution-form4' },
-      { name: 'Director - Academics', table: 'Institution-form5' },
       { name: 'Controller of Examinations', table: 'Institution-form6' },
-      { name: 'Executive Dean – International Affairs', table: 'Institution-form7' },
       { name: 'Head - Placements', table: 'Institution-form8' },
       { name: 'Placement officer', table: 'Institution-form9' },
       { name: 'Head – Training', table: 'Institution-form10' },
@@ -116,7 +116,21 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'block w-full text-left px-3 py-2 hover:bg-purple-100 rounded';
-        btn.innerHTML = `<span class='font-semibold'>${fac.Name || ''}</span> <span class='text-xs text-gray-500'>(ID: ${fac.EmployeeID || ''})</span>`;
+        
+        // Show how many forms this faculty is already assigned to
+        let assignedCount = 0;
+        if (fac.assigned_forms) {
+          try {
+            const arr = JSON.parse(fac.assigned_forms);
+            if (Array.isArray(arr)) assignedCount = arr.length;
+          } catch {}
+        }
+        
+        btn.innerHTML = `
+          <span class='font-semibold'>${fac.Name || ''}</span> 
+          <span class='text-xs text-gray-500'>(ID: ${fac.EmployeeID || ''})</span>
+          ${assignedCount > 0 ? `<span class='text-xs text-blue-600 ml-2'>(${assignedCount} forms assigned)</span>` : ''}
+        `;
         btn.onclick = () => {
           selectedFaculty = fac;
           document.getElementById('saveFacultyBtn').disabled = false;
@@ -135,34 +149,49 @@
     async function saveFacultyAssignment() {
       if (selectedFormIdx === null || !selectedFaculty) return;
       const formName = forms[selectedFormIdx].name;
-      // Check if already assigned to any faculty
-      const { data: facultyRows } = await supabase.from('Faculty').select('input_id, assigned_forms');
-      let alreadyAssigned = false;
+      
+      // Check if this form is already assigned to any faculty
+      const { data: facultyRows } = await supabase.from('Faculty').select('input_id, Name, assigned_forms');
+      let alreadyAssignedTo = null;
+      
       if (facultyRows && Array.isArray(facultyRows)) {
         for (const row of facultyRows) {
           if (row.assigned_forms) {
             let arr = [];
             try { arr = JSON.parse(row.assigned_forms); } catch {}
             if (Array.isArray(arr) && arr.includes(formName)) {
-              alreadyAssigned = true;
+              alreadyAssignedTo = row.Name;
               break;
             }
           }
         }
       }
-      if (alreadyAssigned) {
-        alert('A faculty is already assigned for this form.');
+      
+      if (alreadyAssignedTo) {
+        alert(`This form is already assigned to ${alreadyAssignedTo}. Each form can only be assigned to one faculty.`);
         document.getElementById('facultyModal').classList.add('hidden');
         return;
       }
-      // Assign to selected faculty
+      
+      // Get current assigned forms for the selected faculty
+      const { data: currentFaculty } = await supabase
+        .from('Faculty')
+        .select('assigned_forms')
+        .eq('input_id', selectedFaculty.input_id)
+        .single();
+      
       let arr = [];
-      if (selectedFaculty.assigned_forms) {
-        try { arr = JSON.parse(selectedFaculty.assigned_forms); } catch {}
+      if (currentFaculty && currentFaculty.assigned_forms) {
+        try { arr = JSON.parse(currentFaculty.assigned_forms); } catch {}
       }
       if (!Array.isArray(arr)) arr = [];
-      arr.push(formName);
-      await supabase.from('Faculty').update({ assigned_forms: JSON.stringify(arr) }).eq('input_id', selectedFaculty.input_id);
+      
+      // Check if this faculty already has this form assigned
+      if (!arr.includes(formName)) {
+        arr.push(formName);
+        await supabase.from('Faculty').update({ assigned_forms: JSON.stringify(arr) }).eq('input_id', selectedFaculty.input_id);
+      }
+      
       await loadAssignmentsAndRender();
       document.getElementById('facultyModal').classList.add('hidden');
     }
