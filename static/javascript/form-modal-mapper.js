@@ -943,8 +943,52 @@ function getFormModalContent(row, details) {
   html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_2:</span> <span>${getFileButton(details['Upload The Scanned File_2'])}</span></div>`;
       html += `</div>`;
     } else if (freq === 'weekly') {
-      // ...existing code...
-      // (weekly logic unchanged)
+      html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
+      html += `<div><span class="font-semibold text-gray-700">Week no:</span> <span>${details['Week no'] || '-'}</span></div>`;
+      html += `<div><span class="font-semibold text-gray-700">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
+      html += `<div><span class="font-semibold text-gray-700">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
+      html += `</div>`;
+      
+      html += `<div class='space-y-4'>`;
+      
+      // Define field labels for weekly Students Performance form
+      const weeklyLabels = [
+        'Lab Visit File',
+        'Theory Class Monitoring File',
+        'Placement File',
+        'Training File'
+      ];
+      
+      // Show only fields that have content
+      for (let i = 1; i <= weeklyLabels.length; i++) {
+        const hasStatus = details[`Status_${i}`] && details[`Status_${i}`] !== '-' && details[`Status_${i}`].trim() !== '';
+        const hasDescription = details[`Description_${i}`] && details[`Description_${i}`] !== '-' && details[`Description_${i}`].trim() !== '';
+        
+        // Try multiple possible field name patterns for file upload
+        let fileVal = details[`Upload The Scanned File_${i}`] || details[`Upload the scanned file_${i}`] || details[`Upload Scanned File_${i}`] || '-';
+        const hasFile = fileVal && fileVal !== '-' && fileVal.trim() !== '';
+        
+        // Only show this block if it has any content
+        if (hasStatus || hasDescription || hasFile) {
+          html += `<div class="border-b pb-2 mb-2">
+            <div class="font-semibold text-orange-500 mb-1">${i}. ${weeklyLabels[i-1]}</div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+              <div class="flex flex-col"><span class="font-medium text-purple-700">Status:</span> <span>${details[`Status_${i}`] || '-'}</span></div>
+              <div class="flex flex-col"><span class="font-medium text-purple-700">Description:</span> <span>${details[`Description_${i}`] || '-'}</span></div>
+              <div class="flex flex-col"><span class="font-medium text-purple-700">Upload:</span> `;
+          if (fileVal && fileVal !== '-' && typeof fileVal === 'string' && (fileVal.startsWith('http://') || fileVal.startsWith('https://') || fileVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i))) {
+            html += `<a href="${fileVal}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block">View File</a>`;
+          } else {
+            html += '-';
+          }
+          html += `</div>
+            </div>
+          </div>`;
+        }
+      }
+      
+      html += `</div>`;
+      return html;
     } else if (freq === 'yearly') {
       html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
       html += `<div><span class="font-semibold text-gray-700">Week No:</span> <span>${details['Week No'] || '-'}</span></div>`;
@@ -1087,24 +1131,45 @@ function getFormModalContent(row, details) {
         'Visiting/Adjunct/Emeritus Faculty/Prof. of Practice File',
         'MOUs/Collaborations'
       ];
+      
       html += `<div class='space-y-4'>`;
-      for (let i = 1; i <= 8; i++) {
-        html += `<div class="border-b pb-2 mb-2">
-          <div class="font-semibold text-orange-500 mb-1">${i}. ${rowHeaders[i]}</div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div class="flex flex-col"><span class="font-medium text-purple-700">Status:</span> <span>${details[`Status-${i}`] || '-'}</span></div>
-            <div class="flex flex-col"><span class="font-medium text-purple-700">Description:</span> <span>${details[`Description-${i}`] || '-'}</span></div>
-            <div class="flex flex-col"><span class="font-medium text-purple-700">Upload:</span> `;
-        let fileVal = details[`Upload The Scanned File-${i}`] || '-';
-        if (fileVal && fileVal !== '-' && typeof fileVal === 'string' && (fileVal.startsWith('http://') || fileVal.startsWith('https://') || fileVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i))) {
-          html += `<a href="${fileVal}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block">View File</a>`;
+      
+      // Only show blocks that have some content (status, description, or file)
+      for (let i = 1; i <= rowHeaders.length; i++) {
+        const hasStatus = details[`Status-${i}`] && details[`Status-${i}`] !== '-' && details[`Status-${i}`].trim() !== '';
+        const hasDescription = details[`Description-${i}`] && details[`Description-${i}`] !== '-' && details[`Description-${i}`].trim() !== '';
+        
+        // Try multiple possible field name patterns for file upload
+        // For Faculty Information & Contribution Member, the field name is just "Upload The Scanned File" without number
+        let fileVal = '';
+        if (i === 1) {
+          // For the first item, try the field without number suffix
+          fileVal = details[`Upload The Scanned File`] || details[`Upload The Scanned File-${i}`] || details[`Upload The Scanned File_${i}`] || details[`Upload the scanned file_${i}`] || details[`Upload the Scanned File-${i}`] || '-';
         } else {
-          html += '-';
+          // For other items, try with number suffix
+          fileVal = details[`Upload The Scanned File-${i}`] || details[`Upload The Scanned File_${i}`] || details[`Upload the scanned file_${i}`] || details[`Upload the Scanned File-${i}`] || '-';
         }
-        html += `</div>
-          </div>
-        </div>`;
+        const hasFile = fileVal && fileVal !== '-' && fileVal.trim() !== '';
+        
+        // Only show this block if it has any content
+        if (hasStatus || hasDescription || hasFile) {
+          html += `<div class="border-b pb-2 mb-2">
+            <div class="font-semibold text-orange-500 mb-1">${i}. ${rowHeaders[i-1]}</div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+              <div class="flex flex-col"><span class="font-medium text-purple-700">Status:</span> <span>${details[`Status-${i}`] || '-'}</span></div>
+              <div class="flex flex-col"><span class="font-medium text-purple-700">Description:</span> <span>${details[`Description-${i}`] || '-'}</span></div>
+              <div class="flex flex-col"><span class="font-medium text-purple-700">Upload:</span> `;
+          if (fileVal && fileVal !== '-' && typeof fileVal === 'string' && (fileVal.startsWith('http://') || fileVal.startsWith('https://') || fileVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i))) {
+            html += `<a href="${fileVal}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block">View File</a>`;
+          } else {
+            html += '-';
+          }
+          html += `</div>
+            </div>
+          </div>`;
+        }
       }
+      
       html += `</div>`;
       return html;
     }
