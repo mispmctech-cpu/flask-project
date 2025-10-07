@@ -476,7 +476,7 @@
         try {
           const { data: rejectedData, error: rejectedError } = await supabaseClient
             .from('hod-workdone_reject')
-            .select('input_id, department, portfolio_name, portfolio_member_name, rejected_at')
+            .select('input_id, department, portfolio_name, portfolio_member_name, rejected_at, table_name')
             .eq('department', department);
           if (rejectedError) {
             console.warn('Error fetching rejected records:', rejectedError);
@@ -492,7 +492,7 @@
         try {
           const { data: verifiedData, error: verifiedError } = await supabaseClient
             .from('hod-workdone')
-            .select('input_id, department, portfolio_name, portfolio_member_name, verified_at')
+            .select('input_id, department, portfolio_name, portfolio_member_name, verified_at, table_name')
             .eq('department', department);
           if (verifiedError) {
             console.warn('Error fetching verified records:', verifiedError);
@@ -504,38 +504,77 @@
         }
 
         // Build sets for rejected and verified composite keys
-        const rejectedInputIds = new Set();
+        const rejectedInputIdTableKeys = new Set();
         const rejectedKeys = new Set();
         for (const r of rejectedRows) {
-          if (r.input_id) {
-            rejectedInputIds.add(r.input_id);
+          if (r.input_id && r.table_name) {
+            // Combine input_id with table_name for truly unique identification
+            const inputIdTableKey = `${r.input_id}|${r.table_name}`;
+            rejectedInputIdTableKeys.add(inputIdTableKey);
           }
-          // Composite key for rejected
-          const key = `${r.department}|${r.portfolio_name}|${r.portfolio_member_name}|${r.table_name}|${r.submitted_at || ''}`;
+          // More robust composite key for rejected (excluding submitted_at)
+          const key = `${r.department}|${r.portfolio_name}|${r.portfolio_member_name}|${r.table_name}`;
           rejectedKeys.add(key);
         }
+        
+        const verifiedInputIdTableKeys = new Set();
         const verifiedKeys = new Set();
         for (const v of verifiedRows) {
-          // Composite key for verified
-          const key = `${v.department}|${v.portfolio_name}|${v.portfolio_member_name}|${v.table_name}|${v.submitted_at || ''}`;
+          if (v.input_id && v.table_name) {
+            // Combine input_id with table_name for truly unique identification
+            const inputIdTableKey = `${v.input_id}|${v.table_name}`;
+            verifiedInputIdTableKeys.add(inputIdTableKey);
+          }
+          // More robust composite key for verified (excluding submitted_at)
+          const key = `${v.department}|${v.portfolio_name}|${v.portfolio_member_name}|${v.table_name}`;
           verifiedKeys.add(key);
         }
 
-        // Filter out rejected and verified rows from main table using composite key
+        // Filter out rejected and verified rows from main table
         const filteredRows = rows.filter(row => {
-          // Build composite key for current row
-          const key = `${row.department}|${row.portfolio_name || row.portfolio}|${row.portfolio_member_name || row.member}|${row.table_name || row.table}|${row.submitted_at || ''}`;
+          // First check by input_id + table_name combination (most reliable)
+          if (row.input_id && (row.table_name || row.table)) {
+            const inputIdTableKey = `${row.input_id}|${row.table_name || row.table}`;
+            if (rejectedInputIdTableKeys.has(inputIdTableKey) || verifiedInputIdTableKeys.has(inputIdTableKey)) {
+              return false;
+            }
+          }
+          
+          // Fallback to composite key matching (without submitted_at for better reliability)
+          const key = `${row.department}|${row.portfolio_name || row.portfolio}|${row.portfolio_member_name || row.member}|${row.table_name || row.table}`;
           if (rejectedKeys.has(key) || verifiedKeys.has(key)) {
             return false;
           }
+          
           return true;
         });
 
-        // Store filtered rows globally for pagination and filtering
-        window._allWorkdoneRows = filteredRows;
-        window._filteredWorkdoneRows = filteredRows;
-        window._workingWorkdoneRows = filteredRows;
-        window._workdoneRows = filteredRows;
+        // Sort filtered rows by submission date/time (most recent first)
+        const sortedRows = filteredRows.sort((a, b) => {
+          // Get submission dates with multiple fallback options
+          const getSubmissionDate = (row) => {
+            const dateStr = row.submitted_at || row.created_at || row.timestamp || row.updated_at || row.submission_date || row.date_submitted;
+            if (!dateStr) return new Date(0); // Very old date for records without timestamp
+            
+            try {
+              return new Date(dateStr);
+            } catch (e) {
+              return new Date(0); // Fallback for invalid dates
+            }
+          };
+          
+          const dateA = getSubmissionDate(a);
+          const dateB = getSubmissionDate(b);
+          
+          // Sort in descending order (most recent first)
+          return dateB.getTime() - dateA.getTime();
+        });
+
+        // Store sorted rows globally for pagination and filtering
+        window._allWorkdoneRows = sortedRows;
+        window._filteredWorkdoneRows = sortedRows;
+        window._workingWorkdoneRows = sortedRows;
+        window._workdoneRows = sortedRows;
 
         // Render with pagination
         renderHodWorkdoneTableWithPagination(1);
