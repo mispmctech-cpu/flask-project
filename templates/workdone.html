@@ -1,4 +1,4 @@
-﻿    
+    
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -467,6 +467,8 @@
     // Load workdone data for the department using new WorkdoneTable
     async function loadWorkdone() {
       try {
+        console.log(`🔍 DEBUG: Loading workdone for department: "${department}"`);
+        
         // Fetch all workdone rows
         const rows = await workdoneTable.initHodWorkdoneSection(department);
         console.log(`Loaded ${rows.length} workdone records for department: ${department}`);
@@ -476,7 +478,7 @@
         try {
           const { data: rejectedData, error: rejectedError } = await supabaseClient
             .from('hod-workdone_reject')
-            .select('input_id, department, portfolio_name, portfolio_member_name, rejected_at, table_name')
+            .select('input_id, department, portfolio_name, portfolio_member_name, rejected_at, table_name, submitted_at')
             .eq('department', department);
           if (rejectedError) {
             console.warn('Error fetching rejected records:', rejectedError);
@@ -492,12 +494,20 @@
         try {
           const { data: verifiedData, error: verifiedError } = await supabaseClient
             .from('hod-workdone')
-            .select('input_id, department, portfolio_name, portfolio_member_name, verified_at, table_name')
+            .select('input_id, department, portfolio_name, portfolio_member_name, verified_at, table_name, submitted_at')
             .eq('department', department);
           if (verifiedError) {
             console.warn('Error fetching verified records:', verifiedError);
           } else {
             verifiedRows = verifiedData || [];
+            console.log(`🔍 DEBUG: Found ${verifiedRows.length} verified records in hod-workdone table`);
+            // Debug: Show all verified records
+            verifiedRows.forEach(v => {
+              if (v.table_name === 'form2-daily') {
+                console.log(`🔍 DEBUG: Verified form2-daily record - input_id: ${v.input_id}, member: ${v.portfolio_member_name}, verified_at: ${v.verified_at}`);
+                console.log(`   Full record:`, v);
+              }
+            });
           }
         } catch (err) {
           console.warn('Exception fetching verified records:', err);
@@ -511,9 +521,14 @@
             // Combine input_id with table_name for truly unique identification
             const inputIdTableKey = `${r.input_id}|${r.table_name}`;
             rejectedInputIdTableKeys.add(inputIdTableKey);
+            // Debug: Log rejected records for form2-daily
+            if (r.table_name === 'form2-daily') {
+              console.log(`🔍 DEBUG: Rejected form2-daily record - input_id: ${r.input_id}, member: ${r.portfolio_member_name}`);
+            }
           }
-          // More robust composite key for rejected (excluding submitted_at)
-          const key = `${r.department}|${r.portfolio_name}|${r.portfolio_member_name}|${r.table_name}`;
+          // More robust composite key including submitted_at for unique identification
+          const submittedAt = r.submitted_at || r.created_at || '';
+          const key = `${r.department}|${r.portfolio_name}|${r.portfolio_member_name}|${r.table_name}|${submittedAt}`;
           rejectedKeys.add(key);
         }
         
@@ -524,26 +539,75 @@
             // Combine input_id with table_name for truly unique identification
             const inputIdTableKey = `${v.input_id}|${v.table_name}`;
             verifiedInputIdTableKeys.add(inputIdTableKey);
+            // Debug: Log verified records for form2-daily
+            if (v.table_name === 'form2-daily') {
+              console.log(`🔍 DEBUG: Verified form2-daily record - input_id: ${v.input_id}, member: ${v.portfolio_member_name}`);
+              console.log(`   🔍 This will create composite key: "${v.department}|${v.portfolio_name}|${v.portfolio_member_name}|${v.table_name}|${v.submitted_at || v.created_at || ''}"`);
+            }
           }
-          // More robust composite key for verified (excluding submitted_at)
-          const key = `${v.department}|${v.portfolio_name}|${v.portfolio_member_name}|${v.table_name}`;
+          // More robust composite key including submitted_at for unique identification
+          const submittedAt = v.submitted_at || v.created_at || '';
+          const key = `${v.department}|${v.portfolio_name}|${v.portfolio_member_name}|${v.table_name}|${submittedAt}`;
           verifiedKeys.add(key);
         }
 
         // Filter out rejected and verified rows from main table
         const filteredRows = rows.filter(row => {
+          // Debug: Log filtering for form2-daily records
+          if (row.table === 'form2-daily') {
+            console.log(`🔍 DEBUG: Filtering form2-daily record:`, row);
+            console.log(`   input_id: "${row.input_id}", table: "${row.table}"`);
+            console.log(`   department: "${row.department}", portfolio: "${row.portfolio}", member: "${row.member}"`);
+            
+            // Check input_id filtering
+            if (row.input_id && (row.table_name || row.table)) {
+              const inputIdTableKey = `${row.input_id}|${row.table_name || row.table}`;
+              console.log(`   📋 Input ID key: "${inputIdTableKey}"`);
+              console.log(`   📋 In rejected input ID set:`, rejectedInputIdTableKeys.has(inputIdTableKey));
+              console.log(`   📋 In verified input ID set:`, verifiedInputIdTableKeys.has(inputIdTableKey));
+            }
+            
+            // Check composite key filtering
+            const submittedAt = row.submitted_at || row.created_at || '';
+            const key = `${row.department}|${row.portfolio_name || row.portfolio}|${row.portfolio_member_name || row.member}|${row.table_name || row.table}|${submittedAt}`;
+            console.log(`   🔑 Composite key with submitted_at: "${key}"`);
+            console.log(`   🔑 In rejected composite set:`, rejectedKeys.has(key));
+            console.log(`   🔑 In verified composite set:`, verifiedKeys.has(key));
+            
+            // Show all verified keys for comparison
+            console.log(`   🔍 All verified composite keys:`, Array.from(verifiedKeys));
+          }
+          
           // First check by input_id + table_name combination (most reliable)
           if (row.input_id && (row.table_name || row.table)) {
             const inputIdTableKey = `${row.input_id}|${row.table_name || row.table}`;
             if (rejectedInputIdTableKeys.has(inputIdTableKey) || verifiedInputIdTableKeys.has(inputIdTableKey)) {
+              // Debug: Log why it's being filtered out
+              if (row.table === 'form2-daily') {
+                console.log(`   🚫 FILTERED OUT by input_id check: "${inputIdTableKey}"`);
+                console.log(`   🚫 In rejected set:`, rejectedInputIdTableKeys.has(inputIdTableKey));
+                console.log(`   🚫 In verified set:`, verifiedInputIdTableKeys.has(inputIdTableKey));
+              }
               return false;
             }
           }
           
-          // Fallback to composite key matching (without submitted_at for better reliability)
-          const key = `${row.department}|${row.portfolio_name || row.portfolio}|${row.portfolio_member_name || row.member}|${row.table_name || row.table}`;
+          // Fallback to composite key matching (now including submitted_at for precise matching)
+          const submittedAt = row.submitted_at || row.created_at || '';
+          const key = `${row.department}|${row.portfolio_name || row.portfolio}|${row.portfolio_member_name || row.member}|${row.table_name || row.table}|${submittedAt}`;
           if (rejectedKeys.has(key) || verifiedKeys.has(key)) {
+            // Debug: Log why it's being filtered out
+            if (row.table === 'form2-daily') {
+              console.log(`   🚫 FILTERED OUT by composite key with submitted_at: "${key}"`);
+              console.log(`   🚫 In rejected keys:`, rejectedKeys.has(key));
+              console.log(`   🚫 In verified keys:`, verifiedKeys.has(key));
+            }
             return false;
+          }
+          
+          // Debug: Log if it passes filtering
+          if (row.table === 'form2-daily') {
+            console.log(`   ✅ PASSED filtering - will be displayed`);
           }
           
           return true;
