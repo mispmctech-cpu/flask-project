@@ -7,6 +7,24 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="../static/javascript/form-modal-mapper.js"></script>
   <script src="../static/javascript/workdone-table.js"></script>
+  <style>
+    /* Hide delete buttons in iqac-principal-view-faculty.html */
+    button[onclick*="Delete"] {
+      display: none !important;
+    }
+    button[onclick*="deleteWorkdoneRow"] {
+      display: none !important;
+    }
+    /* Hide the table cell containing delete buttons */
+    td:has(button[onclick*="Delete"]),
+    td:has(button[onclick*="deleteWorkdoneRow"]) {
+      display: none !important;
+    }
+    /* Hide table header for delete column if present */
+    th:empty {
+      display: none !important;
+    }
+  </style>
   </head>
   <body class="bg-pmcBg min-h-screen">
     <header class="bg-purple-700 text-white w-full">
@@ -199,24 +217,27 @@
       <section class="card-shadow rounded-xl overflow-hidden">
         <div class="bg-white p-4">
           <h2 class="text-lg font-bold text-pmcPurple mb-4 uppercase">WORKDONE</h2>
+          <!-- Search input for workdone -->
+          <div class="mb-4">
+            <input id="workdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-purple-700" placeholder="Search by Portfolio or Member" oninput="window._currentWorkdoneTable.filterWorkdoneTable()" />
+          </div>
           <div class="overflow-x-auto">
-              <div class="flex items-center mb-2">
-                <input id="workdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-purple-700" placeholder="Search by Portfolio Member Name" oninput="filterWorkdoneTable()" />
-              </div>
               <table class="min-w-full bg-white shadow text-sm border border-gray-300">
                 <thead class="bg-gradient-to-r from-purple-700 to-purple-500 text-white">
                   <tr>
                     <th class="p-3 border-b border-gray-300">Department</th>
                     <th class="p-3 border-b border-gray-300">Portfolio Name</th>
                     <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
-                    <th class="p-3 border-b border-gray-300">Submitted At</th>
                     <th class="p-3 border-b border-gray-300">Status</th>
-                    <th class="p-3 border-b border-gray-300">View</th>
+                    <th class="p-3 border-b border-gray-300">Submitted At</th>
+                    <th class="p-3 border-b border-gray-300 text-center">View</th>
                   </tr>
                 </thead>
                 <tbody id="facultyWorkdoneTable" class="divide-y divide-gray-200"></tbody>
               </table>
           </div>
+          <!-- Pagination Container for Workdone -->
+          <div class="flex justify-center items-center mt-4" id="workdonePagination"></div>
           <div
             id="workdoneErrorBox"
             class="hidden mt-4 p-3 rounded bg-red-100 text-red-700 font-semibold"
@@ -233,15 +254,6 @@
     </main>
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
     <script>
-        // Search/filter logic for workdone table
-        function filterWorkdoneTable() {
-          const search = document.getElementById('workdoneSearch').value.toLowerCase();
-          const rows = Array.from(document.getElementById('facultyWorkdoneTable').querySelectorAll('tr'));
-          rows.forEach(row => {
-            const memberText = row.children[2]?.textContent?.toLowerCase() || '';
-            row.style.display = memberText.includes(search) ? '' : 'none';
-          });
-        }
       // Get email from query param
       function getQueryParam(name) {
         const url = new URL(window.location.href);
@@ -383,15 +395,85 @@
           if (error || !complianceRows || complianceRows.length === 0) {
             return [null, 'No compliance data'];
           }
-          let row = complianceRows[0];
-          return [row, null];
+
+          // Apply "best case scenario" logic similar to IQAC dashboard
+          if (complianceRows.length === 1) {
+            return [complianceRows[0], null];
+          }
+
+          // Create optimized compliance record using best case scenario
+          const bestComplianceRow = { ...complianceRows[0] }; // Start with latest as base
+          
+          // Check each compliance field and keep "completed" if found in any submission
+          for (let i = 1; i <= 20; i++) { // Assuming max 20 compliance fields
+            const fieldName = `compliance_${i}`;
+            let hasCompleted = false;
+            
+            // Check all submissions for this faculty
+            for (const row of complianceRows) {
+              const value = (row[fieldName] || '').toString().trim().toLowerCase();
+              if (value === 'yes' || value === 'completed') {
+                hasCompleted = true;
+                break;
+              }
+            }
+            
+            // If any submission shows completed, override with completed
+            if (hasCompleted) {
+              bestComplianceRow[fieldName] = 'completed';
+            }
+            // Otherwise keep the latest row's value
+          }
+
+          return [bestComplianceRow, null];
         }
 
         (async function renderDetailsTableWithCompliance() {
           let [coreCompliance, complianceError] = await getCoreComplianceDetails();
           let detailsTableHtml = "";
+          
           if (Array.isArray(detailsTableArr) && detailsTableArr.length > 0) {
-            detailsTableHtml =
+            // Calculate percentage for the faculty
+            let totalMarks = 0;
+            let obtainedMarks = 0;
+            let percentageHtml = '';
+            
+            if (coreCompliance) {
+              for (let i = 0; i < detailsTableArr.length; i++) {
+                let compField = `compliance_${i + 1}`;
+                let compliance = coreCompliance[compField];
+                
+                if (compliance) {
+                  const val = compliance.trim().toLowerCase();
+                  if (val === 'completed' || val === 'yes') {
+                    obtainedMarks += 3;
+                  } else if (val === 'in progress' || val === 'inprogress') {
+                    obtainedMarks += 1;
+                  } else if (val === 'not started' || val === 'no' || val === 'incomplete') {
+                    obtainedMarks += 0;
+                  }
+                }
+                totalMarks += 3; // Each field has max 3 marks
+              }
+              
+              const percentage = totalMarks > 0 ? Math.round((obtainedMarks / totalMarks) * 100) : 0;
+              percentageHtml = `<div class="mb-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-purple-700">Faculty Compliance Score:</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-2xl font-bold text-purple-800">${percentage}%</span>
+                    <span class="text-sm text-gray-600">(${obtainedMarks}/${totalMarks})</span>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-full" style="width: ${percentage}%"></div>
+                  </div>
+                </div>
+              </div>`;
+            }
+
+            detailsTableHtml = percentageHtml +
               `<div class="overflow-x-auto"><table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white">
             <thead class='bg-purple-700 text-white'>
               <tr><th class="px-4 py-2">S. NO</th><th class="px-4 py-2">PARTICULAR</th><th class="px-4 py-2">TARGET</th><th class="px-4 py-2">TAT</th><th class="px-4 py-2">Compliance</th></tr>
@@ -399,8 +481,32 @@
             <tbody>` +
                 detailsTableArr
                   .map(
-                    (row, idx) =>
-                      `<tr class="${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}"><td class="px-2 py-2">${idx + 1}</td><td class="px-2 py-2">${row.particular || ""}</td><td class="px-2 py-2">${row.target || ""}</td><td class="px-2 py-2">${row.tat || ""}</td><td class="px-2 py-2">${coreCompliance ? (coreCompliance[`compliance_${idx+1}`] || '<span class="text-gray-400">-</span>') : (complianceError ? `<span class='text-gray-400'>${complianceError}</span>` : '<span class="text-gray-400">-</span>')}</td></tr>`
+                    (row, idx) => {
+                      let complianceVal = '';
+                      if (coreCompliance) {
+                        let compField = `compliance_${idx + 1}`;
+                        let compliance = coreCompliance[compField];
+                        if (compliance) {
+                          const val = compliance.trim().toLowerCase();
+                          if (val === 'completed' || val === 'yes') {
+                            complianceVal = '<span class="text-green-600 font-bold">Completed</span>';
+                          } else if (val === 'in progress' || val === 'inprogress') {
+                            complianceVal = '<span class="text-orange-600 font-bold">In Progress</span>';
+                          } else if (val === 'not started' || val === 'no' || val === 'incomplete') {
+                            complianceVal = '<span class="text-red-600 font-bold">Not Started</span>';
+                          } else {
+                            complianceVal = compliance;
+                          }
+                        } else {
+                          complianceVal = '<span class="text-gray-400">-</span>';
+                        }
+                      } else if (complianceError) {
+                        complianceVal = `<span class='text-gray-400'>${complianceError}</span>`;
+                      } else {
+                        complianceVal = '<span class="text-gray-400">-</span>';
+                      }
+                      return `<tr class="${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}"><td class="px-2 py-2">${idx + 1}</td><td class="px-2 py-2">${row.particular || ""}</td><td class="px-2 py-2">${row.target || ""}</td><td class="px-2 py-2">${row.tat || ""}</td><td class="px-2 py-2">${complianceVal}</td></tr>`;
+                    }
                   )
                   .join("") +
                 `</tbody></table></div>`;
@@ -473,7 +579,55 @@
   // Load Workdone Section using centralized JS
   const workdoneTable = new WorkdoneTable(supabaseClient);
   // Patch: Add submitted_at column rendering
-  workdoneTable.initWorkdoneSection(data["Name"], data["Designation"]);
+  workdoneTable.initWorkdoneSection(data["Name"], data["Designation"], {
+    extraColumns: [
+      {
+        header: "Submitted At",
+        key: "submitted_at",
+        render: (row) => {
+          if (!row.submitted_at) return '<span class="text-gray-400">-</span>';
+          // Format date/time if possible
+          const d = new Date(row.submitted_at);
+          if (!isNaN(d)) {
+            return d.toLocaleString();
+          }
+          return row.submitted_at;
+        }
+      }
+    ]
+  });
+        
+  // Hide delete buttons specifically for iqac-principal-view-faculty.html
+  function hideDeleteButtons() {
+    // Hide all delete buttons in workdone table
+    const deleteButtons = document.querySelectorAll('button[onclick*="deleteWorkdoneRow"]');
+    deleteButtons.forEach(btn => {
+      btn.style.display = 'none';
+      // Also hide the parent cell
+      if (btn.parentElement) {
+        btn.parentElement.style.display = 'none';
+      }
+    });
+    
+    // Hide other delete buttons
+    const otherDeleteButtons = document.querySelectorAll('button[onclick*="Delete"]');
+    otherDeleteButtons.forEach(btn => {
+      btn.style.display = 'none';
+      // Also hide the parent cell if it only contains the delete button
+      if (btn.parentElement && btn.parentElement.children.length === 1) {
+        btn.parentElement.style.display = 'none';
+      }
+    });
+  }
+  
+  // Run immediately and after table loads
+  setTimeout(hideDeleteButtons, 500);
+  setTimeout(hideDeleteButtons, 1000);
+  setTimeout(hideDeleteButtons, 2000);
+  
+  // Also observe for dynamic content changes
+  const observer = new MutationObserver(hideDeleteButtons);
+  observer.observe(document.body, { childList: true, subtree: true });
       }
 
       loadFacultyProfile();

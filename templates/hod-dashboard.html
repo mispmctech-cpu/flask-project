@@ -29,7 +29,35 @@
     </div>
     <div id="dashboardTableContainer" class="overflow-x-auto"></div>
   <!-- Department Portfolios Table -->
-  <div id="departmentPortfoliosContainer" class="overflow-x-auto mt-10"></div>
+  <div id="departmentPortfoliosStickyHeader" class="flex flex-wrap gap-4 items-center mb-4 bg-white z-20 mt-10" style="position:sticky; top:0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+    <h3 class="text-xl font-bold text-orange-500">Department Portfolios</h3>
+    <label for="portfolioFrequencyFilter" class="font-medium text-orange-700 mr-2">Frequency:</label>
+    <select id="portfolioFrequencyFilter" class="p-2 border rounded">
+      <option value="Weekly">Weekly (Current Week)</option>
+      <option value="Monthly">Monthly</option>
+      <option value="OnceIn3Months">Once in 3 Months</option>
+      <option value="OnceIn2Months">Once in 2 Months</option>
+      <option value="OnceIn15Days">Once in 15 Days</option>
+      <option value="Semester">Once in a Semester</option>
+      <option value="Year">Once in a Year</option>
+      <option value="All">All</option>
+    </select>
+    <div id="weeklyDateFilters" class="flex gap-2 items-center" style="display: none;">
+      <label for="weekStartDate" class="font-medium text-orange-700">Week Start:</label>
+      <input type="date" id="weekStartDate" class="p-2 border rounded text-sm">
+      <label for="weekEndDate" class="font-medium text-orange-700">Week End:</label>
+      <input type="date" id="weekEndDate" class="p-2 border rounded text-sm">
+      <button id="applyWeekFilter" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded text-sm">Apply</button>
+      <button id="resetToCurrentWeek" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm">Current Week</button>
+    </div>
+    <label for="portfolioStatusFilter" class="font-medium text-orange-700 mr-2">Show:</label>
+    <select id="portfolioStatusFilter" class="p-2 border rounded">
+      <option value="All">All</option>
+      <option value="Completed">Completed</option>
+      <option value="Pending">Pending</option>
+    </select>
+  </div>
+  <div id="departmentPortfoliosContainer" class="overflow-x-auto mt-2"></div>
     <!-- Modal for viewing original form -->
     <div id="viewFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
       <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
@@ -41,7 +69,7 @@
   </main>
   <script src="/static/javascript/form-modal-mapper.js"></script>
   <script>
-    // Fetch and render department portfolios table
+    // Fetch and render department portfolios table (HOD)
     async function loadDepartmentPortfolios() {
       // Fetch all faculty
       const { data, error } = await supabaseClient
@@ -51,85 +79,296 @@
         document.getElementById('departmentPortfoliosContainer').innerHTML = '<div class="text-red-500">Failed to load department portfolios.</div>';
         return;
       }
+      
       // Filter for current department only
       const currentDept = department;
+      
+      // Get frequency and status filters
+      const frequencyFilter = document.getElementById('portfolioFrequencyFilter');
+      const selectedFrequency = frequencyFilter ? frequencyFilter.value : 'Weekly';
+      const statusFilter = document.getElementById('portfolioStatusFilter');
+      const selectedStatus = statusFilter ? statusFilter.value : 'All';
+      
+      // Show/hide date filters based on frequency
+      const weeklyDateFilters = document.getElementById('weeklyDateFilters');
+      if (selectedFrequency === 'Weekly') {
+        weeklyDateFilters.style.display = 'flex';
+        // Set default current week dates if not already set
+        const weekStartInput = document.getElementById('weekStartDate');
+        const weekEndInput = document.getElementById('weekEndDate');
+        if (!weekStartInput.value || !weekEndInput.value) {
+          setCurrentWeekDates();
+        }
+      } else {
+        weeklyDateFilters.style.display = 'none';
+      }
+      
+      // Table mapping for each frequency
+      if (!window._hodTableMap) {
+        window._hodTableMap = {
+          Weekly: [
+            'form1-Weekly', 'form2-weekly', 'form3-Weekly', 'form4-Weekly', 'form5-weekly', 'form6_weekly', 'form7-Weekly', 'form8-weekly'
+          ],
+          Monthly: [
+            'form2-once in a month', 'form4-once in a month'
+          ],
+          OnceIn3Months: [
+            'form5-Once in a 3 Months', 'form8-once in 3 Months'
+          ],
+          OnceIn2Months: [
+            'form6-once in 2 month', 'form7-Once in 2 Months'
+          ],
+          OnceIn15Days: [
+            'form1-once in 15 days', 'form3- once in 15 days'
+          ],
+          Semester: [
+            'form1-once in a semester', 'form2-once in a semester', 'form3-once in a semester', 'form4-once in a semester', 'form5-once in a semester', 'form6-once in a semester', 'form7-Once in a Semester', 'form8-Once in Semester'
+          ],
+          Year: [
+            'form1-once in a year'
+          ],
+          All: [
+            'form1-Weekly', 'form2-weekly', 'form3-Weekly', 'form4-Weekly', 'form5-weekly', 'form6_weekly', 'form7-Weekly', 'form8-weekly',
+            'form2-once in a month', 'form4-once in a month',
+            'form5-Once in a 3 Months', 'form8-once in 3 Months',
+            'form6-once in 2 month', 'form7-Once in 2 Months',
+            'form1-once in 15 days', 'form3- once in 15 days',
+            'form1-once in a semester', 'form2-once in a semester', 'form3-once in a semester', 'form4-once in a semester', 'form5-once in a semester', 'form6-once in a semester', 'form7-Once in a Semester', 'form8-Once in Semester',
+            'form1-once in a year'
+          ]
+        };
+      }
+      
+      // Portfolio headers mapping
+      if (!window._hodPortfolioHeadersMap) {
+        window._hodPortfolioHeadersMap = {
+          Weekly: [
+            { label: "1. Training & Placement", table: 'form1-Weekly' },
+            { label: "2. Class Advisor", table: 'form2-weekly' },
+            { label: "3. Info & Contribution", table: 'form3-Weekly' },
+            { label: "4. Outcome & Exam Cell", table: 'form4-Weekly' },
+            { label: "5. Continuous Improvement", table: 'form5-weekly' },
+            { label: "6. T&L Process (IQAC)", table: 'form6_weekly' },
+            { label: "7. Student Support", table: 'form7-Weekly' },
+            { label: "8. Facilities & Lab", table: 'form8-weekly' }
+          ],
+          Monthly: [
+            { label: "2. Class Advisor", table: 'form2-once in a month' },
+            { label: "4. Outcome & Exam Cell", table: 'form4-once in a month' }
+          ],
+          OnceIn3Months: [
+            { label: "5. Continuous Improvement", table: 'form5-Once in a 3 Months' },
+            { label: "8. Facilities & Lab", table: 'form8-once in 3 Months' }
+          ],
+          OnceIn2Months: [
+            { label: "6. T&L Process (IQAC)", table: 'form6-once in 2 month' },
+            { label: "7. Student Support", table: 'form7-Once in 2 Months' }
+          ],
+          OnceIn15Days: [
+            { label: "1. Training & Placement", table: 'form1-once in 15 days' },
+            { label: "3. Info & Contribution", table: 'form3- once in 15 days' }
+          ],
+          Semester: [
+            { label: "1. Training & Placement", table: 'form1-once in a semester' },
+            { label: "2. Class Advisor", table: 'form2-once in a semester' },
+            { label: "3. Info & Contribution", table: 'form3-once in a semester' },
+            { label: "4. Outcome & Exam Cell", table: 'form4-once in a semester' },
+            { label: "5. Continuous Improvement", table: 'form5-once in a semester' },
+            { label: "6. T&L Process (IQAC)", table: 'form6-once in a semester' },
+            { label: "7. Student Support", table: 'form7-Once in a Semester' },
+            { label: "8. Facilities & Lab", table: 'form8-Once in Semester' }
+          ],
+          Year: [
+            { label: "1. Training & Placement", table: 'form1-once in a year' }
+          ],
+          All: [
+            { label: "1. Training & Placement", table: 'form1-Weekly' },
+            { label: "2. Class Advisor", table: 'form2-weekly' },
+            { label: "3. Info & Contribution", table: 'form3-Weekly' },
+            { label: "4. Outcome & Exam Cell", table: 'form4-Weekly' },
+            { label: "5. Continuous Improvement", table: 'form5-weekly' },
+            { label: "6. T&L Process (IQAC)", table: 'form6_weekly' },
+            { label: "7. Student Support", table: 'form7-Weekly' },
+            { label: "8. Facilities & Lab", table: 'form8-weekly' },
+            { label: "2. Class Advisor", table: 'form2-once in a month' },
+            { label: "4. Outcome & Exam Cell", table: 'form4-once in a month' },
+            { label: "5. Continuous Improvement", table: 'form5-Once in a 3 Months' },
+            { label: "8. Facilities & Lab", table: 'form8-once in 3 Months' },
+            { label: "6. T&L Process (IQAC)", table: 'form6-once in 2 month' },
+            { label: "7. Student Support", table: 'form7-Once in 2 Months' },
+            { label: "1. Training & Placement", table: 'form1-once in 15 days' },
+            { label: "3. Info & Contribution", table: 'form3- once in 15 days' },
+            { label: "1. Training & Placement", table: 'form1-once in a semester' },
+            { label: "2. Class Advisor", table: 'form2-once in a semester' },
+            { label: "3. Info & Contribution", table: 'form3-once in a semester' },
+            { label: "4. Outcome & Exam Cell", table: 'form4-once in a semester' },
+            { label: "5. Continuous Improvement", table: 'form5-once in a semester' },
+            { label: "6. T&L Process (IQAC)", table: 'form6-once in a semester' },
+            { label: "7. Student Support", table: 'form7-Once in a Semester' },
+            { label: "8. Facilities & Lab", table: 'form8-Once in Semester' },
+            { label: "1. Training & Placement", table: 'form1-once in a year' }
+          ]
+        };
+      }
+      
+      const portfolioHeadersMap = window._hodPortfolioHeadersMap;
+      const headers = portfolioHeadersMap[selectedFrequency] || [];
       const facultyList = data.filter(fac => (fac.department || 'Unknown') === currentDept);
-      let html = '<h3 class="text-xl font-bold text-orange-500 mb-4">Department Portfolios</h3>';
-      html += '<table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white"><thead class="bg-orange-100 text-orange-700"><tr>';
-      html += '<th class="px-4 py-2">Department</th>';
-      const portfolioHeaders = [
-        "1. Students Performance in Training & Placement Member",
-        "2. Class Advisor",
-        "3. Faculty Information & Contribution Member",
-        "4. Course Outcome & Program Outcome Member (Exam Cell)",
-        "5. Continuous Improvement Member (Program Member)",
-        "6. Teaching & Learning Process Member (IQAC)",
-        "7. Student Support System Member (Discipline & Extra Curricular)",
-        "8. Facilities & Technical Support Member (Lab Member)"
-      ];
-      for (let i = 0; i < portfolioHeaders.length; i++) html += `<th class="px-4 py-2">${portfolioHeaders[i]}</th>`;
-      html += '</tr></thead><tbody>';
-      html += `<tr><td class="px-2 py-2 font-semibold text-purple-700">${currentDept}</td>`;
-      for (let i = 1; i <= 8; i++) {
-        const formKey = `form${i}`;
+      
+      let html = '';
+      html += '<div style="position:sticky; top:0; z-index:30; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.04);">';
+      html += '<table class="w-full text-xs border border-gray-400 rounded-lg overflow-hidden shadow-sm bg-white" style="table-layout:fixed; font-size:12px;">';
+      html += '<thead class="bg-orange-100 text-orange-700">';
+      html += '<tr style="position:sticky; top:56px; background:#FEF3C7; z-index:20;">';
+      html += '<th class="px-1 py-1 border border-gray-400" style="width:90px; position:sticky; top:56px; background:#FEF3C7; z-index:21;">Department</th>';
+      for (const h of headers) html += `<th class="px-1 py-1 border border-gray-400" style="width:120px; position:sticky; top:56px; background:#FEF3C7; z-index:21;">${h.label}</th>`;
+      html += '</tr></thead></table>';
+      html += '</div>';
+      html += '<div style="overflow-x:auto; max-height:500px; overflow-y:auto;">';
+      html += '<table class="w-full text-xs border border-gray-400 rounded-lg overflow-hidden shadow-sm bg-white" style="table-layout:fixed; font-size:12px; margin-top:-1px;">';
+      html += '<tbody>';
+      html += `<tr>`;
+      html += `<td class="px-1 py-1 font-semibold text-purple-700 border border-gray-400" style="word-break:break-word;">${currentDept}</td>`;
+      for (const h of headers) {
+        const formKey = h.label.match(/\d+/) ? `form${h.label.match(/\d+/)[0]}` : '';
+        html += `<td class="px-1 py-1 border border-gray-400" style="word-break:break-word;">`;
         const assignedList = facultyList.filter(fac => (fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes'));
         if (assignedList.length > 0) {
-          html += `<td class="px-2 py-2">`;
           for (const fac of assignedList) {
             const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
-            html += `<div class="flex items-center gap-2">${facultyName} <span id="portfolio-status-${i}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}" class="inline-block"></span></div>`;
+            html += `<div class="flex items-center gap-1" style="font-size:11px;">
+              <span id="portfolio-status-${formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}" class="inline-block"></span>
+              ${facultyName}
+            </div>`;
           }
-          html += `</td>`;
         } else {
-          html += `<td class="px-2 py-2">-</td>`;
+          html += '-';
         }
+        html += `</td>`;
       }
       html += '</tr>';
-      html += '</tbody></table>';
+      html += '</tbody></table></div>';
       document.getElementById('departmentPortfoliosContainer').innerHTML = html;
 
-      // For each assigned faculty/form, check weekly form completion and update tick/cross
-      // Only use the specified weekly form tables
-      const weeklyFormTables = [
-        'form1-Weekly',
-        'form2-weekly',
-        'form3-Weekly',
-        'form4-Weekly',
-        'form5-weekly',
-        'form6_weekly',
-        'form7-Weekly',
-        'form8-weekly'
-      ];
-      for (let i = 1; i <= 8; i++) {
-        const formKey = `form${i}`;
+      // Async tick/cross logic for assigned faculty
+      for (const h of headers) {
+        const formKey = h.label.match(/\d+/) ? `form${h.label.match(/\d+/)[0]}` : '';
+        const tableName = h.table;
         const assignedList = facultyList.filter(fac => (fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes'));
         for (const fac of assignedList) {
           const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
-          const statusSpanId = `portfolio-status-${i}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
-          // Async check for weekly form completion ONLY in specified tables
-            (async () => {
-              const tableName = weeklyFormTables[i-1];
-              const { data, error } = await supabaseClient
-                .from(tableName)
-                .select('*')
-                .eq('Department', currentDept);
-              let filled = false;
-              if (!error && data && data.length > 0) {
-                // Check if any entry matches faculty name (no week filter)
-                filled = data.some(row => {
-                  const rowName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
-                  return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase();
-                });
+          const statusSpanId = `portfolio-status-${formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
+          (async () => {
+            let filled = false;
+            let query = supabaseClient.from(tableName).select('*').eq('Department', currentDept);
+            
+            // If frequency is Weekly, filter by date range
+            if (selectedFrequency === 'Weekly') {
+              const weekStartInput = document.getElementById('weekStartDate');
+              const weekEndInput = document.getElementById('weekEndDate');
+              
+              if (weekStartInput.value && weekEndInput.value) {
+                // Use custom date range
+                const startDate = new Date(weekStartInput.value);
+                startDate.setHours(0, 0, 0, 0);
+                const endDate = new Date(weekEndInput.value);
+                endDate.setHours(23, 59, 59, 999);
+                
+                const startStr = startDate.toISOString();
+                const endStr = endDate.toISOString();
+                
+                query = query
+                  .gte('submitted_at', startStr)
+                  .lte('submitted_at', endStr);
+              } else {
+                // Fallback to current week
+                const now = new Date();
+                const currentDay = now.getDay();
+                const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+                const monday = new Date(now);
+                monday.setDate(now.getDate() + mondayOffset);
+                monday.setHours(0, 0, 0, 0);
+                
+                const sunday = new Date(monday);
+                sunday.setDate(monday.getDate() + 6);
+                sunday.setHours(23, 59, 59, 999);
+                
+                const mondayStr = monday.toISOString();
+                const sundayStr = sunday.toISOString();
+                
+                query = query
+                  .gte('submitted_at', mondayStr)
+                  .lte('submitted_at', sundayStr);
               }
-              const statusSpan = document.getElementById(statusSpanId);
-              if (statusSpan) {
-                statusSpan.innerHTML = filled
-                  ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`
-                  : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`;
+            }
+            
+            const { data: formData, error } = await query;
+            if (!error && formData && formData.length > 0) {
+              filled = formData.some(row => {
+                const rowName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+                return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase();
+              });
+            }
+            const statusSpan = document.getElementById(statusSpanId);
+            if (statusSpan) {
+              // Filter by status
+              if (selectedStatus === 'Completed' && !filled) {
+                statusSpan.parentElement.style.display = 'none';
+                return;
               }
-            })();
+              if (selectedStatus === 'Pending' && filled) {
+                statusSpan.parentElement.style.display = 'none';
+                return;
+              }
+              statusSpan.innerHTML = filled
+                ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`
+                : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`;
+            }
+          })();
         }
       }
+
+      // Add filter event listeners
+      const frequencyFilterEl = document.getElementById('portfolioFrequencyFilter');
+      const statusFilterEl = document.getElementById('portfolioStatusFilter');
+      frequencyFilterEl.onchange = statusFilterEl.onchange = () => loadDepartmentPortfolios();
+      
+      // Setup date filter event listeners
+      if (!document.getElementById('applyWeekFilter').dataset.listenerAdded) {
+        document.getElementById('applyWeekFilter').addEventListener('click', () => {
+          loadDepartmentPortfolios();
+        });
+        
+        document.getElementById('resetToCurrentWeek').addEventListener('click', () => {
+          setCurrentWeekDates();
+          loadDepartmentPortfolios();
+        });
+        
+        document.getElementById('weekStartDate').addEventListener('change', () => {
+          loadDepartmentPortfolios();
+        });
+        
+        document.getElementById('weekEndDate').addEventListener('change', () => {
+          loadDepartmentPortfolios();
+        });
+        
+        document.getElementById('applyWeekFilter').dataset.listenerAdded = 'true';
+      }
+    }
+    
+    // Helper function to set current week dates
+    function setCurrentWeekDates() {
+      const now = new Date();
+      const currentDay = now.getDay();
+      const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + mondayOffset);
+      
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      
+      document.getElementById('weekStartDate').value = monday.toISOString().split('T')[0];
+      document.getElementById('weekEndDate').value = sunday.toISOString().split('T')[0];
     }
     const supabaseClient = window.supabase.createClient(
       "https://cbhodgwaazmjszkujrti.supabase.co",
@@ -221,9 +460,54 @@
           });
           return Object.values(latest);
         }
-        const apDataLatest = getLatestRows(apRes.data || []);
-        const aspDataLatest = getLatestRows(aspRes.data || []);
-        const profDataLatest = getLatestRows(profRes.data || []);
+        
+        // New function: Get best compliance rows (completed if any, otherwise latest)
+        function getBestComplianceRows(data) {
+          const grouped = {};
+          data.forEach(row => {
+            const email = row.faculty_email;
+            if (!grouped[email]) grouped[email] = [];
+            grouped[email].push(row);
+          });
+          
+          const result = [];
+          Object.values(grouped).forEach(rows => {
+            if (rows.length === 0) return;
+            
+            // Sort by ID (newest first)
+            rows.sort((a, b) => (b.id || 0) - (a.id || 0));
+            const latest = rows[0];
+            
+            // Create best compliance record
+            const bestRecord = { ...latest };
+            
+            // For each compliance field, check if any record shows "completed"
+            for (let i = 1; i <= 8; i++) { // Assuming max 8 compliance fields
+              const fieldName = `compliance_${i}`;
+              let hasCompleted = false;
+              
+              for (const row of rows) {
+                const val = row[fieldName];
+                if (val && val.trim().toLowerCase() === 'completed') {
+                  hasCompleted = true;
+                  break;
+                }
+              }
+              
+              if (hasCompleted) {
+                bestRecord[fieldName] = 'completed';
+              }
+              // If no completed found, keep the latest record's value (already in bestRecord)
+            }
+            
+            result.push(bestRecord);
+          });
+          
+          return result;
+        }
+        const apDataLatest = getBestComplianceRows(apRes.data || []);
+        const aspDataLatest = getBestComplianceRows(aspRes.data || []);
+        const profDataLatest = getBestComplianceRows(profRes.data || []);
         for (const key of ['AP', 'ASP', 'Prof']) {
           if (designationFilter !== 'All' && designationFilter !== key) continue;
           const group = groups[key];
@@ -238,20 +522,50 @@
           html += `</tr></thead><tbody>`;
           // For each faculty, show compliance for each particular
           for (const fac of group) {
-            html += `<tr><td class=\"px-2 py-2 font-medium text-purple-700 cursor-pointer underline\" onclick=\"viewFacultyForm('${fac.email}','${key}','${fac.Name ? fac.Name.replace(/'/g, "\'") : ''}')\">${fac.Name || ''}</td>`;
             let complianceRow = null;
             if (key === 'AP') complianceRow = apDataLatest.find(r => r.faculty_email === fac.email);
             else if (key === 'ASP') complianceRow = aspDataLatest.find(r => r.faculty_email === fac.email);
             else if (key === 'Prof') complianceRow = profDataLatest.find(r => r.faculty_email === fac.email);
+            
+            // Calculate percentage
+            let totalMarks = 0;
+            let obtainedMarks = 0;
+            for (let i = 0; i < particulars.length; i++) {
+              let compliance = complianceRow ? complianceRow[`compliance_${i+1}`] : null;
+              if (compliance) {
+                const val = compliance.trim().toLowerCase();
+                if (val === 'completed') {
+                  obtainedMarks += 3;
+                } else if (val === 'in progress' || val === 'inprogress') {
+                  obtainedMarks += 1;
+                } else if (val === 'not started' || val === 'no' || val === 'incomplete') {
+                  obtainedMarks += 0;
+                }
+              }
+              totalMarks += 3; // Each field has max 3 marks
+            }
+            const percentage = totalMarks > 0 ? Math.round((obtainedMarks / totalMarks) * 100) : 0;
+            
+            html += `<tr><td class="px-2 py-2">
+              <div class="font-medium text-purple-700 cursor-pointer underline" onclick="viewFacultyForm('${fac.email}','${key}','${fac.Name ? fac.Name.replace(/'/g, "\'") : ''}')">${fac.Name || ''}</div>
+              <div class="text-sm ${percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600'} font-semibold">${percentage}%</div>
+            </td>`;
+            
             for (let i = 0; i < particulars.length; i++) {
               let compliance = complianceRow ? complianceRow[`compliance_${i+1}`] : null;
               let complianceClass = '';
               let display = '-';
               if (compliance) {
                 const val = compliance.trim().toLowerCase();
-                if (val === 'yes' || val === 'completed') {
+                if (val === 'completed') {
                   complianceClass = 'text-green-600 font-bold';
                   display = 'Completed';
+                } else if (val === 'in progress' || val === 'inprogress') {
+                  complianceClass = 'text-blue-600 font-bold';
+                  display = 'In Progress';
+                } else if (val === 'not started') {
+                  complianceClass = 'text-orange-600 font-bold';
+                  display = 'Not Started';
                 } else if (val === 'no' || val === 'incomplete') {
                   complianceClass = 'text-red-600 font-bold';
                   display = 'Incomplete';
@@ -262,7 +576,7 @@
               } else {
                 complianceClass = 'text-gray-500';
               }
-              html += `<td class=\"px-2 py-2 ${complianceClass}\">${display}</td>`;
+              html += `<td class="px-2 py-2 ${complianceClass}">${display}</td>`;
             }
             html += `</tr>`;
           }

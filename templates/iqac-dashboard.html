@@ -54,7 +54,7 @@
       <select id="portfolioDepartmentFilter" class="p-2 border rounded"></select>
       <label for="portfolioFrequencyFilter" class="font-medium text-orange-700 mr-2">Frequency:</label>
       <select id="portfolioFrequencyFilter" class="p-2 border rounded">
-  <option value="Weekly">Weekly</option>
+  <option value="Weekly">Weekly (Current Week)</option>
   <option value="Monthly">Monthly</option>
   <option value="OnceIn3Months">Once in 3 Months</option>
   <option value="OnceIn2Months">Once in 2 Months</option>
@@ -63,6 +63,14 @@
   <option value="Year">Once in a Year</option>
   <option value="All">All</option>
       </select>
+      <div id="weeklyDateFilters" class="flex gap-2 items-center" style="display: none;">
+        <label for="weekStartDate" class="font-medium text-orange-700">Week Start:</label>
+        <input type="date" id="weekStartDate" class="p-2 border rounded text-sm">
+        <label for="weekEndDate" class="font-medium text-orange-700">Week End:</label>
+        <input type="date" id="weekEndDate" class="p-2 border rounded text-sm">
+        <button id="applyWeekFilter" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded text-sm">Apply</button>
+        <button id="resetToCurrentWeek" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm">Current Week</button>
+      </div>
       <label for="portfolioStatusFilter" class="font-medium text-orange-700 mr-2">Show:</label>
       <select id="portfolioStatusFilter" class="p-2 border rounded">
         <option value="All">All</option>
@@ -223,9 +231,49 @@ function attachExportButtons() {
       const formTableNames = headersConfig.map(h => h.table);
       const formTableData = {};
       for (const tableName of formTableNames) {
-        const { data: tdata } = await supabaseClient
-          .from(tableName)
-          .select('*');
+        let query = supabaseClient.from(tableName).select('*');
+        
+        // If frequency is Weekly, filter by date range
+        if (selectedFrequency === 'Weekly') {
+          const weekStartInput = document.getElementById('weekStartDate');
+          const weekEndInput = document.getElementById('weekEndDate');
+          
+          if (weekStartInput.value && weekEndInput.value) {
+            // Use custom date range
+            const startDate = new Date(weekStartInput.value);
+            startDate.setHours(0, 0, 0, 0);
+            const endDate = new Date(weekEndInput.value);
+            endDate.setHours(23, 59, 59, 999);
+            
+            const startStr = startDate.toISOString();
+            const endStr = endDate.toISOString();
+            
+            query = query
+              .gte('submitted_at', startStr)
+              .lte('submitted_at', endStr);
+          } else {
+            // Fallback to current week
+            const now = new Date();
+            const currentDay = now.getDay();
+            const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+            const monday = new Date(now);
+            monday.setDate(now.getDate() + mondayOffset);
+            monday.setHours(0, 0, 0, 0);
+            
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            sunday.setHours(23, 59, 59, 999);
+            
+            const startStr = monday.toISOString();
+            const endStr = sunday.toISOString();
+            
+            query = query
+              .gte('submitted_at', startStr)
+              .lte('submitted_at', endStr);
+          }
+        }
+        
+        const { data: tdata } = await query;
         formTableData[tableName] = tdata || [];
       }
       const exportRows = [];
@@ -292,6 +340,20 @@ function attachExportButtons() {
   // Frequency filter logic
   const frequencyFilter = document.getElementById('portfolioFrequencyFilter');
   const selectedFrequency = frequencyFilter ? frequencyFilter.value : 'Weekly';
+  
+  // Show/hide date filters based on frequency
+  const weeklyDateFilters = document.getElementById('weeklyDateFilters');
+  if (selectedFrequency === 'Weekly') {
+    weeklyDateFilters.style.display = 'flex';
+    // Set default current week dates if not already set
+    const weekStartInput = document.getElementById('weekStartDate');
+    const weekEndInput = document.getElementById('weekEndDate');
+    if (!weekStartInput.value || !weekEndInput.value) {
+      setCurrentWeekDates();
+    }
+  } else {
+    weeklyDateFilters.style.display = 'none';
+  }
   // Table mapping for each frequency (declare only once)
   if (!window._iqacTableMap) {
     window._iqacTableMap = {
@@ -457,10 +519,49 @@ function attachExportButtons() {
             const statusSpanId = `portfolio-status-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
             (async () => {
               let filled = false;
-              const { data: formData, error } = await supabaseClient
-                .from(tableName)
-                .select('*')
-                .eq('Department', dept);
+              let query = supabaseClient.from(tableName).select('*').eq('Department', dept);
+              
+              // If frequency is Weekly, filter by date range
+              if (selectedFrequency === 'Weekly') {
+                const weekStartInput = document.getElementById('weekStartDate');
+                const weekEndInput = document.getElementById('weekEndDate');
+                
+                if (weekStartInput.value && weekEndInput.value) {
+                  // Use custom date range
+                  const startDate = new Date(weekStartInput.value);
+                  startDate.setHours(0, 0, 0, 0);
+                  const endDate = new Date(weekEndInput.value);
+                  endDate.setHours(23, 59, 59, 999);
+                  
+                  const startStr = startDate.toISOString();
+                  const endStr = endDate.toISOString();
+                  
+                  query = query
+                    .gte('submitted_at', startStr)
+                    .lte('submitted_at', endStr);
+                } else {
+                  // Fallback to current week
+                  const now = new Date();
+                  const currentDay = now.getDay();
+                  const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+                  const monday = new Date(now);
+                  monday.setDate(now.getDate() + mondayOffset);
+                  monday.setHours(0, 0, 0, 0);
+                  
+                  const sunday = new Date(monday);
+                  sunday.setDate(monday.getDate() + 6);
+                  sunday.setHours(23, 59, 59, 999);
+                  
+                  const mondayStr = monday.toISOString();
+                  const sundayStr = sunday.toISOString();
+                  
+                  query = query
+                    .gte('submitted_at', mondayStr)
+                    .lte('submitted_at', sundayStr);
+                }
+              }
+              
+              const { data: formData, error } = await query;
               if (!error && formData && formData.length > 0) {
                 filled = formData.some(row => {
                   const rowName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
@@ -489,6 +590,43 @@ function attachExportButtons() {
 
       // Add filter event listeners
   deptFilter.onchange = statusFilter.onchange = frequencyFilter.onchange = () => loadDepartmentPortfoliosIQAC();
+  
+  // Setup date filter event listeners
+  if (!document.getElementById('applyWeekFilter').dataset.listenerAdded) {
+    document.getElementById('applyWeekFilter').addEventListener('click', () => {
+      loadDepartmentPortfoliosIQAC();
+    });
+    
+    document.getElementById('resetToCurrentWeek').addEventListener('click', () => {
+      setCurrentWeekDates();
+      loadDepartmentPortfoliosIQAC();
+    });
+    
+    document.getElementById('weekStartDate').addEventListener('change', () => {
+      loadDepartmentPortfoliosIQAC();
+    });
+    
+    document.getElementById('weekEndDate').addEventListener('change', () => {
+      loadDepartmentPortfoliosIQAC();
+    });
+    
+    document.getElementById('applyWeekFilter').dataset.listenerAdded = 'true';
+  }
+    }
+    
+    // Helper function to set current week dates
+    function setCurrentWeekDates() {
+      const now = new Date();
+      const currentDay = now.getDay();
+      const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + mondayOffset);
+      
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      
+      document.getElementById('weekStartDate').value = monday.toISOString().split('T')[0];
+      document.getElementById('weekEndDate').value = sunday.toISOString().split('T')[0];
     }
   </script>
   <script>
@@ -580,19 +718,56 @@ function attachExportButtons() {
           supabaseClient.from('asp_compliance').select('*').eq('department', selectedDepartment),
           supabaseClient.from('prof_compliance').select('*').eq('department', selectedDepartment)
         ]);
-        function getLatestRows(data) {
-          const latest = {};
+        function getBestComplianceRows(data) {
+          const facultyData = {};
+          
+          // Group all rows by faculty email
           data.forEach(row => {
             const email = row.faculty_email;
-            if (!latest[email] || row.id > latest[email].id) {
-              latest[email] = row;
+            if (!facultyData[email]) {
+              facultyData[email] = [];
             }
+            facultyData[email].push(row);
           });
-          return Object.values(latest);
+          
+          // For each faculty, create a best-case compliance record
+          const result = [];
+          Object.keys(facultyData).forEach(email => {
+            const rows = facultyData[email];
+            
+            // Start with the most recent row as base
+            rows.sort((a, b) => (b.id || 0) - (a.id || 0));
+            const latestRow = { ...rows[0] };
+            
+            // Check each compliance field and keep "completed" if found in any submission
+            for (let i = 1; i <= 20; i++) { // Assuming max 20 compliance fields
+              const fieldName = `compliance_${i}`;
+              let hasCompleted = false;
+              
+              // Check all submissions for this faculty
+              for (const row of rows) {
+                const value = (row[fieldName] || '').toString().trim().toLowerCase();
+                if (value === 'yes' || value === 'completed') {
+                  hasCompleted = true;
+                  break;
+                }
+              }
+              
+              // If any submission shows completed, override with completed
+              if (hasCompleted) {
+                latestRow[fieldName] = 'completed';
+              }
+              // Otherwise keep the latest row's value
+            }
+            
+            result.push(latestRow);
+          });
+          
+          return result;
         }
-        const apDataLatest = getLatestRows(apRes.data || []);
-        const aspDataLatest = getLatestRows(aspRes.data || []);
-        const profDataLatest = getLatestRows(profRes.data || []);
+        const apDataLatest = getBestComplianceRows(apRes.data || []);
+        const aspDataLatest = getBestComplianceRows(aspRes.data || []);
+        const profDataLatest = getBestComplianceRows(profRes.data || []);
         for (const key of ['AP', 'ASP', 'Prof']) {
           if (designationFilter !== 'All' && designationFilter !== key) continue;
           const group = groups[key];
@@ -605,20 +780,50 @@ function attachExportButtons() {
           });
           html += `</tr></thead><tbody>`;
           for (const fac of group) {
-            html += `<tr><td class="px-2 py-2 font-medium text-purple-700 cursor-pointer underline" onclick="viewFacultyForm('${fac.email}','${key}','${fac.Name ? fac.Name.replace(/'/g, "\'") : ''}')">${fac.Name || ''}</td>`;
             let complianceRow = null;
             if (key === 'AP') complianceRow = apDataLatest.find(r => r.faculty_email === fac.email);
             else if (key === 'ASP') complianceRow = aspDataLatest.find(r => r.faculty_email === fac.email);
             else if (key === 'Prof') complianceRow = profDataLatest.find(r => r.faculty_email === fac.email);
+            
+            // Calculate percentage
+            let totalMarks = 0;
+            let obtainedMarks = 0;
+            for (let i = 0; i < particulars.length; i++) {
+              let compliance = complianceRow ? complianceRow[`compliance_${i+1}`] : null;
+              if (compliance) {
+                const val = compliance.trim().toLowerCase();
+                if (val === 'completed') {
+                  obtainedMarks += 3;
+                } else if (val === 'in progress' || val === 'inprogress') {
+                  obtainedMarks += 1;
+                } else if (val === 'not started' || val === 'no' || val === 'incomplete') {
+                  obtainedMarks += 0;
+                }
+              }
+              totalMarks += 3; // Each field has max 3 marks
+            }
+            const percentage = totalMarks > 0 ? Math.round((obtainedMarks / totalMarks) * 100) : 0;
+            
+            html += `<tr><td class="px-2 py-2">
+              <div class="font-medium text-purple-700 cursor-pointer underline" onclick="viewFacultyForm('${fac.email}','${key}','${fac.Name ? fac.Name.replace(/'/g, "\'") : ''}')">${fac.Name || ''}</div>
+              <div class="text-sm ${percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600'} font-semibold">${percentage}%</div>
+            </td>`;
+            
             for (let i = 0; i < particulars.length; i++) {
               let compliance = complianceRow ? complianceRow[`compliance_${i+1}`] : null;
               let complianceClass = '';
               let display = '-';
               if (compliance) {
                 const val = compliance.trim().toLowerCase();
-                if (val === 'yes' || val === 'completed') {
+                if (val === 'completed') {
                   complianceClass = 'text-green-600 font-bold';
                   display = 'Completed';
+                } else if (val === 'in progress' || val === 'inprogress') {
+                  complianceClass = 'text-blue-600 font-bold';
+                  display = 'In Progress';
+                } else if (val === 'not started') {
+                  complianceClass = 'text-orange-600 font-bold';
+                  display = 'Not Started';
                 } else if (val === 'no' || val === 'incomplete') {
                   complianceClass = 'text-red-600 font-bold';
                   display = 'Incomplete';

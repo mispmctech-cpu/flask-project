@@ -280,11 +280,29 @@ class WorkdoneTable {
         }
 
         if (data && data.length > 0) {
+          // Debug: Log data from form2-daily specifically
+          if (entry.table === 'form2-daily') {
+            console.log(`🔍 DEBUG: Found ${data.length} records in form2-daily table:`, data);
+            console.log(`🔍 DEBUG: Looking for department: "${department}"`);
+            data.forEach((row, idx) => {
+              const rowDept = row['Department'] || row['Department:'] || row['department'] || row['department:'] || '';
+              const rowMember = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+              console.log(`   📄 Record ${idx}: Department="${rowDept}", Member="${rowMember}", input_id="${row.input_id}"`);
+              console.log(`   📄 All columns:`, Object.keys(row));
+              console.log(`   📄 Department match:`, this.eq(rowDept, department));
+            });
+          }
+          
           // Filter by department
           const filtered = data.filter(row => {
             const rowDept = row['Department'] || row['Department:'] || row['department'] || row['department:'] || '';
             return this.eq(rowDept, department);
           });
+          
+          // Debug: Log filtered results for form2-daily
+          if (entry.table === 'form2-daily') {
+            console.log(`🔍 DEBUG: After department filter, form2-daily has ${filtered.length} records for department "${department}"`);
+          }
 
           // Add portfolio info and calculate status, with frequency detection
           filtered.forEach(row => {
@@ -323,12 +341,21 @@ class WorkdoneTable {
           const unverifiedRows = filtered.filter(row => {
             if (row.input_id) {
               const isAlreadyVerified = verifiedInputIds.has(row.input_id);
+              // Debug: Log verification status for form2-daily
+              if (entry.table === 'form2-daily') {
+                console.log(`🔍 DEBUG: form2-daily record input_id=${row.input_id}, verified=${isAlreadyVerified}`);
+              }
               return !isAlreadyVerified;
             } else {
               console.warn('Row missing input_id:', row);
               return true; // Include records without input_id (shouldn't happen, but safe fallback)
             }
           });
+          
+          // Debug: Log final count for form2-daily
+          if (entry.table === 'form2-daily') {
+            console.log(`🔍 DEBUG: form2-daily final unverified count: ${unverifiedRows.length}`);
+          }
 
           console.log(`${entry.table}: ${filtered.length} total, ${unverifiedRows.length} unverified`);
           allRows.push(...unverifiedRows);
@@ -396,6 +423,35 @@ class WorkdoneTable {
       return;
     }
 
+    // Sort by submitted_at timestamp - newest first
+    const sortedRows = [...rows].sort((a, b) => {
+      const aTime = new Date(a.submitted_at || a.created_at || a.updated_at || 0);
+      const bTime = new Date(b.submitted_at || b.created_at || b.updated_at || 0);
+      return bTime - aTime; // Newest first
+    });
+
+    // Store sorted rows globally for pagination
+    window._sortedWorkdoneRows = sortedRows;
+
+    // Render with pagination
+    this.renderWorkdoneTableWithPagination(1);
+  }
+
+  renderWorkdoneTableWithPagination(page = 1) {
+    const itemsPerPage = 10;
+    const rows = window._sortedWorkdoneRows || [];
+    const totalItems = rows.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentPageRows = rows.slice(startIndex, endIndex);
+
+    const tbody = document.getElementById("facultyWorkdoneTable");
+    if (!tbody) {
+      console.error('facultyWorkdoneTable element not found');
+      return;
+    }
+
     // Check if we're on faculty-profile.html (editable page)
     const isEditablePage = window.location.pathname.includes('faculty-profile') || 
                           document.title.includes('Faculty Profile') && 
@@ -411,14 +467,20 @@ class WorkdoneTable {
       thead.insertBefore(submittedAtTh, thead.children[3]);
     }
 
-    if (!rows || rows.length === 0) {
+    if (!currentPageRows || currentPageRows.length === 0) {
       const colspan = isEditablePage ? '7' : '6'; // Extra column for delete button
       tbody.innerHTML = `<tr><td colspan='${colspan}' class='text-center text-gray-400 p-4'>No workdone records found for this faculty.</td></tr>`;
+      
+      // Clear pagination if no data
+      const paginationContainer = document.getElementById('workdonePagination');
+      if (paginationContainer) {
+        paginationContainer.innerHTML = '';
+      }
       return;
     }
 
     let html = "";
-    rows.forEach((row, idx) => {
+    currentPageRows.forEach((row, idx) => {
       const statusClass = row.status === 'COMPLETED' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
       // For institution forms, hide department cell
       const isInstitutionForm = row.table && row.table.toLowerCase().startsWith('institution-');
@@ -439,6 +501,10 @@ class WorkdoneTable {
       } else {
         submittedAt = '<span class="text-gray-400">-</span>';
       }
+      
+      // Calculate the original index in the full sorted array
+      const originalIndex = startIndex + idx;
+      
       html += `<tr class="hover:bg-gray-50">
          ${departmentCell}
         <td class="px-4 py-2 border-b">${row.portfolio || '-'}</td>
@@ -448,12 +514,12 @@ class WorkdoneTable {
           <span class="px-2 py-1 rounded text-xs font-medium ${statusClass}">${row.status || 'PENDING'}</span>
         </td>
         <td class="px-4 py-2 border-b">
-          <button onclick="viewRowDetails(${idx})" class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">View</button>
+          <button onclick="viewRowDetails(${originalIndex})" class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">View</button>
         </td>`;
       // Add delete button only for faculty-profile.html
       if (isEditablePage) {
         html += `<td class="px-4 py-2 border-b">
-          <button onclick="deleteWorkdoneRow(${idx})" class="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Delete</button>
+          <button onclick="deleteWorkdoneRow(${originalIndex})" class="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Delete</button>
         </td>`;
       }
       html += `</tr>`;
@@ -461,8 +527,64 @@ class WorkdoneTable {
 
     tbody.innerHTML = html;
 
+    // Generate pagination UI
+    this.generateWorkdonePagination(page, totalPages);
+
     // Apply filter if search exists
     this.filterWorkdoneTable();
+  }
+
+  generateWorkdonePagination(currentPage, totalPages) {
+    const paginationContainer = document.getElementById('workdonePagination');
+    if (!paginationContainer || totalPages <= 1) {
+      if (paginationContainer) {
+        paginationContainer.innerHTML = '';
+      }
+      return;
+    }
+
+    let paginationHTML = '';
+    
+    // Previous button
+    if (currentPage > 1) {
+      paginationHTML += `<button onclick="window._currentWorkdoneTable.renderWorkdoneTableWithPagination(${currentPage - 1})" 
+                           class="mx-1 px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded">Previous</button>`;
+    }
+
+    // Page numbers
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // Adjust start if we're near the end
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      const isCurrentPage = i === currentPage;
+      const buttonClass = isCurrentPage 
+        ? 'mx-1 px-3 py-2 bg-purple-600 text-white rounded'
+        : 'mx-1 px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded';
+      
+      paginationHTML += `<button onclick="window._currentWorkdoneTable.renderWorkdoneTableWithPagination(${i})" 
+                           class="${buttonClass}">${i}</button>`;
+    }
+
+    // Next button
+    if (currentPage < totalPages) {
+      paginationHTML += `<button onclick="window._currentWorkdoneTable.renderWorkdoneTableWithPagination(${currentPage + 1})" 
+                           class="mx-1 px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded">Next</button>`;
+    }
+
+    // Page info
+    const totalItems = window._sortedWorkdoneRows ? window._sortedWorkdoneRows.length : 0;
+    const startItem = (currentPage - 1) * 10 + 1;
+    const endItem = Math.min(currentPage * 10, totalItems);
+    
+    paginationHTML += `<span class="mx-4 text-gray-600">Showing ${startItem}-${endItem} of ${totalItems} records</span>`;
+
+    paginationContainer.innerHTML = paginationHTML;
   }
 
   // Render workdone table for HOD view (workdone.html) with verify buttons
@@ -589,10 +711,12 @@ class WorkdoneTable {
 // Global functions for modal (required by HTML pages)
 window.viewRowDetails = function(idx) {
   console.log('viewRowDetails called with index:', idx);
-  const row = window._workdoneRows && window._workdoneRows[idx];
+  // Use sorted data if available, fallback to original
+  const rows = window._sortedWorkdoneRows || window._workdoneRows;
+  const row = rows && rows[idx];
   if (!row) {
     console.error('Row not found for index:', idx);
-    console.log('Available rows:', window._workdoneRows);
+    console.log('Available rows:', rows);
     return;
   }
   
@@ -622,7 +746,9 @@ window.viewRowDetails = function(idx) {
 };
 
 window.deleteWorkdoneRow = function(idx) {
-  const row = window._workdoneRows && window._workdoneRows[idx];
+  // Use sorted data if available, fallback to original
+  const rows = window._sortedWorkdoneRows || window._workdoneRows;
+  const row = rows && rows[idx];
   if (!row) {
     console.error('Row not found for index:', idx);
     return;

@@ -205,6 +205,10 @@
       <section class="card-shadow rounded-xl overflow-hidden">
         <div class="bg-white p-4">
           <h2 class="text-lg font-bold text-pmcPurple mb-4 uppercase">WORKDONE</h2>
+          <!-- Search input for workdone -->
+          <div class="mb-4">
+            <input id="workdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-purple-700" placeholder="Search by Portfolio or Member" oninput="window._currentWorkdoneTable.filterWorkdoneTable()" />
+          </div>
           <div class="overflow-x-auto">
             <table
               class="min-w-full bg-white shadow text-sm border border-gray-300"
@@ -216,8 +220,8 @@
                   <th class="p-3 border-b border-gray-300">Department</th>
                   <th class="p-3 border-b border-gray-300">Portfolio Name</th>
                   <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
-                  <th class="p-3 border-b border-gray-300">Submitted At</th>
                   <th class="p-3 border-b border-gray-300">Status</th>
+                  <th class="p-3 border-b border-gray-300">Submitted At</th>
                   <th class="p-3 border-b border-gray-300 text-center">View</th>
                 </tr>
               </thead>
@@ -227,6 +231,8 @@
               ></tbody>
             </table>
           </div>
+          <!-- Pagination Container for Workdone -->
+          <div class="flex justify-center items-center mt-4" id="workdonePagination"></div>
           <div
             id="workdoneErrorBox"
             class="hidden mt-4 p-3 rounded bg-red-100 text-red-700 font-semibold"
@@ -515,24 +521,115 @@
           if (error || !complianceRows || complianceRows.length === 0) {
             return [null, 'No compliance data'];
           }
-          let row = complianceRows[0];
-          return [row, null];
+
+          // Apply "best case scenario" logic similar to IQAC dashboard
+          if (complianceRows.length === 1) {
+            return [complianceRows[0], null];
+          }
+
+          // Create optimized compliance record using best case scenario
+          const bestComplianceRow = { ...complianceRows[0] }; // Start with latest as base
+          
+          // Check each compliance field and keep "completed" if found in any submission
+          for (let i = 1; i <= 20; i++) { // Assuming max 20 compliance fields
+            const fieldName = `compliance_${i}`;
+            let hasCompleted = false;
+            
+            // Check all submissions for this faculty
+            for (const row of complianceRows) {
+              const value = (row[fieldName] || '').toString().trim().toLowerCase();
+              if (value === 'yes' || value === 'completed') {
+                hasCompleted = true;
+                break;
+              }
+            }
+            
+            // If any submission shows completed, override with completed
+            if (hasCompleted) {
+              bestComplianceRow[fieldName] = 'completed';
+            }
+            // Otherwise keep the latest row's value
+          }
+
+          return [bestComplianceRow, null];
         }
 
         (async function renderDetailsTableWithCompliance() {
           let [coreCompliance, complianceError] = await getCoreComplianceDetails();
           let html = "";
+          
           if (Array.isArray(detailsTableArr) && detailsTableArr.length > 0) {
-            html = `<div class='overflow-x-auto'><table class='min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white'><thead class='bg-purple-700 text-white'><tr><th class='px-4 py-2'>S. NO</th><th class='px-4 py-2'>PARTICULAR</th><th class='px-4 py-2'>TARGET</th><th class='px-4 py-2'>TAT</th><th class='px-4 py-2'>Compliance</th>${detailsTableEditMode ? "<th></th>" : ""}</tr></thead><tbody>` +
-              detailsTableArr.map((row, idx) =>
-                `<tr class='${idx%2===0?"bg-gray-50":"bg-white"}'>`+
+            // Calculate percentage for the faculty (only in view mode)
+            let percentageHtml = '';
+            if (!detailsTableEditMode && coreCompliance) {
+              let totalMarks = 0;
+              let obtainedMarks = 0;
+              
+              for (let i = 0; i < detailsTableArr.length; i++) {
+                let compField = `compliance_${i + 1}`;
+                let compliance = coreCompliance[compField];
+                
+                if (compliance) {
+                  const val = compliance.trim().toLowerCase();
+                  if (val === 'completed' || val === 'yes') {
+                    obtainedMarks += 3;
+                  } else if (val === 'in progress' || val === 'inprogress') {
+                    obtainedMarks += 1;
+                  } else if (val === 'not started' || val === 'no' || val === 'incomplete') {
+                    obtainedMarks += 0;
+                  }
+                }
+                totalMarks += 3; // Each field has max 3 marks
+              }
+              
+              const percentage = totalMarks > 0 ? Math.round((obtainedMarks / totalMarks) * 100) : 0;
+              percentageHtml = `<div class="mb-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-purple-700">Faculty Compliance Score:</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-2xl font-bold text-purple-800">${percentage}%</span>
+                    <span class="text-sm text-gray-600">(${obtainedMarks}/${totalMarks})</span>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-full" style="width: ${percentage}%"></div>
+                  </div>
+                </div>
+              </div>`;
+            }
+
+            html = percentageHtml + `<div class='overflow-x-auto'><table class='min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white'><thead class='bg-purple-700 text-white'><tr><th class='px-4 py-2'>S. NO</th><th class='px-4 py-2'>PARTICULAR</th><th class='px-4 py-2'>TARGET</th><th class='px-4 py-2'>TAT</th><th class='px-4 py-2'>Compliance</th>${detailsTableEditMode ? "<th></th>" : ""}</tr></thead><tbody>` +
+              detailsTableArr.map((row, idx) => {
+                let complianceDisplay = '';
+                if (!detailsTableEditMode && coreCompliance) {
+                  let compliance = coreCompliance[`compliance_${idx+1}`];
+                  if (compliance) {
+                    const val = compliance.trim().toLowerCase();
+                    if (val === 'completed' || val === 'yes') {
+                      complianceDisplay = '<span class="text-green-600 font-bold">Completed</span>';
+                    } else if (val === 'in progress' || val === 'inprogress') {
+                      complianceDisplay = '<span class="text-orange-600 font-bold">In Progress</span>';
+                    } else if (val === 'not started' || val === 'no' || val === 'incomplete') {
+                      complianceDisplay = '<span class="text-red-600 font-bold">Not Started</span>';
+                    } else {
+                      complianceDisplay = compliance;
+                    }
+                  } else {
+                    complianceDisplay = '<span class="text-gray-400">-</span>';
+                  }
+                } else if (!detailsTableEditMode) {
+                  complianceDisplay = complianceError ? `<span class='text-gray-400'>${complianceError}</span>` : '<span class="text-gray-400">-</span>';
+                }
+
+                return `<tr class='${idx%2===0?"bg-gray-50":"bg-white"}'>`+
                 (detailsTableEditMode
                   ? `<td>${idx+1}</td><td><input type='text' class='border px-2 py-1 rounded w-32' value='${row.particular||""}' onchange='onDetailsEdit(${idx},"particular",this.value)' /></td><td><input type='text' class='border px-2 py-1 rounded w-24' value='${row.target||""}' onchange='onDetailsEdit(${idx},"target",this.value)' /></td><td><input type='text' class='border px-2 py-1 rounded w-16' value='${row.tat||""}' onchange='onDetailsEdit(${idx},"tat",this.value)' />`+
                   `<td><input type='text' class='border px-2 py-1 rounded w-24' value='${row.compliance||""}' onchange='onDetailsEdit(${idx},"compliance",this.value)' /></td><td><button onclick='onDetailsDelete(${idx})' class='text-red-600 font-bold'>Delete</button></td>`
-                  : `<td class='px-2 py-2'>${idx+1}</td><td class='px-2 py-2'>${row.particular||""}</td><td class='px-2 py-2'>${row.target||""}</td><td class='px-2 py-2'>${row.tat||""}</td><td class='px-2 py-2'>${coreCompliance ? (coreCompliance[`compliance_${idx+1}`] || '<span class="text-gray-400">-</span>') : (complianceError ? `<span class='text-gray-400'>${complianceError}</span>` : '<span class="text-gray-400">-</span>')}</td>`
+                  : `<td class='px-2 py-2'>${idx+1}</td><td class='px-2 py-2'>${row.particular||""}</td><td class='px-2 py-2'>${row.target||""}</td><td class='px-2 py-2'>${row.tat||""}</td><td class='px-2 py-2'>${complianceDisplay}</td>`
                 )+
-                `</tr>`
-              ).join("") +
+                `</tr>`;
+              }).join("") +
               (detailsTableEditMode ? `<tr><td colspan='6'><button onclick='onDetailsAdd()' class='bg-blue-500 text-white px-3 py-1 rounded'>Add Row</button></td></tr>` : "") +
               `</tbody></table></div>`;
           } else {
