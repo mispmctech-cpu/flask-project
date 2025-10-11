@@ -164,6 +164,17 @@
       </button>
     </div>
     <div class="overflow-x-auto">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
+        <div class="flex gap-2 items-center">
+          <label for="pendingDeptFilter" class="font-medium text-green-700">Department:</label>
+          <select id="pendingDeptFilter" class="p-2 border rounded"></select>
+        </div>
+        <input id="pendingWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-green-700" placeholder="Search by Portfolio or Member" />
+        <button onclick="exportTableToExcel('iqacWorkdoneTable', 'IQAC_Workdone')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+          Export to Excel
+        </button>
+      </div>
       <table class="min-w-full bg-white shadow-lg text-sm border border-gray-300">
         <thead class="bg-gradient-to-r from-green-700 to-green-500 text-white">
           <tr>
@@ -185,7 +196,11 @@
     <div class="mt-10">
       <h2 class="text-lg font-bold mb-2 text-green-700">Accepted Workdone</h2>
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
-        <input id="acceptedWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-blue-700" placeholder="Search by Portfolio or Member" oninput="filterTable('acceptedWorkdoneTable', 'acceptedWorkdoneSearch')" />
+        <div class="flex gap-2 items-center">
+          <label for="acceptedDeptFilter" class="font-medium text-blue-700">Department:</label>
+          <select id="acceptedDeptFilter" class="p-2 border rounded"></select>
+        </div>
+        <input id="acceptedWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-blue-700" placeholder="Search by Portfolio or Member" />
         <button onclick="exportTableToExcel('acceptedWorkdoneTable', 'Accepted_Workdone')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
           Export to Excel
@@ -254,13 +269,16 @@
         rejectedRows = [];
       }
 
-      // Build sets of rejected input_ids and fallback keys
-      const rejectedInputIds = new Set();
-      // Only declare rejectedKeys once, use composite key logic below
+      // Build sets of accepted and rejected composite keys using only department, portfolio_name, portfolio_member_name, verified_at
+      const acceptedKeys = new Set();
+      for (const v of acceptedRows) {
+        const key = `${v.department}|${v.portfolio_name}|${v.portfolio_member_name}|${v.verified_at || ''}`;
+        acceptedKeys.add(key);
+      }
+      const rejectedKeys = new Set();
       for (const r of rejectedRows) {
-        if (r.input_id) {
-          rejectedInputIds.add(r.input_id);
-        }
+        const key = `${r.department}|${r.portfolio_name}|${r.portfolio_member_name}|${r.submitted_at || r.rejected_at || ''}`;
+        rejectedKeys.add(key);
       }
 
       let { data, error } = await supabaseClient
@@ -280,22 +298,9 @@
       // Debug: log all loaded records from hod-workdone
       console.log('Loaded records from hod-workdone:', data);
 
-      // Build composite key sets for accepted and rejected
-      const acceptedKeys = new Set();
-      for (const v of acceptedRows) {
-        const key = `${v.department}|${v.portfolio_name}|${v.portfolio_member_name}|${v.table_name}|${v.submitted_at || v.verified_at || ''}`;
-        acceptedKeys.add(key);
-      }
-      // Only declare rejectedKeys here
-      const rejectedKeys = new Set();
-      for (const r of rejectedRows) {
-        const key = `${r.department}|${r.portfolio_name}|${r.portfolio_member_name}|${r.table_name}|${r.submitted_at || r.rejected_at || ''}`;
-        rejectedKeys.add(key);
-      }
-
-      // Filter out rows that are already accepted or rejected using composite key
+      // Filter out rows that are already accepted or rejected using composite key (without table_name)
       const filtered = (data || []).filter(row => {
-        const key = `${row.department}|${row.portfolio_name}|${row.portfolio_member_name}|${row.table_name}|${row.submitted_at || row.verified_at || ''}`;
+        const key = `${row.department}|${row.portfolio_name}|${row.portfolio_member_name}|${row.verified_at || ''}`;
         if (acceptedKeys.has(key)) {
           console.log('Filtered out (already accepted by composite key):', row);
           return false;
@@ -319,13 +324,105 @@
     let iqacRowsPerPage = 10;
     let _iqacRowsAll = [];
     function renderIQACWorkdoneTable(rows) {
-  // Exclude 'Class Advisor (Daily) (Daily)' from the table
-  const filteredRows = rows.filter(r => (r.portfolio_name || '').trim().toLowerCase() !== 'class advisor (daily) (daily)');
-  _iqacRowsAll = filteredRows;
-  window._iqacRowsAll = filteredRows;
-  window._iqacRows = filteredRows;
-  renderIQACWorkdoneTablePage(iqacCurrentPage);
-  renderIQACWorkdonePagination();
+      // Exclude 'Class Advisor (Daily) (Daily)' from the table
+      const filteredRows = rows.filter(r => (r.portfolio_name || '').trim().toLowerCase() !== 'class advisor (daily) (daily)');
+      // Populate department filter
+      const deptFilter = document.getElementById('pendingDeptFilter');
+      const departments = Array.from(new Set(filteredRows.map(r => r.department).filter(Boolean)));
+      deptFilter.innerHTML = '<option value="All">All Departments</option>' + departments.map(d => `<option value="${d}">${d}</option>`).join('');
+      deptFilter.value = 'All';
+      // Set up global search
+      if (typeof window.pendingCurrentPage === 'undefined') window.pendingCurrentPage = 1;
+      if (typeof window.pendingRowsPerPage === 'undefined') window.pendingRowsPerPage = 10;
+      window._iqacRowsAll = filteredRows;
+      window._iqacRows = filteredRows;
+      function getFilteredRows() {
+        const selectedDept = deptFilter.value;
+        const search = document.getElementById('pendingWorkdoneSearch').value.toLowerCase();
+        return filteredRows.filter(r => {
+          let deptMatch = selectedDept === 'All' || r.department === selectedDept;
+          let searchMatch = !search || (
+            (r.portfolio_name && r.portfolio_name.toLowerCase().includes(search)) ||
+            (r.portfolio_member_name && r.portfolio_member_name.toLowerCase().includes(search))
+          );
+          return deptMatch && searchMatch;
+        });
+      }
+      function renderIQACWorkdoneTablePage(page) {
+        const tbody = document.getElementById('iqacWorkdoneTable');
+        const filtered = getFilteredRows();
+        let start = (page - 1) * window.pendingRowsPerPage;
+        let end = start + window.pendingRowsPerPage;
+        let pageRows = filtered.slice(start, end);
+        tbody.innerHTML = pageRows.length > 0 ? pageRows.map((r, idx) => {
+          let globalIdx = start + idx;
+          let statusText = (r.status || '').toString().toUpperCase();
+          let statusClass = '';
+          if (statusText === 'COMPLETED') {
+            statusClass = 'text-green-600 font-bold uppercase';
+          } else if (statusText === 'PENDING') {
+            statusClass = 'text-red-600 font-bold uppercase';
+          } else {
+            statusClass = 'font-bold uppercase';
+          }
+          return `
+          <tr class="hover:bg-green-50 transition border-b border-gray-200" data-iqac-idx="${globalIdx}">
+            <td class='p-3 border-r border-gray-200'>${r.department}</td>
+            <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
+            <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
+            <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
+            <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
+            <td class='p-3 border-r border-gray-200'>${r.verified_at ? new Date(r.verified_at).toLocaleString() : ''}</td>
+            <td class='p-3 text-center'><button class="accept-btn bg-blue-600 hover:bg-blue-800 text-white px-3 py-1 rounded" data-row='${JSON.stringify(r).replace(/'/g, "&#39;")}' onclick="acceptRow(this)">Accept</button></td>
+            <td class='p-3 text-center'><button class="reject-btn bg-red-600 hover:bg-red-800 text-white px-3 py-1 rounded" data-row='${JSON.stringify(r).replace(/'/g, "&#39;")}' onclick="rejectIQACRow(this)">Reject</button></td>
+            <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewIQACRowDetails(${globalIdx})">View</button></td>
+          </tr>
+        `;
+        }).join('') : `<tr><td colspan='9' class='text-center text-gray-400 p-4'>No records found.</td></tr>`;
+      }
+      function renderIQACWorkdonePagination() {
+        const filtered = getFilteredRows();
+        const totalRows = filtered.length;
+        const totalPages = Math.ceil(totalRows / window.pendingRowsPerPage);
+        const container = document.getElementById('iqacWorkdonePagination');
+        if (totalPages <= 1) {
+          container.innerHTML = '';
+          return;
+        }
+        let html = `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${window.pendingCurrentPage === 1 ? 'disabled' : ''} onclick='changePendingPage(${window.pendingCurrentPage - 1})'>Prev</button>`;
+        for (let i = 1; i <= totalPages; i++) {
+          html += `<button class='px-3 py-1 mx-1 rounded ${i === window.pendingCurrentPage ? 'bg-green-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}' onclick='changePendingPage(${i})'>${i}</button>`;
+        }
+        html += `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${window.pendingCurrentPage === totalPages ? 'disabled' : ''} onclick='changePendingPage(${window.pendingCurrentPage + 1})'>Next</button>`;
+        container.innerHTML = html;
+        container.style.overflowX = 'auto';
+        container.style.whiteSpace = 'nowrap';
+        setTimeout(() => { container.scrollLeft = 0; }, 0);
+      }
+      // Always reset to first page when rendering new data
+      window.pendingCurrentPage = 1;
+      renderIQACWorkdoneTablePage(window.pendingCurrentPage);
+      renderIQACWorkdonePagination();
+      window.changePendingPage = function(page) {
+        const filtered = getFilteredRows();
+        const totalRows = filtered.length;
+        const totalPages = Math.ceil(totalRows / window.pendingRowsPerPage);
+        if (page < 1 || page > totalPages) return;
+        window.pendingCurrentPage = page;
+        renderIQACWorkdoneTablePage(page);
+        renderIQACWorkdonePagination();
+      }
+      // Add event listeners for filter and search
+      deptFilter.onchange = () => {
+        window.pendingCurrentPage = 1;
+        renderIQACWorkdoneTablePage(window.pendingCurrentPage);
+        renderIQACWorkdonePagination();
+      };
+      document.getElementById('pendingWorkdoneSearch').oninput = () => {
+        window.pendingCurrentPage = 1;
+        renderIQACWorkdoneTablePage(window.pendingCurrentPage);
+        renderIQACWorkdonePagination();
+      };
     }
     function renderIQACWorkdoneTablePage(page) {
       const tbody = document.getElementById('iqacWorkdoneTable');
@@ -515,23 +612,35 @@
       let acceptedCurrentPage = 1;
       let acceptedRowsPerPage = 10;
       let _acceptedRowsAll = [];
-      window._acceptedRowsAll = rows;
-      window._acceptedRows = rows;
-      renderAcceptedWorkdoneTablePage(acceptedCurrentPage);
-      renderAcceptedWorkdonePagination();
-      window.changeAcceptedPage = function(page) {
-        const totalRows = window._acceptedRowsAll.length;
-        const totalPages = Math.ceil(totalRows / acceptedRowsPerPage);
-        if (page < 1 || page > totalPages) return;
-        acceptedCurrentPage = page;
-        renderAcceptedWorkdoneTablePage(page);
-        renderAcceptedWorkdonePagination();
+  // Use only one set of variable declarations
+  if (typeof window.acceptedCurrentPage === 'undefined') window.acceptedCurrentPage = 1;
+  if (typeof window.acceptedRowsPerPage === 'undefined') window.acceptedRowsPerPage = 10;
+  window._acceptedRowsAll = rows;
+  window._acceptedRows = rows;
+  // Populate department filter
+  const deptFilter = document.getElementById('acceptedDeptFilter');
+  const departments = Array.from(new Set(rows.map(r => r.department).filter(Boolean)));
+  deptFilter.innerHTML = '<option value="All">All Departments</option>' + departments.map(d => `<option value="${d}">${d}</option>`).join('');
+  deptFilter.value = 'All';
+      // Search and filter logic
+      function getFilteredRows() {
+        const selectedDept = deptFilter.value;
+        const search = document.getElementById('acceptedWorkdoneSearch').value.toLowerCase();
+        return rows.filter(r => {
+          let deptMatch = selectedDept === 'All' || r.department === selectedDept;
+          let searchMatch = !search || (
+            (r.portfolio_name && r.portfolio_name.toLowerCase().includes(search)) ||
+            (r.portfolio_member_name && r.portfolio_member_name.toLowerCase().includes(search))
+          );
+          return deptMatch && searchMatch;
+        });
       }
       function renderAcceptedWorkdoneTablePage(page) {
         const tbody = document.getElementById('acceptedWorkdoneTable');
-        let start = (page - 1) * acceptedRowsPerPage;
-        let end = start + acceptedRowsPerPage;
-        let pageRows = window._acceptedRowsAll.slice(start, end);
+        const filteredRows = getFilteredRows();
+        let start = (page - 1) * window.acceptedRowsPerPage;
+        let end = start + window.acceptedRowsPerPage;
+        let pageRows = filteredRows.slice(start, end);
         tbody.innerHTML = pageRows.length > 0 ? pageRows.map((r, idx) => {
           let globalIdx = start + idx;
           let statusText = (r.status || '').toString().toUpperCase();
@@ -559,23 +668,48 @@
         }).join('') : `<tr><td colspan='9' class='text-center text-gray-400 p-4'>No accepted records found.</td></tr>`;
       }
       function renderAcceptedWorkdonePagination() {
-        const totalRows = window._acceptedRowsAll.length;
-        const totalPages = Math.ceil(totalRows / acceptedRowsPerPage);
+        const filteredRows = getFilteredRows();
+        const totalRows = filteredRows.length;
+        const totalPages = Math.ceil(totalRows / window.acceptedRowsPerPage);
         const container = document.getElementById('acceptedWorkdonePagination');
         if (totalPages <= 1) {
           container.innerHTML = '';
           return;
         }
-        let html = `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${acceptedCurrentPage === 1 ? 'disabled' : ''} onclick='changeAcceptedPage(${acceptedCurrentPage - 1})'>Prev</button>`;
+        let html = `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${window.acceptedCurrentPage === 1 ? 'disabled' : ''} onclick='changeAcceptedPage(${window.acceptedCurrentPage - 1})'>Prev</button>`;
         for (let i = 1; i <= totalPages; i++) {
-          html += `<button class='px-3 py-1 mx-1 rounded ${i === acceptedCurrentPage ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}' onclick='changeAcceptedPage(${i})'>${i}</button>`;
+          html += `<button class='px-3 py-1 mx-1 rounded ${i === window.acceptedCurrentPage ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}' onclick='changeAcceptedPage(${i})'>${i}</button>`;
         }
-        html += `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${acceptedCurrentPage === totalPages ? 'disabled' : ''} onclick='changeAcceptedPage(${acceptedCurrentPage + 1})'>Next</button>`;
+        html += `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${window.acceptedCurrentPage === totalPages ? 'disabled' : ''} onclick='changeAcceptedPage(${window.acceptedCurrentPage + 1})'>Next</button>`;
         container.innerHTML = html;
+        container.style.overflowX = 'auto';
+        container.style.whiteSpace = 'nowrap';
+        setTimeout(() => { container.scrollLeft = 0; }, 0);
       }
-    }
-    // Helper function to show fallback data when form data can't be found
-    function showFallbackModal(row) {
+      // Always reset to first page when rendering new data
+      window.acceptedCurrentPage = 1;
+      renderAcceptedWorkdoneTablePage(window.acceptedCurrentPage);
+      renderAcceptedWorkdonePagination();
+      window.changeAcceptedPage = function(page) {
+        const filteredRows = getFilteredRows();
+        const totalRows = filteredRows.length;
+        const totalPages = Math.ceil(totalRows / window.acceptedRowsPerPage);
+        if (page < 1 || page > totalPages) return;
+        window.acceptedCurrentPage = page;
+        renderAcceptedWorkdoneTablePage(page);
+        renderAcceptedWorkdonePagination();
+      }
+      // Add event listeners for filter and search
+      deptFilter.onchange = () => {
+        window.acceptedCurrentPage = 1;
+        renderAcceptedWorkdoneTablePage(window.acceptedCurrentPage);
+        renderAcceptedWorkdonePagination();
+      };
+      document.getElementById('acceptedWorkdoneSearch').oninput = () => {
+        window.acceptedCurrentPage = 1;
+        renderAcceptedWorkdoneTablePage(window.acceptedCurrentPage);
+        renderAcceptedWorkdonePagination();
+      };
       let html = '<div class="mb-4 p-3 bg-yellow-100 text-yellow-800 rounded">⚠️ Could not find original form data. Showing verification record data:</div>';
       html += '<table class="min-w-full text-left">';
       for (const [key, value] of Object.entries(row)) {
