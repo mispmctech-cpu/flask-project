@@ -288,19 +288,50 @@ function attachExportButtons() {
           let names = [];
           for (const fac of assignedList) {
             const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
-            // Check completion in relevant form table
+            // Robust percentage calculation (same as UI)
+            let percentage = 0;
             let filled = false;
             const tdata = formTableData[tableName];
+            let bestRow = null;
             if (tdata && tdata.length > 0) {
-              filled = tdata.some(row => {
-                const rowName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+              // Robust faculty name matching
+              const filteredRows = tdata.filter(row => {
+                const rowName = row['Portfolio Member Name:'] || row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
                 return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase() && (row['Department'] || row['Department:'] || '').toString().trim().toLowerCase() === dept.toString().trim().toLowerCase();
               });
+              if (filteredRows.length > 0) {
+                filled = true;
+                bestRow = filteredRows.sort((a, b) => (b.id || 0) - (a.id || 0))[0];
+              }
+            }
+            if (bestRow) {
+              let totalPoints = 0;
+              let maxPoints = 0;
+              const statusKeys = Object.keys(bestRow).filter(k => k.startsWith('Status'));
+              for (const key of statusKeys) {
+                const val = (bestRow[key] || '').toString().trim().toLowerCase();
+                if (val === 'not applicable' || val === 'na') continue;
+                maxPoints += 3;
+                if (val === 'completed' || val === 'completed and updated') {
+                  totalPoints += 3;
+                } else if (val === 'under process' || val === 'in process' || val === 'in progress') {
+                  totalPoints += 1;
+                } else if (val === 'yet to be completed' || val === '' || val === '-' || val === 'not started' || val === 'no' || val === 'incomplete' || val === null) {
+                  totalPoints += 0;
+                }
+              }
+              if (maxPoints > 0) {
+                percentage = Math.round((totalPoints / maxPoints) * 100);
+              } else {
+                percentage = 0;
+              }
+            } else {
+              percentage = 0;
             }
             // Filter by status
             if (selectedStatus === 'Completed' && !filled) continue;
             if (selectedStatus === 'Pending' && filled) continue;
-            names.push(facultyName + (filled ? ' (C)' : ' (N)'));
+            names.push(facultyName + ` (${percentage}%)` + (filled ? ' (C)' : ' (N)'));
           }
           row.push(names.length > 0 ? names.join(', ') : '-');
         }
@@ -489,10 +520,10 @@ function attachExportButtons() {
       if (assignedList.length > 0) {
         for (const fac of assignedList) {
           const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
-          // Async check for submission in relevant table
+          // Add a span for tick/cross and percentage (percentage will be filled in as (85%) after name)
           html += `<div class="flex items-center gap-1" style="font-size:11px;">
             <span id="portfolio-status-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}" class="inline-block"></span>
-            ${facultyName}
+            <span class="inline-block">${facultyName} <span id="portfolio-percent-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}"></span></span>
           </div>`;
         }
       } else {
@@ -517,60 +548,82 @@ function attachExportButtons() {
           for (const fac of assignedList) {
             const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
             const statusSpanId = `portfolio-status-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
+            const percentSpanId = `portfolio-percent-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
             (async () => {
               let filled = false;
+              let percentage = 0;
               let query = supabaseClient.from(tableName).select('*').eq('Department', dept);
-              
               // If frequency is Weekly, filter by date range
               if (selectedFrequency === 'Weekly') {
                 const weekStartInput = document.getElementById('weekStartDate');
                 const weekEndInput = document.getElementById('weekEndDate');
-                
                 if (weekStartInput.value && weekEndInput.value) {
-                  // Use custom date range
                   const startDate = new Date(weekStartInput.value);
                   startDate.setHours(0, 0, 0, 0);
                   const endDate = new Date(weekEndInput.value);
                   endDate.setHours(23, 59, 59, 999);
-                  
                   const startStr = startDate.toISOString();
                   const endStr = endDate.toISOString();
-                  
-                  query = query
-                    .gte('submitted_at', startStr)
-                    .lte('submitted_at', endStr);
+                  query = query.gte('submitted_at', startStr).lte('submitted_at', endStr);
                 } else {
-                  // Fallback to current week
                   const now = new Date();
                   const currentDay = now.getDay();
                   const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
                   const monday = new Date(now);
                   monday.setDate(now.getDate() + mondayOffset);
                   monday.setHours(0, 0, 0, 0);
-                  
                   const sunday = new Date(monday);
                   sunday.setDate(monday.getDate() + 6);
                   sunday.setHours(23, 59, 59, 999);
-                  
                   const mondayStr = monday.toISOString();
                   const sundayStr = sunday.toISOString();
-                  
-                  query = query
-                    .gte('submitted_at', mondayStr)
-                    .lte('submitted_at', sundayStr);
+                  query = query.gte('submitted_at', mondayStr).lte('submitted_at', sundayStr);
                 }
               }
-              
               const { data: formData, error } = await query;
+              let bestRow = null;
               if (!error && formData && formData.length > 0) {
-                filled = formData.some(row => {
-                  const rowName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+                // Robust faculty name matching (as in workdone-table.js)
+                const filteredRows = formData.filter(row => {
+                  const rowName = row['Portfolio Member Name:'] || row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
                   return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase();
                 });
+                if (filteredRows.length > 0) {
+                  filled = true;
+                  // Use the latest row (by id or timestamp)
+                  bestRow = filteredRows.sort((a, b) => (b.id || 0) - (a.id || 0))[0];
+                }
               }
+              // Calculate percentage if bestRow exists, using all keys starting with 'Status'
+              if (bestRow) {
+                let totalPoints = 0;
+                let maxPoints = 0;
+                // Use all keys starting with 'Status' (case-sensitive, as in workdone-table.js)
+                const statusKeys = Object.keys(bestRow).filter(k => k.startsWith('Status'));
+                for (const key of statusKeys) {
+                  const val = (bestRow[key] || '').toString().trim().toLowerCase();
+                  if (val === 'not applicable' || val === 'na') continue;
+                  maxPoints += 3;
+                  if (val === 'completed' || val === 'completed and updated') {
+                    totalPoints += 3;
+                  } else if (val === 'under process' || val === 'in process' || val === 'in progress') {
+                    totalPoints += 1;
+                  } else if (val === 'yet to be completed' || val === '' || val === '-' || val === 'not started' || val === 'no' || val === 'incomplete' || val === null) {
+                    totalPoints += 0;
+                  }
+                }
+                if (maxPoints > 0) {
+                  percentage = Math.round((totalPoints / maxPoints) * 100);
+                } else {
+                  percentage = 0;
+                }
+              } else {
+                percentage = 0;
+              }
+              // Set tick/cross and percentage
               const statusSpan = document.getElementById(statusSpanId);
+              const percentSpan = document.getElementById(percentSpanId);
               if (statusSpan) {
-                // Filter by status
                 if (selectedStatus === 'Completed' && !filled) {
                   statusSpan.parentElement.style.display = 'none';
                   return;
@@ -580,8 +633,11 @@ function attachExportButtons() {
                   return;
                 }
                 statusSpan.innerHTML = filled
-                  ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>`
-                  : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`;
+                  ? `<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 text-green-500\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M5 13l4 4L19 7\" /></svg>`
+                  : `<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 text-red-500\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M6 18L18 6M6 6l12 12\" /></svg>`;
+                if (percentSpan) {
+                  percentSpan.innerHTML = `<span class='text-xs font-semibold ${percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600'}'>(${percentage}%)</span>`;
+                }
               }
             })();
           }

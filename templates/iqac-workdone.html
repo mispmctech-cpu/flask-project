@@ -54,6 +54,25 @@
     let rejectedIQACRowsPerPage = 10;
     let _rejectedIQACRowsAll = [];
     async function loadRejectedIQACWorkdone() {
+      // First, fetch accepted workdone to exclude any rejected rows that were later accepted
+      let acceptedRows = [];
+      try {
+        const { data: acceptedData, error: acceptedError } = await supabaseClient
+          .from('iqac-workdone')
+          .select('input_id, table_name, department, portfolio_name, portfolio_member_name, verified_at, accepted_at');
+        if (!acceptedError && acceptedData) acceptedRows = acceptedData;
+      } catch (e) {
+        acceptedRows = [];
+      }
+
+      // Build accepted key sets (preferred: input_id__table_name, fallback: department|portfolio|member|verified_at)
+      const acceptedCompositeKeys = new Set();
+      const acceptedFallbackKeys = new Set();
+      for (const v of acceptedRows) {
+        if (v.input_id && v.table_name) acceptedCompositeKeys.add(`${v.input_id}__${v.table_name}`);
+        acceptedFallbackKeys.add(`${v.department}|${v.portfolio_name}|${v.portfolio_member_name}|${v.verified_at || ''}`);
+      }
+
       // Fetch rejected IQAC workdone from iqac_workdone_reject table
       let { data, error } = await supabaseClient
         .from('iqac_workdone_reject')
@@ -63,7 +82,26 @@
         document.getElementById('rejectedIQACWorkdoneTable').innerHTML = `<tr><td colspan='8' class='text-center text-red-500 p-4'>Failed to load rejected workdone: ${error.message}</td></tr>`;
         return;
       }
-      renderRejectedIQACWorkdoneTable(data || []);
+
+      // Filter out rejected rows that are already accepted (use composite key if available, else fallback)
+      const rawRejected = data || [];
+      const filteredRejected = rawRejected.filter(r => {
+        const composite = (r.input_id && r.table_name) ? `${r.input_id}__${r.table_name}` : null;
+        if (composite) {
+          if (acceptedCompositeKeys.has(composite)) {
+            console.log('Excluding rejected row because accepted (by input_id__table_name):', r);
+            return false;
+          }
+        }
+        const fallback = `${r.department}|${r.portfolio_name}|${r.portfolio_member_name}|${r.submitted_at || r.rejected_at || ''}`;
+        if (acceptedFallbackKeys.has(fallback)) {
+          console.log('Excluding rejected row because accepted (by fallback key):', r);
+          return false;
+        }
+        return true;
+      });
+
+      renderRejectedIQACWorkdoneTable(filteredRejected);
     }
     function renderRejectedIQACWorkdoneTable(rows) {
       _rejectedIQACRowsAll = rows;
@@ -157,11 +195,8 @@
       });
     }
     </script>
-      <input id="iqacWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-green-700" placeholder="Search by Portfolio or Member" oninput="filterTable('iqacWorkdoneTable', 'iqacWorkdoneSearch')" />
-      <button onclick="exportTableToExcel('iqacWorkdoneTable', 'IQAC_Workdone')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-        Export to Excel
-      </button>
+      <!-- NOTE: Removed duplicate global search/export controls to avoid two search boxes for the Pending table.
+           Use the department filter + `pendingWorkdoneSearch` and the export button below (single set of controls). -->
     </div>
     <div class="overflow-x-auto">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
@@ -269,16 +304,25 @@
         rejectedRows = [];
       }
 
-      // Build sets of accepted and rejected composite keys using only department, portfolio_name, portfolio_member_name, verified_at
-      const acceptedKeys = new Set();
+      // Build sets of accepted and rejected composite keys.
+      // Prefer robust composite key using input_id + table_name when available.
+      const acceptedCompositeKeys = new Set();
+      const acceptedFallbackKeys = new Set();
       for (const v of acceptedRows) {
+        if (v.input_id && v.table_name) {
+          acceptedCompositeKeys.add(`${v.input_id}__${v.table_name}`);
+        }
         const key = `${v.department}|${v.portfolio_name}|${v.portfolio_member_name}|${v.verified_at || ''}`;
-        acceptedKeys.add(key);
+        acceptedFallbackKeys.add(key);
       }
-      const rejectedKeys = new Set();
+      const rejectedCompositeKeys = new Set();
+      const rejectedFallbackKeys = new Set();
       for (const r of rejectedRows) {
+        if (r.input_id && r.table_name) {
+          rejectedCompositeKeys.add(`${r.input_id}__${r.table_name}`);
+        }
         const key = `${r.department}|${r.portfolio_name}|${r.portfolio_member_name}|${r.submitted_at || r.rejected_at || ''}`;
-        rejectedKeys.add(key);
+        rejectedFallbackKeys.add(key);
       }
 
       let { data, error } = await supabaseClient
@@ -300,13 +344,27 @@
 
       // Filter out rows that are already accepted or rejected using composite key (without table_name)
       const filtered = (data || []).filter(row => {
+        // If the hod-workdone row includes input_id and table_name, prefer that for exact matching
+        const rowCompositeKey = (row.input_id && row.table_name) ? `${row.input_id}__${row.table_name}` : null;
+        if (rowCompositeKey) {
+          if (acceptedCompositeKeys.has(rowCompositeKey)) {
+            console.log('Filtered out (already accepted by input_id__table_name):', row);
+            return false;
+          }
+          if (rejectedCompositeKeys.has(rowCompositeKey)) {
+            console.log('Filtered out (rejected by input_id__table_name):', row);
+            return false;
+          }
+        }
+
+        // Fallback: use department|portfolio|member|timestamp composite key (legacy behavior)
         const key = `${row.department}|${row.portfolio_name}|${row.portfolio_member_name}|${row.verified_at || ''}`;
-        if (acceptedKeys.has(key)) {
-          console.log('Filtered out (already accepted by composite key):', row);
+        if (acceptedFallbackKeys.has(key)) {
+          console.log('Filtered out (already accepted by fallback key):', row);
           return false;
         }
-        if (rejectedKeys.has(key)) {
-          console.log('Filtered out (rejected by composite key):', row);
+        if (rejectedFallbackKeys.has(key)) {
+          console.log('Filtered out (rejected by fallback key):', row);
           return false;
         }
         return true;
@@ -676,15 +734,38 @@
           container.innerHTML = '';
           return;
         }
-        let html = `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${window.acceptedCurrentPage === 1 ? 'disabled' : ''} onclick='changeAcceptedPage(${window.acceptedCurrentPage - 1})'>Prev</button>`;
-        for (let i = 1; i <= totalPages; i++) {
-          html += `<button class='px-3 py-1 mx-1 rounded ${i === window.acceptedCurrentPage ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}' onclick='changeAcceptedPage(${i})'>${i}</button>`;
+        // Windowed pagination: show pages around the current page to avoid very long lists
+        const current = window.acceptedCurrentPage || 1;
+        const maxButtons = 11; // show up to 11 page buttons (centered)
+        let startPage = Math.max(1, current - Math.floor(maxButtons / 2));
+        let endPage = startPage + maxButtons - 1;
+        if (endPage > totalPages) {
+          endPage = totalPages;
+          startPage = Math.max(1, endPage - maxButtons + 1);
         }
-        html += `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${window.acceptedCurrentPage === totalPages ? 'disabled' : ''} onclick='changeAcceptedPage(${window.acceptedCurrentPage + 1})'>Next</button>`;
+
+        let html = `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${current === 1 ? 'disabled' : ''} onclick='changeAcceptedPage(${current - 1})'>Prev</button>`;
+
+        if (startPage > 1) {
+          html += `<button class='px-3 py-1 mx-1 rounded ${1 === current ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}' onclick='changeAcceptedPage(1)'>1</button>`;
+          if (startPage > 2) html += `<span class='px-2'>...</span>`;
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+          html += `<button class='px-3 py-1 mx-1 rounded ${i === current ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}' onclick='changeAcceptedPage(${i})'>${i}</button>`;
+        }
+
+        if (endPage < totalPages) {
+          if (endPage < totalPages - 1) html += `<span class='px-2'>...</span>`;
+          html += `<button class='px-3 py-1 mx-1 rounded ${totalPages === current ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}' onclick='changeAcceptedPage(${totalPages})'>${totalPages}</button>`;
+        }
+
+        html += `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${current === totalPages ? 'disabled' : ''} onclick='changeAcceptedPage(${current + 1})'>Next</button>`;
         container.innerHTML = html;
         container.style.overflowX = 'auto';
         container.style.whiteSpace = 'nowrap';
-        setTimeout(() => { container.scrollLeft = 0; }, 0);
+        // Ensure scroll position resets after layout; a small delay helps across browsers
+        setTimeout(() => { try { container.scrollLeft = 0; } catch(e) {} }, 50);
       }
       // Always reset to first page when rendering new data
       window.acceptedCurrentPage = 1;
@@ -693,7 +774,7 @@
       window.changeAcceptedPage = function(page) {
         const filteredRows = getFilteredRows();
         const totalRows = filteredRows.length;
-        const totalPages = Math.ceil(totalRows / window.acceptedRowsPerPage);
+        const totalPages = Math.max(1, Math.ceil(totalRows / window.acceptedRowsPerPage));
         if (page < 1 || page > totalPages) return;
         window.acceptedCurrentPage = page;
         renderAcceptedWorkdoneTablePage(page);

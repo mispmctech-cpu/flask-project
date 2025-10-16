@@ -33,6 +33,10 @@
       </div>
       <div class="flex flex-col md:flex-row gap-2 md:gap-4 items-center">
         <input id="workdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-purple-700" placeholder="Search by Portfolio or Member" oninput="filterWorkdoneTable()" />
+        <label class="font-semibold text-black ml-2">Submitted At:</label>
+        <input id="pendingStartDate" type="date" class="p-2 border border-gray-300 rounded-md" onchange="filterWorkdoneTable()" />
+        <span class="mx-1">to</span>
+        <input id="pendingEndDate" type="date" class="p-2 border border-gray-300 rounded-md" onchange="filterWorkdoneTable()" />
         <button onclick="exportWorkdoneToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export table to Excel">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
           Export to Excel
@@ -68,6 +72,10 @@
       <h2 class="text-lg font-bold mb-2 text-purple-700">Verified Workdone</h2>
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
         <input id="verifiedWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-green-700" placeholder="Search by Portfolio or Member" oninput="filterVerifiedWorkdoneTable()" />
+        <label class="font-semibold text-black ml-2">Verified At:</label>
+        <input id="verifiedStartDate" type="date" class="p-2 border border-gray-300 rounded-md" onchange="filterVerifiedWorkdoneTable()" />
+        <span class="mx-1">to</span>
+        <input id="verifiedEndDate" type="date" class="p-2 border border-gray-300 rounded-md" onchange="filterVerifiedWorkdoneTable()" />
         <button onclick="exportTableToExcel('verifiedWorkdoneTable', 'Verified_Workdone')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
           Export to Excel
@@ -99,6 +107,10 @@
       <h2 class="text-lg font-bold mb-2 text-red-700">Rejected Workdone</h2>
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
         <input id="rejectedWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-red-700" placeholder="Search by Portfolio or Member" oninput="filterRejectedWorkdoneTable()" />
+        <label class="font-semibold text-black ml-2">Rejected At:</label>
+        <input id="rejectedStartDate" type="date" class="p-2 border border-gray-300 rounded-md" onchange="filterRejectedWorkdoneTable()" />
+        <span class="mx-1">to</span>
+        <input id="rejectedEndDate" type="date" class="p-2 border border-gray-300 rounded-md" onchange="filterRejectedWorkdoneTable()" />
         <button onclick="exportTableToExcel('rejectedWorkdoneTable', 'Rejected_Workdone')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
           Export to Excel
@@ -159,17 +171,23 @@
     // Filter function for Verified Workdone table
     function filterVerifiedWorkdoneTable() {
       const search = document.getElementById('verifiedWorkdoneSearch').value.toLowerCase();
+      const startDateInput = document.getElementById('verifiedStartDate');
+      const endDateInput = document.getElementById('verifiedEndDate');
+      let startDate = startDateInput && startDateInput.value ? new Date(startDateInput.value) : null;
+      let endDate = endDateInput && endDateInput.value ? new Date(endDateInput.value) : null;
+      if (endDate) endDate.setHours(23,59,59,999);
       if (!window._allVerifiedRows) return;
-      if (search.trim() === '') {
-        window._filteredVerifiedRows = window._allVerifiedRows;
-      } else {
-        window._filteredVerifiedRows = window._allVerifiedRows.filter(row => {
-          const department = (row.department || '').toLowerCase();
-          const portfolio = (row.portfolio_name || '').toLowerCase();
-          const member = (row.portfolio_member_name || '').toLowerCase();
-          return department.includes(search) || portfolio.includes(search) || member.includes(search);
-        });
-      }
+      window._filteredVerifiedRows = window._allVerifiedRows.filter(row => {
+        const department = (row.department || '').toLowerCase();
+        const portfolio = (row.portfolio_name || '').toLowerCase();
+        const member = (row.portfolio_member_name || '').toLowerCase();
+        const verifiedAt = row.verified_at ? new Date(row.verified_at) : null;
+        let dateMatch = true;
+        if (startDate && verifiedAt) dateMatch = verifiedAt >= startDate;
+        if (endDate && verifiedAt) dateMatch = dateMatch && (verifiedAt <= endDate);
+        if ((startDate || endDate) && !verifiedAt) dateMatch = false;
+        return (department.includes(search) || portfolio.includes(search) || member.includes(search)) && dateMatch;
+      });
       window._workingVerifiedRows = window._filteredVerifiedRows || window._allVerifiedRows;
       renderFilteredVerifiedWorkdoneTable(1);
     }
@@ -232,17 +250,23 @@
     // Filter function for Rejected Workdone table
     function filterRejectedWorkdoneTable() {
       const search = document.getElementById('rejectedWorkdoneSearch').value.toLowerCase();
+      const startDateInput = document.getElementById('rejectedStartDate');
+      const endDateInput = document.getElementById('rejectedEndDate');
+      let startDate = startDateInput && startDateInput.value ? new Date(startDateInput.value) : null;
+      let endDate = endDateInput && endDateInput.value ? new Date(endDateInput.value) : null;
+      if (endDate) endDate.setHours(23,59,59,999);
       if (!window._allRejectedRows) return;
-      if (search.trim() === '') {
-        window._filteredRejectedRows = window._allRejectedRows;
-      } else {
-        window._filteredRejectedRows = window._allRejectedRows.filter(row => {
-          const department = (row.department || '').toLowerCase();
-          const portfolio = (row.portfolio_name || row.portfolio || '').toLowerCase();
-          const member = (row.portfolio_member_name || row.member || '').toLowerCase();
-          return department.includes(search) || portfolio.includes(search) || member.includes(search);
-        });
-      }
+      window._filteredRejectedRows = window._allRejectedRows.filter(row => {
+        const department = (row.department || '').toLowerCase();
+        const portfolio = (row.portfolio_name || row.portfolio || '').toLowerCase();
+        const member = (row.portfolio_member_name || row.member || '').toLowerCase();
+        const rejectedAt = row.rejected_at ? new Date(row.rejected_at) : null;
+        let dateMatch = true;
+        if (startDate && rejectedAt) dateMatch = rejectedAt >= startDate;
+        if (endDate && rejectedAt) dateMatch = dateMatch && (rejectedAt <= endDate);
+        if ((startDate || endDate) && !rejectedAt) dateMatch = false;
+        return (department.includes(search) || portfolio.includes(search) || member.includes(search)) && dateMatch;
+      });
       window._workingRejectedRows = window._filteredRejectedRows || window._allRejectedRows;
       renderFilteredRejectedWorkdoneTable(1);
     }
