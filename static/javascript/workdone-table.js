@@ -37,7 +37,7 @@ class WorkdoneTable {
     // Institution Level Forms (using exact table names provided)
     this.formTables = [
       // Add Form 6 Once in 2 Months for IQAC workdone
-  { table: "form6_once_in_2_month", portfolio: "Teaching & Learning Process Member (IQAC) (Once in 2 Months)" },
+      { table: "form6_once_in_2_month", portfolio: "Teaching & Learning Process Member (IQAC) (Once in 2 Months)" },
       // Add Form 6 Weekly for IQAC workdone
       { table: "form6_weekly", portfolio: "Teaching & Learning Process Member (IQAC) (Weekly)" },
       { table: "Institution-form1-monthly", portfolio: "Director – Students welfare & Admission (Monthly)" },
@@ -70,6 +70,9 @@ class WorkdoneTable {
       { table: "form1-Weekly", portfolio: "Students Performance in Training & Placement Member (Weekly)" },
       { table: "form1-once in 15 days", portfolio: "Students Performance in Training & Placement Member (Bi-weekly)" },
       { table: "form1-once in a semester", portfolio: "Students Performance in Training & Placement Member (Semester)" },
+      // NEW: Add support for new Form2-daily table (Postgres: "Form2-daily")
+      { table: "Form2-daily", portfolio: "Class Advisor (Daily)" },
+      // Keep old form2-daily for backward compatibility
       { table: "form2-daily", portfolio: "Class Advisor (Daily)" },
       { table: "form2-weekly", portfolio: "Class Advisor (Weekly)" },
       { table: "form2-once in a month", portfolio: "Class Advisor (Monthly)" },
@@ -389,7 +392,6 @@ class WorkdoneTable {
         }
         
         // Fallback: use current time (newest records will appear first)
-        // This ensures recently processed records appear at top
         return Date.now();
       };
       
@@ -727,19 +729,19 @@ window.viewRowDetails = function(idx) {
   
   console.log('Row found:', row);
   const details = row._original || row;
-  
+
   // Use form-modal-mapper.js function
   if (typeof getFormModalContent !== 'function') {
     console.error('getFormModalContent function not found. Make sure form-modal-mapper.js is included.');
     console.log('Available global functions:', Object.keys(window).filter(key => typeof window[key] === 'function'));
     return;
   }
-  
+
   console.log('Generating modal content...');
-  const html = getFormModalContent(row, details);
+  let html = getFormModalContent(row, details);
   const modalContent = document.getElementById('viewModalContent');
   const modal = document.getElementById('viewModal');
-  
+
   if (modalContent && modal) {
     console.log('Modal elements found, showing modal');
     modalContent.innerHTML = html;

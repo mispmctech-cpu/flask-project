@@ -707,7 +707,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Insert into Supabase
                     const { data, error } = await supabaseClient
-                        .from('form2-daily')
+                        .from('Form2-daily')
                         .insert([row]);
                         
                     if (error) {
