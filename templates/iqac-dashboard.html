@@ -360,7 +360,29 @@ function exportStatusTableToExcel(scope) {
               }
             }
           }
-          let rowArr = [dept, fac.Name || fac['Portfolio Member Name'] || fac.email || ''];
+          // Calculate percentage for this faculty
+          let percentage = 0;
+          if (row) {
+            let completedCount = 0;
+            let applicableCount = 0;
+            for (let idx of generalIdx) {
+              let statusVal = row ? (row[`Status_${idx}`] || row[`Status_${idx}`] || '-') : '-';
+              const val = (statusVal || '').toString().trim().toLowerCase();
+              if (val === 'not applicable' || val === 'na') continue;
+              applicableCount += 1;
+              if (val === 'completed' || val === 'completed and updated') {
+                completedCount += 1;
+              }
+            }
+            if (applicableCount > 0) {
+              percentage = Math.round((completedCount / applicableCount) * 100);
+            } else {
+              percentage = 0;
+            }
+          }
+          // Add percentage in brackets to faculty name
+          let facultyDisplayName = (fac.Name || fac['Portfolio Member Name'] || fac.email || '') + ` (${percentage}%)`;
+          let rowArr = [dept, facultyDisplayName];
           for (let idx of generalIdx) {
             let statusVal = row ? (row[`Status_${idx}`] || row[`Status_${idx}`] || '-') : '-';
             let display = '-';
@@ -672,7 +694,8 @@ function attachExportButtons() {
             // Filter by status
             if (selectedStatus === 'Completed' && !filled) continue;
             if (selectedStatus === 'Pending' && filled) continue;
-            names.push(facultyName + ` (${percentage}%)` + (filled ? ' (C)' : ' (N)'));
+            // Always use brackets for percentage
+            names.push(`${facultyName} (${percentage}%)`);
           }
           row.push(names.length > 0 ? names.join(', ') : '-');
         }
@@ -944,7 +967,7 @@ function attachExportButtons() {
                 for (const key of statusKeys) {
                   const val = (bestRow[key] || '').toString().trim().toLowerCase();
                   if (val === 'not applicable' || val === 'na') continue;
-                  // All other values, including '-', are counted as applicable (0 unless completed)
+                  // Treat null, empty, or '-' as applicable (mark=0)
                   applicableCount += 1;
                   if (val === 'completed' || val === 'completed and updated') {
                     completedCount += 1;
@@ -1206,9 +1229,20 @@ function attachExportButtons() {
               }
             }
           }
-          html += `<tr><td class="px-2 py-2 font-medium text-blue-700 cursor-pointer underline" onclick="viewStatusFacultyForm('${key}','${(fac.Name || '').replace(/'/g, "\'")}', '${selectedStatusDepartment.replace(/'/g, "\'")}')">${fac.Name || fac['Portfolio Member Name'] || fac.email || ''}</td>`;
+          // Percentage calculation: completed=1, not applicable/na=skip, any other=0
+          let completedCount = 0;
+          let applicableCount = 0;
           for (let idx of generalIdx) {
-            let statusVal = row ? (row[`Status_${idx}`] || row[`Status_${idx}`] || '-') : '-';
+            let statusVal = row ? (row[`Status_${idx}`] || '-') : '-';
+            const val = (statusVal || '').trim().toLowerCase();
+            if (val === 'not applicable' || val === 'na') continue;
+            applicableCount += 1;
+            if (val === 'completed') completedCount += 1;
+          }
+          const percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) : 0;
+          html += `<tr><td class="px-2 py-2 font-medium text-blue-700 cursor-pointer underline" onclick="viewStatusFacultyForm('${key}','${(fac.Name || '').replace(/'/g, "\'")}', '${selectedStatusDepartment.replace(/'/g, "\'")}')">${fac.Name || fac['Portfolio Member Name'] || fac.email || ''}<div class='text-sm ${percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600'} font-semibold'>${percentage}%</div></td>`;
+          for (let idx of generalIdx) {
+            let statusVal = row ? (row[`Status_${idx}`] || '-') : '-';
             let display = '-';
             let statusClass = '';
             if (statusVal && typeof statusVal === 'string') {
