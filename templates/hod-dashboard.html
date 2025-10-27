@@ -17,6 +17,26 @@
     </div>
   </header>
   <main class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Faculty Portfolio Status Table -->
+    <h2 class="text-2xl font-bold text-blue-700 mt-12 mb-6">Faculty Portfolio Status Table</h2>
+    <div class="mb-6 flex flex-wrap gap-4 items-center">
+      <label for="statusDesignationFilter" class="font-medium text-blue-700 mr-2">Filter by Designation:</label>
+      <select id="statusDesignationFilter" class="p-2 border rounded">
+        <option value="All">All</option>
+        <option value="AP">Assistant Professor (AP)</option>
+        <option value="ASP">Associate Professor (ASP)</option>
+        <option value="Prof">Professor (Prof)</option>
+      </select>
+    </div>
+    <div id="facultyStatusTableContainer" class="overflow-x-auto"></div>
+    <!-- Modal for viewing AP/ASP/Prof form details from status table -->
+    <div id="viewStatusFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+        <button onclick="closeViewStatusFormModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <h3 id="viewStatusFormModalTitle" class="text-xl font-bold mb-4 text-blue-700">Faculty Portfolio Form Details</h3>
+        <div id="viewStatusFormModalContent"></div>
+      </div>
+    </div>
     <h2 class="text-2xl font-bold text-purple-700 mb-6">Faculty Core Scope Compliance Table</h2>
     <div class="mb-6">
       <label for="designationFilter" class="font-medium text-purple-700 mr-2">Filter by Designation:</label>
@@ -68,6 +88,329 @@
     </div>
   </main>
   <script src="/static/javascript/form-modal-mapper.js"></script>
+  <script>
+    function closeViewStatusFormModal() {
+      document.getElementById('viewStatusFormModal').classList.add('hidden');
+      document.getElementById('viewStatusFormModalContent').innerHTML = '';
+      document.getElementById('viewStatusFormModalTitle').textContent = 'Faculty Portfolio Form Details';
+    }
+
+    async function viewStatusFacultyForm(designation, facultyName, department) {
+      document.getElementById('viewStatusFormModal').classList.remove('hidden');
+      document.getElementById('viewStatusFormModalContent').innerHTML = '<div class="text-center text-gray-500">Loading form data...</div>';
+      let tableName = '';
+      let nameField = '';
+      let deptField = '';
+      if (designation === 'AP') { tableName = 'AP'; nameField = 'Portfolio Member Name'; deptField = 'Department'; }
+      else if (designation === 'ASP') { tableName = 'ASP'; nameField = 'Portfolio Member Name'; deptField = 'Department:'; }
+      else if (designation === 'Prof') { tableName = 'Prof'; nameField = 'Portfolio Member Name'; deptField = 'Department:'; }
+      else {
+        document.getElementById('viewStatusFormModalContent').innerHTML = '<div class="text-red-500">Unknown designation.</div>';
+        return;
+      }
+      const { data, error } = await supabaseClient
+        .from(tableName)
+        .select('*')
+        .eq(deptField, department)
+        .eq(nameField, facultyName)
+        .order('input_id', { ascending: false });
+      if (error || !data || data.length === 0) {
+        document.getElementById('viewStatusFormModalContent').innerHTML = '<div class="text-red-500">Form data not found.</div>';
+        return;
+      }
+      const row = data[0];
+      let html = '';
+      html += `<div class="mb-4">
+        <div class="font-semibold text-blue-700">Department:</div>
+        <div class="mb-2">${row[deptField] || row['Department:'] || row['Department'] || ''}</div>
+        <div class="font-semibold text-blue-700">Portfolio Name:</div>
+        <div class="mb-2">${row['Portfolio Name'] || row['Portfolio Name:'] || ''}</div>
+        <div class="font-semibold text-blue-700">Portfolio Member Name:</div>
+        <div class="mb-2">${row['Portfolio Member Name'] || ''}</div>
+      </div>`;
+      let sections = [];
+      if (designation === 'AP') {
+        sections = [
+          'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+          'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+          'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+          'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+          'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
+          'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
+          'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+          'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
+          'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
+          'Research and Development: Present at conferences.',
+          'Research and Development: Guide student research and final-year projects',
+          'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
+          'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
+          'Institutional Development: Serve on academic and administrative committees.',
+          'Professional Development: Attend FDP/ workshops/ seminar.',
+          'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.',
+          'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
+          'Community and Industry Engagement: Engage in extension activities, and social outreach Programs.',
+          'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
+          'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
+          'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.'
+        ];
+      } else if (designation === 'ASP' || designation === 'Prof') {
+        sections = [
+          'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+          'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+          'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+          'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+          'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
+          'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
+          'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+          'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
+          'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
+          'Research and Development: Present at conferences.',
+          'Research and Development: Guide student research and final-year projects',
+          'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
+          'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
+          'Institutional Development: Serve on academic and administrative committees.',
+          'Professional Development: Attend FDP/ workshops/ seminar.',
+          'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.',
+          'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
+          'Community and Industry Engagement: Engage in extension activities, and social outreach Programs.',
+          'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
+          'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
+          'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.'
+        ];
+      }
+      html += `<div class="space-y-4">`;
+      for (let i = 1; i <= sections.length; i++) {
+        const statusVal = row[`Status_${i}`] || '-';
+        const descVal = row[`Description_${i}`] || '-';
+        let uploadVal = row[`Upload The Scanned File_${i}`] || row[`Upload the scanned file_${i}`] || '-';
+        let uploadHtml = '-';
+        if (uploadVal && uploadVal !== '-' && typeof uploadVal === 'string') {
+          const isUrl = uploadVal.startsWith('http://') || uploadVal.startsWith('https://');
+          const isFile = uploadVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i);
+          if (isUrl || isFile) {
+            uploadHtml = `<a href="${uploadVal}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block">View</a>`;
+          } else {
+            uploadHtml = uploadVal;
+          }
+        }
+        html += `<div class="border-b pb-2 mb-2">
+          <div class="font-semibold text-orange-500 mb-1">${i}. ${sections[i-1]}</div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div><span class="font-medium text-blue-700">Status:</span> ${statusVal}</div>
+            <div><span class="font-medium text-blue-700">Description:</span> ${descVal}</div>
+            <div><span class="font-medium text-blue-700">Upload:</span> ${uploadHtml}</div>
+          </div>
+        </div>`;
+      }
+      html += `</div>`;
+      document.getElementById('viewStatusFormModalContent').innerHTML = html;
+      document.getElementById('viewStatusFormModalTitle').textContent = `${designation} Portfolio Form Details`;
+    }
+    let selectedStatusDesignation = 'All';
+    document.addEventListener('DOMContentLoaded', function() {
+      const statusDesigSel = document.getElementById('statusDesignationFilter');
+      if (statusDesigSel) {
+        statusDesigSel.addEventListener('change', () => {
+          selectedStatusDesignation = statusDesigSel.value;
+          loadFacultyStatusTableHOD();
+        });
+      }
+      loadFacultyStatusTableHOD();
+    });
+    async function loadFacultyStatusTableHOD() {
+      const department = (function() {
+        const url = new URL(window.location.href);
+        return url.searchParams.get('department') || localStorage.getItem('department') || '';
+      })();
+      if (!department) {
+        document.getElementById('facultyStatusTableContainer').innerHTML = '<div class="text-gray-500">No department selected.</div>';
+        return;
+      }
+      const { data: facultyList, error: facErr } = await supabaseClient
+        .from('Faculty')
+        .select('*')
+        .eq('department', department);
+      if (facErr || !facultyList || facultyList.length === 0) {
+        document.getElementById('facultyStatusTableContainer').innerHTML = '<div class="text-red-500">Failed to load faculty data.</div>';
+        return;
+      }
+      const groups = { AP: [], ASP: [], Prof: [] };
+      facultyList.forEach(fac => {
+        const desig = (fac.Designation || '').toUpperCase();
+        if (desig === 'AP' || desig === 'ASSISTANT PROFESSOR') groups.AP.push(fac);
+        else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') groups.ASP.push(fac);
+        else if (desig === 'PROF' || desig === 'PROFESSOR') groups.Prof.push(fac);
+      });
+      let html = '';
+      const apScopes = [
+        'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+        'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+        'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+        'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+        'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
+        'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
+        'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+        'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
+        'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
+        'Research and Development: Present at conferences.',
+        'Research and Development: Guide student research and final-year projects',
+        'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
+        'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
+        'Institutional Development: Serve on academic and administrative committees.',
+        'Professional Development: Attend FDP/ workshops/ seminar.',
+        'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.',
+        'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
+        'Community and Industry Engagement: Engage in extension activities, and social outreach Programs.',
+        'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
+        'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
+        'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.'
+      ];
+      const apGeneralIdx = [1,2,3,4,5,6,7,8,9,12,13,14,20,21,22];
+      const aspScopes = [
+        'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+        'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+        'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+        'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+        'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
+        'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
+        'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+        'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
+        'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
+        'Research and Development: Publish in peer-reviewed journals',
+        'Research and Development: Apply for research grants',
+        'Research and Development: Guide student research and final-year projects',
+        'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
+        'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
+        'Institutional Development: Serve on academic and administrative committees.',
+        'Professional Development: Organize FDP/ workshops/ seminar.',
+        'Professional Development: NPTEL/MOOC and certifications.',
+        'Professional Development: Memberships in professional bodies.',
+        'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
+        'Community and Industry Engagement: Engage in consultancy',
+        'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
+        'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
+        'Memberships in professional bodies.'
+      ];
+      const aspGeneralIdx = [1,2,3,4,5,6,7,8,9,13,14,15,20,21];
+      const profScopes = [
+        'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+        'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+        'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+        'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+        'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
+        'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
+        'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+        'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
+        'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
+        'Research and Development: Publish in peer-reviewed journals',
+        'Research and Development: Apply for research grants',
+        'Research and Development: Guide student research and final-year projects',
+        'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
+        'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
+        'Institutional Development: Serve on academic and administrative committees.',
+        'Professional Development: Organize FDP/ workshops/ seminar.',
+        'Professional Development: NPTEL/MOOC and certifications.',
+        'Professional Development: Memberships in professional bodies.',
+        'Community and Industry Engagement: Facilitate MoUs',
+        'Community and Industry Engagement: Engage in consultancy',
+        'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
+        'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
+        'Memberships in professional bodies.'
+      ];
+      const profGeneralIdx = [1,2,3,4,5,6,7,8,9,13,14,15,20,21];
+      for (const key of ['AP', 'ASP', 'Prof']) {
+        if (selectedStatusDesignation !== 'All' && selectedStatusDesignation !== key) continue;
+        const group = groups[key];
+        if (group.length === 0) continue;
+        html += `<h3 class="text-xl font-semibold text-blue-700 mt-8 mb-2">${key === 'AP' ? 'Assistant Professor (AP)' : key === 'ASP' ? 'Associate Professor (ASP)' : 'Professor (Prof)'}</h3>`;
+        // Table header
+        html += `<div class="overflow-x-auto mb-6"><table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white"><thead class="bg-blue-700 text-white"><tr><th class="px-4 py-2">Faculty Name</th>`;
+        let scopes = [];
+        let generalIdx = [];
+        if (key === 'AP') { scopes = apScopes; generalIdx = apGeneralIdx; }
+        else if (key === 'ASP') { scopes = aspScopes; generalIdx = aspGeneralIdx; }
+        else if (key === 'Prof') { scopes = profScopes; generalIdx = profGeneralIdx; }
+        for (let idx of generalIdx) {
+          let desc = scopes[idx-1] ? scopes[idx-1].trim() : '';
+          if (key === 'AP' && idx === 22) {
+            desc = scopes[21] || 'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.';
+          }
+          html += `<th class="px-4 py-2" title="${desc}">${desc ? desc : 'Status ' + idx}</th>`;
+        }
+        html += `</tr></thead><tbody>`;
+        for (const fac of group) {
+          let tableName = '';
+          let nameField = '';
+          let deptField = '';
+          if (key === 'AP') { tableName = 'AP'; nameField = 'Portfolio Member Name'; deptField = 'Department'; }
+          else if (key === 'ASP') { tableName = 'ASP'; nameField = 'Portfolio Member Name'; deptField = '"Department:"'; }
+          else if (key === 'Prof') { tableName = 'Prof'; nameField = 'Portfolio Member Name'; deptField = '"Department:"'; }
+          let { data: rows, error: rowErr } = await supabaseClient
+            .from(tableName)
+            .select('*')
+            .eq(deptField, department)
+            .order('input_id', { ascending: false });
+          let facNamesToTry = [];
+          if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
+          if (fac.Name) facNamesToTry.push(fac.Name);
+          if (fac.email) facNamesToTry.push(fac.email);
+          facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n || '').toString().trim().toLowerCase()).filter(Boolean)));
+          let row = null;
+          if (rows && rows.length > 0) {
+            for (let r of rows) {
+              let possibleRowNames = [
+                r['Portfolio Member Name'],
+                r['Portfolio Member Name:'],
+                r['Portfolio Memeber Name'],
+                r['faculty_name'],
+                r['Faculty Name'],
+                r['Name'],
+                r['email']
+              ].map(x => (x || '').toString().trim().toLowerCase()).filter(Boolean);
+              let rowDept = (r['Department:'] || r['Department'] || '').toString().trim().toLowerCase();
+              let matchDept = (department || '').toString().trim().toLowerCase();
+              if (rowDept === matchDept && facNamesToTry.some(n => possibleRowNames.includes(n))) {
+                row = r;
+                break;
+              }
+            }
+          }
+          html += `<tr><td class="px-2 py-2 font-medium text-blue-700 cursor-pointer underline" onclick="viewStatusFacultyForm('${key}','${(fac.Name || '').replace(/'/g, "\'")}', '${department.replace(/'/g, "\'")}')">${fac.Name || fac['Portfolio Member Name'] || fac.email || ''}</td>`;
+          for (let idx of generalIdx) {
+            let statusVal = row ? (row[`Status_${idx}`] || row[`Status_${idx}`] || '-') : '-';
+            let display = '-';
+            let statusClass = '';
+            if (statusVal && typeof statusVal === 'string') {
+              const val = statusVal.trim().toLowerCase();
+              if (val === 'completed') {
+                display = 'Completed';
+                statusClass = 'text-green-600 font-semibold';
+              } else if (val === 'in progress' || val === 'inprogress' || val === 'underprocess' || val === 'under process') {
+                display = statusVal;
+                statusClass = 'text-yellow-600 font-semibold';
+              } else if (val === 'yet to be completed' || val === 'not started' || val === 'no' || val === 'incomplete') {
+                display = statusVal;
+                statusClass = 'text-red-600 font-semibold';
+              } else if (val === '-' || val === '' || val === null) {
+                display = '-';
+                statusClass = 'text-gray-500';
+              } else {
+                display = statusVal;
+                statusClass = 'text-blue-600 font-semibold';
+              }
+            } else {
+              display = '-';
+              statusClass = 'text-gray-500';
+            }
+            html += `<td class="px-2 py-2 ${statusClass}">${display}</td>`;
+          }
+          html += `</tr>`;
+        }
+        html += `</tbody></table></div>`;
+      }
+      document.getElementById('facultyStatusTableContainer').innerHTML = html || '<div class="text-gray-500">No status data found.</div>';
+    }
+  </script>
   <script>
     // Fetch and render department portfolios table (HOD)
     async function loadDepartmentPortfolios() {
@@ -699,12 +1042,19 @@
       // Render each section with heading
       html += `<div class="space-y-4">`;
       for (let i = 1; i <= sections.length; i++) {
+        let fileUrl = row[`Upload The Scanned File_${i}`] || row[`Upload the scanned file_${i}`] || '';
+        let fileHtml = '-';
+        if (fileUrl && typeof fileUrl === 'string' && (fileUrl.startsWith('http://') || fileUrl.startsWith('https://'))) {
+          fileHtml = `<a href="${fileUrl}" target="_blank" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-xs font-semibold">View</a>`;
+        } else if (fileUrl) {
+          fileHtml = fileUrl;
+        }
         html += `<div class="border-b pb-2 mb-2">
           <div class="font-semibold text-orange-500 mb-1">${i}. ${sections[i-1]}</div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
             <div><span class="font-medium text-purple-700">Status:</span> ${row[`Status_${i}`] || '-'}</div>
             <div><span class="font-medium text-purple-700">Description:</span> ${row[`Description_${i}`] || '-'}</div>
-            <div><span class="font-medium text-purple-700">Upload:</span> ${row[`Upload The Scanned File_${i}`] || row[`Upload the scanned file_${i}`] || '-'}</div>
+            <div><span class="font-medium text-purple-700">Upload:</span> ${fileHtml}</div>
           </div>
         </div>`;
       }

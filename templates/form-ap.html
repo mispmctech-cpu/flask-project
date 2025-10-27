@@ -73,8 +73,43 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="text" name="Portfolio Member Name" class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
                 </div>
             </div>
+            <!-- Section 1: Compliance (S. No 10,11,15,16,17,18,19) -->
+            <div class="overflow-x-auto rounded-xl shadow border border-green-200 bg-white w-full mb-8">
+                <h2 class="text-lg font-bold text-green-700 px-4 pt-4">Targeted Section</h2>
+                <table class="w-full min-w-[1200px] text-xs md:text-sm table-fixed mt-2">
+                    <colgroup>
+                        <col style="width: 3%">
+                        <col style="width: 36%">
+                        <col style="width: 10%">
+                        <col style="width: 10%">
+                        <col style="width: 10%">
+                        <col style="width: 18%">
+                        <col style="width: 13%">
+                    </colgroup>
+                    <thead class="bg-green-400">
+                        <tr>
+                            <th class="border px-2 py-2 font-bold text-white">S. NO</th>
+                            <th class="border px-2 py-2 font-bold text-white">SCOPE</th>
+                            <th class="border px-2 py-2 font-bold text-white">TARGET</th>
+                            <th class="border px-2 py-2 font-bold text-white">TAT</th>
+                            <th class="border px-2 py-2 font-bold text-white">Status</th>
+                            <th class="border px-2 py-2 font-bold text-white">Description</th>
+                            <th class="border px-2 py-2 font-bold text-white">Upload File</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ap-compliance-body">
+                        <!-- JS will render compliance rows here -->
+                    </tbody>
+                </table>
+                <div class="flex justify-center mt-6 mb-4">
+                    <button id="complianceSubmitBtn" type="button" class="bg-green-700 hover:bg-green-600 text-white font-bold py-2 px-8 rounded-2xl shadow-xl text-lg tracking-wide transition-all duration-200">Submit Compliance</button>
+                    <span id="complianceLoadingSpinner" class="ml-4 hidden"><svg class="animate-spin h-8 w-8 text-green-700 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg></span>
+                </div>
+            </div>
+            <!-- Section 2: Remaining 15 rows -->
             <div class="overflow-x-auto rounded-xl shadow border border-purple-100 bg-white w-full">
-                <table class="w-full min-w-[1200px] text-xs md:text-sm table-fixed">
+                <h2 class="text-lg font-bold text-purple-700 px-4 pt-4">General Section</h2>
+                <table class="w-full min-w-[1200px] text-xs md:text-sm table-fixed mt-2">
                     <colgroup>
                         <col style="width: 3%">
                         <col style="width: 36%">
@@ -95,14 +130,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             <th class="border px-2 py-2 font-bold text-white">Upload File</th>
                         </tr>
                     </thead>
-                    <tbody id="ap-table-body">
-                        <!-- JS will render 21 rows here -->
+                    <tbody id="ap-general-body">
+                        <!-- JS will render general rows here -->
                     </tbody>
                 </table>
-            </div>
-            <div class="flex justify-center mt-8">
-                <button id="apSubmitBtn" type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
-                <span id="apLoadingSpinner" class="ml-4 hidden"><svg class="animate-spin h-8 w-8 text-purple-800 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg></span>
+                <div class="flex justify-center mt-6 mb-4">
+                    <button id="apSubmitBtn" type="button" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit General</button>
+                    <span id="apLoadingSpinner" class="ml-4 hidden"><svg class="animate-spin h-8 w-8 text-purple-800 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg></span>
+                </div>
             </div>
         </form>
     </div>
@@ -125,31 +160,50 @@ document.addEventListener('DOMContentLoaded', function() {
         { scope: 'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.', target: '', tat: 'END OF FRIDAY' },
         { scope: 'Institutional Development: Serve on academic and administrative committees.', target: '1', tat: 'AS PER SCHEDULE' },
         { scope: 'Professional Development: Attend FDP/ workshops/ seminar.', target: '2 PER YEAR', tat: '31ST MAY' },
-        { scope: 'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.', target: '2 PER SEM 1 MEMBERSHIP', tat: '31ST MAY' },
+        { scope: 'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications.', target: '2 PER SEM', tat: '31ST MAY' },
+        { scope: 'Professional Development: Memberships in professional bodies.', target: '1 MEMBERSHIP', tat: '31ST MAY' },
         { scope: 'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.', target: '1/SEM', tat: '31ST DEC' },
         { scope: 'Community and Industry Engagement: Engage in extension activities, and social outreach Programs.', target: '1/SEM', tat: '31ST DEC' },
         { scope: 'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.', target: '', tat: 'END OF THE DAY' },
         { scope: 'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.', target: '', tat: 'AS PER SCHEDULE' },
         { scope: 'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.', target: '', tat: '31ST MAY' },
     ];
-    // Render table rows
-    const tbody = document.getElementById('ap-table-body');
-    apRows.forEach((row, i) => {
-        const idx = i + 1;
+    // Render compliance and general rows separately
+    const complianceRows = [10, 11, 15, 16, 17, 18, 19];
+    const generalRows = Array.from({length: 22}, (_, i) => i + 1).filter(idx => !complianceRows.includes(idx));
+    const complianceTbody = document.getElementById('ap-compliance-body');
+    const generalTbody = document.getElementById('ap-general-body');
+    complianceRows.forEach(idx => {
+        const row = apRows[idx - 1];
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td class="border px-2 py-1 text-center">${idx}</td>
-            <td class="border px-2 py-1">${row.scope}</td>
-            <td class="border px-2 py-1 text-center">${row.target}</td>
-            <td class="border px-2 py-1 text-center">${row.tat}</td>
-            <td class="border px-2 py-1"><select name="Status_${idx}" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
-            <td class="border px-2 py-1"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
-            <td class="border px-2 py-1">
-                <input type="file" name="Upload The Scanned File_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="${idx}" />
-                <span class="file-check hidden text-green-600 font-bold" data-row="${idx}">✓ Uploaded</span>
-            </td>
-        `;
-        tbody.appendChild(tr);
+        tr.innerHTML =
+            '<td class="border px-2 py-1 text-center">' + idx + '</td>' +
+            '<td class="border px-2 py-1">' + row.scope + '</td>' +
+            '<td class="border px-2 py-1 text-center">' + row.target + '</td>' +
+            '<td class="border px-2 py-1 text-center">' + row.tat + '</td>' +
+            '<td class="border px-2 py-1"><select name="Status_' + idx + '" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>' +
+            '<td class="border px-2 py-1"><input type="text" name="Description_' + idx + '" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>' +
+            '<td class="border px-2 py-1">' +
+                '<input type="file" name="Upload The Scanned File_' + idx + '" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="' + idx + '" />' +
+                '<span class="file-check hidden text-green-600 font-bold" data-row="' + idx + '">✓ Uploaded</span>' +
+            '</td>';
+        complianceTbody.appendChild(tr);
+    });
+    generalRows.forEach(idx => {
+        const row = apRows[idx - 1];
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+            '<td class="border px-2 py-1 text-center">' + idx + '</td>' +
+            '<td class="border px-2 py-1">' + row.scope + '</td>' +
+            '<td class="border px-2 py-1 text-center">' + row.target + '</td>' +
+            '<td class="border px-2 py-1 text-center">' + row.tat + '</td>' +
+            '<td class="border px-2 py-1"><select name="Status_' + idx + '" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>' +
+            '<td class="border px-2 py-1"><input type="text" name="Description_' + idx + '" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>' +
+            '<td class="border px-2 py-1">' +
+                '<input type="file" name="Upload The Scanned File_' + idx + '" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="' + idx + '" />' +
+                '<span class="file-check hidden text-green-600 font-bold" data-row="' + idx + '">✓ Uploaded</span>' +
+            '</td>';
+        generalTbody.appendChild(tr);
     });
     
     // Simple file upload indicator
@@ -178,103 +232,99 @@ document.addEventListener('DOMContentLoaded', function() {
         const { data: urlData } = supabase.storage.from('Ap').getPublicUrl(path);
         return urlData.publicUrl;
     }
-    document.getElementById('apForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
+    // --- Compliance Section Submission ---
+    document.getElementById('complianceSubmitBtn').addEventListener('click', async function(e) {
+        // Show loading spinner and disable submit button
+        const submitBtn = document.getElementById('complianceSubmitBtn');
+        const spinner = document.getElementById('complianceLoadingSpinner');
+        if (submitBtn) submitBtn.disabled = true;
+        if (spinner) spinner.classList.remove('hidden');
+        try {
+            const form = document.getElementById('apForm');
+            const formData = new FormData(form);
+            // Only collect compliance rows
+            const complianceMap = [10, 11, 15, 16, 17, 18, 19];
+            let faculty_email = '';
+            // Get faculty email
+            try {
+                const { data: facultyRows } = await supabase
+                    .from('Faculty')
+                    .select('email')
+                    .eq('department', formData.get('Department'))
+                    .eq('Name', formData.get('Portfolio Member Name'))
+                    .limit(1)
+                    .single();
+                if (facultyRows && facultyRows.email) faculty_email = facultyRows.email;
+            } catch (e) {}
+            // Upload files for compliance rows
+            let complianceRow = {
+                department: formData.get('Department'),
+                faculty_email: faculty_email,
+                faculty_name: formData.get('Portfolio Member Name'),
+            };
+            for (let j = 0; j < complianceMap.length; j++) {
+                let idx = complianceMap[j];
+                complianceRow[`compliance_${j+1}`] = formData.get(`Status_${idx}`) || '';
+                // Optionally, you can also upload files and descriptions for compliance if needed
+            }
+            await supabase.from('ap_compliance').insert([complianceRow]);
+            window.location.href = 'notification.html?status=success';
+        } catch (err) {
+            window.location.href = `notification.html?status=error&msg=${encodeURIComponent(err.message)}`;
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
+            if (spinner) spinner.classList.add('hidden');
+        }
+    });
+
+    // --- General Section Submission ---
+    document.getElementById('apSubmitBtn').addEventListener('click', async function(e) {
         // Show loading spinner and disable submit button
         const submitBtn = document.getElementById('apSubmitBtn');
         const spinner = document.getElementById('apLoadingSpinner');
         if (submitBtn) submitBtn.disabled = true;
         if (spinner) spinner.classList.remove('hidden');
-        
         try {
-            const form = e.target;
+            const form = document.getElementById('apForm');
             const formData = new FormData(form);
-        // Prepare row object for 21 rows
-        const row = {
-            "Department": formData.get('Department'),
-            "Portfolio Name": formData.get('Portfolio Name'),
-            "Portfolio Member Name": formData.get('Portfolio Member Name'),
-        };
-        for (let i = 1; i <= 21; i++) {
-            row[`Status_${i}`] = formData.get(`Status_${i}`);
-            row[`Description_${i}`] = formData.get(`Description_${i}`);
-            const file = formData.get(`Upload The Scanned File_${i}`);
-            if (file && file.size > 0) {
-                const ts = Date.now();
-                const path = `apfile${i}_${ts}_${file.name}`;
-                try {
-                    row[`Upload The Scanned File_${i}`] = await uploadFileToStorage(file, path);
-                } catch (err) {
-                    window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
-                    return;
-                }
-            } else {
-                row[`Upload The Scanned File_${i}`] = null;
-            }
-        }
-        // Insert into ap_compliance table
-        // SCOPE index mapping for compliance fields:
-        // 1. Present at Conferences. (idx 10)
-        // 2. Guide student research and final-year projects. (idx 11)
-        // 3. Attend FDPs / workshop/Seminars (idx 15)
-        // 4. NPTEL/ MOOC certifications (idx 16)
-        // 5. Facilitate industry-institute interaction through guest lectures, internships. (idx 17)
-        // 6. Engage in extension activities, and social outreach programs. (idx 18)
-        // 7. Membership in professional body (idx 21)
-        const complianceMap = [10, 11, 15, 16, 17, 18, 21];
-        let faculty_email = '';
-        try {
-            const { data: facultyRows } = await supabase
-                .from('Faculty')
-                .select('email')
-                .eq('department', row["Department"])
-                .eq('Name', row["Portfolio Member Name"])
-                .limit(1)
-                .single();
-            if (facultyRows && facultyRows.email) faculty_email = facultyRows.email;
-        } catch (e) {}
-        const complianceRow = {
-            department: row["Department"],
-            faculty_email: faculty_email,
-            faculty_name: row["Portfolio Member Name"],
-            compliance_1: row[`Status_${complianceMap[0]}`] || '',
-            compliance_2: row[`Status_${complianceMap[1]}`] || '',
-            compliance_3: row[`Status_${complianceMap[2]}`] || '',
-            compliance_4: row[`Status_${complianceMap[3]}`] || '',
-            compliance_5: row[`Status_${complianceMap[4]}`] || '',
-            compliance_6: row[`Status_${complianceMap[5]}`] || '',
-            compliance_7: row[`Status_${complianceMap[6]}`] || ''
-        };
-        await supabase.from('ap_compliance').insert([complianceRow]);
-        // Insert into Supabase
-        const { data, error } = await supabase.from('AP').insert([row]);
-        // --- Compliance logic and Faculty table update ---
-        async function updateFacultyComplianceAP() {
-            let allCompleted = true;
-            let anyFilled = false;
-            for (let i = 1; i <= 21; i++) {
-                let status = row[`Status_${i}`] || "";
-                if (status) anyFilled = true;
-                let s = status.toLowerCase();
-                if (s !== "completed" && s !== "updated" && s !== "not applicable") {
-                    allCompleted = false;
+            // Prepare row object for 22 rows, but only fill general rows
+            const generalRows = Array.from({length: 22}, (_, i) => i + 1).filter(idx => ![10,11,15,16,17,18,19].includes(idx));
+            const row = {
+                "Department": formData.get('Department'),
+                "Portfolio Name": formData.get('Portfolio Name'),
+                "Portfolio Member Name": formData.get('Portfolio Member Name'),
+            };
+            for (let i = 1; i <= 22; i++) {
+                if (generalRows.includes(i)) {
+                    row[`Status_${i}`] = formData.get(`Status_${i}`);
+                    row[`Description_${i}`] = formData.get(`Description_${i}`);
+                    const file = formData.get(`Upload The Scanned File_${i}`);
+                    if (file && file.size > 0) {
+                        const ts = Date.now();
+                        const path = `apfile${i}_${ts}_${file.name}`;
+                        try {
+                            row[`Upload The Scanned File_${i}`] = await uploadFileToStorage(file, path);
+                        } catch (err) {
+                            window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
+                            return;
+                        }
+                    } else {
+                        row[`Upload The Scanned File_${i}`] = null;
+                    }
+                } else {
+                    row[`Status_${i}`] = null;
+                    row[`Description_${i}`] = null;
+                    row[`Upload The Scanned File_${i}`] = null;
                 }
             }
-            let compliance = "NOT FILLED";
-            if (anyFilled) compliance = allCompleted ? "COMPLETED" : "PENDING";
-            // Update Faculty table (by department and member name) in new compliance column
-            await supabase.from('Faculty').update({ compliance: compliance })
-                .eq('department', row["Department"])
-                .eq('Name', row["Portfolio Member Name"]);
-        }
+            // Insert into Supabase
+            const { data, error } = await supabase.from('AP').insert([row]);
             if (!error) {
-                await updateFacultyComplianceAP();
                 window.location.href = 'notification.html?status=success';
             } else {
                 window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
             }
         } finally {
-            // Hide spinner and enable button (in case of error or after redirect)
             if (submitBtn) submitBtn.disabled = false;
             if (spinner) spinner.classList.add('hidden');
         }

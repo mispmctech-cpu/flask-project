@@ -56,42 +56,72 @@ function getFormModalContent(row, details) {
     portfolio.includes('ap form') ||
     portfolio.includes('ap core scope form')
   ) {
-    html += `<div class="mb-4"><span class="text-lg font-bold text-purple-700">Faculty Core Scope - AP Form</span></div>`;
-    html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
-    html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || '-'}</span></div>`;
-    html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name'] || '-'}</span></div>`;
+    html += `<div class="mb-4"><span class="text-2xl font-extrabold text-purple-800 tracking-wide">Faculty Core Scope - AP Form</span></div>`;
+    html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">`;
+    html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
     html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || '-'}</span></div>`;
     html += `</div>`;
-    html += `<div class='mt-4'>`;
-    // SCOPE blocks (21 rows)
-    const scopes = [
-      'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
-      'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
-      'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
-      'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
-      'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
-      'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
-      'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
-      'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
-      'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
-      'Research and Development: Present at conferences.',
-      'Research and Development: Guide student research and final-year projects',
-      'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
-      'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
-      'Institutional Development: Serve on academic and administrative committees.',
-      'Professional Development: Attend FDP/ workshops/ seminar.',
-      'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.',
-      'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
-      'Community and Industry Engagement: Engage in extension activities, and social outreach Programs.',
-      'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
-      'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
-      'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.'
+    // Section headers for visual clarity
+    const sectionMap = [
+      { title: 'Teaching and Curriculum Delivery', color: 'bg-blue-100 text-blue-800', range: [1, 4] },
+      { title: 'Student Mentorship and Support', color: 'bg-green-100 text-green-800', range: [5, 9] },
+      { title: 'Research and Development', color: 'bg-yellow-100 text-yellow-800', range: [10, 12] },
+      { title: 'Institutional Development', color: 'bg-pink-100 text-pink-800', range: [13, 15] },
+      { title: 'Professional Development', color: 'bg-purple-100 text-purple-800', range: [16, 18] },
+      { title: 'Community and Industry Engagement', color: 'bg-orange-100 text-orange-800', range: [19, 20] },
+      { title: 'Administrative Duties', color: 'bg-gray-100 text-gray-800', range: [21, 22] },
+      { title: 'Other', color: 'bg-red-100 text-red-800', range: [23, 23] },
     ];
-    for (let i = 1; i <= 21; i++) {
-      html += `<div class='col-span-2 mt-4 mb-2'><span class="text-lg font-bold text-purple-700">${i}. ${scopes[i-1]}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Upload The Scanned File_${i}:</span> <span>${details[`Upload The Scanned File_${i}`] ? `<a href='${details[`Upload The Scanned File_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+    const scopes = [
+      'Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+      'Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+      'Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+      'Prepare Product model and instructional Chart for the assigned subject.',
+      'Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
+      'Monitor student attendance, performance, and well-being.',
+      'Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+      'Maintain the Mentor book for assigned mentee.',
+      'Consolidate innovative course material, Lab manuals',
+      'Publish in peer-reviewed journals',
+      'Apply for research grants',
+      'Guide student research and final-year projects',
+      'Participate in curriculum development and revision through Boards of Studies.',
+      'Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
+      'Serve on academic and administrative committees.',
+      'Organize FDP/ workshops/ seminar.',
+      'NPTEL/MOOC and certifications.',
+      'Memberships in professional bodies.',
+      'Facilitate MoUs',
+      'Engage in consultancy',
+      'Maintain academic records, course files, Log Book and student evaluations.',
+      'Assist in examination duties, including question paper setting, invigilation, and evaluation.',
+      'Other duties as assigned.'
+    ];
+    let sectionIdx = 0;
+    html += `<div class="divide-y">`;
+    for (let i = 1; i <= 23; i++) {
+      // Section header logic
+      if (sectionIdx < sectionMap.length && i === sectionMap[sectionIdx].range[0]) {
+        html += `<div class="col-span-3 py-2 px-3 rounded ${sectionMap[sectionIdx].color} font-bold text-lg mt-4 mb-2 shadow-sm">${sectionMap[sectionIdx].title}</div>`;
+      }
+      if (sectionIdx < sectionMap.length && i > sectionMap[sectionIdx].range[1]) {
+        sectionIdx++;
+        if (sectionIdx < sectionMap.length && i === sectionMap[sectionIdx].range[0]) {
+          html += `<div class="col-span-3 py-2 px-3 rounded ${sectionMap[sectionIdx].color} font-bold text-lg mt-4 mb-2 shadow-sm">${sectionMap[sectionIdx].title}</div>`;
+        }
+      }
+      html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-2 py-2 items-center border-b">`;
+      html += `<div class="font-semibold text-gray-700">${i}. ${scopes[i-1]}</div>`;
+      html += `<div><span class="text-gray-500">Status:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+      html += `<div><span class="text-gray-500">Description:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+      let fileVal = details[`Upload the scanned file_${i}`];
+      let fileHtml = '-';
+      if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
+        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
+      }
+      html += `<div class="md:col-span-3 ml-2">${fileHtml !== '-' ? `<span class='text-gray-500'>File:</span> ${fileHtml}` : ''}</div>`;
+      html += `</div>`;
     }
     html += `</div>`;
     return html;
@@ -1365,50 +1395,75 @@ function getFormModalContent(row, details) {
   if (
     portfolio.includes('asp core scope form') ||
     portfolio.includes('asp form') ||
-    portfolio.includes('faculty asp scope')
+    portfolio.includes('faculty asp scope') ||
+    (tableName && tableName.includes('asp'))
   ) {
-    html += `<div class="mb-4"><span class="text-lg font-bold text-purple-700">Faculty Core Scope - ASP Form</span></div>`;
-    html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+    html += `<div class="mb-4"><span class="text-2xl font-extrabold text-purple-800 tracking-wide">Faculty Core Scope - ASP Form</span></div>`;
+    html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">`;
     html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
     html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
     html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || details['Portfolio Member Name'] || '-'}</span></div>`;
     html += `</div>`;
-    html += `<div class='mt-4'>`;
-    // SCOPE blocks (22 rows)
-    const scopes = [
-      'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
-      'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
-      'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
-      'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
-      'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
-      'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
-      'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
-      'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
-      'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
-      'Research and Development: Present at conferences.',
-      'Research and Development: Guide student research and final-year projects',
-      'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
-      'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
-      'Institutional Development: Serve on academic and administrative committees.',
-      'Professional Development: Attend FDP/ workshops/ seminar.',
-      'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.',
-      'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
-      'Community and Industry Engagement: Engage in extension activities, and social outreach Programs.',
-      'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
-      'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
-      'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.',
-      'Other: Any other work assigned by the Principal/Head of Department.'
+    // Section headers for visual clarity
+    const sectionMap = [
+      { title: 'Teaching and Curriculum Delivery', color: 'bg-blue-100 text-blue-800', range: [1, 4] },
+      { title: 'Student Mentorship and Support', color: 'bg-green-100 text-green-800', range: [5, 9] },
+      { title: 'Research and Development', color: 'bg-yellow-100 text-yellow-800', range: [10, 12] },
+      { title: 'Institutional Development', color: 'bg-pink-100 text-pink-800', range: [13, 15] },
+      { title: 'Professional Development', color: 'bg-purple-100 text-purple-800', range: [16, 18] },
+      { title: 'Community and Industry Engagement', color: 'bg-orange-100 text-orange-800', range: [19, 20] },
+      { title: 'Administrative Duties', color: 'bg-gray-100 text-gray-800', range: [21, 22] },
+      { title: 'Other', color: 'bg-red-100 text-red-800', range: [23, 23] },
     ];
-    for (let i = 1; i <= 22; i++) {
-      html += `<div class='col-span-2 mt-4 mb-2'><span class="text-lg font-bold text-purple-700">${i}. ${scopes[i-1]}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+    const scopes = [
+      'Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+      'Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+      'Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+      'Prepare Product model and instructional Chart for the assigned subject.',
+      'Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
+      'Monitor student attendance, performance, and well-being.',
+      'Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+      'Maintain the Mentor book for assigned mentee.',
+      'Consolidate innovative course material, Lab manuals',
+      'Publish in peer-reviewed journals',
+      'Apply for research grants',
+      'Guide student research and final-year projects',
+      'Participate in curriculum development and revision through Boards of Studies.',
+      'Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
+      'Serve on academic and administrative committees.',
+      'Organize FDP/ workshops/ seminar.',
+      'NPTEL/MOOC and certifications.',
+      'Memberships in professional bodies.',
+      'Facilitate industry-institute interaction through guest lectures, Internships.',
+      'Engage in consultancy',
+      'Maintain academic records, course files, Log Book and student evaluations.',
+      'Assist in examination duties, including question paper setting, invigilation, and evaluation.',
+      'Other duties as assigned.'
+    ];
+    let sectionIdx = 0;
+    html += `<div class="divide-y">`;
+    for (let i = 1; i <= 23; i++) {
+      // Section header logic
+      if (sectionIdx < sectionMap.length && i === sectionMap[sectionIdx].range[0]) {
+        html += `<div class="col-span-3 py-2 px-3 rounded ${sectionMap[sectionIdx].color} font-bold text-lg mt-4 mb-2 shadow-sm">${sectionMap[sectionIdx].title}</div>`;
+      }
+      if (sectionIdx < sectionMap.length && i > sectionMap[sectionIdx].range[1]) {
+        sectionIdx++;
+        if (sectionIdx < sectionMap.length && i === sectionMap[sectionIdx].range[0]) {
+          html += `<div class="col-span-3 py-2 px-3 rounded ${sectionMap[sectionIdx].color} font-bold text-lg mt-4 mb-2 shadow-sm">${sectionMap[sectionIdx].title}</div>`;
+        }
+      }
+      html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-2 py-2 items-center border-b">`;
+      html += `<div class="font-semibold text-gray-700">${i}. ${scopes[i-1]}</div>`;
+      html += `<div><span class="text-gray-500">Status:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+      html += `<div><span class="text-gray-500">Description:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
       let fileVal = details[`Upload the scanned file_${i}`];
       let fileHtml = '-';
       if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
         fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
       }
-      html += `<div><span class="font-semibold text-gray-700">Upload the scanned file_${i}:</span> <span>${fileHtml}</span></div>`;
+      html += `<div class="md:col-span-3 ml-2">${fileHtml !== '-' ? `<span class='text-gray-500'>File:</span> ${fileHtml}` : ''}</div>`;
+      html += `</div>`;
     }
     html += `</div>`;
     return html;
@@ -1420,48 +1475,71 @@ function getFormModalContent(row, details) {
     portfolio.includes('prof form') ||
     portfolio.includes('faculty prof scope')
   ) {
-    html += `<div class="mb-4"><span class="text-lg font-bold text-purple-700">Faculty Core Scope - Professor Form</span></div>`;
-    html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+    html += `<div class="mb-4"><span class="text-2xl font-extrabold text-purple-800 tracking-wide">Faculty Core Scope - Professor Form</span></div>`;
+    html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">`;
     html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
     html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
     html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || details['Portfolio Member Name'] || '-'}</span></div>`;
     html += `</div>`;
-    html += `<div class='mt-4'>`;
-    // SCOPE blocks (22 rows)
-    const scopes = [
-      'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
-      'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
-      'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
-      'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
-      'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
-      'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
-      'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
-      'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
-      'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
-      'Research and Development: Present at conferences.',
-      'Research and Development: Guide student research and final-year projects',
-      'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
-      'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
-      'Institutional Development: Serve on academic and administrative committees.',
-      'Professional Development: Attend FDP/ workshops/ seminar.',
-      'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.',
-      'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
-      'Community and Industry Engagement: Engage in extension activities, and social outreach Programs.',
-      'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
-      'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
-      'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.',
-      'Other: Any other work assigned by the Principal/Head of Department.'
+    // Section headers for visual clarity
+    const sectionMap = [
+      { title: 'Teaching and Curriculum Delivery', color: 'bg-blue-100 text-blue-800', range: [1, 4] },
+      { title: 'Student Mentorship and Support', color: 'bg-green-100 text-green-800', range: [5, 9] },
+      { title: 'Research and Development', color: 'bg-yellow-100 text-yellow-800', range: [10, 11] },
+      { title: 'Institutional Development', color: 'bg-pink-100 text-pink-800', range: [12, 14] },
+      { title: 'Professional Development', color: 'bg-purple-100 text-purple-800', range: [15, 16] },
+      { title: 'Community and Industry Engagement', color: 'bg-orange-100 text-orange-800', range: [17, 18] },
+      { title: 'Administrative Duties', color: 'bg-gray-100 text-gray-800', range: [19, 21] },
+      { title: 'Other', color: 'bg-red-100 text-red-800', range: [22, 22] },
     ];
+    const scopes = [
+      'Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+      'Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+      'Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+      'Prepare Product model and instructional Chart for the assigned subject.',
+      'Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
+      'Monitor student attendance, performance, and well-being.',
+      'Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+      'Maintain the Mentor book for assigned mentee.',
+      'Consolidate innovative course material, Lab manuals',
+      'Present at conferences.',
+      'Guide student research and final-year projects',
+      'Participate in curriculum development and revision through Boards of Studies.',
+      'Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
+      'Serve on academic and administrative committees.',
+      'Attend FDP/ workshops/ seminar.',
+      'Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.',
+      'Facilitate industry-institute interaction through guest lectures, Internships.',
+      'Engage in extension activities, and social outreach Programs.',
+      'Maintain academic records, course files, Log Book and student evaluations.',
+      'Assist in examination duties, including question paper setting, invigilation, and evaluation.',
+      'Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.',
+      'Any other work assigned by the Principal/Head of Department.'
+    ];
+    let sectionIdx = 0;
+    html += `<div class="divide-y">`;
     for (let i = 1; i <= 22; i++) {
-      html += `<div class='col-span-2 mt-4 mb-2'><span class="text-lg font-bold text-purple-700">${i}. ${scopes[i-1]}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+      // Section header logic
+      if (sectionIdx < sectionMap.length && i === sectionMap[sectionIdx].range[0]) {
+        html += `<div class="col-span-3 py-2 px-3 rounded ${sectionMap[sectionIdx].color} font-bold text-lg mt-4 mb-2 shadow-sm">${sectionMap[sectionIdx].title}</div>`;
+      }
+      if (sectionIdx < sectionMap.length && i > sectionMap[sectionIdx].range[1]) {
+        sectionIdx++;
+        if (sectionIdx < sectionMap.length && i === sectionMap[sectionIdx].range[0]) {
+          html += `<div class="col-span-3 py-2 px-3 rounded ${sectionMap[sectionIdx].color} font-bold text-lg mt-4 mb-2 shadow-sm">${sectionMap[sectionIdx].title}</div>`;
+        }
+      }
+      html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-2 py-2 items-center border-b">`;
+      html += `<div class="font-semibold text-gray-700">${i}. ${scopes[i-1]}</div>`;
+      html += `<div><span class="text-gray-500">Status:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+      html += `<div><span class="text-gray-500">Description:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
       let fileVal = details[`Upload the scanned file_${i}`];
       let fileHtml = '-';
       if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
         fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
       }
-      html += `<div><span class="font-semibold text-gray-700">Upload the scanned file_${i}:</span> <span>${fileHtml}</span></div>`;
+      html += `<div class="md:col-span-3 ml-2">${fileHtml !== '-' ? `<span class='text-gray-500'>File:</span> ${fileHtml}` : ''}</div>`;
+      html += `</div>`;
     }
     html += `</div>`;
     return html;
