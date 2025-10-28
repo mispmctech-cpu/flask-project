@@ -1252,11 +1252,28 @@
     // Fetch verified workdone from hod-workdone table
     async function loadVerifiedWorkdone() {
       try {
-        const { data, error } = await supabaseClient
-          .from('hod-workdone')
-          .select('*')
-          .eq('department', department)
-          .order('verified_at', { ascending: false }); // Sort by verification time, newest first
+        // Fetch from both Hod-workdone and hod-workdone tables
+        const [res1, res2] = await Promise.all([
+          supabaseClient
+            .from('Hod-workdone')
+            .select('*')
+            .eq('department', department)
+            .order('verified_at', { ascending: false }),
+          supabaseClient
+            .from('hod-workdone')
+            .select('*')
+            .eq('department', department)
+            .order('verified_at', { ascending: false })
+        ]);
+
+        let data = [];
+        let error = null;
+        if (res1.error && res2.error) {
+          error = res1.error;
+        } else {
+          if (res1.data) data = data.concat(res1.data);
+          if (res2.data) data = data.concat(res2.data);
+        }
 
         if (error) {
           console.error('Error loading verified workdone:', error);
@@ -1264,7 +1281,14 @@
           return;
         }
 
-        console.log('Loaded verified workdone data:', data);
+        // Sort merged data by verified_at descending
+        data.sort((a, b) => {
+          const aTime = new Date(a.verified_at || a.created_at || 0).getTime();
+          const bTime = new Date(b.verified_at || b.created_at || 0).getTime();
+          return bTime - aTime;
+        });
+
+        console.log('Loaded verified workdone data (merged):', data);
         renderVerifiedWorkdoneTable(data || []);
       } catch (err) {
         console.error('Exception loading verified workdone:', err);
@@ -1603,31 +1627,31 @@
         submitted_at: row.submitted_at || row.created_at || row.timestamp || row.updated_at || row.submission_date || row.date_submitted || null
       };
       try {
-        // Insert into hod-workdone table
+        // Insert into Hod-workdone table (capital H)
         let result;
         if (verifiedData.input_id) {
           // Check for existing
           const { data: existing } = await supabaseClient
-            .from('hod-workdone')
+            .from('Hod-workdone')
             .select('id')
             .eq('input_id', verifiedData.input_id)
             .single();
           if (existing) {
             // Update existing record
             result = await supabaseClient
-              .from('hod-workdone')
+              .from('Hod-workdone')
               .update(verifiedData)
               .eq('input_id', verifiedData.input_id);
           } else {
             // Insert new
             result = await supabaseClient
-              .from('hod-workdone')
+              .from('Hod-workdone')
               .insert([verifiedData]);
           }
         } else {
           // No input_id, safe to insert
           result = await supabaseClient
-            .from('hod-workdone')
+            .from('Hod-workdone')
             .insert([verifiedData]);
         }
         if (result.error) {

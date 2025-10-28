@@ -325,10 +325,26 @@
         rejectedFallbackKeys.add(key);
       }
 
-      let { data, error } = await supabaseClient
-        .from('hod-workdone')
-        .select('*')
-        .order('verified_at', { ascending: false });
+      // Fetch from both Hod-workdone and hod-workdone tables
+      const [res1, res2] = await Promise.all([
+        supabaseClient
+          .from('Hod-workdone')
+          .select('*')
+          .order('verified_at', { ascending: false }),
+        supabaseClient
+          .from('hod-workdone')
+          .select('*')
+          .order('verified_at', { ascending: false })
+      ]);
+
+      let data = [];
+      let error = null;
+      if (res1.error && res2.error) {
+        error = res1.error;
+      } else {
+        if (res1.data) data = data.concat(res1.data);
+        if (res2.data) data = data.concat(res2.data);
+      }
       document.getElementById('loadingBox').style.display = 'none';
       if (error) {
         const errorBox = document.getElementById('errorBox');
@@ -339,12 +355,12 @@
         document.getElementById('errorBox').classList.add('hidden');
       }
 
-      // Debug: log all loaded records from hod-workdone
-      console.log('Loaded records from hod-workdone:', data);
+      // Debug: log all loaded records from both tables
+      console.log('Loaded records from Hod-workdone and hod-workdone:', data);
 
       // Filter out rows that are already accepted or rejected using composite key (without table_name)
       const filtered = (data || []).filter(row => {
-        // If the hod-workdone row includes input_id and table_name, prefer that for exact matching
+        // If the row includes input_id and table_name, prefer that for exact matching
         const rowCompositeKey = (row.input_id && row.table_name) ? `${row.input_id}__${row.table_name}` : null;
         if (rowCompositeKey) {
           if (acceptedCompositeKeys.has(rowCompositeKey)) {

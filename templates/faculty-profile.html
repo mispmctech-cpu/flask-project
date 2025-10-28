@@ -148,6 +148,19 @@
         <div class="mt-8">
           <label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-1">FACULTY MANDATORY SCOPE IN RESEARCH, INNOVATIONS AND EXTENSION ACTIVITY/FACULTY CONTRIBUTIONS</label>
           <div id="facultyDetailsTable" class="mt-1"></div>
+        <!-- Faculty Responsibilities Status Table -->
+        <div class="mt-8">
+          <label class="text-base font-bold text-green-700 uppercase tracking-wide block mb-1">FACULTY RESPONSIBILITIES STATUS</label>
+          <div id="facultyResponsibilitiesStatusTable" class="mt-1"></div>
+        <!-- Modal for viewing original responsibilities data -->
+        <div id="viewResponsibilitiesModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+          <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeResponsibilitiesModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+            <div id="viewResponsibilitiesModalContent"></div>
+          </div>
+        </div>
+        </div>
+        </div>
         </div>
       </section>
       <section class="card-shadow rounded-xl overflow-hidden mb-8">
@@ -745,6 +758,188 @@
         // Reset form state
         setEditMode(false);
 
+        // --- Begin: Faculty Portfolio Status Table (AP/ASP/Prof) ---
+        async function renderFacultyPortfolioStatusTable() {
+          const name = data["Name"] || "";
+          const department = data["department"] || "";
+          const designation = (data["Designation"] || "").toUpperCase();
+          let tableName = null;
+          let scopes = [];
+          if (designation === "AP") {
+            tableName = "AP";
+            scopes = [
+              "1. Research Publications", "2. Research Projects", "3. Patents", "4. FDP/Workshops", "5. Awards", "6. Consultancy", "7. Memberships", "8. Resource Person", "9. Reviewer/Editor", "10. Others"
+            ];
+          } else if (designation === "ASP") {
+            tableName = "ASP";
+            scopes = [
+              "1. Research Publications", "2. Research Projects", "3. Patents", "4. FDP/Workshops", "5. Awards", "6. Consultancy", "7. Memberships", "8. Resource Person", "9. Reviewer/Editor", "10. Others"
+            ];
+          } else if (designation === "PROF" || designation === "PROFESSOR") {
+            tableName = "Prof";
+            scopes = [
+              "1. Research Publications", "2. Research Projects", "3. Patents", "4. FDP/Workshops", "5. Awards", "6. Consultancy", "7. Memberships", "8. Resource Person", "9. Reviewer/Editor", "10. Others"
+            ];
+          }
+          if (!tableName) {
+            document.getElementById("facultyPortfolioStatusTable").innerHTML = '<div class="text-gray-400">No portfolio status available for this designation.</div>';
+            return;
+          }
+          // Fetch the most recent submission for this faculty (match Portfolio Member Name)
+          const { data: portfolioRows, error } = await supabaseClient
+            .from(tableName)
+            .select('*')
+            .eq('Portfolio Member Name', name)
+            .eq('Department', department)
+            .order('submitted_at', { ascending: false })
+            .limit(1);
+          if (error || !portfolioRows || portfolioRows.length === 0) {
+            document.getElementById("facultyPortfolioStatusTable").innerHTML = '<div class="text-gray-400">No recent portfolio submission found.</div>';
+            return;
+          }
+          const row = portfolioRows[0];
+          let html = '<table class="w-full text-xs border border-gray-400 rounded-lg overflow-hidden shadow-sm bg-white"><thead class="bg-blue-100 text-blue-700"><tr><th class="px-2 py-1 border border-gray-400">Scope</th><th class="px-2 py-1 border border-gray-400">Status</th></tr></thead><tbody>';
+          for (const scope of scopes) {
+            let status = row[scope] || '-';
+            let statusDisplay = '';
+            if (typeof status === 'string') status = status.trim();
+            if (status === '-' || status === '' || status == null) {
+              statusDisplay = '<span class="text-red-600 font-semibold">Pending</span>';
+            } else if (status.toLowerCase() === 'not applicable') {
+              statusDisplay = '<span class="text-gray-400">Not Applicable</span>';
+            } else {
+              statusDisplay = '<span class="text-green-700 font-semibold">Completed</span>';
+            }
+            html += `<tr><td class="px-2 py-1 border border-gray-400">${scope}</td><td class="px-2 py-1 border border-gray-400">${statusDisplay}</td></tr>`;
+          }
+          html += '</tbody></table>';
+          document.getElementById("facultyPortfolioStatusTable").innerHTML = html;
+        }
+        renderFacultyPortfolioStatusTable();
+        // --- Begin: Faculty Responsibilities Status Table ---
+        async function renderFacultyResponsibilitiesStatusTable() {
+          const name = data["Name"] || "";
+          const department = data["department"] || "";
+          const designation = (data["Designation"] || "").toUpperCase();
+          let tableName = null;
+          if (designation === "AP") tableName = "AP";
+          else if (designation === "ASP") tableName = "ASP";
+          else if (designation === "PROF" || designation === "PROFESSOR") tableName = "Prof";
+          if (!tableName) {
+            document.getElementById("facultyResponsibilitiesStatusTable").innerHTML = '<div class="text-gray-400">No responsibilities status available for this designation.</div>';
+            return;
+          }
+          // Responsibility descriptions (order matches Status_1, Status_2, ...)
+          const responsibilities = [
+            "Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.",
+            "Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.",
+            "Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.",
+            "Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.",
+            "Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.",
+            "Student Mentorship and Support: Monitor student attendance, performance, and well-being.",
+            "Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.",
+            "Student Mentorship and Support: Maintain the Mentor book for assigned mentee.",
+            "Student Mentorship and Support: Consolidate innovative course material, Lab manuals",
+            "Institutional Development: Participate in curriculum development and revision through Boards of Studies.",
+            "Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.",
+            "Institutional Development: Serve on academic and administrative committees.",
+            "Community and Industry Engagement: Engage in consultancy",
+            "Administrative Duties: Maintain academic records, course files, Log Book and student evaluations."
+          ];
+          // Fetch the most recent submission for this faculty (match Portfolio Member Name)
+          const { data: portfolioRows, error } = await supabaseClient
+            .from(tableName)
+            .select('*')
+            .eq('Portfolio Member Name', name)
+            .eq('Department', department)
+            .order('submitted_at', { ascending: false })
+            .limit(1);
+          if (error || !portfolioRows || portfolioRows.length === 0) {
+            document.getElementById("facultyResponsibilitiesStatusTable").innerHTML = '<div class="text-gray-400">No recent responsibilities submission found.</div>';
+            return;
+          }
+          const row = portfolioRows[0];
+          let html = '<div class="overflow-x-auto"><table class="min-w-full text-xs border border-gray-400 rounded-lg overflow-hidden shadow-sm bg-white"><thead class="bg-green-100 text-green-700"><tr>';
+          html += '<th class="px-2 py-1 border border-gray-400">Faculty Name</th>';
+          for (const resp of responsibilities) {
+            html += `<th class="px-2 py-1 border border-gray-400">${resp}</th>`;
+          }
+          html += '</tr></thead><tbody><tr>';
+          // Make faculty name clickable to show modal with original data
+          html += `<td class="px-2 py-1 border border-gray-400 font-semibold text-blue-700 underline cursor-pointer" onclick='showResponsibilitiesModal(${JSON.stringify(row).replace(/'/g,"&#39;")})'>${name}</td>`;
+          for (let i = 1; i <= responsibilities.length; i++) {
+            let status = row[`Status_${i}`];
+            if (status === undefined || status === null || status === "") status = "-";
+            html += `<td class="px-2 py-1 border border-gray-400">${status}</td>`;
+          }
+          html += '</tr></tbody></table></div>';
+          document.getElementById("facultyResponsibilitiesStatusTable").innerHTML = html;
+
+        // Modal logic for viewing original responsibilities data
+        window.closeResponsibilitiesModal = function() {
+          document.getElementById('viewResponsibilitiesModal').classList.add('hidden');
+          document.getElementById('viewResponsibilitiesModalContent').innerHTML = '';
+        }
+        window.showResponsibilitiesModal = function(row) {
+          let html = '<h3 class="text-lg font-bold text-green-700 mb-4">Original Responsibilities Data</h3>';
+          // Section titles (same as table headers)
+          const sections = [
+            "Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.",
+            "Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.",
+            "Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.",
+            "Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.",
+            "Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.",
+            "Student Mentorship and Support: Monitor student attendance, performance, and well-being.",
+            "Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.",
+            "Student Mentorship and Support: Maintain the Mentor book for assigned mentee.",
+            "Student Mentorship and Support: Consolidate innovative course material, Lab manuals",
+            "Institutional Development: Participate in curriculum development and revision through Boards of Studies.",
+            "Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.",
+            "Institutional Development: Serve on academic and administrative committees.",
+            "Community and Industry Engagement: Engage in consultancy",
+            "Administrative Duties: Maintain academic records, course files, Log Book and student evaluations."
+          ];
+          html += `<div class="mb-4">
+            <div class="font-semibold text-blue-700">Department:</div>
+            <div class="mb-2">${row['Department'] || ''}</div>
+            <div class="font-semibold text-blue-700">Portfolio Name:</div>
+            <div class="mb-2">${row['Portfolio Name'] || ''}</div>
+            <div class="font-semibold text-blue-700">Portfolio Member Name:</div>
+            <div class="mb-2">${row['Portfolio Member Name'] || ''}</div>
+          </div>`;
+          html += `<div class="space-y-4">`;
+          for (let i = 1; i <= sections.length; i++) {
+            const statusVal = row[`Status_${i}`] || '-';
+            const descVal = row[`Description_${i}`] || '-';
+            let uploadVal = row[`Upload The Scanned File_${i}`] || row[`Upload the scanned file_${i}`] || '-';
+            let uploadHtml = '-';
+            if (uploadVal && uploadVal !== '-' && typeof uploadVal === 'string') {
+              const isUrl = uploadVal.startsWith('http://') || uploadVal.startsWith('https://');
+              const isFile = uploadVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i);
+              if (isUrl || isFile) {
+                uploadHtml = `<a href="${uploadVal}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block">View</a>`;
+              } else {
+                uploadHtml = uploadVal;
+              }
+            }
+            html += `<div class="border-b pb-2 mb-2">
+              <div class="font-semibold text-orange-500 mb-1">${i}. ${sections[i-1]}</div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <div><span class="font-medium text-blue-700">Status:</span> ${statusVal}</div>
+                <div><span class="font-medium text-blue-700">Description:</span> ${descVal}</div>
+                <div><span class="font-medium text-blue-700">Upload:</span> ${uploadHtml}</div>
+              </div>
+            </div>`;
+          }
+          html += `</div>`;
+          document.getElementById('viewResponsibilitiesModalContent').innerHTML = html;
+          document.getElementById('viewResponsibilitiesModal').classList.remove('hidden');
+        }
+        }
+        renderFacultyResponsibilitiesStatusTable();
+        // --- End: Faculty Responsibilities Status Table ---
+        // --- End: Faculty Portfolio Status Table ---
+
         // Assigned Institution Forms Section (with Open Form button)
         let assignedFormsArr = [];
         try {
@@ -996,15 +1191,24 @@
                 
                 if (compliance) {
                   const val = compliance.trim().toLowerCase();
-                  if (val === 'completed' || val === 'yes') {
-                    obtainedMarks += 3;
-                  } else if (val === 'in progress' || val === 'inprogress') {
+                  if (val === 'not applicable' || val === 'n/a') {
+                    // Do not count this field in totalMarks or obtainedMarks
+                    return;
+                  } else if (val === 'completed' || val === 'yes') {
                     obtainedMarks += 1;
+                  } else if (val === 'in progress' || val === 'inprogress') {
+                    obtainedMarks += 0;
                   } else if (val === 'not started' || val === 'no' || val === 'incomplete') {
                     obtainedMarks += 0;
+                  } else if (val === '-' || val === '' || val === null) {
+                    obtainedMarks += 0;
                   }
+                  totalMarks += 1; // Only count if not 'Not Applicable'
+                } else {
+                  // If compliance is null or undefined, treat as zero and count in total
+                  obtainedMarks += 0;
+                  totalMarks += 1;
                 }
-                totalMarks += 3; // Each field has max 3 marks
               }
               
               const percentage = totalMarks > 0 ? Math.round((obtainedMarks / totalMarks) * 100) : 0;
