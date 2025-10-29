@@ -492,7 +492,7 @@
     async function loadWorkdone() {
       try {
         console.log(`🔍 DEBUG: Loading workdone for department: "${department}"`);
-        
+
         // Fetch all workdone rows
         const rows = await workdoneTable.initHodWorkdoneSection(department);
         console.log(`Loaded ${rows.length} workdone records for department: ${department}`);
@@ -513,25 +513,23 @@
           console.warn('Exception fetching rejected records:', err);
         }
 
-        // Fetch all verified records for department
+        // Fetch all verified records for department from BOTH tables
         let verifiedRows = [];
         try {
-          const { data: verifiedData, error: verifiedError } = await supabaseClient
-            .from('hod-workdone')
-            .select('input_id, department, portfolio_name, portfolio_member_name, verified_at, table_name, submitted_at')
-            .eq('department', department);
-          if (verifiedError) {
-            console.warn('Error fetching verified records:', verifiedError);
+          const [res1, res2] = await Promise.all([
+            supabaseClient
+              .from('Hod-workdone')
+              .select('input_id, department, portfolio_name, portfolio_member_name, verified_at, table_name, submitted_at'),
+            supabaseClient
+              .from('hod-workdone')
+              .select('input_id, department, portfolio_name, portfolio_member_name, verified_at, table_name, submitted_at')
+          ]);
+          if (res1.error && res2.error) {
+            console.warn('Error fetching verified records:', res1.error || res2.error);
           } else {
-            verifiedRows = verifiedData || [];
-            console.log(`🔍 DEBUG: Found ${verifiedRows.length} verified records in hod-workdone table`);
-            // Debug: Show all verified records
-            verifiedRows.forEach(v => {
-              if (v.table_name === 'form2-daily') {
-                console.log(`🔍 DEBUG: Verified form2-daily record - input_id: ${v.input_id}, member: ${v.portfolio_member_name}, verified_at: ${v.verified_at}`);
-                console.log(`   Full record:`, v);
-              }
-            });
+            if (res1.data) verifiedRows = verifiedRows.concat(res1.data);
+            if (res2.data) verifiedRows = verifiedRows.concat(res2.data);
+            console.log(`🔍 DEBUG: Found ${verifiedRows.length} verified records in both tables`);
           }
         } catch (err) {
           console.warn('Exception fetching verified records:', err);
@@ -542,34 +540,21 @@
         const rejectedKeys = new Set();
         for (const r of rejectedRows) {
           if (r.input_id && r.table_name) {
-            // Combine input_id with table_name for truly unique identification
             const inputIdTableKey = `${r.input_id}|${r.table_name}`;
             rejectedInputIdTableKeys.add(inputIdTableKey);
-            // Debug: Log rejected records for form2-daily
-            if (r.table_name === 'form2-daily') {
-              console.log(`🔍 DEBUG: Rejected form2-daily record - input_id: ${r.input_id}, member: ${r.portfolio_member_name}`);
-            }
           }
-          // More robust composite key including submitted_at for unique identification
           const submittedAt = r.submitted_at || r.created_at || '';
           const key = `${r.department}|${r.portfolio_name}|${r.portfolio_member_name}|${r.table_name}|${submittedAt}`;
           rejectedKeys.add(key);
         }
-        
+
         const verifiedInputIdTableKeys = new Set();
         const verifiedKeys = new Set();
         for (const v of verifiedRows) {
           if (v.input_id && v.table_name) {
-            // Combine input_id with table_name for truly unique identification
             const inputIdTableKey = `${v.input_id}|${v.table_name}`;
             verifiedInputIdTableKeys.add(inputIdTableKey);
-            // Debug: Log verified records for form2-daily
-            if (v.table_name === 'form2-daily') {
-              console.log(`🔍 DEBUG: Verified form2-daily record - input_id: ${v.input_id}, member: ${v.portfolio_member_name}`);
-              console.log(`   🔍 This will create composite key: "${v.department}|${v.portfolio_name}|${v.portfolio_member_name}|${v.table_name}|${v.submitted_at || v.created_at || ''}"`);
-            }
           }
-          // More robust composite key including submitted_at for unique identification
           const submittedAt = v.submitted_at || v.created_at || '';
           const key = `${v.department}|${v.portfolio_name}|${v.portfolio_member_name}|${v.table_name}|${submittedAt}`;
           verifiedKeys.add(key);
@@ -577,94 +562,41 @@
 
         // Filter out rejected and verified rows from main table
         const filteredRows = rows.filter(row => {
-          // Debug: Log filtering for form2-daily records
-          if (row.table === 'form2-daily') {
-            console.log(`🔍 DEBUG: Filtering form2-daily record:`, row);
-            console.log(`   input_id: "${row.input_id}", table: "${row.table}"`);
-            console.log(`   department: "${row.department}", portfolio: "${row.portfolio}", member: "${row.member}"`);
-            
-            // Check input_id filtering
-            if (row.input_id && (row.table_name || row.table)) {
-              const inputIdTableKey = `${row.input_id}|${row.table_name || row.table}`;
-              console.log(`   📋 Input ID key: "${inputIdTableKey}"`);
-              console.log(`   📋 In rejected input ID set:`, rejectedInputIdTableKeys.has(inputIdTableKey));
-              console.log(`   📋 In verified input ID set:`, verifiedInputIdTableKeys.has(inputIdTableKey));
-            }
-            
-            // Check composite key filtering
-            const submittedAt = row.submitted_at || row.created_at || '';
-            const key = `${row.department}|${row.portfolio_name || row.portfolio}|${row.portfolio_member_name || row.member}|${row.table_name || row.table}|${submittedAt}`;
-            console.log(`   🔑 Composite key with submitted_at: "${key}"`);
-            console.log(`   🔑 In rejected composite set:`, rejectedKeys.has(key));
-            console.log(`   🔑 In verified composite set:`, verifiedKeys.has(key));
-            
-            // Show all verified keys for comparison
-            console.log(`   🔍 All verified composite keys:`, Array.from(verifiedKeys));
-          }
-          
-          // First check by input_id + table_name combination (most reliable)
           if (row.input_id && (row.table_name || row.table)) {
             const inputIdTableKey = `${row.input_id}|${row.table_name || row.table}`;
             if (rejectedInputIdTableKeys.has(inputIdTableKey) || verifiedInputIdTableKeys.has(inputIdTableKey)) {
-              // Debug: Log why it's being filtered out
-              if (row.table === 'form2-daily') {
-                console.log(`   🚫 FILTERED OUT by input_id check: "${inputIdTableKey}"`);
-                console.log(`   🚫 In rejected set:`, rejectedInputIdTableKeys.has(inputIdTableKey));
-                console.log(`   🚫 In verified set:`, verifiedInputIdTableKeys.has(inputIdTableKey));
-              }
               return false;
             }
           }
-          
-          // Fallback to composite key matching (now including submitted_at for precise matching)
           const submittedAt = row.submitted_at || row.created_at || '';
           const key = `${row.department}|${row.portfolio_name || row.portfolio}|${row.portfolio_member_name || row.member}|${row.table_name || row.table}|${submittedAt}`;
           if (rejectedKeys.has(key) || verifiedKeys.has(key)) {
-            // Debug: Log why it's being filtered out
-            if (row.table === 'form2-daily') {
-              console.log(`   🚫 FILTERED OUT by composite key with submitted_at: "${key}"`);
-              console.log(`   🚫 In rejected keys:`, rejectedKeys.has(key));
-              console.log(`   🚫 In verified keys:`, verifiedKeys.has(key));
-            }
             return false;
           }
-          
-          // Debug: Log if it passes filtering
-          if (row.table === 'form2-daily') {
-            console.log(`   ✅ PASSED filtering - will be displayed`);
-          }
-          
           return true;
         });
 
         // Sort filtered rows by submission date/time (most recent first)
         const sortedRows = filteredRows.sort((a, b) => {
-          // Get submission dates with multiple fallback options
           const getSubmissionDate = (row) => {
             const dateStr = row.submitted_at || row.created_at || row.timestamp || row.updated_at || row.submission_date || row.date_submitted;
-            if (!dateStr) return new Date(0); // Very old date for records without timestamp
-            
+            if (!dateStr) return new Date(0);
             try {
               return new Date(dateStr);
             } catch (e) {
-              return new Date(0); // Fallback for invalid dates
+              return new Date(0);
             }
           };
-          
           const dateA = getSubmissionDate(a);
           const dateB = getSubmissionDate(b);
-          
-          // Sort in descending order (most recent first)
           return dateB.getTime() - dateA.getTime();
         });
 
-        // Store sorted rows globally for pagination and filtering
         window._allWorkdoneRows = sortedRows;
         window._filteredWorkdoneRows = sortedRows;
         window._workingWorkdoneRows = sortedRows;
         window._workdoneRows = sortedRows;
 
-        // Render with pagination
         renderHodWorkdoneTableWithPagination(1);
       } catch (error) {
         console.error('Error loading workdone:', error);
@@ -1268,11 +1200,19 @@
 
         let data = [];
         let error = null;
+        // Debug: Print department value used for filtering
+        console.log('[DEBUG] Department filter value:', department);
         if (res1.error && res2.error) {
           error = res1.error;
         } else {
-          if (res1.data) data = data.concat(res1.data);
-          if (res2.data) data = data.concat(res2.data);
+          if (res1.data) {
+            console.log('[DEBUG] Hod-workdone fetched:', res1.data);
+            data = data.concat(res1.data);
+          }
+          if (res2.data) {
+            console.log('[DEBUG] hod-workdone fetched:', res2.data);
+            data = data.concat(res2.data);
+          }
         }
 
         if (error) {
@@ -1288,8 +1228,15 @@
           return bTime - aTime;
         });
 
-        console.log('Loaded verified workdone data (merged):', data);
-        renderVerifiedWorkdoneTable(data || []);
+        // Debug: Show merged and sorted data
+        console.log('[DEBUG] Merged verified workdone data:', data);
+        window._allVerifiedRows = data || [];
+        window._filteredVerifiedRows = window._allVerifiedRows;
+        window._workingVerifiedRows = window._allVerifiedRows;
+        if (!window._allVerifiedRows.length) {
+          document.getElementById('verifiedWorkdoneTable').innerHTML = `<tr><td colspan='7' class='text-center text-yellow-600 p-4'>No verified workdone records found for department: <b>${department}</b>. Check for case sensitivity or whitespace issues.</td></tr>`;
+        }
+        renderFilteredVerifiedWorkdoneTable(1);
       } catch (err) {
         console.error('Exception loading verified workdone:', err);
         document.getElementById('verifiedWorkdoneTable').innerHTML = `<tr><td colspan='7' class='text-center text-red-500 p-4'>Error loading verified workdone: ${err.message}</td></tr>`;
@@ -1611,65 +1558,55 @@
         return;
       }
       btn.disabled = true;
-      const row = window._allWorkdoneRows[idx];
-      // Prepare verified data
-      const verifiedData = {
-        department: row.department,
-        portfolio_name: row.portfolio,
-        portfolio_member_name: row.member,
-        status: 'COMPLETED',
-        verified_by: localStorage.getItem('hod_name') || 'HOD',
-        verified_at: new Date().toISOString(),
-        documents: row.documents || null,
-        view_link: row.view_link || null,
-        input_id: row.input_id || null,
-        table_name: row.table_name || row.table || null,
-        submitted_at: row.submitted_at || row.created_at || row.timestamp || row.updated_at || row.submission_date || row.date_submitted || null
-      };
+      // Show loading overlay
+      let loadingDiv = document.createElement('div');
+      loadingDiv.id = 'verifyLoadingOverlay';
+      loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+      loadingDiv.innerHTML = `<div style="background:white;padding:32px 48px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <svg class='animate-spin' style='height:48px;width:48px;color:#2563eb;' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+          <circle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'></circle>
+          <path class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'></path>
+        </svg>
+        <div style='font-size:18px;color:#2563eb;font-weight:600;'>Verifying, please wait...</div>
+      </div>`;
+      document.body.appendChild(loadingDiv);
       try {
-        // Insert into Hod-workdone table (capital H)
-        let result;
-        if (verifiedData.input_id) {
-          // Check for existing
-          const { data: existing } = await supabaseClient
-            .from('Hod-workdone')
-            .select('id')
-            .eq('input_id', verifiedData.input_id)
-            .single();
-          if (existing) {
-            // Update existing record
-            result = await supabaseClient
-              .from('Hod-workdone')
-              .update(verifiedData)
-              .eq('input_id', verifiedData.input_id);
-          } else {
-            // Insert new
-            result = await supabaseClient
-              .from('Hod-workdone')
-              .insert([verifiedData]);
-          }
-        } else {
-          // No input_id, safe to insert
-          result = await supabaseClient
-            .from('Hod-workdone')
-            .insert([verifiedData]);
-        }
-        if (result.error) {
-          alert('Failed to verify record: ' + result.error.message);
+        const verified_by = localStorage.getItem('hod_name') || 'HOD';
+        const row = window._allWorkdoneRows[idx];
+        const verifyPayload = {
+          department: row.department || row.Department || '',
+          portfolio_name: row.portfolio_name || row.portfolio || '',
+          portfolio_member_name: row.portfolio_member_name || row.member || row['Portfolio Member Name'] || row['Faculty Name'] || row['Name'] || '',
+          status: 'COMPLETED',
+          verified_by,
+          verified_at: new Date().toISOString(),
+          documents: row.documents || null,
+          view_link: row.view_link || null,
+          input_id: row.input_id || null,
+          table_name: row.table_name || row.table || null,
+          submitted_at: row.submitted_at || row.created_at || row.timestamp || row.updated_at || row.submission_date || row.date_submitted || null
+        };
+        const { error } = await supabaseClient
+          .from('Hod-workdone')
+          .insert([verifyPayload]);
+        if (error) {
+          alert('Failed to verify record: ' + error.message + '\n\nFull error: ' + JSON.stringify(error) + '\n\nPayload: ' + JSON.stringify(verifyPayload));
+          console.error('Supabase verify error:', error, verifyPayload);
           btn.disabled = false;
+          document.body.removeChild(loadingDiv);
           return;
         }
-        // Remove from local array
         window._allWorkdoneRows.splice(idx, 1);
         window._filteredWorkdoneRows = window._allWorkdoneRows;
         window._workingWorkdoneRows = window._allWorkdoneRows;
         renderFilteredWorkdoneTable(workdoneCurrentPage);
-        // Reload data to ensure backend sync
         await loadWorkdone();
         await loadVerifiedWorkdone();
+        document.body.removeChild(loadingDiv);
       } catch (err) {
         alert('Error verifying record: ' + err.message);
         btn.disabled = false;
+        document.body.removeChild(loadingDiv);
       }
     }
 
