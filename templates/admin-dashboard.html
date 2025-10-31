@@ -43,6 +43,43 @@
 
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <!-- Welcome Section -->
+                <!-- Admin Access Section: Hide/Unhide Faculty Details -->
+                <section class="max-w-2xl mx-auto mt-8 mb-8 bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-bold text-purple-700 mb-4 flex items-center gap-2">
+                        <i class="fas fa-user-shield"></i> Faculty Details Access Control
+                    </h2>
+                    <div class="flex items-center gap-4">
+                        <label class="font-medium text-gray-700">Show Salary & Sensitive Details:</label>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggleFacultyDetails" class="form-checkbox h-5 w-5 text-purple-600" />
+                            <span id="facultyDetailsLabel" class="ml-2 text-gray-700">Visible to All</span>
+                        </label>
+                        <span id="facultyDetailsStatus" class="ml-4 text-sm text-gray-500"></span>
+                    </div>
+                </section>
+                <script>
+                    // Admin toggle for faculty details visibility
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const toggleFacultyDetails = document.getElementById('toggleFacultyDetails');
+                        const facultyDetailsStatus = document.getElementById('facultyDetailsStatus');
+                        const facultyDetailsLabel = document.getElementById('facultyDetailsLabel');
+                        function updateFacultyDetailsUI() {
+                            const checked = toggleFacultyDetails.checked;
+                            facultyDetailsLabel.textContent = checked ? 'Visible to All' : 'Hidden from All';
+                            facultyDetailsStatus.textContent = checked ? 'Sensitive details are visible on all faculty pages.' : 'Sensitive details are hidden on all faculty pages.';
+                        }
+                        function loadFacultyDetailsSetting() {
+                            const val = localStorage.getItem('showFacultySensitiveDetails');
+                            toggleFacultyDetails.checked = val === 'true';
+                            updateFacultyDetailsUI();
+                        }
+                        toggleFacultyDetails.addEventListener('change', function() {
+                            localStorage.setItem('showFacultySensitiveDetails', toggleFacultyDetails.checked ? 'true' : 'false');
+                            updateFacultyDetailsUI();
+                        });
+                        loadFacultyDetailsSetting();
+                    });
+                </script>
         <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 mb-8 text-white">
             <div class="flex items-center justify-between">
                 <div>

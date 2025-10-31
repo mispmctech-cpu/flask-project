@@ -322,7 +322,20 @@
     </div>
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
     <script>
-      // Image cropping functionality
+      // Hide/unhide salary and sensitive details based on admin setting
+      function updateSensitiveDetailsVisibility() {
+        const show = localStorage.getItem('showFacultySensitiveDetails') === 'true';
+        const salaryField = document.getElementById('facultySalary');
+        const salaryLabel = salaryField?.parentElement?.querySelector('label');
+        if (salaryField) {
+          salaryField.parentElement.style.display = show ? '' : 'none';
+        }
+        if (salaryLabel && salaryLabel.textContent?.toLowerCase().includes('salary')) {
+          salaryLabel.style.display = show ? '' : 'none';
+        }
+      }
+      document.addEventListener('DOMContentLoaded', updateSensitiveDetailsVisibility);
+      window.addEventListener('storage', updateSensitiveDetailsVisibility);
       let cropper = null;
       let currentImageFile = null;
 

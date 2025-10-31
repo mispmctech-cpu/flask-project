@@ -266,6 +266,18 @@
     </main>
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
     <script>
+      // Hide/unhide salary and sensitive details based on admin setting
+      function updateSensitiveDetailsVisibility() {
+        const show = localStorage.getItem('showFacultySensitiveDetails') === 'true';
+        const salaryField = document.getElementById('facultySalary');
+        if (salaryField) {
+          salaryField.parentElement.style.display = show ? '' : 'none';
+        }
+      }
+      document.addEventListener('DOMContentLoaded', updateSensitiveDetailsVisibility);
+      window.addEventListener('storage', updateSensitiveDetailsVisibility);
+    </script>
+    <script>
       // Get email from query param
       function getQueryParam(name) {
         const url = new URL(window.location.href);
