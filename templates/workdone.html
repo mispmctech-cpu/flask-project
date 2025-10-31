@@ -1292,159 +1292,93 @@
 
     // Modal logic for viewing verified row details
     async function viewVerifiedRowDetails(idx) {
-      console.log('viewVerifiedRowDetails called with index:', idx);
-      
-      // Get verified row data
-      if (!window._verifiedRows || !window._verifiedRows[idx]) {
-        console.error('Verified row not found for index:', idx);
+      // Robust view logic from iqac-workdone.html
+      if (!window._allVerifiedRows || !window._allVerifiedRows[idx]) {
         alert('Error: Verified record not found');
         return;
       }
-      
-      const verifiedRow = window._verifiedRows[idx];
-      console.log('Verified row:', verifiedRow);
-      
-      try {
-        // Show loading in modal
-        const modal = document.getElementById('viewModal');
-        const modalContent = document.getElementById('viewModalContent');
-        
-        if (modalContent && modal) {
-          modalContent.innerHTML = '<div class="p-4 text-center">Loading verified record details...</div>';
-          modal.classList.remove('hidden');
-        }
-        
-        let originalData = null;
-        let displayData = null;
-        
-        // Since original_data column doesn't exist yet, skip that step and go straight to fetching from source table
-        console.log('Fetching original data from table:', verifiedRow.table_name, 'with input_id:', verifiedRow.input_id);
-        
-        // Try to fetch from original table using exact input_id matching first
-        if (verifiedRow.input_id && verifiedRow.table_name) {
-          console.log('Fetching original data from table:', verifiedRow.table_name, 'with input_id:', verifiedRow.input_id);
-          
-          try {
-            const { data, error } = await supabaseClient
-              .from(verifiedRow.table_name)
-              .select('*')
-              .eq('input_id', verifiedRow.input_id)
-              .single();
-            
-            if (error) {
-              console.warn(`Error fetching from ${verifiedRow.table_name}:`, error);
-            } else if (data) {
-              originalData = data;
-              console.log('Found original data by input_id:', originalData);
-            }
-          } catch (err) {
-            console.warn(`Exception fetching from ${verifiedRow.table_name}:`, err);
+      const verifiedRow = window._allVerifiedRows[idx];
+      const modal = document.getElementById('viewModal');
+      const modalContent = document.getElementById('viewModalContent');
+      if (modalContent && modal) {
+        modalContent.innerHTML = '<div class="p-4 text-center">Loading verified record details...</div>';
+        modal.classList.remove('hidden');
+      }
+      let originalData = null;
+      // 1. Try input_id + table_name
+      if (verifiedRow.input_id && verifiedRow.table_name) {
+        try {
+          const { data, error } = await supabaseClient
+            .from(verifiedRow.table_name)
+            .select('*')
+            .eq('input_id', verifiedRow.input_id)
+            .single();
+          if (!error && data) originalData = data;
+        } catch (e) {}
+      }
+      // 2. Fallback: strict match by department, portfolio, member name
+      if (!originalData && verifiedRow.table_name) {
+        try {
+          const { data, error } = await supabaseClient
+            .from(verifiedRow.table_name)
+            .select('*');
+          if (!error && data && data.length > 0) {
+            const filtered = data.filter(row => {
+              const rowDept = row['Department'] || row['Department:'] || row['department'] || row['department:'] || '';
+              const rowMember = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+              const deptMatch = rowDept.toString().trim().toLowerCase() === (verifiedRow.department || '').toString().trim().toLowerCase();
+              const memberMatch = rowMember.toString().trim().toLowerCase() === (verifiedRow.portfolio_member_name || '').toString().trim().toLowerCase();
+              return deptMatch && memberMatch;
+            });
+            if (filtered.length > 0) originalData = filtered[0];
           }
-        }
-        
-        // If still no data, try fallback method with strict matching
-        if (!originalData && verifiedRow.table_name) {
-          console.log('Trying fallback method with strict matching');
-          
-          try {
-            const { data, error } = await supabaseClient
-              .from(verifiedRow.table_name)
-              .select('*');
-            
-            if (error) {
-              console.warn(`Error fetching from ${verifiedRow.table_name}:`, error);
-            } else if (data && data.length > 0) {
-              // Strict matching by department and member name
-              const filtered = data.filter(row => {
-                const rowDept = row['Department'] || row['Department:'] || row['department'] || row['department:'] || '';
-                const rowMember = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
-                
-                // Use strict matching (case-insensitive, trimmed)
-                const deptMatch = rowDept.toString().trim().toLowerCase() === verifiedRow.department.toString().trim().toLowerCase();
-                const memberMatch = rowMember.toString().trim().toLowerCase() === verifiedRow.portfolio_member_name.toString().trim().toLowerCase();
-                
-                return deptMatch && memberMatch;
-              });
-              
-              if (filtered.length > 0) {
-                // If multiple matches, try to find the most recent or use first
-                originalData = filtered[0];
-                console.log('Found original data by strict matching:', originalData);
-                
-                if (filtered.length > 1) {
-                  console.warn(`Multiple matches found (${filtered.length}), using first one`);
-                }
-              }
-            }
-          } catch (err) {
-            console.warn(`Exception in fallback fetch from ${verifiedRow.table_name}:`, err);
-          }
-        }
-        
-        if (originalData) {
-          // Create row context for modal display
-          const rowContext = {
-            portfolio: verifiedRow.portfolio_name,
-            table: verifiedRow.table_name,
-            department: verifiedRow.department,
-            member: verifiedRow.portfolio_member_name,
-            status: verifiedRow.status,
-            _original: originalData
-          };
-          
-          console.log('Generating modal content with context:', rowContext);
-          
-          // Use form-modal-mapper.js function to generate content
-          if (typeof getFormModalContent === 'function') {
-            const html = getFormModalContent(rowContext, originalData);
-            
-            if (modalContent && modal) {
-              modalContent.innerHTML = `
-                <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded">
-                  <h4 class="font-bold text-green-800">✅ Verified Record</h4>
-                  <p class="text-sm text-green-600">Verified by: ${verifiedRow.verified_by} on ${new Date(verifiedRow.verified_at).toLocaleString()}</p>
-                  <p class="text-sm text-gray-500">Source: ${verifiedRow.table_name} (input_id: ${verifiedRow.input_id || 'N/A'})</p>
-                </div>
-                ${html}
-              `;
-              modal.classList.remove('hidden');
-            }
-          } else {
-            throw new Error('getFormModalContent function not available');
+        } catch (e) {}
+      }
+      // 3. Show modal
+      if (originalData) {
+        const rowContext = {
+          portfolio: verifiedRow.portfolio_name,
+          table: verifiedRow.table_name,
+          department: verifiedRow.department,
+          member: verifiedRow.portfolio_member_name,
+          status: verifiedRow.status,
+          _original: originalData
+        };
+        if (typeof getFormModalContent === 'function') {
+          const html = getFormModalContent(rowContext, originalData);
+          if (modalContent && modal) {
+            modalContent.innerHTML = `
+              <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded">
+                <h4 class="font-bold text-green-800">✅ Verified Record</h4>
+                <p class="text-sm text-green-600">Verified by: ${verifiedRow.verified_by} on ${new Date(verifiedRow.verified_at).toLocaleString()}</p>
+                <p class="text-sm text-gray-500">Source: ${verifiedRow.table_name} (input_id: ${verifiedRow.input_id || 'N/A'})</p>
+              </div>
+              ${html}
+            `;
+            modal.classList.remove('hidden');
           }
         } else {
-          // Original data not found
-          if (modalContent) {
-            modalContent.innerHTML = `
-              <div class="p-4 text-center text-red-600">
-                <h4 class="font-bold mb-2">Original Data Not Found</h4>
-                <p>Could not find the original form data for this verified record.</p>
-                <div class="mt-4 text-sm text-gray-600 text-left">
-                  <p><strong>Portfolio:</strong> ${verifiedRow.portfolio_name}</p>
-                  <p><strong>Member:</strong> ${verifiedRow.portfolio_member_name}</p>
-                  <p><strong>Department:</strong> ${verifiedRow.department}</p>
-                  <p><strong>Status:</strong> ${verifiedRow.status}</p>
-                  <p><strong>Table:</strong> ${verifiedRow.table_name}</p>
-                  <p><strong>Input ID:</strong> ${verifiedRow.input_id || 'N/A'}</p>
-                  <p><strong>Verified By:</strong> ${verifiedRow.verified_by}</p>
-                  <p><strong>Verified At:</strong> ${new Date(verifiedRow.verified_at).toLocaleString()}</p>
-                </div>
-                <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                  <p class="text-sm text-yellow-700">This might happen if the original record was deleted or if the verification data is incomplete.</p>
-                </div>
-              </div>
-            `;
-          }
+          modalContent.innerHTML = '<div class="p-4 text-center text-red-600">Form modal content function not available.</div>';
         }
-        
-      } catch (error) {
-        console.error('Error loading verified row details:', error);
-        const modalContent = document.getElementById('viewModalContent');
+      } else {
         if (modalContent) {
           modalContent.innerHTML = `
             <div class="p-4 text-center text-red-600">
-              <h4 class="font-bold mb-2">Error Loading Data</h4>
-              <p>${error.message}</p>
+              <h4 class="font-bold mb-2">Original Data Not Found</h4>
+              <p>Could not find the original form data for this verified record.</p>
+              <div class="mt-4 text-sm text-gray-600 text-left">
+                <p><strong>Portfolio:</strong> ${verifiedRow.portfolio_name}</p>
+                <p><strong>Member:</strong> ${verifiedRow.portfolio_member_name}</p>
+                <p><strong>Department:</strong> ${verifiedRow.department}</p>
+                <p><strong>Status:</strong> ${verifiedRow.status}</p>
+                <p><strong>Table:</strong> ${verifiedRow.table_name}</p>
+                <p><strong>Input ID:</strong> ${verifiedRow.input_id || 'N/A'}</p>
+                <p><strong>Verified By:</strong> ${verifiedRow.verified_by}</p>
+                <p><strong>Verified At:</strong> ${new Date(verifiedRow.verified_at).toLocaleString()}</p>
+              </div>
+              <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                <p class="text-sm text-yellow-700">This might happen if the original record was deleted or if the verification data is incomplete.</p>
+              </div>
             </div>
           `;
         }
