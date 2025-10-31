@@ -46,9 +46,16 @@
         </details>
     </div>
 
-    <script>
-        let supabaseClient = null;
+        </script>
+    <!-- Footer -->
+    <footer class="bg-gray-100 text-center py-4 mt-8 border-t border-gray-300">
+        <p class="text-gray-500 text-sm">
+            &copy; All Rights Reserved
+            <a href="https://pmctech.org" target="_blank" class="text-gray-500 hover:text-gray-700 underline">PMC TECH</a>, IV CSE 2022-2026.<br/>
+        </p>
+    </footer>
 
+</body>
         async function checkDatabase() {
             const url = document.getElementById('supabaseUrl').value.trim();
             const key = document.getElementById('supabaseKey').value.trim();
