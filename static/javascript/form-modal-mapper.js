@@ -537,34 +537,48 @@ function getFormModalContent(row, details) {
       html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
       html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
       html += `</div>`;
-      const acadRows = [
-        'Autonomous Regulations & Curriculum File',
-        'AICTE Communications File',
-        'UGC Communications File',
-        'AU Communications File',
-        'Order for Nominees of BOS, Academic council, Governing Council, Finance Committee from AU File',
-        'Governing Council File & Its Implementations File',
-        'Academic Council File & Its Implementations File',
-        'BOS Minutes & Implementation File',
-        'Proposal of New Program Introduction with supporting Documents',
-        'OBE Promotion Programs for Faculty',
-        'Institution Academic Calendar Its Execution Status File',
-        'Result Analysis File',
-        'New Faculty orientation Programs File',
-        'New Faculty Mentoring File',
-        'FDP/Workshop/Seminar Programs on UGC Mandate File',
-        'Internal Compliance Committee File',
-        'Planning and Monitoring File',
-        'PO Attainment File (For all Programs)'
+      // New logic: 15 rows, but without Target and TAT columns
+      const rows = [
+        {scope: "Develop and implement academic policies in line with the institution's vision and autonomy framework."},
+        {scope: "Coordinate curriculum design, revision, and approval through Boards of Studies and Academic Council."},
+        {scope: "Ensure alignment with AICTE, UGC, and affiliating university norms while leveraging the flexibility of autonomy."},
+        {scope: "Oversee the introduction of new programs and courses based on industry trends and academic advancements."},
+        {scope: "Promote interdisciplinary learning and outcome-based education (OBE)."},
+        {scope: "Ensure timely updates to syllabi with inputs from industry and academia."},
+        {scope: "Supervise academic calendars, timetables, and course delivery across departments."},
+        {scope: "Coordinate with the Controller of Examinations for smooth conduct of internal and end-semester assessments."},
+        {scope: "Monitor academic performance and implement corrective measures when needed."},
+        {scope: "Facilitate faculty orientation, and mentoring."},
+        {scope: "Organize faculty development programs (FDPs), workshops, and seminars on quality enhancement and UGC mandate for faculty."},
+        {scope: "Promote faculty participation in strategic planning and continuous improvement."},
+        {scope: "Coordinate with statutory bodies like the Academic Council and IQAC."},
+        {scope: "Ensure compliance with government and regulatory bodies for academic approvals."},
+        {scope: "Promote benchmarking and innovation in strategic planning and academic development."},
       ];
-      html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
-      for (let i = 1; i <= acadRows.length; i++) {
-        html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${acadRows[i-1]}</span></div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+      html += `<div class=\"overflow-x-auto rounded-xl\">`;
+      html += `<table class=\"w-full min-w-[800px] text-xs md:text-sm table-fixed mt-2 border border-[#f7a440]\">`;
+      html += `<thead class=\"bg-[#f7a440]\"><tr>`;
+      html += `<th class=\"text-white font-bold py-2 px-2 text-center rounded-l-xl border-r border-white\">S.No</th>`;
+      html += `<th class=\"text-white font-bold py-2 px-2 border-r border-white\">Scope</th>`;
+      html += `<th class=\"text-white font-bold py-2 px-2 border-r border-white\">Status</th>`;
+      html += `<th class=\"text-white font-bold py-2 px-2 border-r border-white\">Description</th>`;
+      html += `<th class=\"text-white font-bold py-2 px-2 text-center rounded-r-xl\">File</th>`;
+      html += `</tr></thead><tbody>`;
+      for (let i = 0; i < rows.length; i++) {
+        const idx = i + 1;
+        html += `<tr class=\"border-b\">`;
+        html += `<td class=\"py-2 px-2 text-center border-r border-[#f7a440]\">${idx}</td>`;
+        html += `<td class=\"py-2 px-2 border-r border-[#f7a440]\">${rows[i].scope}</td>`;
+        html += `<td class=\"py-2 px-2 border-r border-[#f7a440]\">${details[`Status_${idx}`] || '-'}</td>`;
+        html += `<td class=\"py-2 px-2 border-r border-[#f7a440]\">${details[`Description_${idx}`] || '-'}</td>`;
+        if (details[`Upload the scanned file_${idx}`]) {
+          html += `<td class=\"py-2 px-2 text-center\"><a href=\"${details[`Upload the scanned file_${idx}`]}\" target=\"_blank\" class=\"text-blue-600 underline\">View</a></td>`;
+        } else {
+          html += `<td class=\"py-2 px-2 text-center\">-</td>`;
+        }
+        html += `</tr>`;
       }
-      html += `</div>`;
+      html += `</tbody></table></div>`;
       return html;
     }
     // Institution-form4.html (monthly and once in six months)
@@ -575,36 +589,60 @@ function getFormModalContent(row, details) {
       html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
       html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
       html += `</div>`;
-      let fileLabels = [];
-      let startIdx = 1;
-      let endIdx = 6;
-      if (row.table.toLowerCase().includes('once in six months')) {
-        fileLabels = [
-          'Students Satisfaction Survey File',
-          'Academic Administrative Audit File',
-          'AQAR Submission Status File'
+        // New logic: 20 monthly rows, matching the new schema and design
+        const rows = [
+          {scope: 'Develop and implement quality benchmarks for academic and administrative activities.'},
+          {scope: 'Align institutional practices with NAAC, NBA, and other accreditations, ranking frameworks.'},
+          {scope: 'Promote a culture of evidence-based decision-making and continuous improvement.'},
+          {scope: 'Adopt quality mandate as per the guidelines of UGC/MOE'},
+          {scope: 'Share the UGC/AICTE/MOE Guidelines, Benchmarks with respective Heads/Person concerned towards implementation.'},
+          {scope: 'Develop Audit Calendar for the academic year.'},
+          {scope: 'Oversee internal audits, academic reviews, and performance evaluations.'},
+          {scope: 'Track key performance indicators (KPIs) related to teaching, research, and governance.'},
+          {scope: 'Facilitate submission of AQARs, SSRs, and other quality-related documents.'},
+          {scope: 'Conduct External AAA, BO Audits.'},
+          {scope: 'Conduct External AAA, ISO Audits.'},
+          {scope: 'Organize workshops, FDPs, and training programs on quality assurance, teaching innovations, and instructional best practices.'},
+          {scope: 'Facilitate implementation of outcome-based teaching-learning methods and accreditation outcomes (OBE).'},
+          {scope: 'Facilitate feedback collection from students, alumni, employers, and other stakeholders.'},
+          {scope: 'Analyze feedback and initiate corrective actions to enhance quality.'},
+          {scope: 'Maintain documentation and records of quality initiatives, audits, and reviews.'},
+          {scope: 'Develop and implement policies related to quality, accreditation, and ranking.'},
+          {scope: 'Coordinate NAAC, NBA, and other accreditation/ranking support.'},
+          {scope: 'Promote innovation, internal audits, and inter-institutional quality initiatives within institutions.'},
+          {scope: 'Initiate quality initiative within institutions.'},
         ];
-        startIdx = 7;
-        endIdx = 9;
-      } else {
-        fileLabels = [
-          'Audit Calendar & Its Execution Status File',
-          'Internal Audit File',
-          'External Audit File',
-          'FDP/Workshop/Training on Quality File',
-          'Feedback File',
-          'Faculty Grievances File'
-        ];
-      }
-      html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
-      for (let i = startIdx; i <= endIdx; i++) {
-        html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${fileLabels[i-startIdx]}</span></div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
-      }
-      html += `</div>`;
-      return html;
+        html += `<div class="mb-4"><span class="text-3xl font-extrabold text-[#7d4c9e] tracking-wide">DEAN - IQAC : MONTHLY</span></div>`;
+        html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">`;
+        html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+        html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || '-'}</span></div>`;
+        html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
+        html += `</div>`;
+        html += `<div class="overflow-x-auto rounded-xl">`;
+        html += `<table class="w-full min-w-[800px] text-xs md:text-sm table-fixed mt-2 border border-[#f7a440]">`;
+        html += `<thead class="bg-[#f7a440]"><tr>`;
+        html += `<th class="text-white font-bold py-2 px-2 text-center rounded-l-xl border-r border-white">S.No</th>`;
+        html += `<th class="text-white font-bold py-2 px-2 border-r border-white">Scope</th>`;
+        html += `<th class="text-white font-bold py-2 px-2 border-r border-white">Status</th>`;
+        html += `<th class="text-white font-bold py-2 px-2 border-r border-white">Description</th>`;
+        html += `<th class="text-white font-bold py-2 px-2 text-center rounded-r-xl">File</th>`;
+        html += `</tr></thead><tbody>`;
+        for (let i = 0; i < rows.length; i++) {
+          const idx = i + 1;
+          html += `<tr class="bg-[#faf7ff]">`;
+          html += `<td class="text-center font-semibold">${idx}.</td>`;
+          html += `<td class="px-2">${rows[i].scope}</td>`;
+          html += `<td class="text-center">${details[`Status_${idx}`] || '-'}</td>`;
+          html += `<td class="px-2">${details[`Description_${idx}`] || '-'}</td>`;
+          if (details[`Upload the scanned file_${idx}`]) {
+            html += `<td class="text-center"><a href="${details[`Upload the scanned file_${idx}`]}" target="_blank" class="text-blue-700 underline">View</a></td>`;
+          } else {
+            html += `<td class="text-center">-</td>`;
+          }
+          html += `</tr>`;
+        }
+        html += `</tbody></table></div>`;
+        return html;
     }
     // Institution-form3.html
     if (row.table && row.table.toLowerCase().includes('institution-form3')) {
@@ -744,33 +782,55 @@ function getFormModalContent(row, details) {
     }
     // Institution-form7.html
     if (row.table && row.table.toLowerCase().includes('institution-form7')) {
-      html += `<div class="mb-4"><span class="text-3xl font-extrabold text-[#7d4c9e] tracking-wide">EXECUTIVE DEAN : MONTHLY</span></div>`;
-      html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">`;
-      html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name:'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month:'] || '-'}</span></div>`;
-      html += `</div>`;
-      const fileLabels = [
-        'Roadmap for internalization and its Progress File',
-        'Policy for International Partnership with University & Research Centers',
-        'Global Partnership MOU File',
-        'Students Mobility Programs File',
-        'International Students Admission File',
-        'Global Ranking Applications File'
+      // New logic: 16 monthly rows, matching the new schema
+      const rows = [
+        { scope: "Formulate and implement the institution’s internationalization roadmap.", target: "", tot: "30TH JULY" },
+        { scope: "Align global initiatives with the college’s academic mission and regulatory framework.", target: "", tot: "30TH JULY" },
+        { scope: "Develop policies for international partnerships, mobility, and global program delivery.", target: "", tot: "30TH JULY" },
+        { scope: "Identify and establish collaborations with foreign universities, research centers, and industries.", target: "FLU; RC-4; INDUSTRY-2", tot: "31ST MAY" },
+        { scope: "Facilitate signing and execution of MoUs for student/faculty exchange, joint research, and dual-degree programs.", target: "3 MOUS", tot: "31ST MAY" },
+        { scope: "Facilitate, supervise, and exchange of MoUs for student/faculty exchange, joint research, and dual-degree programs.", target: "3", tot: "31ST MAY" },
+        { scope: "Maintain active engagement with international consortia and networks.", target: "", tot: "31ST MAY" },
+        { scope: "Promote and manage inbound and outbound exchange programs, internships, and study-abroad programs.", target: "20 STUDENTS, 10 FACULTY", tot: "31ST MAY" },
+        { scope: "Facilitate participation in international teaching, research, and sabbatical programs.", target: "5 FACULTY", tot: "31ST MAY" },
+        { scope: "Ensure visa facilitation, orientation, and support services for international students and faculty.", target: "10 EXTERNAL STUDENTS AND 5 FACULTY", tot: "31ST MAY" },
+        { scope: "Develop digital strategies to attract international students.", target: "10 COUNTRY", tot: "30TH SEP" },
+        { scope: "Plan, guide, and coordinate admission of international students.", target: "10 COUNTRY", tot: "31ST DEC" },
+        { scope: "Facilitate accommodation, onboarding, and integration of international students.", target: "10 COUNTRY", tot: "END OF FRIDAY" },
+        { scope: "Ensure compliance with national and international regulations related to international education.", target: "10 COUNTRY", tot: "25TH OF EVERY MONTH" },
+        { scope: "Liaise with regulatory bodies for policy alignment and reporting.", target: "10 COUNTRY", tot: "25TH OF EVERY MONTH" },
+        { scope: "Track KPIs such as MoUs signed, international student/faculty numbers, and international leadership accreditation bodies, and regulatory agencies.", target: "", tot: "31ST MAY" },
       ];
-      html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
-      for (let i = 1; i <= 6; i++) {
-        html += `<div class='col-span-2 mt-4 mb-2'><span class="text-lg font-bold text-purple-700">${i}. ${fileLabels[i-1]}</span></div>`;
-        html += `<div><span class="font-semibold text-gray-700">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
-        html += `<div><span class="font-semibold text-gray-700">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
-        let fileVal = details[`Upload the scanned file_${i}`];
-        let fileHtml = '-';
-        if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
-          fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
-        }
-        html += `<div><span class="font-semibold text-gray-700">Upload the scanned file_${i}:</span> <span>${fileHtml}</span></div>`;
-      }
+      html += `<div class="mb-4"><span class="text-2xl font-extrabold text-[#7d4c9e] tracking-wide">EXECUTIVE DEAN – INTERNATIONAL AFFAIRS (Monthly)</span></div>`;
+      html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">`;
+      html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name:'] || details['Portfolio Name'] || '-'}</span></div>`;
+      html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || '-'}</span></div>`;
+      html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
       html += `</div>`;
+      html += `<div class="overflow-x-auto rounded-xl">`;
+      html += `<table class="w-full min-w-[800px] text-xs md:text-sm table-fixed mt-2 border border-[#f7a440]">`;
+      html += `<thead class="bg-[#f7a440]"><tr>`;
+      html += `<th class="text-white font-bold py-2 px-2 text-center rounded-l-xl border-r border-white">S.No</th>`;
+      html += `<th class="text-white font-bold py-2 px-2 border-r border-white">Scope</th>`;
+      html += `<th class="text-white font-bold py-2 px-2 border-r border-white">Status</th>`;
+      html += `<th class="text-white font-bold py-2 px-2 border-r border-white">Description</th>`;
+      html += `<th class="text-white font-bold py-2 px-2 text-center rounded-r-xl">File</th>`;
+      html += `</tr></thead><tbody>`;
+      for (let i = 0; i < rows.length; i++) {
+        const idx = i + 1;
+        html += `<tr class="bg-[#faf7ff]">`;
+        html += `<td class="text-center font-semibold">${idx}.</td>`;
+        html += `<td class="px-2">${rows[i].scope}</td>`;
+        html += `<td class="text-center">${details[`Status_${idx}`] || '-'}</td>`;
+        html += `<td class="px-2">${details[`Description_${idx}`] || '-'}</td>`;
+        if (details[`Upload the scanned file_${idx}`]) {
+          html += `<td class="text-center"><a href="${details[`Upload the scanned file_${idx}`]}" target="_blank" class="text-blue-700 underline">View</a></td>`;
+        } else {
+          html += `<td class="text-center">-</td>`;
+        }
+        html += `</tr>`;
+      }
+      html += `</tbody></table></div>`;
       return html;
     }
   // Faculty-form7.html

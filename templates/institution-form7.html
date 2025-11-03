@@ -48,10 +48,9 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
     <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-2xl mt-14 p-14">
         <h2 class="text-center text-3xl font-extrabold text-[#7d4c9e] tracking-wide mb-12">EXECUTIVE DEAN – INTERNATIONAL AFFAIRS</h2>
-        <!-- MONTHLY SECTION -->
-        <div class="mb-16">
-            <h3 class="text-center text-2xl font-bold text-[#f7a440] mb-8">EXECUTIVE DEAN : MONTHLY</h3>
-            <form id="institution-form7-monthly" autocomplete="off">
+    <!-- MONTHLY SECTION (ONLY, 16 ROWS) -->
+    <div class="mb-16">
+    <form id="institution-form7-monthly" autocomplete="off">
                 <div class="flex flex-col md:flex-row gap-10 mb-10">
                     <div class="flex-1">
                         <label class="block font-semibold mb-3 text-gray-700">Portfolio Name:</label>
@@ -82,304 +81,172 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="overflow-x-auto rounded-xl">
                     <table class="w-full min-w-[1200px] text-base border-separate border-spacing-y-2">
-                        <thead>
-                            <tr>
-                                <th class="bg-[#f7a440] text-white font-bold py-4 px-3 text-center rounded-l-xl">S.No</th>
-                                <th class="bg-[#f7a440] text-white font-bold py-4 px-3">Name of the file</th>
-                                <th class="bg-[#f7a440] text-white font-bold py-4 px-3 text-center">Status</th>
-                                <th class="bg-[#f7a440] text-white font-bold py-4 px-3">Description</th>
-                                <th class="bg-[#f7a440] text-white font-bold py-4 px-3 text-center rounded-r-xl">Upload the scanned file</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                                    <thead class="bg-[#f7a440]">
+                                        <tr>
+                                            <th class="text-white font-bold py-3 px-2 text-center rounded-l-xl border-r border-white">S.No</th>
+                                            <th class="text-white font-bold py-3 px-2 border-r border-white">Scope</th>
+                                            <th class="text-white font-bold py-3 px-2 border-r border-white">Target</th>
+                                            <th class="text-white font-bold py-3 px-2 border-r border-white">TOT</th>
+                                            <th class="text-white font-bold py-3 px-2 text-center rounded-r-xl">Status</th>
+                                            <th class="text-white font-bold py-3 px-2">Description</th>
+                                            <th class="text-white font-bold py-3 px-2">Upload the scanned file</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                            <!-- 1. International Strategy and Policy -->
                             <tr class="bg-[#faf7ff]">
                                 <td class="text-center font-semibold">1.</td>
-                                <td class="px-3">Professional bodies activities</td>
-                                <td class="text-center">
-                                    <select name="Status_1" required class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white">
-                                        <option value="" disabled selected>Select</option>
-                                        <option>Completed and Updated</option>
-                                        <option>Yet to be Completed</option>
-                                        <option>Under Process</option>
-                                        <option>Not Applicable</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="text" name="Description_1" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
-                                </td>
-                                <td class="text-center">
-                                    <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
-                                        <input type="file" name="Upload the scanned file_1" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input" data-row="monthly-1">
-                                    </label>
-                                    <span class="file-check hidden text-green-600 font-bold ml-2" data-row="monthly-1">✓ Uploaded</span>
-                                </td>
+                                <td class="px-2">Formulate and implement the institution’s internationalization roadmap.</td>
+                                <td class="text-center"></td>
+                                <td class="text-center">30TH JULY</td>
+                                <td class="text-center"><select name="Status_1" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+                                <td><input type="text" name="Description_1" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+                                <td class="text-center"><input type="file" name="Upload the scanned file_1" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="1" /><span class="file-check hidden text-green-600 font-bold" data-row="1">✓ Uploaded</span></td>
                             </tr>
                             <tr class="bg-[#faf7ff]">
                                 <td class="text-center font-semibold">2.</td>
-                                <td class="px-3">MOU activities – Audit</td>
-                                <td class="text-center">
-                                    <select name="Status_2" required class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white">
-                                        <option value="" disabled selected>Select</option>
-                                        <option>Completed and Updated</option>
-                                        <option>Yet to be Completed</option>
-                                        <option>Under Process</option>
-                                        <option>Not Applicable</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="text" name="Description_2" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
-                                </td>
-                                <td class="text-center">
-                                    <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
-                                        <input type="file" name="Upload the scanned file_2" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input" data-row="monthly-2">
-                                    </label>
-                                    <span class="file-check hidden text-green-600 font-bold ml-2" data-row="monthly-2">✓ Uploaded</span>
-                                </td>
+                                <td class="px-2">Align global initiatives with the college’s academic mission and regulatory framework.</td>
+                                <td class="text-center"></td>
+                                <td class="text-center">30TH JULY</td>
+                                <td class="text-center"><select name="Status_2" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+                                <td><input type="text" name="Description_2" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+                                <td class="text-center"><input type="file" name="Upload the scanned file_2" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="2" /><span class="file-check hidden text-green-600 font-bold" data-row="2">✓ Uploaded</span></td>
                             </tr>
                             <tr class="bg-[#faf7ff]">
                                 <td class="text-center font-semibold">3.</td>
-                                <td class="px-3">Renewal Professional bodies</td>
-                                <td class="text-center">
-                                    <select name="Status_3" required class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white">
-                                        <option value="" disabled selected>Select</option>
-                                        <option>Completed and Updated</option>
-                                        <option>Yet to be Completed</option>
-                                        <option>Under Process</option>
-                                        <option>Not Applicable</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="text" name="Description_3" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
-                                </td>
-                                <td class="text-center">
-                                    <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
-                                        <input type="file" name="Upload the scanned file_3" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input" data-row="monthly-3">
-                                    </label>
-                                    <span class="file-check hidden text-green-600 font-bold ml-2" data-row="monthly-3">✓ Uploaded</span>
-                                </td>
+                                <td class="px-2">Develop policies for international partnerships, mobility, and global program delivery.</td>
+                                <td class="text-center"></td>
+                                <td class="text-center">30TH JULY</td>
+                                <td class="text-center"><select name="Status_3" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+                                <td><input type="text" name="Description_3" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+                                <td class="text-center"><input type="file" name="Upload the scanned file_3" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="3" /><span class="file-check hidden text-green-600 font-bold" data-row="3">✓ Uploaded</span></td>
                             </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <button type="submit" class="mt-8 bg-[#7d4c9e] hover:bg-[#5e357a] text-white font-bold py-3 px-16 rounded-full text-lg tracking-wide transition-all duration-200 mx-auto block shadow-lg">Submit</button>
-            </form>
-        </div>
-
-        <!-- ONCE IN A SEMESTER SECTION -->
-        <div class="mb-16">
-            <h3 class="text-center text-2xl font-bold text-[#f7a440] mb-8">EXECUTIVE DEAN : ONCE IN A SEMESTER</h3>
-            <form id="institution-form7-semester" autocomplete="off">
-                <div class="flex flex-col md:flex-row gap-10 mb-10">
-                    <div class="flex-1">
-                        <label class="block font-semibold mb-3 text-gray-700">Portfolio Name:</label>
-                        <input type="text" name="Portfolio Name:" required class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#7d4c9e] bg-gray-50">
-                    </div>
-                    <div class="flex-1">
-                        <label class="block font-semibold mb-3 text-gray-700">Portfolio Person Name:</label>
-                        <input type="text" name="Portfolio Member Name:" required class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#7d4c9e] bg-gray-50">
-                    </div>
-                    <div class="flex-1 flex flex-col">
-                        <label class="font-semibold text-gray-700 mb-3">Month:</label>
-                        <select name="Month:" required class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-3 bg-gray-50">
-                            <option value="" disabled selected>Select</option>
-                            <option value="January">January</option>
-                            <option value="February">February</option>
-                            <option value="March">March</option>
-                            <option value="April">April</option>
-                            <option value="May">May</option>
-                            <option value="June">June</option>
-                            <option value="July">July</option>
-                            <option value="August">August</option>
-                            <option value="September">September</option>
-                            <option value="October">October</option>
-                            <option value="November">November</option>
-                            <option value="December">December</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="overflow-x-auto rounded-xl">
-                    <table class="w-full min-w-[1200px] text-base border-separate border-spacing-y-2">
-                        <thead>
-                            <tr>
-                                <th class="bg-[#f7a440] text-white font-bold py-4 px-3 text-center rounded-l-xl">S.No</th>
-                                <th class="bg-[#f7a440] text-white font-bold py-4 px-3">Name of the file</th>
-                                <th class="bg-[#f7a440] text-white font-bold py-4 px-3 text-center">Status</th>
-                                <th class="bg-[#f7a440] text-white font-bold py-4 px-3">Description</th>
-                                <th class="bg-[#f7a440] text-white font-bold py-4 px-3 text-center rounded-r-xl">Upload the scanned file</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                            <!-- 2. Global Partnerships and MoUs -->
                             <tr class="bg-[#faf7ff]">
                                 <td class="text-center font-semibold">4.</td>
-                                <td class="px-3">New Staff PDF for Innovative Teaching Using Google Classroom</td>
-                                <td class="text-center">
-                                    <select name="Status_1" required class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white">
-                                        <option value="" disabled selected>Select</option>
-                                        <option>Completed and Updated</option>
-                                        <option>Yet to be Completed</option>
-                                        <option>Under Process</option>
-                                        <option>Not Applicable</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="text" name="Description_1" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
-                                </td>
-                                <td class="text-center">
-                                    <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
-                                        <input type="file" name="Upload the scanned file_1" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input" data-row="semester-1">
-                                    </label>
-                                    <span class="file-check hidden text-green-600 font-bold ml-2" data-row="semester-1">✓ Uploaded</span>
-                                </td>
+                                <td class="px-2">Identify and establish collaborations with foreign universities, research centers, and industries.</td>
+                                <td class="text-center">FLU; RC-4; INDUSTRY-2</td>
+                                <td class="text-center">31ST MAY</td>
+                                <td class="text-center"><select name="Status_4" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+                                <td><input type="text" name="Description_4" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+                                <td class="text-center"><input type="file" name="Upload the scanned file_4" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="4" /><span class="file-check hidden text-green-600 font-bold" data-row="4">✓ Uploaded</span></td>
                             </tr>
                             <tr class="bg-[#faf7ff]">
                                 <td class="text-center font-semibold">5.</td>
-                                <td class="px-3">Induction week, Student awareness in Research/Project for PG Student</td>
-                                <td class="text-center">
-                                    <select name="Status_2" required class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white">
-                                        <option value="" disabled selected>Select</option>
-                                        <option>Completed and Updated</option>
-                                        <option>Yet to be Completed</option>
-                                        <option>Under Process</option>
-                                        <option>Not Applicable</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="text" name="Description_2" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
-                                </td>
-                                <td class="text-center">
-                                    <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
-                                        <input type="file" name="Upload the scanned file_2" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input" data-row="semester-2">
-                                    </label>
-                                    <span class="file-check hidden text-green-600 font-bold ml-2" data-row="semester-2">✓ Uploaded</span>
-                                </td>
+                                <td class="px-2">Facilitate signing and execution of MoUs for student/faculty exchange, joint research, and dual-degree programs.</td>
+                                <td class="text-center">3 MOUS</td>
+                                <td class="text-center">31ST MAY</td>
+                                <td class="text-center"><select name="Status_5" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+                                <td><input type="text" name="Description_5" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+                                <td class="text-center"><input type="file" name="Upload the scanned file_5" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="5" /><span class="file-check hidden text-green-600 font-bold" data-row="5">✓ Uploaded</span></td>
                             </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <button type="submit" class="mt-8 bg-[#7d4c9e] hover:bg-[#5e357a] text-white font-bold py-3 px-16 rounded-full text-lg tracking-wide transition-all duration-200 mx-auto block shadow-lg">Submit</button>
-            </form>
-        </div>
-
-        <!-- ONCE IN A YEAR SECTION -->
-        <div class="mb-16">
-            <h3 class="text-center text-2xl font-bold text-[#f7a440] mb-8">EXECUTIVE DEAN : ONCE IN A YEAR</h3>
-            <form id="institution-form7-year" autocomplete="off">
-                <div class="flex flex-col md:flex-row gap-10 mb-10">
-                    <div class="flex-1">
-                        <label class="block font-semibold mb-3 text-gray-700">Portfolio Name:</label>
-                        <input type="text" name="Portfolio Name:" required class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#7d4c9e] bg-gray-50">
-                    </div>
-                    <div class="flex-1">
-                        <label class="block font-semibold mb-3 text-gray-700">Portfolio Person Name:</label>
-                        <input type="text" name="Portfolio Member Name:" required class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#7d4c9e] bg-gray-50">
-                    </div>
-                    <div class="flex-1 flex flex-col">
-                        <label class="font-semibold text-gray-700 mb-3">Month:</label>
-                        <select name="Month:" required class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-3 bg-gray-50">
-                            <option value="" disabled selected>Select</option>
-                            <option value="January">January</option>
-                            <option value="February">February</option>
-                            <option value="March">March</option>
-                            <option value="April">April</option>
-                            <option value="May">May</option>
-                            <option value="June">June</option>
-                            <option value="July">July</option>
-                            <option value="August">August</option>
-                            <option value="September">September</option>
-                            <option value="October">October</option>
-                            <option value="November">November</option>
-                            <option value="December">December</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="overflow-x-auto rounded-xl">
-                    <table class="w-full min-w-[1200px] text-base border-separate border-spacing-y-2">
-                        <thead>
-                            <tr>
-                                <th class="bg-[#f7a440] text-white font-bold py-4 px-3 text-center rounded-l-xl">S.No</th>
-                                <th class="bg-[#f7a440] text-white font-bold py-4 px-3">Name of the file</th>
-                                <th class="bg-[#f7a440] text-white font-bold py-4 px-3 text-center">Status</th>
-                                <th class="bg-[#f7a440] text-white font-bold py-4 px-3">Description</th>
-                                <th class="bg-[#f7a440] text-white font-bold py-4 px-3 text-center rounded-r-xl">Upload the scanned file</th>
-                            </tr>
-                        </thead>
-                        <tbody>
                             <tr class="bg-[#faf7ff]">
                                 <td class="text-center font-semibold">6.</td>
-                                <td class="px-3">International students Internship</td>
-                                <td class="text-center">
-                                    <select name="Status_1" required class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white">
-                                        <option value="" disabled selected>Select</option>
-                                        <option>Completed and Updated</option>
-                                        <option>Yet to be Completed</option>
-                                        <option>Under Process</option>
-                                        <option>Not Applicable</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="text" name="Description_1" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
-                                </td>
-                                <td class="text-center">
-                                    <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
-                                        <input type="file" name="Upload the scanned file_1" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input" data-row="year-1">
-                                    </label>
-                                    <span class="file-check hidden text-green-600 font-bold ml-2" data-row="year-1">✓ Uploaded</span>
-                                </td>
+                                <td class="px-2">Facilitate, supervise, and exchange of MoUs for student/faculty exchange, joint research, and dual-degree programs.</td>
+                                <td class="text-center">3</td>
+                                <td class="text-center">31ST MAY</td>
+                                <td class="text-center"><select name="Status_6" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+                                <td><input type="text" name="Description_6" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+                                <td class="text-center"><input type="file" name="Upload the scanned file_6" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="6" /><span class="file-check hidden text-green-600 font-bold" data-row="6">✓ Uploaded</span></td>
                             </tr>
                             <tr class="bg-[#faf7ff]">
                                 <td class="text-center font-semibold">7.</td>
-                                <td class="px-3">New MOU – two per year</td>
-                                <td class="text-center">
-                                    <select name="Status_2" required class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white">
-                                        <option value="" disabled selected>Select</option>
-                                        <option>Completed and Updated</option>
-                                        <option>Yet to be Completed</option>
-                                        <option>Under Process</option>
-                                        <option>Not Applicable</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="text" name="Description_2" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
-                                </td>
-                                <td class="text-center">
-                                    <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
-                                        <input type="file" name="Upload the scanned file_2" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input" data-row="year-2">
-                                    </label>
-                                    <span class="file-check hidden text-green-600 font-bold ml-2" data-row="year-2">✓ Uploaded</span>
-                                </td>
+                                <td class="px-2">Maintain active engagement with international consortia and networks.</td>
+                                <td class="text-center"></td>
+                                <td class="text-center">31ST MAY</td>
+                                <td class="text-center"><select name="Status_7" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+                                <td><input type="text" name="Description_7" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+                                <td class="text-center"><input type="file" name="Upload the scanned file_7" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="7" /><span class="file-check hidden text-green-600 font-bold" data-row="7">✓ Uploaded</span></td>
                             </tr>
+                            <!-- 3. Student and Faculty Mobility -->
                             <tr class="bg-[#faf7ff]">
                                 <td class="text-center font-semibold">8.</td>
-                                <td class="px-3">International language Activities (apply for research grant)/ Internship overseas) – one per year</td>
-                                <td class="text-center">
-                                    <select name="Status_3" required class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white">
-                                        <option value="" disabled selected>Select</option>
-                                        <option>Completed and Updated</option>
-                                        <option>Yet to be Completed</option>
-                                        <option>Under Process</option>
-                                        <option>Not Applicable</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="text" name="Description_3" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
-                                </td>
-                                <td class="text-center">
-                                    <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
-                                        <input type="file" name="Upload the scanned file_3" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input" data-row="year-3">
-                                    </label>
-                                    <span class="file-check hidden text-green-600 font-bold ml-2" data-row="year-3">✓ Uploaded</span>
-                                </td>
+                                <td class="px-2">Promote and manage inbound and outbound exchange programs, internships, and study-abroad programs.</td>
+                                <td class="text-center">20 STUDENTS, 10 FACULTY</td>
+                                <td class="text-center">31ST MAY</td>
+                                <td class="text-center"><select name="Status_8" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+                                <td><input type="text" name="Description_8" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+                                <td class="text-center"><input type="file" name="Upload the scanned file_8" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="8" /><span class="file-check hidden text-green-600 font-bold" data-row="8">✓ Uploaded</span></td>
+                            </tr>
+                            <tr class="bg-[#faf7ff]">
+                                <td class="text-center font-semibold">9.</td>
+                                <td class="px-2">Facilitate participation in international teaching, research, and sabbatical programs.</td>
+                                <td class="text-center">5 FACULTY</td>
+                                <td class="text-center">31ST MAY</td>
+                                <td class="text-center"><select name="Status_9" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+                                <td><input type="text" name="Description_9" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+                                <td class="text-center"><input type="file" name="Upload the scanned file_9" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="9" /><span class="file-check hidden text-green-600 font-bold" data-row="9">✓ Uploaded</span></td>
+                            </tr>
+                            <tr class="bg-[#faf7ff]">
+                                <td class="text-center font-semibold">10.</td>
+                                <td class="px-2">Ensure visa facilitation, orientation, and support services for international students and faculty.</td>
+                                <td class="text-center">10 EXTERNAL STUDENTS AND 5 FACULTY</td>
+                                <td class="text-center">31ST MAY</td>
+                                <td class="text-center"><select name="Status_10" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+                                <td><input type="text" name="Description_10" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+                                <td class="text-center"><input type="file" name="Upload the scanned file_10" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="10" /><span class="file-check hidden text-green-600 font-bold" data-row="10">✓ Uploaded</span></td>
+                            </tr>
+                            <!-- 4. International Student Recruitment and Support -->
+                            <tr class="bg-[#faf7ff]">
+                                <td class="text-center font-semibold">11.</td>
+                                <td class="px-2">Develop digital strategies to attract international students.</td>
+                                <td class="text-center">10 COUNTRY</td>
+                                <td class="text-center">30TH SEP</td>
+                                <td class="text-center"><select name="Status_11" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+                                <td><input type="text" name="Description_11" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+                                <td class="text-center"><input type="file" name="Upload the scanned file_11" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="11" /><span class="file-check hidden text-green-600 font-bold" data-row="11">✓ Uploaded</span></td>
+                            </tr>
+                            <tr class="bg-[#faf7ff]">
+                                <td class="text-center font-semibold">12.</td>
+                                <td class="px-2">Plan, guide, and coordinate admission of international students.</td>
+                                <td class="text-center">10 COUNTRY</td>
+                                <td class="text-center">31ST DEC</td>
+                                <td class="text-center"><select name="Status_12" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+                                <td><input type="text" name="Description_12" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+                                <td class="text-center"><input type="file" name="Upload the scanned file_12" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="12" /><span class="file-check hidden text-green-600 font-bold" data-row="12">✓ Uploaded</span></td>
+                            </tr>
+                            <tr class="bg-[#faf7ff]">
+                                <td class="text-center font-semibold">13.</td>
+                                <td class="px-2">Facilitate accommodation, onboarding, and integration of international students.</td>
+                                <td class="text-center">10 COUNTRY</td>
+                                <td class="text-center">END OF FRIDAY</td>
+                                <td class="text-center"><select name="Status_13" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+                                <td><input type="text" name="Description_13" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+                                <td class="text-center"><input type="file" name="Upload the scanned file_13" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="13" /><span class="file-check hidden text-green-600 font-bold" data-row="13">✓ Uploaded</span></td>
+                            </tr>
+                            <!-- 5. Compliance and Liaison -->
+                            <tr class="bg-[#faf7ff]">
+                                <td class="text-center font-semibold">14.</td>
+                                <td class="px-2">Ensure compliance with national and international regulations related to international education.</td>
+                                <td class="text-center">10 COUNTRY</td>
+                                <td class="text-center">25TH OF EVERY MONTH</td>
+                                <td class="text-center"><select name="Status_14" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+                                <td><input type="text" name="Description_14" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+                                <td class="text-center"><input type="file" name="Upload the scanned file_14" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="14" /><span class="file-check hidden text-green-600 font-bold" data-row="14">✓ Uploaded</span></td>
+                            </tr>
+                            <tr class="bg-[#faf7ff]">
+                                <td class="text-center font-semibold">15.</td>
+                                <td class="px-2">Liaise with regulatory bodies for policy alignment and reporting.</td>
+                                <td class="text-center">10 COUNTRY</td>
+                                <td class="text-center">25TH OF EVERY MONTH</td>
+                                <td class="text-center"><select name="Status_15" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+                                <td><input type="text" name="Description_15" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+                                <td class="text-center"><input type="file" name="Upload the scanned file_15" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="15" /><span class="file-check hidden text-green-600 font-bold" data-row="15">✓ Uploaded</span></td>
+                            </tr>
+                            <!-- 6. Monitoring and Reporting -->
+                            <tr class="bg-[#faf7ff]">
+                                <td class="text-center font-semibold">16.</td>
+                                <td class="px-2">Track KPIs such as MoUs signed, international student/faculty numbers, and international leadership accreditation bodies, and regulatory agencies.</td>
+                                <td class="text-center"></td>
+                                <td class="text-center">31ST MAY</td>
+                                <td class="text-center"><select name="Status_16" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+                                <td><input type="text" name="Description_16" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+                                <td class="text-center"><input type="file" name="Upload the scanned file_16" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="16" /><span class="file-check hidden text-green-600 font-bold" data-row="16">✓ Uploaded</span></td>
                             </tr>
                         </tbody>
-                    </table>
+                    </table>               
+                            <!-- 5. Compliance and Liaison -->
+                            
                 </div>
                 <button type="submit" class="mt-8 bg-[#7d4c9e] hover:bg-[#5e357a] text-white font-bold py-3 px-16 rounded-full text-lg tracking-wide transition-all duration-200 mx-auto block shadow-lg">Submit</button>
             </form>
@@ -413,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return urlData.publicUrl;
     }
 
-    // Monthly form submission
+    // Monthly form submission (16 rows)
     document.getElementById('institution-form7-monthly').addEventListener('submit', async function(e) {
         e.preventDefault();
         const form = e.target;
@@ -426,11 +293,10 @@ document.addEventListener('DOMContentLoaded', function() {
             "Month:": formData.get('Month:')
         };
 
-        // For each file row (monthly has 3 rows)
-        for (let i = 1; i <= 3; i++) {
+        // For each file row (monthly has 16 rows)
+        for (let i = 1; i <= 16; i++) {
             row[`Status_${i}`] = formData.get(`Status_${i}`) || null;
             row[`Description_${i}`] = formData.get(`Description_${i}`) || null;
-            
             const file = formData.get(`Upload the scanned file_${i}`);
             if (file && file.size > 0) {
                 const ts = Date.now();

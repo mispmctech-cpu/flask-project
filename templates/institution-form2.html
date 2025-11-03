@@ -275,28 +275,26 @@
             };
             let totalRows = 0;
             hrSections.forEach(section => { totalRows += section.rows.length; });
-            for (let i = 1; i <= totalRows; i++) {
-                row[`Status_${i}`] = formData.get(`Status_${i}`);
-                row[`Description_${i}`] = formData.get(`Description_${i}`);
-                const file = formData.get(`Upload the scanned file_${i}`);
+            for (let i = 1; i <= 22; i++) {
+                // Use correct field names as per schema
+                const statusKey = `Status_${i}`;
+                const descKey = `Description_${i}`;
+                const fileKey = `Upload The Scanned File_${i}`;
+                row[statusKey] = formData.get(statusKey) || null;
+                row[descKey] = formData.get(descKey) || null;
+                const file = formData.get(`Upload the scanned file_${i}`) || formData.get(fileKey);
                 if (file && file.size > 0) {
                     const ts = Date.now();
                     const path = `form2file${i}_${ts}_${file.name}`;
                     try {
-                        row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
+                        row[fileKey] = await uploadFileToStorage(file, path);
                     } catch (err) {
                         window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
                         return;
                     }
                 } else {
-                    row[`Upload the scanned file_${i}`] = null;
+                    row[fileKey] = null;
                 }
-            }
-            // Fill all remaining fields up to 22 with null if not present (to match schema)
-            for (let i = totalRows + 1; i <= 22; i++) {
-                row[`Status_${i}`] = null;
-                row[`Description_${i}`] = null;
-                row[`Upload the scanned file_${i}`] = null;
             }
             // Submit to Supabase
             const { data, error } = await supabase.from('Institution-form2').insert([row]);

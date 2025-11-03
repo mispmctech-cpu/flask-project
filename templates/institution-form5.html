@@ -1,50 +1,78 @@
 ﻿</script>
 <script src="https://unpkg.com/@supabase/supabase-js"></script>
 <script>
+// Auto-fill Portfolio Name, Portfolio Member Name, and Month from localStorage if available (like institution-form4.html)
 document.addEventListener('DOMContentLoaded', function() {
-	// Table rendering (updated to 18 rows as per schema and image)
-	const acadRows = [
-		'Autonomous Regulations & Curriculum File',
-		'AICTE Communications File',
-		'UGC Communications File',
-		'AU Communications File',
-		'Order for Nominees of BOS, Academic council, Governing Council, Finance Committee from AU File',
-		'Governing Council File & Its Implementations File',
-		'Academic Council File & Its Implementations File',
-		'BOS Minutes & Implementation File',
-		'Proposal of New Program Introduction with supporting Documents',
-		'OBE Promotion Programs for Faculty',
-		'Institution Academic Calendar Its Execution Status File',
-		'Result Analysis File',
-		'New Faculty orientation Programs File',
-		'New Faculty Mentoring File',
-		'FDP/Workshop/Seminar Programs on UGC Mandate File',
-		'Internal Compliance Committee File',
-		'Planning and Monitoring File',
-		'PO Attainment File (For all Programs)'
-	];
-	const tbody1 = document.getElementById('acad-table-body-1');
-	if (tbody1 && tbody1.children.length === 0) {
-		acadRows.forEach((name, i) => {
-			const idx = i + 1;
-			const tr = document.createElement('tr');
-			tr.innerHTML = `
-				<td class="border px-2 py-1 text-center">${idx}</td>
-				<td class="border px-2 py-1">${name}</td>
-				<td class="border px-2 py-1"><select name="Status_${idx}" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
-				<td class="border px-2 py-1"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
-				<td class="border px-2 py-1">
-				<label class="custom-upload">
-				Upload
-				<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
-				<input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="file-input" data-row="${idx}" />
-				</label>
-				<span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">✓ Uploaded</span>
-				</td>
-			`;
-			tbody1.appendChild(tr);
-		});
+	var portfolio = localStorage.getItem('selectedPortfolio') || '';
+	var member = localStorage.getItem('selectedMemberName') || '';
+	var month = localStorage.getItem('selectedMonth') || '';
+
+	const form = document.getElementById('acadForm1');
+	if (form) {
+		const portfolioField = form.querySelector('input[name="Portfolio Name:"]');
+		if (portfolioField && portfolio) {
+			portfolioField.value = portfolio;
+		}
+		const memberField = form.querySelector('input[name="Portfolio Member Name:"]');
+		if (memberField && member) {
+			memberField.value = member;
+		}
+		const monthField = form.querySelector('select[name="Month:"]');
+		if (monthField && month) {
+			for (var i = 0; i < monthField.options.length; i++) {
+				if (monthField.options[i].value === month) {
+					monthField.selectedIndex = i;
+					break;
+				}
+			}
+		}
 	}
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Table rendering (15 rows as per image and schema)
+    const acadRows = [
+      {scope: "Develop and implement academic policies in line with the institution's vision and autonomy framework.", target: "", tat: "15TH JUNE"},
+      {scope: "Coordinate curriculum design, revision, and approval through Boards of Studies and Academic Council.", target: "", tat: "15TH JUNE & 1ST DEC"},
+      {scope: "Ensure alignment with AICTE, UGC, and affiliating university norms while leveraging the flexibility of autonomy.", target: "", tat: "25TH OF MONTH"},
+      {scope: "Oversee the introduction of new programs and courses based on industry trends and academic advancements.", target: "", tat: "1ST JAN"},
+      {scope: "Promote interdisciplinary learning and outcome-based education (OBE).", target: "", tat: "25TH OF MONTH"},
+      {scope: "Ensure timely updates to syllabi with inputs from industry and academia.", target: "", tat: "15TH NOV / 31ST MARCH"},
+      {scope: "Supervise academic calendars, timetables, and course delivery across departments.", target: "", tat: "END OF DAY"},
+      {scope: "Coordinate with the Controller of Examinations for smooth conduct of internal and end-semester assessments.", target: "", tat: "END OF FRIDAY"},
+      {scope: "Monitor academic performance and implement corrective measures when needed.", target: "", tat: "END OF FRIDAY"},
+      {scope: "Facilitate faculty orientation, and mentoring.", target: "", tat: "25TH OF MONTH"},
+      {scope: "Organize faculty development programs (FDPs), workshops, and seminars on quality enhancement and UGC mandate for faculty.", target: "1 Per year", tat: "31ST DEC / 31ST MAY"},
+      {scope: "Promote faculty participation in strategic planning and continuous improvement.", target: "", tat: "END OF FRIDAY"},
+      {scope: "Coordinate with statutory bodies like the Academic Council and IQAC.", target: "", tat: "AS PER SCHEDULE"},
+      {scope: "Ensure compliance with government and regulatory bodies for academic approvals.", target: "", tat: "25TH OF MONTH"},
+      {scope: "Promote benchmarking and innovation in strategic planning and academic development.", target: "", tat: "25TH OF MONTH"},
+    ];
+    const tbody1 = document.getElementById('acad-table-body-1');
+    if (tbody1 && tbody1.children.length === 0) {
+      acadRows.forEach((row, i) => {
+        const idx = i + 1;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="border px-2 py-1 text-center">${idx}</td>
+          <td class="border px-2 py-1">${row.scope}</td>
+          <td class="border px-2 py-1 text-center">${row.target}</td>
+          <td class="border px-2 py-1 text-center">${row.tat}</td>
+          <td class="border px-2 py-1"><select name="Status_${idx}" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
+          <td class="border px-2 py-1"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
+          <td class="border px-2 py-1">
+            <label class="custom-upload">
+              Upload
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
+              <input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="file-input" data-row="${idx}" />
+            </label>
+            <span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">✓ Uploaded</span>
+          </td>
+        `;
+        tbody1.appendChild(tr);
+      });
+    }
 
 	// Simple file upload indicator
 	document.addEventListener('change', function(e) {
@@ -82,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				"Portfolio Member Name:": formData.get('Portfolio Member Name:'),
 				"Month:": formData.get('Month:'),
 			};
-			for (let i = 1; i <= 18; i++) {
+			for (let i = 1; i <= 15; i++) {
 				row[`Status_${i}`] = formData.get(`Status_${i}`);
 				row[`Description_${i}`] = formData.get(`Description_${i}`);
 				const file = formData.get(`Upload the scanned file_${i}`);
@@ -236,21 +264,24 @@ document.addEventListener('DOMContentLoaded', function() {
 							<col style="width: 4%">
 							<col style="width: 32%">
 							<col style="width: 13%">
-							<col style="width: 20%">
-							<col style="width: 18%">
 							<col style="width: 13%">
+							<col style="width: 13%">
+							<col style="width: 13%">
+							<col style="width: 12%">
 						</colgroup>
 						<thead class="bg-orange-400">
-						<tr>
-						<th class="border px-2 py-2 font-bold text-white">S.No</th>
-						<th class="border px-2 py-2 font-bold text-white">Name of the file</th>
-						<th class="border px-2 py-2 font-bold text-white">Status</th>
-						<th class="border px-2 py-2 font-bold text-white">Description</th>
-						<th class="border px-2 py-2 font-bold text-white">Upload the scanned file</th>
-						</tr>
+							<tr>
+								<th class="border px-2 py-2 font-bold text-white">S.No</th>
+								<th class="border px-2 py-2 font-bold text-white">Scope</th>
+								<th class="border px-2 py-2 font-bold text-white">Target</th>
+								<th class="border px-2 py-2 font-bold text-white">TAT</th>
+								<th class="border px-2 py-2 font-bold text-white">Status</th>
+								<th class="border px-2 py-2 font-bold text-white">Description</th>
+								<th class="border px-2 py-2 font-bold text-white">File</th>
+							</tr>
 						</thead>
 						<tbody id="acad-table-body-1">
-							<!-- JS will render 16 rows here -->
+							<!-- JS will render 15 rows here -->
 						</tbody>
 					</table>
 				</div>
