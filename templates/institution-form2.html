@@ -149,6 +149,33 @@
         </div>
     </div>
     <script>
+    // Autofetch using localStorage (like institution-form4.html)
+    document.addEventListener('DOMContentLoaded', function() {
+        var portfolio = localStorage.getItem('selectedPortfolio') || '';
+        var member = localStorage.getItem('selectedMemberName') || '';
+        var month = localStorage.getItem('selectedMonth') || '';
+        const form = document.getElementById('hrForm');
+        if (form) {
+            const portfolioField = form.querySelector('input[name="Portfolio Name:"]');
+            if (portfolioField && portfolio) {
+                portfolioField.value = portfolio;
+            }
+            const memberField = form.querySelector('input[name="Portfolio Member Name:"]');
+            if (memberField && member) {
+                memberField.value = member;
+            }
+            const monthField = form.querySelector('select[name="Month:"]');
+            if (monthField && month) {
+                for (var i = 0; i < monthField.options.length; i++) {
+                    if (monthField.options[i].value === month) {
+                        monthField.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+    });
+    
     // Sectioned rows as per the image
     const hrSections = [
         {
@@ -222,7 +249,7 @@
             tr.innerHTML = `
                 <td class="border px-4 py-3 text-center">${i+1}.</td>
                 <td class="border px-4 py-3">${name}</td>
-                <td class="border px-4 py-3"><select name="Status_${sn}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
+                <td class="border px-4 py-3"><select name="Status_${sn}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Yet to be completed</option><option>Not Applicable</option></select></td>
                 <td class="border px-4 py-3"><input type="text" name="Description_${sn}" maxlength="200" class="w-full border rounded px-2 py-2" placeholder="0-200 chars" /></td>
                 <td class="border px-4 py-3">
                     <label class="custom-upload">
@@ -266,6 +293,17 @@
     const form = document.getElementById('hrForm');
     if (form) {
         form.addEventListener('submit', async function(e) {
+            // Save autofetch values to localStorage for next time
+            try {
+                var autofetchForm = e.target;
+                var portfolio = autofetchForm.querySelector('input[name="Portfolio Name:"]').value || '';
+                var member = autofetchForm.querySelector('input[name="Portfolio Member Name:"]').value || '';
+                var month = autofetchForm.querySelector('select[name="Month:"]').value || '';
+                localStorage.setItem('selectedPortfolio', portfolio);
+                localStorage.setItem('selectedMemberName', member);
+                localStorage.setItem('selectedMonth', month);
+            } catch (err) { /* ignore */ }
+            
             e.preventDefault();
             const formData = new FormData(form);
             const row = {
