@@ -125,69 +125,93 @@
 			<div class="flex justify-center mt-10">
 				<button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
 			</div>
-			<div class="overflow-x-auto rounded-xl card-shadow border border-purple-100 bg-white w-full mt-10 p-4">
-				<table class="w-full min-w-[1200px] text-xs md:text-sm table-fixed">
-					<colgroup>
-						<col style="width: 4%">
-						<col style="width: 32%">
-						<col style="width: 13%">
-						<col style="width: 20%">
-						<col style="width: 18%">
-						<col style="width: 13%">
-					</colgroup>
-					<thead class="bg-orange-400">
-					<tr>
-					<th colspan="5" class="table-section-title">ONCE IN SIX MONTHS</th>
-					</tr>
-					<tr>
-					<th class="border px-2 py-2 font-bold text-white">S.No</th>
-					<th class="border px-2 py-2 font-bold text-white">Name of the file</th>
-					<th class="border px-2 py-2 font-bold text-white">Status</th>
-					<th class="border px-2 py-2 font-bold text-white">Description</th>
-					<th class="border px-2 py-2 font-bold text-white">Upload the scanned file</th>
-					</tr>
-					</thead>
-					<tbody id="inst-table-body-2">
-						<!-- JS will render 1 row here -->
-					</tbody>
-				</table>
-			</div>
-			<div class="flex justify-center mt-10 mb-2">
-				<button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
-			</div>
+			
+					
+					
 		</form>
 			</div>
 		</div>
 	<script src="https://unpkg.com/@supabase/supabase-js"></script>
 	<script>
-	// Table data from image
+	// Autofetch using localStorage (like institution-form4.html)
+	document.addEventListener('DOMContentLoaded', function() {
+		var portfolio = localStorage.getItem('selectedPortfolio') || '';
+		var member = localStorage.getItem('selectedMemberName') || '';
+		var month = localStorage.getItem('selectedMonth') || '';
+		const form = document.getElementById('instForm1');
+		if (form) {
+			const portfolioField = form.querySelector('input[name="Portfolio Name:"]');
+			if (portfolioField && portfolio) {
+				portfolioField.value = portfolio;
+			}
+			const memberField = form.querySelector('input[name="Portfolio Member Name:"]');
+			if (memberField && member) {
+				memberField.value = member;
+			}
+			const monthField = form.querySelector('select[name="Month:"]');
+			if (monthField && month) {
+				for (var i = 0; i < monthField.options.length; i++) {
+					if (monthField.options[i].value === month) {
+						monthField.selectedIndex = i;
+						break;
+					}
+				}
+			}
+		}
+	});
+	// Table data from images (35 rows)
 	const monthlyRows = [
-		'Students External Counselling File',
-		'Medical Facilities File',
-		'Students Grievances',
-		'Institution Level Cultural',
-		'Institution Level Sports',
-		'Institution Level Extra Curricular Activities',
-		'Students Clubs',
-		'Orientation Program for Students',
-		'Hostel Mess File',
-		'Hostel Students Attendance',
-		'Hostel Certifications',
-		'Hotel Grievance Redressal',
-		'Scholarship File',
-		'Students Welfare schemes File',
-		'Campus Discipline',
-		'Institution Policy and Code of Conduct for Students',
-		'Outreach programs',
-		'School Visit File',
-		'Marketing Progress',
-		'Admission File',
-		'Admission Process'
+		// 1. Student Support and Well-being
+		'Ensure the physical, emotional, and psychological well-being of students.',
+		'Facilitate access to counselling services, health care, and emergency support.',
+		'Address student grievances and act as a mediator when necessary.',
+		// 2. Campus Life Engagement
+		'Organize and oversee extracurricular activities, including cultural, literary, and sports events.',
+		'Promote student clubs, societies, and leadership initiatives.',
+		'Coordinate orientation and induction programs for new students.',
+		// 3. Hostel and Residential Life
+		'Supervise hostel administration in collaboration with wardens.',
+		'Ensure safety, hygiene, and a conducive living environment in hostels.',
+		'Address issues related to mess, accommodation, and student discipline.',
+		// 4. Scholarships and Financial Aid
+		'Facilitate the disbursement of scholarships, fellowships, and student aid funds.',
+		// 5. Student Welfare Schemes
+		'Liaise with government and private agencies for student welfare schemes.',
+		// 6. Discipline and Conduct
+		'Work with the Principal and disciplinary committees to maintain campus discipline.',
+		'Promote awareness of institutional policies and codes of conduct.',
+		// 7. Liaison and Representation
+		'Act as a bridge between students and administration.',
+		'Represent student interests in academic and administrative councils.',
+		'Coordinate with external bodies for student exchange, competitions, and outreach.',
+		// 8. Special Initiatives
+		'Support students from marginalized or underrepresented backgrounds.',
+		'Promote inclusivity, gender sensitization, and anti-ragging measures.',
+		// 9. Admissions Policy and Planning
+		'Execute admission policies as per the guidelines of State Government of Tamil Nadu.',
+		'Ensure adherence to reservation policies and government norms.',
+		// 10. Outreach and Branding
+		'Lead institutional outreach through school visits, education fairs, and digital campaigns.',
+		'Collaborate with marketing teams to develop brochures, videos, and online content that highlight the college’s strengths.',
+		'Build relationships with feeder institutions and career counsellors.',
+		// 11. Application and Selection Process
+		'Oversee the entire admissions cycle—from application receipt to final enrolment.',
+		'Coordinate entrance exams, interviews, and counselling sessions.',
+		'Ensure timely communication with applicants and resolution of queries.',
+		// 12. Data Management and Reporting
+		'Maintain accurate records of applications, admissions, and enrolment trends.',
+		'Analyse data to refine recruitment strategies and forecast future intake.',
+		'Prepare reports for internal review and regulatory compliance.',
+		// 13. Application and Selection Process (repeat)
+		'Oversee the entire admissions cycle—from application receipt to final enrolment. (Repeat)',
+		'Coordinate entrance exams, interviews, and counselling sessions. (Repeat)',
+		'Ensure timely communication with applicants and resolution of queries. (Repeat)',
+		// 14. Data Management and Reporting (repeat)
+		'Maintain accurate records of applications, admissions, and enrolment trends. (Repeat)',
+		'Analyse data to refine recruitment strategies and forecast future intake. (Repeat)',
+		'Prepare reports for internal review and regulatory compliance. (Repeat)'
 	];
-	const sixMonthRows = [
-		'Induction Program for First Year Students'
-	];
-	// Render monthly rows
+	// Render monthly rows (35 rows)
 	const tbody1 = document.getElementById('inst-table-body-1');
 	monthlyRows.forEach((name, i) => {
 		const idx = i + 1;
@@ -195,7 +219,7 @@
 		tr.innerHTML = `
 			<td class="border px-2 py-1 text-center">${idx}</td>
 			<td class="border px-2 py-1">${name}</td>
-			<td class="border px-2 py-1"><select name="Status_${idx}" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
+			<td class="border px-2 py-1"><select name="Status_${idx}" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
 			<td class="border px-2 py-1"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
 			<td class="border px-2 py-1">
 				<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
@@ -205,24 +229,7 @@
 		`;
 		tbody1.appendChild(tr);
 	});
-	// Render six month row
-	const tbody2 = document.getElementById('inst-table-body-2');
-	sixMonthRows.forEach((name, i) => {
-		const idx = 22;
-		const tr = document.createElement('tr');
-		tr.innerHTML = `
-			<td class="border px-2 py-1 text-center">${idx}</td>
-			<td class="border px-2 py-1">${name}</td>
-			<td class="border px-2 py-1"><select name="Status_${idx}" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
-			<td class="border px-2 py-1"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
-			<td class="border px-2 py-1">
-				<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
-				<span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">✓</span>
-				<input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
-			</td>
-		`;
-		tbody2.appendChild(tr);
-	});
+	// Removed broken six month row rendering (no tbody2 in HTML)
 	// Supabase setup (update bucket/table as needed)
 	const supabase = window.supabase.createClient(
 		"https://cbhodgwaazmjszkujrti.supabase.co",
@@ -259,7 +266,7 @@ document.addEventListener('click', function(e) {
 	}
 });
 
-// Handle file selection and upload for all rows
+// Handle file selection and upload for all rows (1-35)
 document.addEventListener('change', async function(e) {
 	if (e.target && e.target.classList.contains('file-input-row')) {
 		const row = e.target.getAttribute('data-row');
@@ -281,17 +288,27 @@ document.addEventListener('change', async function(e) {
 		}
 	}
 });
-	document.getElementById('instForm1').addEventListener('submit', async function(e) {
+			document.getElementById('instForm1').addEventListener('submit', async function(e) {
+				// Save autofetch values to localStorage for next time
+				try {
+					var autofetchForm = e.target;
+					var portfolio = autofetchForm.querySelector('input[name="Portfolio Name:"]').value || '';
+					var member = autofetchForm.querySelector('input[name="Portfolio Member Name:"]').value || '';
+					var month = autofetchForm.querySelector('select[name="Month:"]').value || '';
+					localStorage.setItem('selectedPortfolio', portfolio);
+					localStorage.setItem('selectedMemberName', member);
+					localStorage.setItem('selectedMonth', month);
+				} catch (err) { /* ignore */ }
 		e.preventDefault();
 		const form = e.target;
 		const formData = new FormData(form);
-		// Monthly section
+		// Monthly section (1-35)
 		const monthlyRow = {
 			"Portfolio Name:": formData.get('Portfolio Name:'),
 			"Portfolio Member Name:": formData.get('Portfolio Member Name:'),
 			"Month:": formData.get('Month:'),
 		};
-		for (let i = 1; i <= 21; i++) {
+		for (let i = 1; i <= 35; i++) {
 			monthlyRow[`Status_${i}`] = formData.get(`Status_${i}`);
 			monthlyRow[`Description_${i}`] = formData.get(`Description_${i}`);
 			// Get the file input for this row

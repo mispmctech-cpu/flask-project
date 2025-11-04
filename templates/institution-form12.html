@@ -82,6 +82,35 @@
 			.p-6, .md\:p-10 { padding: 0.5rem !important; }
 		}
 	</style>
+<script>
+// Auto-fill Portfolio Name, Portfolio Member Name, and Month from localStorage if available (like institution-form11.html)
+document.addEventListener('DOMContentLoaded', function() {
+	var portfolio = localStorage.getItem('selectedPortfolio') || '';
+	var member = localStorage.getItem('selectedMemberName') || '';
+	var month = localStorage.getItem('selectedMonth') || '';
+
+	const form = document.getElementById('form12');
+	if (form) {
+		const portfolioField = form.querySelector('input[name="Portfolio Name:"]');
+		if (portfolioField && portfolio) {
+			portfolioField.value = portfolio;
+		}
+		const memberField = form.querySelector('input[name="Portfolio Member Name:"]');
+		if (memberField && member) {
+			memberField.value = member;
+		}
+		const monthField = form.querySelector('select[name="Month:"]');
+		if (monthField && month) {
+			for (var i = 0; i < monthField.options.length; i++) {
+				if (monthField.options[i].value === month) {
+					monthField.selectedIndex = i;
+					break;
+				}
+			}
+		}
+	}
+});
+</script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col min-h-screen">
 	<div class="w-full bg-purple-800 py-4 flex items-center">
@@ -123,11 +152,13 @@
 					<table class="w-full min-w-[1100px] text-xs md:text-sm table-fixed">
 						<thead class="bg-orange-400">
 						<tr>
-							<th class="border px-2 py-2 font-bold text-white">S.No</th>
-							<th class="border px-2 py-2 font-bold text-white">Name of the file</th>
-							<th class="border px-2 py-2 font-bold text-white">Status</th>
-							<th class="border px-2 py-2 font-bold text-white">Description</th>
-							<th class="border px-2 py-2 font-bold text-white">Upload the scanned  file</th>
+						<th class="border px-2 py-2 font-bold text-white">S.No</th>
+						<th class="border px-2 py-2 font-bold text-white">Scope</th>
+						<th class="border px-2 py-2 font-bold text-white">Target</th>
+						<th class="border px-2 py-2 font-bold text-white">TAT</th>
+						<th class="border px-2 py-2 font-bold text-white">Status</th>
+						<th class="border px-2 py-2 font-bold text-white">Description</th>
+						<th class="border px-2 py-2 font-bold text-white">Upload the scanned file</th>
 						</tr>
 						</thead>
 						<tbody id="form12-table-body">
@@ -142,37 +173,37 @@
 		</div>
 	</div>
 	<script>
-	// File rows for form 12
-	const fileRows = [
-		'Roadmap File',
-		'Establishment of Research Labs File',
-		'Funding Agencies, Research Calls and its Submission Status File',
-		'Innovation Programs Calendar & its Execution File',
-		'Innovation Product File',
-		'Innovation Bootcamp File',
-		'Publications File',
-		'Patents File',
-		'Research Proposal Submission status File',
-		'Incubation Centre Status File',
-		'Startups File',
-		'Alumni networks for mentorship, funding, and collaboration File',
-		'Consultancy File',
-		'Industry Database file',
-		'Research Centre Database file',
-		'Scientists Database File',
-		'Research Advisory Committee File',
-		'Seed Money File',
-		'Entrepreneurship Development Cell File'
+	// Row data from the image (17 rows)
+	const form12Rows = [
+		{scope: 'Promote a culture of high-quality, interdisciplinary research among faculty and students.', target: '', tat: 'END OF FRIDAY'},
+		{scope: 'Facilitate the establishment of research centers and labs aligned with national priorities and institutional strengths.', target: 'Each Dept 1', tat: '31ST MAY'},
+		{scope: 'Identify and secure funding from government agencies (eg. DST, AICTE, UGC) and industry partners.', target: '', tat: '48HRS FROM NOTIFICATION'},
+		{scope: 'Encourage ideation, prototyping, and product development through hackathons, design challenges, and innovation cells.', target: '5 From Each Dept', tat: '31ST MAY'},
+		{scope: 'Guide faculty and students in patent filing, IPR management, and technology transfer.', target: '3 from each dept', tat: '31ST MAY'},
+		{scope: 'Collaborate with Innovation & Incubation Council (IIC) to implement innovation roadmap.', target: 'Achieve 4 Star', tat: '31ST MAY'},
+		{scope: 'Establish and strengthen incubation centers or tie-ups with external incubators.', target: 'Develop 3 Incubators', tat: '31ST MAY'},
+		{scope: 'Mentor student/faculty start-ups through business model validation, funding support, and investor connects.', target: 'Minimum 8 Start Ups', tat: '31ST MAY'},
+		{scope: 'Organize entrepreneurship bootcamps, investor meets, and awareness programs.', target: 'One from Each Category', tat: '31ST MAY'},
+		{scope: 'Draft and implement institutional policies on research, innovation, and entrepreneurship in line with NEP.', target: '', tat: '15TH JULY'},
+		{scope: 'Allocate resources (space, seed funding, mentorship) to nurture start-ups.', target: '', tat: '15TH JULY'},
+		{scope: 'Promote gender equity and support for women and minority entrepreneurs.', target: '', tat: '30TH SEPT'},
+		{scope: 'Establish linkages with industries, research organizations, and international institutions.', target: '10', tat: '31ST MAY'},
+		{scope: 'Align alumni support for innovation, mentorship, and funding.', target: 'NIRF', tat: '31ST JAN'},
+		{scope: 'Monitor progress against KPIs such as patents, start-ups, funding, and awards.', target: '300 ALUMNI', tat: '31ST MAY'},
+		{scope: 'Publish reports to governing bodies and accreditation agencies.', target: '', tat: '31ST DEC & MAY'},
+		{scope: 'Assist reports to governing bodies and accreditation agencies.', target: '', tat: 'AS PER REQUIREMENT'},
 	];
 	// Render rows
 	const tbody = document.getElementById('form12-table-body');
-	fileRows.forEach((name, i) => {
+	form12Rows.forEach((row, i) => {
 		const idx = i + 1;
 		const tr = document.createElement('tr');
 		tr.innerHTML = `
 			<td class="border px-4 py-3 text-center">${idx}</td>
-			<td class="border px-4 py-3">${name}</td>
-			<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
+			<td class="border px-4 py-3">${row.scope}</td>
+			<td class="border px-4 py-3 text-center">${row.target}</td>
+			<td class="border px-4 py-3 text-center">${row.tat}</td>
+			<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
 			<td class="border px-4 py-3"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-2 py-2" placeholder="0-200 chars" /></td>
 			<td class="border px-4 py-3">
 				<label class="custom-upload">

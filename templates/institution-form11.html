@@ -82,6 +82,35 @@
 			.p-6, .md\:p-10 { padding: 0.5rem !important; }
 		}
 	</style>
+<script>
+// Auto-fill Portfolio Name, Portfolio Member Name, and Month from localStorage if available (like institution-form4.html)
+document.addEventListener('DOMContentLoaded', function() {
+	var portfolio = localStorage.getItem('selectedPortfolio') || '';
+	var member = localStorage.getItem('selectedMemberName') || '';
+	var month = localStorage.getItem('selectedMonth') || '';
+
+	const form = document.getElementById('form11');
+	if (form) {
+		const portfolioField = form.querySelector('input[name="Portfolio Name:"]');
+		if (portfolioField && portfolio) {
+			portfolioField.value = portfolio;
+		}
+		const memberField = form.querySelector('input[name="Portfolio Member Name:"]');
+		if (memberField && member) {
+			memberField.value = member;
+		}
+		const monthField = form.querySelector('select[name="Month:"]');
+		if (monthField && month) {
+			for (var i = 0; i < monthField.options.length; i++) {
+				if (monthField.options[i].value === month) {
+					monthField.selectedIndex = i;
+					break;
+				}
+			}
+		}
+	}
+});
+</script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col min-h-screen">
 	<div class="w-full bg-purple-800 py-4 flex items-center">
@@ -142,17 +171,21 @@
 		</div>
 	</div>
 	<script>
-	// File rows for form 11
+	// File rows for form 11 (from image, 13 rows)
 	const fileRows = [
-		'Training calendar file',
-		"Students categorization file",
-		"Gap analysis file",
-		"Industry expectations file",
-		"Training reports file",
-		"MOU File(training)",
-		"Budget file",
-		"Students analysis file",
-		"Mapping file(NBA&NAAC)"
+		'Identify skill gaps among students and faculty (survey/feedback)',
+		'Collaborate with departments for curriculum/industry alignment',
+		'Design annual training calendars (technical, soft skills, career readiness)',
+		'Coordinate logistics for workshops, seminars, certifications, guest lectures',
+		'Ensure alignment with NBA/NAAC graduate attributes and outcome-based education',
+		'Liaise with industry experts, trainers, HR for resource mobilization',
+		'Facilitate MoUs for training, internships, experiential learning',
+		'Finalize training dates, venues, resource persons (with departments)',
+		'Prepare budget proposals, seek approvals (Principal/Governing Body)',
+		'Maintain training reports, attendance, feedback, impact analysis',
+		'Ensure training modules meet institutional, accreditation standards',
+		'Organize training, aptitude sessions, technical bootcamps',
+		'Track participation/performance (dashboards, ERP systems)'
 	];
 	// Render rows
 	const tbody = document.getElementById('form11-table-body');
@@ -162,7 +195,7 @@
 		tr.innerHTML = `
 			<td class="border px-4 py-3 text-center">${idx}</td>
 			<td class="border px-4 py-3">${name}</td>
-			<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
+					<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
 			<td class="border px-4 py-3"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-2 py-2" placeholder="0-200 chars" /></td>
 			<td class="border px-4 py-3">
 				<label class="custom-upload">
@@ -197,23 +230,23 @@
 			"Portfolio Member Name:": formData.get('Portfolio Member Name:'),
 			"Month:": formData.get('Month:'),
 		};
-		for (let i = 1; i <= 9; i++) {
-			row[`Status_${i}`] = formData.get(`Status_${i}`);
-			row[`Description_${i}`] = formData.get(`Description_${i}`);
-			const file = formData.get(`Upload the scanned file_${i}`);
-			if (file && file.size > 0) {
-				const ts = Date.now();
-				const path = `form11file${i}_${ts}_${file.name}`;
-				try {
-					row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
-				} catch (err) {
-					window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
-					return;
-				}
-			} else {
-				row[`Upload the scanned file_${i}`] = null;
-			}
-		}
+	       for (let i = 1; i <= 13; i++) {
+		       row[`Status_${i}`] = formData.get(`Status_${i}`);
+		       row[`Description_${i}`] = formData.get(`Description_${i}`);
+		       const file = formData.get(`Upload the scanned file_${i}`);
+		       if (file && file.size > 0) {
+			       const ts = Date.now();
+			       const path = `form11file${i}_${ts}_${file.name}`;
+			       try {
+				       row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
+			       } catch (err) {
+				       window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
+				       return;
+			       }
+		       } else {
+			       row[`Upload the scanned file_${i}`] = null;
+		       }
+	       }
 		// Submit to Supabase
 		const { data, error } = await supabase.from('Institution-form11').insert([row]);
 		if (error) {

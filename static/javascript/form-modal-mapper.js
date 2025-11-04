@@ -247,25 +247,49 @@ function getFormModalContent(row, details) {
         html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
         html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
         html += `</div>`;
+        // New 13-row schema and row names from institution-form11.html
         const fileLabels = [
-          'Training calendar file',
-          'Students categorization file',
-          'Gap analysis file',
-          'Industry expectations file',
-          'Training reports file',
-          'MOU File(training)',
-          'Budget file',
-          'Students analysis file',
-          'Mapping file(NBA&NAAC)'
+          'Identify skill gaps among students and faculty (survey/feedback)',
+          'Collaborate with departments for curriculum/industry alignment',
+          'Design annual training calendars (technical, soft skills, career readiness)',
+          'Coordinate logistics for workshops, seminars, certifications, guest lectures',
+          'Ensure alignment with NBA/NAAC graduate attributes and outcome-based education',
+          'Liaise with industry experts, trainers, HR for resource mobilization',
+          'Facilitate MoUs for training, internships, experiential learning',
+          'Finalize training dates, venues, resource persons (with departments)',
+          'Prepare budget proposals, seek approvals (Principal/Governing Body)',
+          'Maintain training reports, attendance, feedback, impact analysis',
+          'Ensure training modules meet institutional, accreditation standards',
+          'Organize training, aptitude sessions, technical bootcamps',
+          'Track participation/performance (dashboards, ERP systems)'
         ];
-        html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
-        for (let i = 1; i <= fileLabels.length; i++) {
-          html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${fileLabels[i-1]}</span></div>`;
-          html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
-          html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
-          html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+        html += `<div class=\"overflow-x-auto rounded-xl\">`;
+        html += `<table class=\"w-full min-w-[800px] text-xs md:text-sm table-fixed mt-2 border border-[#f7a440]\">`;
+        html += `<thead class=\"bg-[#f7a440]\"><tr>`;
+        html += `<th class=\"text-white font-bold py-2 px-2 text-center rounded-l-xl border-r border-white\">S.No</th>`;
+        html += `<th class=\"text-white font-bold py-2 px-2 border-r border-white\">Scope</th>`;
+        html += `<th class=\"text-white font-bold py-2 px-2 border-r border-white\">Status</th>`;
+        html += `<th class=\"text-white font-bold py-2 px-2 border-r border-white\">Description</th>`;
+        html += `<th class=\"text-white font-bold py-2 px-2 text-center rounded-r-xl\">File</th>`;
+        html += `</tr></thead><tbody>`;
+        for (let i = 0; i < fileLabels.length; i++) {
+          const idx = i + 1;
+          const status = details[`Status_${idx}`] || '-';
+          const desc = details[`Description_${idx}`] || '-';
+          let fileCell = '-';
+          const fileUrl = details[`Upload the scanned file_${idx}`];
+          if (fileUrl && typeof fileUrl === 'string' && fileUrl.trim() !== '') {
+            fileCell = `<a href=\"${fileUrl}\" target=\"_blank\" class=\"text-blue-700 underline\">View File</a>`;
+          }
+          html += `<tr>`;
+          html += `<td class=\"border px-2 py-2 text-center\">${idx}</td>`;
+          html += `<td class=\"border px-2 py-2\">${fileLabels[i]}</td>`;
+          html += `<td class=\"border px-2 py-2\">${status}</td>`;
+          html += `<td class=\"border px-2 py-2\">${desc}</td>`;
+          html += `<td class=\"border px-2 py-2 text-center\">${fileCell}</td>`;
+          html += `</tr>`;
         }
-        html += `</div>`;
+        html += `</tbody></table></div>`;
         return html;
       }
         // Institution-form12.html
@@ -277,25 +301,24 @@ function getFormModalContent(row, details) {
           html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
           html += `</div>`;
           const fileLabels = [
-            'Roadmap File',
-            'Establishment of Research Labs File',
-            'Funding Agencies, Research Calls and its Submission Status File',
-            'Innovation Programs Calendar & its Execution File',
-            'Innovation Product File',
-            'Innovation Bootcamp File',
-            'Publications File',
-            'Patents File',
-            'Research Proposal Submission status File',
-            'Incubation Centre Status File',
-            'Startups File',
-            'Alumni networks for mentorship, funding, and collaboration File',
-            'Consultancy File',
-            'Industry Database file',
-            'Research Centre Database file',
-            'Scientists Database File',
-            'Research Advisory Committee File',
-            'Seed Money File',
-            'Entrepreneurship Development Cell File'
+            'Promote a culture of high-quality, interdisciplinary research among faculty and students.',
+            'Facilitate the establishment of research centers and labs aligned with national priorities and institutional strengths.',
+            'Identify and secure funding from government agencies (eg. DST, AICTE, UGC) and industry partners.',
+            'Encourage ideation, prototyping, and product development through hackathons, design challenges, and innovation cells.',
+            'Guide faculty and students in patent filing, IPR management, and technology transfer.',
+            'Collaborate with Innovation & Incubation Council (IIC) to implement innovation roadmap.',
+            'Establish and strengthen incubation centers or tie-ups with external incubators',
+            '	Mentor student/faculty start-ups through business model validation, funding support, and investor connects.',
+            'Organize entrepreneurship bootcamps, investor meets, and awareness programs.',
+            'Draft and implement institutional policies on research, innovation, and entrepreneurship in line with NEP.',
+            'Allocate resources (space, seed funding, mentorship) to nurture start-ups.',
+            'Promote gender equity and support for women and minority entrepreneurs.',
+            '	Establish linkages with industries, research organizations, and international institutions.',
+            'Align alumni support for innovation, mentorship, and funding.',
+            'Monitor progress against KPIs such as patents, start-ups, funding, and awards.',
+            'Publish reports to governing bodies and accreditation agencies.',
+            'Assist reports to governing bodies and accreditation agencies.',
+            
           ];
           html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
           for (let i = 1; i <= fileLabels.length; i++) {
@@ -738,46 +761,65 @@ function getFormModalContent(row, details) {
       html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name:'] || details['Portfolio Member Name'] || '-'}</span></div>`;
       html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month:'] || details['Month'] || '-'}</span></div>`;
       html += `</div>`;
-      let fileLabels = [];
-      let startIdx = 1;
-      let endIdx = 21;
-      if (row.table.toLowerCase().includes('once in six months')) {
-        fileLabels = ['Induction Program for First Year Students'];
-        startIdx = 22;
-        endIdx = 22;
-      } else {
-        fileLabels = [
-          'Students External Counselling File',
-          'Medical Facilities File',
-          'Students Grievances',
-          'Institution Level Cultural',
-          'Institution Level Sports',
-          'Institution Level Extra Curricular Activities',
-          'Students Clubs',
-          'Orientation Program for Students',
-          'Hostel Mess File',
-          'Hostel Students Attendance',
-          'Hostel Certifications',
-          'Hotel Grievance Redressal',
-          'Scholarship File',
-          'Students Welfare schemes File',
-          'Campus Discipline',
-          'Institution Policy and Code of Conduct for Students',
-          'Outreach programs',
-          'School Visit File',
-          'Marketing Progress',
-          'Admission File',
-          'Admission Process'
-        ];
+      // 35 monthly rows (show all 35, generic label)
+      html += `<div class='overflow-x-auto rounded-xl'>`;
+      html += `<table class='w-full min-w-[900px] text-xs md:text-sm table-fixed mt-2 border border-[#f7a440]'>`;
+      html += `<thead class='bg-[#f7a440]'><tr>`;
+      html += `<th class='text-white font-bold py-2 px-2 text-center rounded-l-xl border-r border-white'>S.No</th>`;
+      html += `<th class='text-white font-bold py-2 px-2 border-r border-white'>Scope</th>`;
+      html += `<th class='text-white font-bold py-2 px-2 border-r border-white'>Status</th>`;
+      html += `<th class='text-white font-bold py-2 px-2 border-r border-white'>Description</th>`;
+      html += `<th class='text-white font-bold py-2 px-2 text-center rounded-r-xl'>File</th>`;
+      html += `</tr></thead><tbody>`;
+      // Use the same monthlyRows as in the HTML (35 rows)
+      const monthlyRows = [
+        'Ensure the physical, emotional, and psychological well-being of students.',
+        'Facilitate access to counselling services, health care, and emergency support.',
+        'Address student grievances and act as a mediator when necessary.',
+        'Organize and oversee extracurricular activities, including cultural, literary, and sports events.',
+        'Promote student clubs, societies, and leadership initiatives.',
+        'Coordinate orientation and induction programs for new students.',
+        'Supervise hostel administration in collaboration with wardens.',
+        'Ensure safety, hygiene, and a conducive living environment in hostels.',
+        'Address issues related to mess, accommodation, and student discipline.',
+        'Facilitate the disbursement of scholarships, fellowships, and student aid funds.',
+        'Liaise with government and private agencies for student welfare schemes.',
+        'Work with the Principal and disciplinary committees to maintain campus discipline.',
+        'Promote awareness of institutional policies and codes of conduct.',
+        'Act as a bridge between students and administration.',
+        'Represent student interests in academic and administrative councils.',
+        'Coordinate with external bodies for student exchange, competitions, and outreach.',
+        'Support students from marginalized or underrepresented backgrounds.',
+        'Promote inclusivity, gender sensitization, and anti-ragging measures.',
+        'Execute admission policies as per the guidelines of State Government of Tamil Nadu.',
+        'Ensure adherence to reservation policies and government norms.',
+        'Lead institutional outreach through school visits, education fairs, and digital campaigns.',
+        'Collaborate with marketing teams to develop brochures, videos, and online content that highlight the college’s strengths.',
+        'Build relationships with feeder institutions and career counsellors.',
+        'Oversee the entire admissions cycle—from application receipt to final enrolment.',
+        'Coordinate entrance exams, interviews, and counselling sessions.',
+        'Ensure timely communication with applicants and resolution of queries.',
+        'Maintain accurate records of applications, admissions, and enrolment trends.',
+        'Analyse data to refine recruitment strategies and forecast future intake.',
+        'Prepare reports for internal review and regulatory compliance.',
+        'Oversee the entire admissions cycle—from application receipt to final enrolment. (Repeat)',
+        'Coordinate entrance exams, interviews, and counselling sessions. (Repeat)',
+        'Ensure timely communication with applicants and resolution of queries. (Repeat)',
+        'Maintain accurate records of applications, admissions, and enrolment trends. (Repeat)',
+        'Analyse data to refine recruitment strategies and forecast future intake. (Repeat)',
+        'Prepare reports for internal review and regulatory compliance. (Repeat)'
+      ];
+      for (let i = 0; i < 35; i++) {
+        const idx = i + 1;
+        html += `<tr class='bg-[#faf7ff]'>`;
+        html += `<td class='text-center font-semibold'>${idx}.</td>`;
+        html += `<td class='px-2'>${monthlyRows[i]}</td>`;
+        html += `<td class='text-center'>${details[`Status_${idx}`] || '-'}</td>`;
+        html += `<td class='px-2'>${details[`Description_${idx}`] || '-'}</td>`;
+        html += `<td class='text-center'>${details[`Upload the scanned file_${idx}`] ? `<a href='${details[`Upload the scanned file_${idx}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</td>`;
+        html += `</tr>`;
       }
-      html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4'>`;
-      for (let i = startIdx; i <= endIdx; i++) {
-        html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${fileLabels[i-startIdx]}</span></div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
-        html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_${i}:</span> <span>${details[`Upload the scanned file_${i}`] ? `<a href='${details[`Upload the scanned file_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
-      }
-      html += `</div>`;
+      html += `</tbody></table></div>`;
       return html;
     }
     // Institution-form7.html
