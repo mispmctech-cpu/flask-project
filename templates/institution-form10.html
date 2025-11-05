@@ -1,6 +1,45 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+   <script>
+// File upload indicator
+document.addEventListener('change', function(e) {
+	if (e.target.classList.contains('file-input')) {
+		const rowId = e.target.getAttribute('data-row');
+		const checkmark = document.querySelector(`[data-row="${rowId}"].file-check`);
+		if (checkmark && e.target.files.length > 0) {
+			checkmark.classList.remove('hidden');
+		}
+	}
+});
+   // Auto-fill Portfolio Name, Portfolio Member Name, and Month from localStorage if available
+   document.addEventListener('DOMContentLoaded', function() {
+	   var portfolio = localStorage.getItem('selectedPortfolio') || '';
+	   var member = localStorage.getItem('selectedMemberName') || '';
+	   var month = localStorage.getItem('selectedMonth') || '';
+
+	   const form = document.getElementById('placementMonthlyForm');
+	   if (form) {
+		   const portfolioField = form.querySelector('input[name="Portfolio Name:"]');
+		   if (portfolioField && portfolio) {
+			   portfolioField.value = portfolio;
+		   }
+		   const memberField = form.querySelector('input[name="Portfolio Member Name:"]');
+		   if (memberField && member) {
+			   memberField.value = member;
+		   }
+		   const monthField = form.querySelector('select[name="Month:"]');
+		   if (monthField && month) {
+			   for (var i = 0; i < monthField.options.length; i++) {
+				   if (monthField.options[i].value === month) {
+					   monthField.selectedIndex = i;
+					   break;
+				   }
+			   }
+		   }
+	   }
+   });
+   </script>
 	<script src="https://unpkg.com/@supabase/supabase-js"></script>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -131,7 +170,7 @@
 						</tr>
 						</thead>
 						<tbody id="placement-monthly-table-body">
-							<!-- JS will render 7 rows here -->
+							<!-- JS will render 10 rows here -->
 						</tbody>
 					</table>
 				</div>
@@ -141,78 +180,34 @@
 			</form>
 		</div>
 		<!-- Once in Six Months Form -->
-		<div class="w-full max-w-7xl mx-auto bg-white rounded-2xl card-shadow border border-purple-300 overflow-x-auto p-0 mb-12">
-			<h2 class="text-center text-2xl md:text-3xl font-extrabold tracking-wide text-purple-800 py-8">HEAD-TRAINING: ONCE IN SIX MONTHS</h2>
-			<form id="trainingSixMonthsForm" class="p-6 md:p-10 space-y-10 w-full">
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-8 bg-purple-50 rounded-xl p-8 card-shadow mb-8">
-					<div>
-						<label class="block font-semibold text-purple-900 mb-1">Portfolio Name:</label>
-						<input type="text" name="Portfolio Name:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
-					</div>
-					<div>
-						<label class="block font-semibold text-purple-900 mb-1">Portfolio Person Name:</label>
-						<input type="text" name="Portfolio Person Name:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
-					</div>
-					<div>
-						<label class="block font-semibold text-purple-900 mb-1">Month:</label>
-						<select name="Month:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400">
-							<option value="">-- Select Month --</option>
-							<option value="January">January</option>
-							<option value="February">February</option>
-							<option value="March">March</option>
-							<option value="April">April</option>
-							<option value="May">May</option>
-							<option value="June">June</option>
-							<option value="July">July</option>
-							<option value="August">August</option>
-							<option value="September">September</option>
-							<option value="October">October</option>
-							<option value="November">November</option>
-							<option value="December">December</option>
-						</select>
-					</div>
-				</div>
-				<div class="overflow-x-auto rounded-xl card-shadow border border-purple-100 bg-white w-full p-6 my-8">
-					<table class="w-full min-w-[1100px] text-xs md:text-sm table-fixed">
-						<thead class="bg-orange-400">
-						<tr>
-							<th class="border px-2 py-2 font-bold text-white">S.No</th>
-							<th class="border px-2 py-2 font-bold text-white">Name of the file</th>
-							<th class="border px-2 py-2 font-bold text-white">Status</th>
-							<th class="border px-2 py-2 font-bold text-white">Description</th>
-							<th class="border px-2 py-2 font-bold text-white">Upload the scanned file</th>
-						</tr>
-						</thead>
-						<tbody id="training-sixmonths-table-body">
-							<!-- JS will render 2 rows here -->
-						</tbody>
-					</table>
-				</div>
-				<div class="flex justify-center mt-10">
-					<button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
-				</div>
-			</form>
-		</div>
+		
 	</div>
 	<script>
-	// Placement monthly rows
-	const placementRows = [
-		'Placement File',
-		'Paid Internship File',
-		'On/Off Campus Recruitments File',
-		'Industry Visit File',
-		'HR Conclave File',
-		'Placement Orientation Programs File'
-	];
-	// Render placement monthly rows
-	const tbodyPlacement = document.getElementById('placement-monthly-table-body');
-	placementRows.forEach((name, i) => {
+	// 10 scope labels from the image
+	const fileRows = [
+  // 1. Strategic Planning and Industry Engagement
+  'Develop and execute a comprehensive training strategy aligned with academic programs and market trends including gap analysis.',
+  'Build and maintain strong relationships with industry partners, academicians, training partners and alumni.',
+  'Organize Training Programs: Aptitude & Reasoning, Communication, Soft Skill, Tech Skill.',
+  // 2. Career Guidance and Counselling
+  'Provide one-on-one and group career counselling to help students identify career paths.',
+  'Guide students on higher education opportunities, competitive exams, and entrepreneurship.',
+  'Conduct psychometric assessments and aptitude tests to support career planning (as per Clause No 1(iii)).',
+  // 3. Training and Skill Development
+  'Develop and implement training modules on soft skills, technical skills, and interview preparation.',
+  'Collaborate with faculty and external trainers for workshops, mock interviews, and skill-building sessions.',
+  'Monitor training outcomes and adapt programs based on student feedback and placement outcomes.'
+];
+	// Render rows
+	const tbody = document.getElementById('placement-monthly-table-body');
+	tbody.innerHTML = '';
+	fileRows.forEach((name, i) => {
 		const idx = i + 1;
 		const tr = document.createElement('tr');
 		tr.innerHTML = `
 			<td class="border px-4 py-3 text-center">${idx}</td>
 			<td class="border px-4 py-3">${name}</td>
-			<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
+			<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
 			<td class="border px-4 py-3"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-2 py-2" placeholder="0-200 chars" /></td>
 			<td class="border px-4 py-3">
 				<label class="custom-upload">
@@ -223,21 +218,21 @@
 				<span class="file-check hidden" data-row="${idx}">✓ Uploaded</span>
 			</td>
 		`;
-		tbodyPlacement.appendChild(tr);
+		tbody.appendChild(tr);
 	});
 	// Supabase setup
 	const supabase = window.supabase.createClient(
 		"https://cbhodgwaazmjszkujrti.supabase.co",
 		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
 	);
-	async function uploadFileToStorage(file, path, bucket = 'Institution form10') {
+	async function uploadFileToStorage(file, path) {
 		if (!file) return null;
-		const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
-		if (error) throw error;
-		const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
-		return urlData.publicUrl;
+			const { data, error } = await supabase.storage.from('Institution form10').upload(path, file, { upsert: true });
+			if (error) throw error;
+			const { data: urlData } = supabase.storage.from('Institution form10').getPublicUrl(path);
+			return urlData.publicUrl;
 	}
-	// Placement monthly form submit
+	// Form submit
 	document.getElementById('placementMonthlyForm').addEventListener('submit', async function(e) {
 		e.preventDefault();
 		const form = e.target;
@@ -247,23 +242,28 @@
 			"Portfolio Member Name:": formData.get('Portfolio Member Name:'),
 			"Month:": formData.get('Month:'),
 		};
-		for (let i = 1; i <= 6; i++) {
-			row[`Status_${i}`] = formData.get(`Status_${i}`);
-			row[`Description_${i}`] = formData.get(`Description_${i}`);
-			const file = formData.get(`Upload the scanned file_${i}`);
-			if (file && file.size > 0) {
-				const ts = Date.now();
-				const path = `form10file${i}_${ts}_${file.name}`;
-				try {
-					row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
-				} catch (err) {
-					window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
-					return;
+			for (let i = 1; i <= 10; i++) {
+				row[`Status_${i}`] = formData.get(`Status_${i}`);
+				row[`Description_${i}`] = formData.get(`Description_${i}`);
+				const file = formData.get(`Upload the scanned file_${i}`);
+				if (file && file.size > 0) {
+					const ts = Date.now();
+					const path = `form10file${i}_${ts}_${file.name}`;
+					try {
+						row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
+						// Show uploaded checkmark for this row
+						const checkmark = document.querySelector(`[data-row="${i}"].file-check`);
+						if (checkmark) {
+							checkmark.classList.remove('hidden');
+						}
+					} catch (err) {
+						window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
+						return;
+					}
+				} else {
+					row[`Upload the scanned file_${i}`] = null;
 				}
-			} else {
-				row[`Upload the scanned file_${i}`] = null;
 			}
-		}
 		// Submit to Supabase
 		const { data, error } = await supabase.from('Institution-form10').insert([row]);
 		if (error) {
@@ -332,13 +332,17 @@
 	
 	// File upload indicator
 	document.addEventListener('change', function(e) {
-		if (e.target.classList.contains('file-input')) {
-			const rowId = e.target.getAttribute('data-row');
-			const checkmark = document.querySelector(`[data-row="${rowId}"].file-check`);
-			if (checkmark && e.target.files.length > 0) {
-				checkmark.classList.remove('hidden');
+			if (e.target.classList.contains('file-input')) {
+				const rowId = e.target.getAttribute('data-row');
+				const checkmark = document.querySelector(`[data-row="${rowId}"].file-check`);
+				if (checkmark) {
+					if (e.target.files.length > 0) {
+						checkmark.classList.remove('hidden');
+					} else {
+						checkmark.classList.add('hidden');
+					}
+				}
 			}
-		}
 	});
 	</script>  <!-- Footer -->
   <footer class="text-center py-4 mt-8">
