@@ -1,7 +1,36 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-	<script src="https://unpkg.com/@supabase/supabase-js"></script>
+   <script src="https://unpkg.com/@supabase/supabase-js"></script>
+   <script>
+   // Auto-fill Portfolio Name, Portfolio Member Name, and Month from localStorage if available
+   document.addEventListener('DOMContentLoaded', function() {
+	   var portfolio = localStorage.getItem('selectedPortfolio') || '';
+	   var member = localStorage.getItem('selectedMemberName') || '';
+	   var month = localStorage.getItem('selectedMonth') || '';
+
+	   const form = document.getElementById('form16');
+	   if (form) {
+		   const portfolioField = form.querySelector('input[name="Portfolio Name:"]');
+		   if (portfolioField && portfolio) {
+			   portfolioField.value = portfolio;
+		   }
+		   const memberField = form.querySelector('input[name="Portfolio Member Name:"]');
+		   if (memberField && member) {
+			   memberField.value = member;
+		   }
+		   const monthField = form.querySelector('select[name="Month:"]');
+		   if (monthField && month) {
+			   for (var i = 0; i < monthField.options.length; i++) {
+				   if (monthField.options[i].value === month) {
+					   monthField.selectedIndex = i;
+					   break;
+				   }
+			   }
+		   }
+	   }
+   });
+   </script>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>PRO : MONTHLY</title>
@@ -102,7 +131,21 @@
 					</div>
 					<div>
 						<label class="block font-semibold text-purple-900 mb-1">Month:</label>
-						<input type="text" name="Month:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" placeholder="" />
+						<select name="Month:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400">
+							<option value="">-- Select Month --</option>
+							<option value="January">January</option>
+							<option value="February">February</option>
+							<option value="March">March</option>
+							<option value="April">April</option>
+							<option value="May">May</option>
+							<option value="June">June</option>
+							<option value="July">July</option>
+							<option value="August">August</option>
+							<option value="September">September</option>
+							<option value="October">October</option>
+							<option value="November">November</option>
+							<option value="December">December</option>
+						</select>
 					</div>
 				</div>
 				<div class="overflow-x-auto rounded-xl card-shadow border border-purple-100 bg-white w-full p-6 my-8">
@@ -128,17 +171,41 @@
 		</div>
 	</div>
 	<script>
-	// File rows for form 16 (from image)
+	// 24 scope labels from the image
 	const fileRows = [
-		'Media Relations File',
-		'Institutional Branding File',
-		'Stakeholder Communication File',
-		'Event Coordination File',
-		'Digital Presence Management File',
-		'Crisis Communication File',
-		'Collaboration with Schools File',
-		'Collaboration with Local; Officers File',
-		'Collaboration with District Administration File'
+		// 1. Media Relations
+		'Build and maintain relationships with local and national media.',
+		'Draft press releases, news articles, and media kits for college events and achievements.',
+		'Coordinate press coverage for conferences, convocations, and student accomplishments.',
+		// 2. Institutional Branding
+		"Promote the college's vision, mission, and strategic initiatives.",
+		'Ensure consistency in branding across digital platforms, brochures, and advertisements.',
+		'Collaborate with design teams to produce promotional materials.',
+		// 3. Stakeholder Communication
+		'Act as a liaison between the college and external stakeholders (industry, alumni, government bodies).',
+		'Facilitate communication with parents, prospective students, and the community.',
+		'Support internal communication strategies for faculty and staff.',
+		// 4. Event Coordination
+		'Assist in organizing institutional events such as seminars, workshops, and cultural fests.',
+		'Manage invitations, media coverage, and post-event publicity.',
+		'Document and archive event highlights for institutional records.',
+		// 5. Digital Presence Management
+		'Oversee content updates on the college website and social media platforms.',
+		'Monitor online reputation and respond to queries or feedback.',
+		'Collaborate with IT and content teams to ensure timely and relevant updates.',
+		// 6. Accreditation and Ranking Support
+		'Highlight activities and achievements related to NBA, NAAC and other accreditations.',
+		'Coordinate with ranking agencies and ensure accurate representation of institutional data.',
+		'Support initiatives aligned with quality assurance and continuous improvement.',
+		// 7. Strategic Contributions
+		'Develop protocols for managing communication during emergencies or controversies.',
+		'Ensure timely dissemination of verified information to stakeholders.',
+		// 8. Alumni and Industry Engagement
+		'Support alumni relations through newsletters, reunions, and success stories.',
+		'Facilitate industry partnerships by showcasing collaborative projects and MoUs.',
+		// 9. Documentation and Reporting
+		'Maintain and report media coverage, stakeholder feedback, and outreach activities.',
+		'Prepare periodic reports for the Governing Body and Academic Council.'
 	];
 	// Render rows
 	const tbody = document.getElementById('form16-table-body');
@@ -148,7 +215,7 @@
 		tr.innerHTML = `
 			<td class="border px-4 py-3 text-center">${idx}</td>
 			<td class="border px-4 py-3">${name}</td>
-			<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
+			<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
 			<td class="border px-4 py-3"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-2 py-2" placeholder="0-200 chars" /></td>
 			<td class="border px-4 py-3">
 				<label class="custom-upload">
@@ -183,7 +250,7 @@
 			"Portfolio Member Name:": formData.get('Portfolio Member Name:'),
 			"Month:": formData.get('Month:'),
 		};
-		for (let i = 1; i <= 9; i++) {
+		for (let i = 1; i <= 24; i++) {
 			row[`Status_${i}`] = formData.get(`Status_${i}`);
 			row[`Description_${i}`] = formData.get(`Description_${i}`);
 			const file = formData.get(`Upload the scanned file_${i}`);
