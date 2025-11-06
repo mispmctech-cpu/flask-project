@@ -1,7 +1,36 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-	<script src="https://unpkg.com/@supabase/supabase-js"></script>
+   <script src="https://unpkg.com/@supabase/supabase-js"></script>
+   <script>
+   // Auto-fill Portfolio Name, Portfolio Member Name, and Month from localStorage if available
+   document.addEventListener('DOMContentLoaded', function() {
+	   var portfolio = localStorage.getItem('selectedPortfolio') || '';
+	   var member = localStorage.getItem('selectedMemberName') || '';
+	   var month = localStorage.getItem('selectedMonth') || '';
+
+	   const form = document.getElementById('form15');
+	   if (form) {
+		   const portfolioField = form.querySelector('input[name="Portfolio Name:"]');
+		   if (portfolioField && portfolio) {
+			   portfolioField.value = portfolio;
+		   }
+		   const memberField = form.querySelector('input[name="Portfolio Member Name:"]');
+		   if (memberField && member) {
+			   memberField.value = member;
+		   }
+		   const monthField = form.querySelector('select[name="Month:"]');
+		   if (monthField && month) {
+			   for (var i = 0; i < monthField.options.length; i++) {
+				   if (monthField.options[i].value === month) {
+					   monthField.selectedIndex = i;
+					   break;
+				   }
+			   }
+		   }
+	   }
+   });
+   </script>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>ERP COORDINATOR : MONTHLY</title>
@@ -142,25 +171,40 @@
 		</div>
 	</div>
 	<script>
-	// File rows for form 15
+	// 24 scope labels from the image
 	const fileRows = [
-		'Academic ERP File',
-		'Finance ERP File',
-		'Administrative HR ERP  File',
-		'Exam ERP File',
-		'Ranking framework file(NBA,NAAC,NIRF)',
-		'Data security & access control file',
-		'Academic module audit file',
-		'Administrative HR audit file',
-		'Academic ERP audit file',
-		'Finance ERP audit file',
-		'Administrative HR ERP audit file',
-		'Exam ERP audit file',
-		'Reporting and analytics file',
-		'User manual file',
-		'Training file',
-		'System integration and Maintenance file',
-		'Budget file'
+		// A. Strategic Alignment
+		'ERP modules mapped to institutional goals (academics, finance, HR, exams)',
+		'Integration with accreditation and ranking frameworks (NAAC, NBA, NIRF)',
+		'Customization for autonomy-specific workflows (e.g., internal assessments, BOS approvals)',
+		// B. Data Security & Access Control
+		'Role-based access and user authentication protocols',
+		'Data encryption, backup, and disaster recovery mechanisms',
+		'Audit trails for user activity and data modifications',
+		// C. Academic Module Audit
+		'Course registration, attendance, and timetable automation',
+		'Internal assessment, CO/PO mapping, and result processing',
+		'Integration with LMS and digital evaluation tools',
+		// D. Administrative & HR Module Audit
+		'Staff records, leave management, and payroll processing',
+		'Performance appraisal and service book digitization',
+		'Recruitment and onboarding workflows',
+		// E. Finance & Accounts Module Audit
+		'Budgeting, fee collection, and expenditure tracking',
+		'Procurement and inventory management',
+		'Statutory compliance (GST, TDS, PF, etc.)',
+		// F. Reporting & Analytics
+		'Availability of dashboards for decision-makers',
+		'Customizable reports for audits, accreditations, and IQAC',
+		'Real-time data visualization and alerts',
+		// G. User Experience & Training
+		'Ease of use for faculty, students, and admin staff',
+		'Training programs for user manuals',
+		'Feedback and suggestions for continuous improvement',
+		// H. System Integration & Maintenance
+		'Compatibility with biometric, RFID, and digital library systems',
+		'Regular updates, bug fixes, and vendor support',
+		'SLA (Service Level Agreement) compliance'
 	];
 	// Render rows
 	const tbody = document.getElementById('form15-table-body');
@@ -170,7 +214,7 @@
 		tr.innerHTML = `
 			<td class="border px-4 py-3 text-center">${idx}</td>
 			<td class="border px-4 py-3">${name}</td>
-			<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
+			<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
 			<td class="border px-4 py-3"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-2 py-2" placeholder="0-200 chars" /></td>
 			<td class="border px-4 py-3">
 				<label class="custom-upload">

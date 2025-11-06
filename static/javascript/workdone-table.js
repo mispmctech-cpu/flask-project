@@ -109,20 +109,21 @@ class WorkdoneTable {
   // Calculate status based on all status fields
   calculateStatus(row) {
     const statusFields = Object.keys(row).filter(key => key.startsWith('Status'));
-    
     if (statusFields.length === 0) return 'PENDING';
-    
-    // All status fields must be filled and either "Completed and Updated" or "Not Applicable"
+    // Acceptable completed status values (all lowercase)
+    const completedValues = [
+      'completed',
+      'completed and updated',
+      'not applicable'
+    ];
     for (const field of statusFields) {
       const value = row[field];
       if (!value || value.trim() === '') return 'PENDING';
-      
       const normalizedValue = value.trim().toLowerCase();
-      if (normalizedValue !== 'completed and updated' && normalizedValue !== 'not applicable') {
+      if (!completedValues.includes(normalizedValue)) {
         return 'PENDING';
       }
     }
-    
     return 'COMPLETED';
   }
 

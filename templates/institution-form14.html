@@ -111,53 +111,15 @@
 						<thead class="bg-orange-400">
 						<tr>
 							<th class="border px-2 py-2 font-bold text-white">S.No</th>
-							<th class="border px-2 py-2 font-bold text-white">Name of the file</th>
-							<th class="border px-2 py-2 font-bold text-white">Status</th>
+							<th class="border px-2 py-2 font-bold text-white">Function</th>
 							<th class="border px-2 py-2 font-bold text-white">Description</th>
-							<th class="border px-2 py-2 font-bold text-white">Upload the scanned  file</th>
+							<th class="border px-2 py-2 font-bold text-white">Status</th>
+							<th class="border px-2 py-2 font-bold text-white">Remarks</th>
+							<th class="border px-2 py-2 font-bold text-white">Upload the scanned file</th>
 						</tr>
 						</thead>
 						<tbody id="form14-monthly-table-body">
-							<!-- JS will render 7 rows here -->
-						</tbody>
-					</table>
-				</div>
-				<div class="flex justify-center mt-10">
-					<button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
-				</div>
-			</form>
-		</div>
-		<!-- Once in 6 Months Form -->
-		<div class="w-full max-w-7xl mx-auto bg-white rounded-2xl card-shadow border border-purple-300 overflow-x-auto p-0 mb-12">
-			<h2 class="text-center text-2xl md:text-3xl font-extrabold tracking-wide text-purple-800 py-8">WEBSITE COORDINATOR: ONCE IN SIX MONTHS</h2>
-			<form id="form14-6months" class="p-6 md:p-10 space-y-10 w-full">
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-8 bg-purple-50 rounded-xl p-8 card-shadow mb-8">
-					<div>
-						<label class="block font-semibold text-purple-900 mb-1">Portfolio Name:</label>
-						<input type="text" name="Portfolio Name:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
-					</div>
-					<div>
-						<label class="block font-semibold text-purple-900 mb-1">Portfolio Member Name:</label>
-						<input type="text" name="Portfolio Member Name:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
-					</div>
-					<div>
-						<label class="block font-semibold text-purple-900 mb-1">Month:</label>
-						<input type="text" name="Month:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
-					</div>
-				</div>
-				<div class="overflow-x-auto rounded-xl card-shadow border border-purple-100 bg-white w-full p-6 my-8">
-					<table class="w-full min-w-[1100px] text-xs md:text-sm table-fixed">
-						<thead class="bg-orange-400">
-						<tr>
-							<th class="border px-2 py-2 font-bold text-white">S.No</th>
-							<th class="border px-2 py-2 font-bold text-white">Name of the file</th>
-							<th class="border px-2 py-2 font-bold text-white">Status</th>
-							<th class="border px-2 py-2 font-bold text-white">Description</th>
-							<th class="border px-2 py-2 font-bold text-white">Upload the scanned  file</th>
-						</tr>
-						</thead>
-						<tbody id="form14-6months-table-body">
-							<!-- JS will render 1 row here -->
+							<!-- JS will render 17 rows here -->
 						</tbody>
 					</table>
 				</div>
@@ -168,23 +130,76 @@
 		</div>
 	</div>
 	<script>
-	// Monthly file rows
-	const monthlyRows = [
-		'Website updation File',
-		'Data security updates file',
-		'No of Viewers File',
-		'Student portals, fee payment gateways, and ERP integrations updates File',
-		'Newsletters, magazines, alumni testimonials updates File',
-		'Audit File',
-		'Department Page update status File'
+// Auto-fill Portfolio Name, Portfolio Member Name, and Month from localStorage if available
+document.addEventListener('DOMContentLoaded', function() {
+	var portfolio = localStorage.getItem('selectedPortfolio') || '';
+	var member = localStorage.getItem('selectedMemberName') || '';
+	var month = localStorage.getItem('selectedMonth') || '';
+
+	// Monthly form only
+	const formMonthly = document.getElementById('form14-monthly');
+	if (formMonthly) {
+		const portfolioField = formMonthly.querySelector('input[name="Portfolio Name:"]');
+		if (portfolioField && portfolio) {
+			portfolioField.value = portfolio;
+		}
+		const memberField = formMonthly.querySelector('input[name="Portfolio Member Name:"]');
+		if (memberField && member) {
+			memberField.value = member;
+		}
+		const monthField = formMonthly.querySelector('input[name="Month:"]');
+		if (monthField && month) {
+			monthField.value = month;
+		}
+	}
+});
+	// Monthly rows from image and schema
+	const monthlyFunctions = [
+		'Content Management',
+		'Design Consistency',
+		'Departmental Coordination',
+		'Digital Compliance',
+		'Event & Announcement Updates',
+		'Faculty & Student Information',
+		'Social Media Integration',
+		'E-Content & Repository Management',
+		'Statutory Compliance',
+		'Content Update Calendar',
+		'IQAC/Exam/Placement Coordination',
+		'Data Security & Backups',
+		'Student Portals & ERP',
+		'Archive & Accreditation Reports',
+		'NAAC/NBA Documentation',
+		'Periodic Audits',
+		'Other duties as assigned'
+	];
+	const monthlyDescriptions = [
+		'Publishes and updates academic, administrative, and event-related content across the website.',
+		'Ensures uniform layout, branding, and navigation across departmental pages.',
+		'Liaises with departments and cells to collect, verify, and upload relevant updates.',
+		'Ensures accessibility, responsiveness, and compliance with institutional and regulatory norms.',
+		'Posts circulars, results, placement drives, and campus news in a timely manner.',
+		'Maintains updated profiles, achievements, and departmental activities.',
+		'Coordinates with media teams to synchronize website content with social platforms.',
+		'Uploads syllabi, academic calendars, e-learning materials, and archives.',
+		'Maintains and updates the mandatory requirements of UGC, AICTE, Anna University.',
+		'Maintain a content update calendar aligned with academic and administrative cycles.',
+		'Coordinate with IQAC, Exam Cell, Placement Cell, and other statutory bodies for timely updates.',
+		'Ensure data security, regular backups and uptime monitoring in collaboration with IT support.',
+		'Facilitate student portals, fee payment gateways, and ERP integrations as needed.',
+		'Archive newsletters, magazines, alumni testimonials, and accreditation reports.',
+		'Support NAAC/NBA documentation by maintaining digital evidence and structured navigation.',
+		'Conduct periodic audits to remove outdated content and broken links.',
+		'Other duties as assigned.'
 	];
 	const tbodyMonthly = document.getElementById('form14-monthly-table-body');
-	monthlyRows.forEach((name, i) => {
+	for (let i = 0; i < monthlyFunctions.length; i++) {
 		const idx = i + 1;
 		const tr = document.createElement('tr');
 		tr.innerHTML = `
 			<td class="border px-4 py-3 text-center">${idx}</td>
-			<td class="border px-4 py-3">${name}</td>
+			<td class="border px-4 py-3">${monthlyFunctions[i]}</td>
+			<td class="border px-4 py-3">${monthlyDescriptions[i]}</td>
 			<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
 			<td class="border px-4 py-3"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-2 py-2" placeholder="0-200 chars" /></td>
 			<td class="border px-4 py-3">
@@ -197,25 +212,7 @@
 			</td>
 		`;
 		tbodyMonthly.appendChild(tr);
-	});
-	// Once in 6 months file row
-	const tbody6Months = document.getElementById('form14-6months-table-body');
-	const tr6 = document.createElement('tr');
-	tr6.innerHTML = `
-		<td class="border px-4 py-3 text-center">8.</td>
-		<td class="border px-4 py-3">Budget File</td>
-		<td class="border px-4 py-3"><select name="Status_1" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
-		<td class="border px-4 py-3"><input type="text" name="Description_1" maxlength="200" class="w-full border rounded px-2 py-2" placeholder="0-200 chars" /></td>
-		<td class="border px-4 py-3">
-			<label class="custom-upload">
-				Upload
-				<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
-				<input type="file" name="Upload the scanned file_1" accept=".pdf,.jpg,.jpeg,.png" class="file-input" data-row="1" />
-			</label>
-			<span class="file-check hidden" data-row="1">✓ Uploaded</span>
-		</td>
-	`;
-	tbody6Months.appendChild(tr6);
+	}
 	// Supabase setup
 	const supabase = window.supabase.createClient(
 		"https://cbhodgwaazmjszkujrti.supabase.co",
@@ -238,7 +235,7 @@
 			"Portfolio Member Name:": formData.get('Portfolio Member Name:'),
 			"Month:": formData.get('Month:'),
 		};
-		for (let i = 1; i <= 7; i++) {
+		for (let i = 1; i <= 17; i++) {
 			row[`Status_${i}`] = formData.get(`Status_${i}`);
 			row[`Description_${i}`] = formData.get(`Description_${i}`);
 			const file = formData.get(`Upload the scanned file_${i}`);
@@ -256,38 +253,6 @@
 			}
 		}
 		const { data, error } = await supabase.from('Institution-form14-monthly').insert([row]);
-		if (error) {
-			window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
-		} else {
-			window.location.href = 'notification.html?status=success';
-		}
-	});
-	// Once in 6 months form submit
-	document.getElementById('form14-6months').addEventListener('submit', async function(e) {
-		e.preventDefault();
-		const form = e.target;
-		const formData = new FormData(form);
-		const row = {
-			"Portfolio Name:": formData.get('Portfolio Name:'),
-			"Portfolio Member Name:": formData.get('Portfolio Member Name:'),
-			"Month:": formData.get('Month:'),
-			"Status_1": formData.get('Status_1'),
-			"Description_1": formData.get('Description_1'),
-		};
-		const file = formData.get('Upload the scanned file_1');
-		if (file && file.size > 0) {
-			const ts = Date.now();
-			const path = `form14once6monthsfile1_${ts}_${file.name}`;
-			try {
-				row['Upload the scanned file_1'] = await uploadFileToStorage(file, path);
-			} catch (err) {
-				window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed: ' + err.message)}`;
-				return;
-			}
-		} else {
-			row['Upload the scanned file_1'] = null;
-		}
-		const { data, error } = await supabase.from('Institution-form14-oncein6months').insert([row]);
 		if (error) {
 			window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
 		} else {

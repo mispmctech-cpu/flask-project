@@ -104,7 +104,21 @@
 					</div>
 					<div>
 						<label class="block font-semibold text-purple-900 mb-1">Month:</label>
-						<input type="text" name="Month:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" placeholder="" />
+						<select name="Month:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400">
+							<option value="" disabled selected>Select</option>
+							<option value="January">January</option>
+							<option value="February">February</option>
+							<option value="March">March</option>
+							<option value="April">April</option>
+							<option value="May">May</option>
+							<option value="June">June</option>
+							<option value="July">July</option>
+							<option value="August">August</option>
+							<option value="September">September</option>
+							<option value="October">October</option>
+							<option value="November">November</option>
+							<option value="December">December</option>
+						</select>
 					</div>
 				</div>
 				<div class="overflow-x-auto rounded-xl card-shadow border border-purple-100 bg-white w-full p-6 my-8">
@@ -130,6 +144,33 @@
 		</div>
 	</div>
 	<script>
+// Auto-fill Portfolio Name, Portfolio Member Name, and Month from localStorage if available
+document.addEventListener('DOMContentLoaded', function() {
+	var portfolio = localStorage.getItem('selectedPortfolio') || '';
+	var member = localStorage.getItem('selectedMemberName') || '';
+	var month = localStorage.getItem('selectedMonth') || '';
+
+	const form = document.getElementById('form17');
+	if (form) {
+		const portfolioField = form.querySelector('input[name="Portfolio Name:"]');
+		if (portfolioField && portfolio) {
+			portfolioField.value = portfolio;
+		}
+		const memberField = form.querySelector('input[name="Portfolio Member Name:"]');
+		if (memberField && member) {
+			memberField.value = member;
+		}
+		const monthField = form.querySelector('select[name="Month:"]');
+		if (monthField && month) {
+			for (var i = 0; i < monthField.options.length; i++) {
+				if (monthField.options[i].value === month) {
+					monthField.selectedIndex = i;
+					break;
+				}
+			}
+		}
+	}
+});
 	// Initialize form status checking
 	const supabase = window.supabase.createClient(
 		"https://cbhodgwaazmjszkujrti.supabase.co",
@@ -139,18 +180,19 @@
 	// Initialize form status controller
 	const formStatusController = initializeFormStatusCheck(supabase, 'institution-form17');
 	
-	// File rows for form 17 (from image)
-	const fileRows = [
-		'Transport and Database file',
-		'Logistics Maintenance file',
-		'Logistics logbook file',
-		'BUS requirement file',
-		'Grievances file',
-		'IV/Sports/Village visit file'
+	// Responsibility rows for form 17 (from image)
+	const responsibilityRows = [
+		'To take responsibility of transport arrangements for students and staff from College to City & vice versa.',
+		'To periodically maintain all the buses.',
+		'To report to the Principal in case of any major repair.',
+		'To periodically check the log books maintained by the drivers.',
+		'To arrange for agreements with Transport Company for additional buses, if required.',
+		'To arrange transport for the students and staff for any educational tour, visit for sports competitions etc.',
+		'To maintain time discipline on the arrival and departure of buses.'
 	];
 	// Render rows
 	const tbody = document.getElementById('form17-table-body');
-	fileRows.forEach((name, i) => {
+	responsibilityRows.forEach((name, i) => {
 		const idx = i + 1;
 		const tr = document.createElement('tr');
 		tr.innerHTML = `
@@ -188,7 +230,7 @@
 			"Portfolio Member Name:": formData.get('Portfolio Member Name:'),
 			"Month:": formData.get('Month:'),
 		};
-		for (let i = 1; i <= 6; i++) {
+		for (let i = 1; i <= 7; i++) {
 			row[`Status_${i}`] = formData.get(`Status_${i}`);
 			row[`Description_${i}`] = formData.get(`Description_${i}`);
 			const file = formData.get(`Upload the scanned file_${i}`);
