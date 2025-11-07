@@ -92,6 +92,7 @@
 		<div class="w-full max-w-7xl mx-auto bg-white rounded-2xl card-shadow border border-purple-300 overflow-x-auto p-0 mb-12">
 			<h2 class="text-center text-2xl md:text-3xl font-extrabold tracking-wide text-purple-800 py-8">IT INFRA COORDINATOR: MONTHLY</h2>
 			<form id="form13-monthly" class="p-6 md:p-10 space-y-10 w-full">
+				<!-- Prevent default form submission by removing action and method attributes -->
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-8 bg-purple-50 rounded-xl p-8 card-shadow mb-8">
 					<div>
 						<label class="block font-semibold text-purple-900 mb-1">Portfolio Name:</label>
@@ -103,7 +104,21 @@
 					</div>
 					<div>
 						<label class="block font-semibold text-purple-900 mb-1">Month:</label>
-						<input type="text" name="Month:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
+						<select name="Month:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400">
+							<option value="">Select Month</option>
+							<option value="January">January</option>
+							<option value="February">February</option>
+							<option value="March">March</option>
+							<option value="April">April</option>
+							<option value="May">May</option>
+							<option value="June">June</option>
+							<option value="July">July</option>
+							<option value="August">August</option>
+							<option value="September">September</option>
+							<option value="October">October</option>
+							<option value="November">November</option>
+							<option value="December">December</option>
+						</select>
 					</div>
 				</div>
 				<div class="overflow-x-auto rounded-xl card-shadow border border-purple-100 bg-white w-full p-6 my-8">
@@ -111,82 +126,103 @@
 						<thead class="bg-orange-400">
 						<tr>
 							<th class="border px-2 py-2 font-bold text-white">S.No</th>
-							<th class="border px-2 py-2 font-bold text-white">Name of the file</th>
-							<th class="border px-2 py-2 font-bold text-white">Status</th>
+							<th class="border px-2 py-2 font-bold text-white">Function</th>
 							<th class="border px-2 py-2 font-bold text-white">Description</th>
-							<th class="border px-2 py-2 font-bold text-white">Upload the scanned  file</th>
+							<th class="border px-2 py-2 font-bold text-white">Status</th>
+							<th class="border px-2 py-2 font-bold text-white">Remarks</th>
+							<th class="border px-2 py-2 font-bold text-white">Upload the scanned file</th>
 						</tr>
 						</thead>
 						<tbody id="form13-monthly-table-body">
-							<!-- JS will render 8 rows here -->
+							<!-- JS will render 15 rows here -->
 						</tbody>
 					</table>
 				</div>
 				<div class="flex justify-center mt-10">
-					<button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
-				</div>
-			</form>
-		</div>
-		<!-- Once in 6 Months Form -->
-		<div class="w-full max-w-7xl mx-auto bg-white rounded-2xl card-shadow border border-purple-300 overflow-x-auto p-0 mb-12">
-			<h2 class="text-center text-2xl md:text-3xl font-extrabold tracking-wide text-purple-800 py-8">IT INFRA COORDINATOR: ONCE IN SIX MONTHS</h2>
-			<form id="form13-6months" class="p-6 md:p-10 space-y-10 w-full">
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-8 bg-purple-50 rounded-xl p-8 card-shadow mb-8">
-					<div>
-						<label class="block font-semibold text-purple-900 mb-1">Portfolio Name:</label>
-						<input type="text" name="Portfolio Name:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
-					</div>
-					<div>
-						<label class="block font-semibold text-purple-900 mb-1">Portfolio Member Name:</label>
-						<input type="text" name="Portfolio Member Name:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
-					</div>
-					<div>
-						<label class="block font-semibold text-purple-900 mb-1">Month:</label>
-						<input type="text" name="Month:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
-					</div>
-				</div>
-				<div class="overflow-x-auto rounded-xl card-shadow border border-purple-100 bg-white w-full p-6 my-8">
-					<table class="w-full min-w-[1100px] text-xs md:text-sm table-fixed">
-						<thead class="bg-orange-400">
-						<tr>
-							<th class="border px-2 py-2 font-bold text-white">S.No</th>
-							<th class="border px-2 py-2 font-bold text-white">Name of the file</th>
-							<th class="border px-2 py-2 font-bold text-white">Status</th>
-							<th class="border px-2 py-2 font-bold text-white">Description</th>
-							<th class="border px-2 py-2 font-bold text-white">Upload the scanned  file</th>
-						</tr>
-						</thead>
-						<tbody id="form13-6months-table-body">
-							<!-- JS will render 1 row here -->
-						</tbody>
-					</table>
-				</div>
-				<div class="flex justify-center mt-10">
-					<button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
+					<button type="button" id="form13-monthly-submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
 				</div>
 			</form>
 		</div>
 	</div>
 	<script>
-	// Monthly file rows
-	const monthlyRows = [
-		'IT Infrastructure Planning File',
-		'Security & Compliance File',
-		'Vendor & AMC Management File',
-		'Disaster Recovery & Backup File',
-		'Performance Monitoring File',
-		'Inventory of IT assets File',
-		'IT audits File',
-		'IT Training sessions File'
+	// Auto-fill Portfolio Name, Portfolio Member Name, and Month from localStorage if available
+	document.addEventListener('DOMContentLoaded', function() {
+		var portfolio = localStorage.getItem('selectedPortfolio') || '';
+		var member = localStorage.getItem('selectedMemberName') || '';
+		var month = localStorage.getItem('selectedMonth') || '';
+
+		// Monthly form
+		const formMonthly = document.getElementById('form13-monthly');
+		if (formMonthly) {
+			const portfolioField = formMonthly.querySelector('input[name="Portfolio Name:"]');
+			if (portfolioField && portfolio) {
+				portfolioField.value = portfolio;
+			}
+			const memberField = formMonthly.querySelector('input[name="Portfolio Member Name:"]');
+			if (memberField && member) {
+				memberField.value = member;
+			}
+			const monthField = formMonthly.querySelector('select[name="Month:"]');
+			if (monthField && month) {
+				for (let i = 0; i < monthField.options.length; i++) {
+					if (monthField.options[i].value === month) {
+						monthField.selectedIndex = i;
+						break;
+					}
+				}
+			}
+		}
+	});
+	// Monthly rows from image and schema
+	const monthlyFunctions = [
+		'Infrastructure Planning',
+		'Project Coordination',
+		'System Integration',
+		'Security Compliance',
+		'Vendor & AMC Management',
+		'Disaster Recovery & Backup',
+		'Performance Monitoring',
+		'Policy Development',
+		'Inventory of IT assets',
+		'Coordination with System Admin/ERP/Website',
+		'Support online exams, virtual labs, hybrid learning',
+		'Periodic IT audits',
+		'Training sessions for faculty/staff',
+		'Network monitoring, firewall configs, antivirus',
+		'Prepare budget proposals'
+	];
+	const monthlyDescriptions = [
+		'Designs and upgrades IT infrastructure including servers, networks, and data centers.',
+		'Leads implementation of IT projects such as ERP, LMS, biometric systems, and smart classrooms.',
+		'Ensures seamless integration of hardware, software, and cloud-based services across departments.',
+		'Implements cybersecurity protocols, data privacy measures, and ensures IT compliance with institutional and regulatory standards.',
+		'Coordinates with vendors for procurement, installation, and maintenance of IT assets.',
+		'Develops and maintains disaster recovery plans and data backup strategies.',
+		'Tracks system uptime, bandwidth usage, and hardware health to ensure optimal performance.',
+		'Drafts IT usage policies, access protocols, and digital governance frameworks.',
+		'Maintain an updated inventory of IT assets including servers, routers, switches, and end-user devices.',
+		'Coordinate with the System Administrator, ERP Cell, and Website Coordinator for infrastructure alignment.',
+		'Support online examination, virtual labs, and hybrid learning environments.',
+		'Conduct periodic IT audits and submit reports to IQAC or the Governing Body.',
+		'Facilitate training sessions for faculty and staff on new technologies and digital tools.',
+		'Monitor network security, firewall configurations, and antivirus deployments.',
+		'Prepare budget proposals for IT infrastructure expansion and renewal.'
 	];
 	const tbodyMonthly = document.getElementById('form13-monthly-table-body');
-	monthlyRows.forEach((name, i) => {
+	for (let i = 0; i < monthlyFunctions.length; i++) {
 		const idx = i + 1;
 		const tr = document.createElement('tr');
 		tr.innerHTML = `
 			<td class="border px-4 py-3 text-center">${idx}</td>
-			<td class="border px-4 py-3">${name}</td>
-			<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
+			<td class="border px-4 py-3">${monthlyFunctions[i]}</td>
+			<td class="border px-4 py-3">${monthlyDescriptions[i]}</td>
+			<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2">
+				<option value="">Select</option>
+				<option>Completed</option>
+				<option>In Progress</option>
+				<option>Yet to be Completed</option>
+				<option>Not Applicable</option>
+			</select></td>
 			<td class="border px-4 py-3"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-2 py-2" placeholder="0-200 chars" /></td>
 			<td class="border px-4 py-3">
 				<label class="custom-upload">
@@ -198,7 +234,7 @@
 			</td>
 		`;
 		tbodyMonthly.appendChild(tr);
-	});
+	}
 	// Once in 6 months file row
 	const tbody6Months = document.getElementById('form13-6months-table-body');
 	const tr6 = document.createElement('tr');
@@ -230,16 +266,15 @@
 		return urlData.publicUrl;
 	}
 	// Monthly form submit
-	document.getElementById('form13-monthly').addEventListener('submit', async function(e) {
-		e.preventDefault();
-		const form = e.target;
+	document.getElementById('form13-monthly-submit').addEventListener('click', async function() {
+		const form = document.getElementById('form13-monthly');
 		const formData = new FormData(form);
 		const row = {
 			"Portfolio Name:": formData.get('Portfolio Name:'),
 			"Portfolio Member Name:": formData.get('Portfolio Member Name:'),
 			"Month:": formData.get('Month:'),
 		};
-		for (let i = 1; i <= 8; i++) {
+		for (let i = 1; i <= 15; i++) {
 			row[`Status_${i}`] = formData.get(`Status_${i}`);
 			row[`Description_${i}`] = formData.get(`Description_${i}`);
 			const file = formData.get(`Upload the scanned file_${i}`);
@@ -249,17 +284,21 @@
 				try {
 					row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
 				} catch (err) {
-					window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
+					alert('File upload failed for row ' + i + ': ' + err.message);
 					return;
 				}
 			} else {
 				row[`Upload the scanned file_${i}`] = null;
 			}
 		}
+		console.log('Submitting row to Supabase:', row);
 		const { data, error } = await supabase.from('Institution-form13-monthly').insert([row]);
+		console.log('Supabase response:', { data, error });
 		if (error) {
+			alert('Supabase error: ' + error.message);
 			window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
 		} else {
+			alert('Submission successful!');
 			window.location.href = 'notification.html?status=success';
 		}
 	});
