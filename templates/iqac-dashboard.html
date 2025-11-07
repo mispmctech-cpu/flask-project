@@ -31,7 +31,7 @@
         </div>
       </div>
     </div>
-    <h2 class="text-2xl font-bold text-purple-700 mb-6">Faculty Core Scope Compliance Table</h2>
+    <h2 class="text-2xl font-bold text-purple-700 mb-6">Faculty Core Scope - Yearly</h2>
     <div class="mb-6 flex flex-wrap gap-4 items-center">
       <label for="departmentFilter" class="font-medium text-purple-700 mr-2">Filter by Department:</label>
       <select id="departmentFilter" class="p-2 border rounded"></select>
@@ -50,7 +50,7 @@
     <div id="dashboardTableContainer" class="overflow-x-auto"></div>
 
     <!-- NEW: Faculty Status Table from AP, ASP, Prof tables -->
-    <h2 class="text-2xl font-bold text-blue-700 mt-12 mb-6">Faculty Portfolio Status Table</h2>
+    <h2 class="text-2xl font-bold text-blue-700 mt-12 mb-6">Faculty Core Scope - Monthly</h2>
     <div class="mb-6 flex flex-wrap gap-4 items-center">
       <label for="statusDepartmentFilter" class="font-medium text-blue-700 mr-2">Filter by Department:</label>
       <select id="statusDepartmentFilter" class="p-2 border rounded"></select>
@@ -1097,6 +1097,41 @@ function attachExportButtons() {
         else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') groups.ASP.push(fac);
         else if (desig === 'PROF' || desig === 'PROFESSOR') groups.Prof.push(fac);
       });
+      // Fetch all AP/ASP/Prof rows for this department for aggregation
+      const [apRows, aspRows, profRows] = await Promise.all([
+        supabaseClient.from('AP').select('*').eq('Department', selectedStatusDepartment),
+        supabaseClient.from('ASP').select('*').eq('Department:', selectedStatusDepartment),
+        supabaseClient.from('Prof').select('*').eq('Department:', selectedStatusDepartment)
+      ]);
+      // Helper to aggregate all rows for a faculty and status index
+      function getBestStatusForFaculty(fac, key, idx) {
+        let rows = [];
+        let facNamesToTry = [];
+        if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
+        if (fac.Name) facNamesToTry.push(fac.Name);
+        if (fac.email) facNamesToTry.push(fac.email);
+        facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n || '').toString().trim().toLowerCase()).filter(Boolean)));
+        if (key === 'AP') rows = apRows.data || [];
+        else if (key === 'ASP') rows = aspRows.data || [];
+        else if (key === 'Prof') rows = profRows.data || [];
+        // Find all rows for this faculty
+        let facRows = rows.filter(r => {
+          let rowName = (r['Portfolio Member Name'] || r['Portfolio Member Name:'] || r['Portfolio Memeber Name'] || r['faculty_name'] || r['Faculty Name'] || r['Name'] || r['email'] || '').toString().trim().toLowerCase();
+          return facNamesToTry.includes(rowName);
+        });
+        // If any row for this status is completed, return 'Completed'
+        for (let r of facRows) {
+          let statusVal = r[`Status_${idx}`] || '-';
+          const val = (statusVal || '').trim().toLowerCase();
+          if (val === 'completed') return 'Completed';
+        }
+        // Otherwise, return the latest row's value if exists
+        if (facRows.length > 0) {
+          let statusVal = facRows[0][`Status_${idx}`] || '-';
+          return statusVal;
+        }
+        return '-';
+      }
       let html = '';
       // Define scope/description arrays for headers
       // Only show General Section columns (not compliance/targeted)
@@ -1229,20 +1264,21 @@ function attachExportButtons() {
               }
             }
           }
-          // Percentage calculation: completed=1, not applicable/na=skip, any other=0
+          // Percentage calculation: completed=1 if any row for that status is completed, not applicable/na=skip, any other=0
           let completedCount = 0;
           let applicableCount = 0;
           for (let idx of generalIdx) {
-            let statusVal = row ? (row[`Status_${idx}`] || '-') : '-';
+            // Use the new aggregation logic
+            let statusVal = getBestStatusForFaculty(fac, key, idx);
             const val = (statusVal || '').trim().toLowerCase();
             if (val === 'not applicable' || val === 'na') continue;
             applicableCount += 1;
             if (val === 'completed') completedCount += 1;
           }
           const percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) : 0;
-          html += `<tr><td class="px-2 py-2 font-medium text-blue-700 cursor-pointer underline" onclick="viewStatusFacultyForm('${key}','${(fac.Name || '').replace(/'/g, "\'")}', '${selectedStatusDepartment.replace(/'/g, "\'")}')">${fac.Name || fac['Portfolio Member Name'] || fac.email || ''}<div class='text-sm ${percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600'} font-semibold'>${percentage}%</div></td>`;
+          html += `<tr><td class="px-2 py-2 font-medium text-blue-700 cursor-pointer underline" onclick="viewStatusFacultyForm('${key}','${(fac.Name || '').replace(/'/g, "\'")}', '${selectedStatusDepartment.replace(/'/g, "\'")})">${fac.Name || fac['Portfolio Member Name'] || fac.email || ''}<div class='text-sm ${percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600'} font-semibold'>${percentage}%</div></td>`;
           for (let idx of generalIdx) {
-            let statusVal = row ? (row[`Status_${idx}`] || '-') : '-';
+            let statusVal = getBestStatusForFaculty(fac, key, idx);
             let display = '-';
             let statusClass = '';
             if (statusVal && typeof statusVal === 'string') {
