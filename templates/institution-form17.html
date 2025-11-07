@@ -198,7 +198,13 @@ document.addEventListener('DOMContentLoaded', function() {
 		tr.innerHTML = `
 			<td class="border px-4 py-3 text-center">${idx}</td>
 			<td class="border px-4 py-3">${name}</td>
-			<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
+			<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2">
+				<option value="">Select</option>
+				<option>Completed</option>
+				<option>In Progress</option>
+				<option>Yet to be Completed</option>
+				<option>Not Applicable</option>
+			</select></td>
 			<td class="border px-4 py-3"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-2 py-2" placeholder="0-200 chars" /></td>
 			<td class="border px-4 py-3">
 				<label class="custom-upload">
