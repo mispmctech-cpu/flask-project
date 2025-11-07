@@ -305,22 +305,36 @@
       }
 
       // Build sets of accepted and rejected composite keys.
-      // Prefer robust composite key using input_id + table_name when available.
+      // Primary matching using input_id, secondary using composite keys when available.
       const acceptedCompositeKeys = new Set();
+      const acceptedInputIds = new Set(); // Primary matching method
       const acceptedFallbackKeys = new Set();
       for (const v of acceptedRows) {
+        // Primary: Store input_id for direct matching
+        if (v.input_id) {
+          acceptedInputIds.add(v.input_id.toString());
+        }
+        // Secondary: Store composite key if both input_id and table_name exist
         if (v.input_id && v.table_name) {
           acceptedCompositeKeys.add(`${v.input_id}__${v.table_name}`);
         }
+        // Fallback: Legacy matching method
         const key = `${v.department}|${v.portfolio_name}|${v.portfolio_member_name}|${v.verified_at || ''}`;
         acceptedFallbackKeys.add(key);
       }
       const rejectedCompositeKeys = new Set();
+      const rejectedInputIds = new Set(); // Primary matching method
       const rejectedFallbackKeys = new Set();
       for (const r of rejectedRows) {
+        // Primary: Store input_id for direct matching
+        if (r.input_id) {
+          rejectedInputIds.add(r.input_id.toString());
+        }
+        // Secondary: Store composite key if both input_id and table_name exist
         if (r.input_id && r.table_name) {
           rejectedCompositeKeys.add(`${r.input_id}__${r.table_name}`);
         }
+        // Fallback: Legacy matching method
         const key = `${r.department}|${r.portfolio_name}|${r.portfolio_member_name}|${r.submitted_at || r.rejected_at || ''}`;
         rejectedFallbackKeys.add(key);
       }
@@ -358,9 +372,22 @@
       // Debug: log all loaded records from both tables
       console.log('Loaded records from Hod-workdone and hod-workdone:', data);
 
-      // Filter out rows that are already accepted or rejected using composite key (without table_name)
+      // Filter out rows that are already accepted or rejected
       const filtered = (data || []).filter(row => {
-        // If the row includes input_id and table_name, prefer that for exact matching
+        // Primary check: If input_id exists, check if it's already accepted/rejected
+        if (row.input_id) {
+          const inputIdStr = row.input_id.toString();
+          if (acceptedInputIds.has(inputIdStr)) {
+            console.log('Filtered out (already accepted by input_id):', row);
+            return false;
+          }
+          if (rejectedInputIds.has(inputIdStr)) {
+            console.log('Filtered out (rejected by input_id):', row);
+            return false;
+          }
+        }
+
+        // Secondary check: If both input_id and table_name exist, check composite key
         const rowCompositeKey = (row.input_id && row.table_name) ? `${row.input_id}__${row.table_name}` : null;
         if (rowCompositeKey) {
           if (acceptedCompositeKeys.has(rowCompositeKey)) {
@@ -373,7 +400,7 @@
           }
         }
 
-        // Fallback: use department|portfolio|member|timestamp composite key (legacy behavior)
+        // Fallback check: Use department|portfolio|member|timestamp composite key (legacy behavior)
         const key = `${row.department}|${row.portfolio_name}|${row.portfolio_member_name}|${row.verified_at || ''}`;
         if (acceptedFallbackKeys.has(key)) {
           console.log('Filtered out (already accepted by fallback key):', row);
