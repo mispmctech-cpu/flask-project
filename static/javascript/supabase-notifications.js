@@ -93,11 +93,18 @@ async function postNotification() {
   }
   try {
     // Use .select() to return inserted row
+    // If on HR page, force sender and role to 'HR'
+    let sender = getUsername();
+    let role = getRole();
+    if (window.location.pathname.endsWith('hr.html')) {
+      sender = 'HR';
+      role = 'HR';
+    }
     const response = await supabase.from('notifications').insert([
       {
         message: text,
-        sender: getUsername(),
-        role: getRole(),
+        sender: sender,
+        role: role,
         audience: 'all',
         created_at: new Date().toISOString()
       }
@@ -110,6 +117,8 @@ async function postNotification() {
       errorDiv.textContent = 'Notification posted!';
       errorDiv.className = 'text-green-600 font-semibold mb-2';
       input.value = '';
+      // Refresh notifications list immediately
+      if (typeof fetchNotifications === 'function') fetchNotifications();
     } else {
       errorDiv.textContent = 'Unknown error. Full response: ' + JSON.stringify(response, null, 2);
       errorDiv.className = 'text-red-600 font-semibold mb-2';
