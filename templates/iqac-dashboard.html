@@ -1100,8 +1100,8 @@ function attachExportButtons() {
       // Fetch all AP/ASP/Prof rows for this department for aggregation
       const [apRows, aspRows, profRows] = await Promise.all([
         supabaseClient.from('AP').select('*').eq('Department', selectedStatusDepartment),
-        supabaseClient.from('ASP').select('*').eq('Department:', selectedStatusDepartment),
-        supabaseClient.from('Prof').select('*').eq('Department:', selectedStatusDepartment)
+        supabaseClient.from('ASP').select('*').eq('"Department:"', selectedStatusDepartment),
+        supabaseClient.from('Prof').select('*').eq('"Department:"', selectedStatusDepartment)
       ]);
       // Helper to aggregate all rows for a faculty and status index
       function getBestStatusForFaculty(fac, key, idx) {
