@@ -320,6 +320,25 @@
         </form>
       </div>
     </div>
+
+    <!-- Core Scope Selection Modal (Monthly or Yearly) -->
+    <div id="coreScopeSelectionModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
+        <button onclick="closeCoreScopeModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <h3 class="text-xl font-bold mb-4 text-purple-700">Select Form Type</h3>
+        <p class="text-gray-600 mb-6">Please choose the type of form you want to fill:</p>
+        <div class="space-y-3">
+          <button id="monthlyFormBtn" class="w-full bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold text-lg transition">
+            Faculty Core Scope(Monthly)
+          </button>
+          <button id="yearlyFormBtn" class="w-full bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold text-lg transition">
+            Faculty Mandatory Scope(Yearly)
+          </button>
+        </div>
+        <button onclick="closeCoreScopeModal()" class="w-full mt-4 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded font-semibold">Cancel</button>
+      </div>
+    </div>
+
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
     <script>
       // Hide/unhide salary and sensitive details based on admin setting
@@ -1347,7 +1366,7 @@
           ninthFormLink = "form-prof.html";
         }
         if (ninthFormName && ninthFormLink) {
-          formsHtmlCore += `<tr><td class="px-4 py-2">1</td><td class="px-4 py-2">${ninthFormName}</td><td class="px-4 py-2"><button onclick="openForm('${ninthFormLink}', '${data['department']}', '${ninthFormName}', '${data['Name']}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button></td></tr>`;
+          formsHtmlCore += `<tr><td class="px-4 py-2">1</td><td class="px-4 py-2">${ninthFormName}</td><td class="px-4 py-2"><button onclick="openCoreScopeModal('${ninthFormLink}', '${data['department']}', '${ninthFormName}', '${data['Name']}', '${designation}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button></td></tr>`;
         }
         document.getElementById("facultyFormsDept").innerHTML =
           formsHtmlDept ||
@@ -1355,8 +1374,45 @@
         document.getElementById("facultyFormsCore").innerHTML =
           formsHtmlCore ||
           '<tr><td colspan="3" class="text-gray-400 text-center p-4">No core scope form assigned.</td></tr>';
+      
+      // Core Scope Modal Functions
+      let _coreScopeFormData = {};
+      
+      window.openCoreScopeModal = function(yearlyFormUrl, department, portfolio, memberName, designation) {
+        // Store data for later use
+        _coreScopeFormData = {
+          yearlyFormUrl: yearlyFormUrl,
+          department: department,
+          portfolio: portfolio,
+          memberName: memberName,
+          designation: designation
+        };
+        
+        // Show modal
+        document.getElementById('coreScopeSelectionModal').classList.remove('hidden');
+      };
+      
+      window.closeCoreScopeModal = function() {
+        document.getElementById('coreScopeSelectionModal').classList.add('hidden');
+        _coreScopeFormData = {};
+      };
+      
+      // Monthly Form Button Handler
+      document.getElementById('monthlyFormBtn').addEventListener('click', function() {
+        // For monthly, always use faculty-core-scope.html regardless of designation
+        openForm('faculty-core-scope.html', _coreScopeFormData.department, 'Faculty Core Scope (Monthly)', _coreScopeFormData.memberName, _coreScopeFormData.designation);
+        closeCoreScopeModal();
+      });
+      
+      // Yearly Form Button Handler
+      document.getElementById('yearlyFormBtn').addEventListener('click', function() {
+        // For yearly, use the designation-specific form
+        openForm(_coreScopeFormData.yearlyFormUrl, _coreScopeFormData.department, _coreScopeFormData.portfolio, _coreScopeFormData.memberName, _coreScopeFormData.designation);
+        closeCoreScopeModal();
+      });
+      
       // Auto-fetch Open Form logic with form status check
-      window.openForm = async function(formUrl, department, portfolio, memberName) {
+      window.openForm = async function(formUrl, department, portfolio, memberName, designation) {
         try {
           // Extract form identifier from URL
           let formId = formUrl.replace('.html', '');
@@ -1374,6 +1430,7 @@
             localStorage.setItem('selectedDepartment', department);
             localStorage.setItem('selectedPortfolio', portfolio);
             localStorage.setItem('selectedMemberName', memberName);
+            if (designation) localStorage.setItem('selectedDesignation', designation);
             window.location.href = formUrl;
             return;
           }
@@ -1389,6 +1446,7 @@
           localStorage.setItem('selectedDepartment', department);
           localStorage.setItem('selectedPortfolio', portfolio);
           localStorage.setItem('selectedMemberName', memberName);
+          if (designation) localStorage.setItem('selectedDesignation', designation);
           window.location.href = formUrl;
 
         } catch (error) {
@@ -1397,6 +1455,7 @@
           localStorage.setItem('selectedDepartment', department);
           localStorage.setItem('selectedPortfolio', portfolio);
           localStorage.setItem('selectedMemberName', memberName);
+          if (designation) localStorage.setItem('selectedDesignation', designation);
           window.location.href = formUrl;
         }
       }

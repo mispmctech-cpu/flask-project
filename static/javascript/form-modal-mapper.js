@@ -50,82 +50,356 @@ function getFormModalContent(row, details) {
     return html;
   }
 
-    // form-ap.html
+  // Core Scope (Monthly) form - CHECK THIS BEFORE AP FORM
   if (
-    portfolio.includes('faculty core scope') ||
-    portfolio.includes('ap form') ||
-    portfolio.includes('ap core scope form')
+    tableName.includes('core_scope') ||
+    tableName.includes('core-scope') ||
+    (portfolio.includes('core scope') && portfolio.includes('monthly'))
   ) {
-    html += `<div class="mb-4"><span class="text-2xl font-extrabold text-purple-800 tracking-wide">Faculty Core Scope - AP Form</span></div>`;
-    html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">`;
+    html += `<div class="mb-4"><span class="text-2xl font-extrabold text-purple-800 tracking-wide">Faculty Core Scope (Monthly)</span></div>`;
+    html += `<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">`;
+    html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || '-'}</span></div>`;
+    html += `</div>`;
+    
+    const coreScopeLabels = [
+      'Teaching & Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+      'Teaching & Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+      'Teaching & Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+      'Teaching & Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+      'Student Mentorship & Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
+      'Student Mentorship & Support: Monitor student attendance, performance, and well-being.',
+      'Student Mentorship & Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+      'Student Mentorship & Support: Maintain the Mentor book for assigned mentee.',
+      'Student Mentorship & Support: Consolidate innovative course material, Lab manuals',
+      'Research and Development: Present at conferences.',
+      'Research and Development: Guide student research and final-year projects',
+      'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
+      'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
+      'Institutional Development: Serve on academic and administrative committees.',
+      'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.'
+    ];
+
+    html += `<div class="overflow-x-auto">`;
+    html += `<table class="w-full text-sm border border-gray-300">`;
+    html += `<thead class="bg-orange-400 text-white"><tr>`;
+    html += `<th class="border border-gray-300 px-3 py-2 text-center" style="width: 5%;">S.No</th>`;
+    html += `<th class="border border-gray-300 px-3 py-2" style="width: 40%;">Assistant Professor Scope</th>`;
+    html += `<th class="border border-gray-300 px-3 py-2" style="width: 15%;">Status</th>`;
+    html += `<th class="border border-gray-300 px-3 py-2" style="width: 30%;">Description</th>`;
+    html += `<th class="border border-gray-300 px-3 py-2 text-center" style="width: 10%;">File</th>`;
+    html += `</tr></thead><tbody>`;
+    
+    for (let i = 1; i <= 15; i++) {
+      const statusVal = details[`Status_${i}`] || '-';
+      const descVal = details[`Description_${i}`] || '-';
+      let fileVal = details[`Upload The Scanned File_${i}`];
+      let fileHtml = '-';
+      if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
+        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-xs'>View File</a>`;
+      }
+      
+      html += `<tr class="hover:bg-gray-50 ${i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}">`;
+      html += `<td class="border border-gray-300 px-3 py-2 text-center font-semibold">${i}</td>`;
+      html += `<td class="border border-gray-300 px-3 py-2">${coreScopeLabels[i-1]}</td>`;
+      html += `<td class="border border-gray-300 px-3 py-2"><span class="px-2 py-1 rounded ${statusVal === 'Completed' || statusVal === 'Completed and Updated' ? 'bg-green-100 text-green-800' : statusVal === 'Not Applicable' ? 'bg-gray-100 text-gray-600' : 'bg-yellow-100 text-yellow-800'}">${statusVal}</span></td>`;
+      html += `<td class="border border-gray-300 px-3 py-2 text-sm">${descVal}</td>`;
+      html += `<td class="border border-gray-300 px-3 py-2 text-center">${fileHtml}</td>`;
+      html += `</tr>`;
+    }
+    
+    html += `</tbody></table></div>`;
+    return html;
+  }
+
+    // form-ap.html (AP Yearly Form - 7 items only)
+  if (
+    portfolio.includes('ap form') ||
+    portfolio.includes('ap core scope form') ||
+    tableName === 'ap' ||
+    tableName.toLowerCase() === 'ap(yearly)' ||
+    portfolio.toLowerCase().includes('ap yearly')
+  ) {
+    html += `<div class="mb-4"><span class="text-2xl font-extrabold text-purple-800 tracking-wide">Assistant Professor: Faculty Mandatory Scope (Yearly)</span></div>`;
+    html += `<div class="text-center mb-4"><span class="text-lg text-gray-600 italic">in Research, Innovations and Extension activity/ Faculty Contributions</span></div>`;
+    html += `<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-purple-50 p-4 rounded-lg">`;
     html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
     html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
     html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || '-'}</span></div>`;
     html += `</div>`;
-    // Section headers for visual clarity
-    const sectionMap = [
-      { title: 'Teaching and Curriculum Delivery', color: 'bg-blue-100 text-blue-800', range: [1, 4] },
-      { title: 'Student Mentorship and Support', color: 'bg-green-100 text-green-800', range: [5, 9] },
-      { title: 'Research and Development', color: 'bg-yellow-100 text-yellow-800', range: [10, 12] },
-      { title: 'Institutional Development', color: 'bg-pink-100 text-pink-800', range: [13, 15] },
-      { title: 'Professional Development', color: 'bg-purple-100 text-purple-800', range: [16, 18] },
-      { title: 'Community and Industry Engagement', color: 'bg-orange-100 text-orange-800', range: [19, 20] },
-      { title: 'Administrative Duties', color: 'bg-gray-100 text-gray-800', range: [21, 22] },
-      { title: 'Other', color: 'bg-red-100 text-red-800', range: [23, 23] },
+    
+    // Table view for 7 yearly items
+    const apYearlyLabels = [
+      'Present at Conferences.',
+      'Guide student research and final-year projects.',
+      'Attend FDPs / workshop/Seminars',
+      'NPTEL/ MOOC certifications',
+      'Facilitate industry-institute interaction through guest lectures, Internships.',
+      'Engage in extension activities, and social outreach programs.',
+      'Membership in professional body'
     ];
-    const scopes = [
-      'Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
-      'Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
-      'Incorporate innovative teaching methods, including ICT tools and experiential learning.',
-      'Prepare Product model and instructional Chart for the assigned subject.',
-      'Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
-      'Monitor student attendance, performance, and well-being.',
-      'Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
-      'Maintain the Mentor book for assigned mentee.',
-      'Consolidate innovative course material, Lab manuals',
-      'Publish in peer-reviewed journals',
-      'Apply for research grants',
-      'Guide student research and final-year projects',
-      'Participate in curriculum development and revision through Boards of Studies.',
-      'Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
-      'Serve on academic and administrative committees.',
-      'Organize FDP/ workshops/ seminar.',
-      'NPTEL/MOOC and certifications.',
-      'Memberships in professional bodies.',
-      'Facilitate MoUs',
-      'Engage in consultancy',
-      'Maintain academic records, course files, Log Book and student evaluations.',
-      'Assist in examination duties, including question paper setting, invigilation, and evaluation.',
-      'Other duties as assigned.'
+    
+    const apYearlyTargets = [
+      '1/Year',
+      '2 Batch/Year',
+      '2/Year',
+      '2/Sem',
+      '1/SEM',
+      '1 / SEM',
+      '1 per year'
     ];
-    let sectionIdx = 0;
-    html += `<div class="divide-y">`;
-    for (let i = 1; i <= 23; i++) {
-      // Section header logic
-      if (sectionIdx < sectionMap.length && i === sectionMap[sectionIdx].range[0]) {
-        html += `<div class="col-span-3 py-2 px-3 rounded ${sectionMap[sectionIdx].color} font-bold text-lg mt-4 mb-2 shadow-sm">${sectionMap[sectionIdx].title}</div>`;
+    
+    const apYearlyTAT = [
+      '31st May',
+      '31st May',
+      '31st May',
+      '31st DEC/ 31st May',
+      '31st DEC/ 31st May',
+      '31st DEC / 31st May',
+      '31st May'
+    ];
+    
+    html += `<div class="overflow-x-auto"><table class="w-full text-sm border">`;
+    html += `<thead class="bg-yellow-400"><tr>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 5%">S.NO</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 35%">PARTICULAR</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">TARGET</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">TAT</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">Compliance</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">Description</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">File</th>`;
+    html += `</tr></thead><tbody>`;
+    
+    for (let i = 1; i <= 7; i++) {
+      const status = details[`Status_${i}`] || '-';
+      const description = details[`Description_${i}`] || '-';
+      const fileVal = details[`Upload The Scanned File_${i}`];
+      
+      // Status color coding
+      let statusClass = 'bg-gray-100 text-gray-800';
+      if (status.toLowerCase().includes('completed')) {
+        statusClass = 'bg-green-100 text-green-800';
+      } else if (status.toLowerCase().includes('in progress')) {
+        statusClass = 'bg-yellow-100 text-yellow-800';
+      } else if (status.toLowerCase().includes('not applicable')) {
+        statusClass = 'bg-gray-200 text-gray-600';
       }
-      if (sectionIdx < sectionMap.length && i > sectionMap[sectionIdx].range[1]) {
-        sectionIdx++;
-        if (sectionIdx < sectionMap.length && i === sectionMap[sectionIdx].range[0]) {
-          html += `<div class="col-span-3 py-2 px-3 rounded ${sectionMap[sectionIdx].color} font-bold text-lg mt-4 mb-2 shadow-sm">${sectionMap[sectionIdx].title}</div>`;
-        }
-      }
-      html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-2 py-2 items-center border-b">`;
-      html += `<div class="font-semibold text-gray-700">${i}. ${scopes[i-1]}</div>`;
-      html += `<div><span class="text-gray-500">Status:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
-      html += `<div><span class="text-gray-500">Description:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
-      let fileVal = details[`Upload the scanned file_${i}`];
-      let fileHtml = '-';
+      
+      html += `<tr class="hover:bg-gray-50">`;
+      html += `<td class="border px-2 py-2 text-center font-semibold">${i}</td>`;
+      html += `<td class="border px-2 py-2">${apYearlyLabels[i-1]}</td>`;
+      html += `<td class="border px-2 py-2 text-center">${apYearlyTargets[i-1]}</td>`;
+      html += `<td class="border px-2 py-2 text-center">${apYearlyTAT[i-1]}</td>`;
+      html += `<td class="border px-2 py-2"><span class="inline-block px-2 py-1 rounded text-xs font-semibold ${statusClass}">${status}</span></td>`;
+      html += `<td class="border px-2 py-2 text-sm">${description}</td>`;
+      
+      let fileHtml = '<span class="text-gray-400">-</span>';
       if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
-        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
+        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs'>View File</a>`;
       }
-      html += `<div class="md:col-span-3 ml-2">${fileHtml !== '-' ? `<span class='text-gray-500'>File:</span> ${fileHtml}` : ''}</div>`;
-      html += `</div>`;
+      html += `<td class="border px-2 py-2 text-center">${fileHtml}</td>`;
+      html += `</tr>`;
     }
-    html += `</div>`;
+    
+    html += `</tbody></table></div>`;
     return html;
   }
+
+  // form-asp.html (ASP Yearly Form - 7 items only)
+  if (
+    portfolio.includes('asp form') ||
+    portfolio.includes('asp core scope form') ||
+    tableName === 'asp' ||
+    tableName.toLowerCase() === 'asp(yearly)' ||
+    portfolio.toLowerCase().includes('asp yearly')
+  ) {
+    html += `<div class="mb-4"><span class="text-2xl font-extrabold text-purple-800 tracking-wide">Associate Professor: Faculty Mandatory Scope (Yearly)</span></div>`;
+    html += `<div class="text-center mb-4"><span class="text-lg text-gray-600 italic">in Research, Innovations and Extension activity/ Faculty Contributions</span></div>`;
+    html += `<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-purple-50 p-4 rounded-lg">`;
+    html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || '-'}</span></div>`;
+    html += `</div>`;
+    
+    // Table view for 7 yearly items (matching exact image content)
+    const aspYearlyLabels = [
+      'Publish in peer-reviewed journals',
+      'Apply for research grants',
+      'Guide student research and final-year projects.',
+      'Organize FDPs / workshop/Seminars',
+      'NPTEL/ MOOC certifications',
+      'Facilitate industry-institute interaction through guest lectures, Internships.',
+      'Engage in Consultancy.'
+    ];
+    
+    const aspYearlyTargets = [
+      '1/Year',
+      '1/per',
+      '2 Batch/Year',
+      '1/Year',
+      '1/Sem',
+      '1/SEM',
+      '1 / YEAR'
+    ];
+    
+    const aspYearlyTAT = [
+      '31st May',
+      '31st May',
+      '31st May',
+      '31st May',
+      '31st DEC/ 31st May',
+      '31st DEC/ 31st May',
+      '31st May'
+    ];
+    
+    html += `<div class="overflow-x-auto"><table class="w-full text-sm border">`;
+    html += `<thead class="bg-yellow-400"><tr>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 5%">S.NO</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 35%">PARTICULAR</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">TARGET</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">TAT</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">Compliance</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">Description</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">File</th>`;
+    html += `</tr></thead><tbody>`;
+    
+    for (let i = 1; i <= 7; i++) {
+      const status = details[`Status_${i}`] || '-';
+      const description = details[`Description_${i}`] || '-';
+      const fileVal = details[`Upload The Scanned File_${i}`];
+      
+      // Status color coding
+      let statusClass = 'bg-gray-100 text-gray-800';
+      if (status.toLowerCase().includes('completed')) {
+        statusClass = 'bg-green-100 text-green-800';
+      } else if (status.toLowerCase().includes('in progress')) {
+        statusClass = 'bg-yellow-100 text-yellow-800';
+      } else if (status.toLowerCase().includes('not applicable')) {
+        statusClass = 'bg-gray-200 text-gray-600';
+      }
+      
+      html += `<tr class="hover:bg-gray-50">`;
+      html += `<td class="border px-2 py-2 text-center font-semibold">${i}</td>`;
+      html += `<td class="border px-2 py-2">${aspYearlyLabels[i-1]}</td>`;
+      html += `<td class="border px-2 py-2 text-center">${aspYearlyTargets[i-1]}</td>`;
+      html += `<td class="border px-2 py-2 text-center">${aspYearlyTAT[i-1]}</td>`;
+      html += `<td class="border px-2 py-2"><span class="inline-block px-2 py-1 rounded text-xs font-semibold ${statusClass}">${status}</span></td>`;
+      html += `<td class="border px-2 py-2 text-sm">${description}</td>`;
+      
+      let fileHtml = '<span class="text-gray-400">-</span>';
+      if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
+        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs'>View File</a>`;
+      }
+      html += `<td class="border px-2 py-2 text-center">${fileHtml}</td>`;
+      html += `</tr>`;
+    }
+    
+    html += `</tbody></table></div>`;
+    return html;
+  }
+
+  // form-prof.html (Professor Yearly Form - 8 items only)
+  if (
+    portfolio.includes('prof form') ||
+    portfolio.includes('prof core scope form') ||
+    portfolio.includes('professor form') ||
+    tableName === 'prof' ||
+    tableName.toLowerCase() === 'prof(yearly)' ||
+    portfolio.toLowerCase().includes('prof yearly')
+  ) {
+    html += `<div class="mb-4"><span class="text-2xl font-extrabold text-purple-800 tracking-wide">Professor: Faculty Mandatory Scope (Yearly)</span></div>`;
+    html += `<div class="text-center mb-4"><span class="text-lg text-gray-600 italic">in Research, Innovations and Extension activity/ Faculty Contributions</span></div>`;
+    html += `<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-purple-50 p-4 rounded-lg">`;
+    html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || '-'}</span></div>`;
+    html += `</div>`;
+    
+    // Table view for 8 yearly items (matching exact image content)
+    const profYearlyLabels = [
+      'Publish in peer-reviewed journals',
+      'Apply for research grants',
+      'Guide student research and final-year projects.',
+      'Organize FDPs / workshop/Seminars',
+      'NPTEL/ MOOC certifications',
+      'Facilitate MoU',
+      'Engage in Consultancy.',
+      'Membership in professional body'
+    ];
+    
+    const profYearlyTargets = [
+      '2/Year',
+      '1/year',
+      '2 Batch/Year',
+      '1/Year',
+      '1/Sem',
+      '1/Year',
+      '1 / YEAR',
+      '1 per year'
+    ];
+    
+    const profYearlyTAT = [
+      '31st May',
+      '31st May',
+      '31st May',
+      '31st May',
+      '31st DEC/ 31st May',
+      '31st DEC/ 31st May',
+      '31st May',
+      '31st May'
+    ];
+    
+    html += `<div class="overflow-x-auto"><table class="w-full text-sm border">`;
+    html += `<thead class="bg-yellow-400"><tr>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 5%">S.NO</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 35%">PARTICULAR</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">TARGET</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">TAT</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">Compliance</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">Description</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">File</th>`;
+    html += `</tr></thead><tbody>`;
+    
+    for (let i = 1; i <= 8; i++) {
+      const status = details[`Status_${i}`] || '-';
+      const description = details[`Description_${i}`] || '-';
+      const fileVal = details[`Upload The Scanned File_${i}`];
+      
+      // Status color coding
+      let statusClass = 'bg-gray-100 text-gray-800';
+      if (status.toLowerCase().includes('completed')) {
+        statusClass = 'bg-green-100 text-green-800';
+      } else if (status.toLowerCase().includes('in progress')) {
+        statusClass = 'bg-yellow-100 text-yellow-800';
+      } else if (status.toLowerCase().includes('not applicable')) {
+        statusClass = 'bg-gray-200 text-gray-600';
+      }
+      
+      html += `<tr class="hover:bg-gray-50">`;
+      html += `<td class="border px-2 py-2 text-center font-semibold">${i}</td>`;
+      html += `<td class="border px-2 py-2">${profYearlyLabels[i-1]}</td>`;
+      html += `<td class="border px-2 py-2 text-center">${profYearlyTargets[i-1]}</td>`;
+      html += `<td class="border px-2 py-2 text-center">${profYearlyTAT[i-1]}</td>`;
+      html += `<td class="border px-2 py-2"><span class="inline-block px-2 py-1 rounded text-xs font-semibold ${statusClass}">${status}</span></td>`;
+      html += `<td class="border px-2 py-2 text-sm">${description}</td>`;
+      
+      let fileHtml = '<span class="text-gray-400">-</span>';
+      if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
+        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs'>View File</a>`;
+      }
+      html += `<td class="border px-2 py-2 text-center">${fileHtml}</td>`;
+      html += `</tr>`;
+    }
+    
+    html += `</tbody></table></div>`;
+    return html;
+  }
+
     // Institution-form8.html
     if (row.table && row.table.toLowerCase().includes('institution-form8')) {
       html += `<div class=\"mb-4\"><span class=\"text-3xl font-extrabold text-[#7d4c9e] tracking-wide\">PLACEMENT CELL : MONTHLY</span></div>`;
@@ -1003,7 +1277,79 @@ function getFormModalContent(row, details) {
     let freq = '';
     let tableName = row.table || '';
     
-    // Detect frequency from table name or portfolio 
+    // If it's form7-monthly, show table view with all 9 rows
+    if (tableName.includes('form7-monthly')) {
+      html += `<div class=\"mb-4\"><span class=\"text-2xl font-bold text-purple-700\">Student Support System Member (Discipline & Extra Curricular) - Monthly</span></div>`;
+      html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-6\">`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || details['Portfolio Memeber Name'] || details['faculty_name'] || details['Faculty Name'] || details['Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Week no:</span> <span>${details['Week no'] || details['Week No'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
+      html += `</div>`;
+      
+      // Table with 9 rows
+      const fileLabels = [
+        'Mentor File',
+        'Disciplinary Actions File',
+        'Extra-Curricular Activities & Achievements File (Sports, Yoga & Cultural etc.,)',
+        'National Festival celebration & Participation File',
+        'Extension Activities File',
+        'Students Feedback on Faculty File',
+        'Feedback Analysis & Action Taken Report File',
+        'Students Grievance Redressal file (Academic & Non Academic)',
+        'Self-Learning Facilities file'
+      ];
+      
+      const tats = [
+        'Weekly', 'Weekly', 'Twice in a Month', 'Twice in a Month', 
+        'Twice in a Month', 'Once in 2 Months', 'Once in 2 Months', 
+        'Once in 2 Months', 'Once in a Semester'
+      ];
+      
+      html += `<div class="overflow-x-auto mt-6">`;
+      html += `<table class="min-w-full border-collapse border border-gray-300">`;
+      html += `<thead><tr style="background: linear-gradient(90deg, #f59e42 0%, #fbbf24 100%);" class="text-white">`;
+      html += `<th class="border border-gray-300 px-3 py-2 text-left">S.No</th>`;
+      html += `<th class="border border-gray-300 px-3 py-2 text-left">Name of File</th>`;
+      html += `<th class="border border-gray-300 px-3 py-2 text-left">TAT</th>`;
+      html += `<th class="border border-gray-300 px-3 py-2 text-left">Status</th>`;
+      html += `<th class="border border-gray-300 px-3 py-2 text-left">Description</th>`;
+      html += `<th class="border border-gray-300 px-3 py-2 text-left">File</th>`;
+      html += `</tr></thead><tbody>`;
+      
+      for (let i = 1; i <= 9; i++) {
+        const status = details[`Status_${i}`] || '-';
+        const desc = details[`Description_${i}`] || '-';
+        const fileUrl = details[`Upload The Scanned File_${i}`];
+        
+        let statusColor = 'text-gray-700';
+        if (status.toLowerCase().includes('completed')) statusColor = 'text-green-600 font-semibold';
+        else if (status.toLowerCase().includes('under process')) statusColor = 'text-yellow-600 font-semibold';
+        else if (status.toLowerCase().includes('yet to be')) statusColor = 'text-orange-600 font-semibold';
+        
+        let fileHtml = '-';
+        if (fileUrl && typeof fileUrl === 'string' && fileUrl !== 'null' && fileUrl.trim() !== '' && fileUrl !== '-') {
+          fileHtml = `<a href='${fileUrl}' target='_blank' class='text-blue-600 hover:text-blue-800 underline'>📄 View</a>`;
+        }
+        
+        html += `<tr class="hover:bg-gray-50">`;
+        html += `<td class="border border-gray-300 px-3 py-2 text-center">${i}</td>`;
+        html += `<td class="border border-gray-300 px-3 py-2">${fileLabels[i-1]}</td>`;
+        html += `<td class="border border-gray-300 px-3 py-2">${tats[i-1]}</td>`;
+        html += `<td class="border border-gray-300 px-3 py-2 ${statusColor}">${status}</td>`;
+        html += `<td class="border border-gray-300 px-3 py-2">${desc}</td>`;
+        html += `<td class="border border-gray-300 px-3 py-2">${fileHtml}</td>`;
+        html += `</tr>`;
+      }
+      
+      html += `</tbody></table></div>`;
+      return html;
+    }
+    
+    // Detect frequency from table name or portfolio for other form7 variants
     if (tableName.includes('weekly') || portfolio.includes('weekly')) freq = 'weekly';
     else if (tableName.includes('2 month') || tableName.includes('2months') || portfolio.includes('2 month') || portfolio.includes('2months') || portfolio.includes('once in 2 months')) freq = '2months';
     else if (tableName.includes('semester') || portfolio.includes('semester')) freq = 'semester';
@@ -1060,40 +1406,82 @@ function getFormModalContent(row, details) {
     return html;
   }
 
-  // Faculty-form4.html - Course Outcome & Program Outcome Member (Exam Cell)
-  // Faculty-form4.html - Course Outcome & Program Outcome Member (Exam Cell) (Monthly, form4-once in a month)
-  if (portfolio.includes('course outcome & program outcome member') && (row.table || '').toLowerCase().includes('form4-once in a month')) {
+  // Faculty-form4.html - Course Outcome & Program Outcome Member (Exam Cell) (form4 - monthly table with 17 rows)
+  if (portfolio.includes('course outcome & program outcome member') && 
+      ((row.table || '').toLowerCase().includes('form4-once in a month') || 
+       (row.table || '').toLowerCase().includes('form4 - monthly') || 
+       (row.table || '').toLowerCase().includes('form4-monthly'))) {
     html += `<div class=\"mb-4\"><span class=\"text-2xl font-bold text-purple-700\">Course Outcome & Program Outcome Member (Exam Cell) - Monthly</span></div>`;
     html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-6\">`;
     html += `<div><span class=\"font-semibold text-gray-700\">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
     html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
     html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Memeber Name'] || details['Portfolio Member Name'] || details['faculty_name'] || details['Faculty Name'] || details['Name'] || '-'}</span></div>`;
     html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Week no:</span> <span>${details['Week no'] || details['Week No'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
+    html += `<div><span class=\"font-semibold text-gray-700\">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
     html += `</div>`;
-    // Only 8 required fields
-    const labels = [
-      'Exam TimeTable File',
-      'Internal Exam Question Paper File With Answer Key',
+    
+    // Table with 17 rows
+    const fileLabels = [
+      'Slip Test File',
+      'Exam Time Table File',
+      'Internal Exam Question Paper File with Answer Key',
       'Result Analysis File',
       'Question Bank',
-      'Slow Learner Couching File',
-      'Action taken for Internal Test Failures File',
-      'Result File',
-      'ERP internal Mark Entry File'
+      'Slow Learner Coaching File',
+      'Action Taken for Internal Test Failures File',
+      'Retest File',
+      'ERP Internal Mark Entry File',
+      'Semester Result Analysis File',
+      'Average Grade point File',
+      'Success rate with Backlog & without Backlog',
+      'Academic Performance in second Year',
+      'Attainment of CO',
+      'Attainment of PO',
+      'Attainment of PSO',
+      'Mapping of CO & PO File'
     ];
-    html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4 mt-4'>`;
-    for (let i = 1; i <= labels.length; i++) {
-      html += `<div class='col-span-2 mt-4 mb-2'><span class=\"text-lg font-bold text-purple-700\">${i}. ${labels[i-1]}</span></div>`;
-      html += `<div><span class=\"font-semibold text-gray-700\">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
-      html += `<div><span class=\"font-semibold text-gray-700\">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
-      let fileVal = details[`Upload The Scanned File_${i}`];
+    
+    html += `<div class="overflow-x-auto mt-6">`;
+    html += `<table class="min-w-full border-collapse border border-gray-300">`;
+    html += `<thead><tr style="background: linear-gradient(90deg, #f59e42 0%, #fbbf24 100%);" class="text-white">`;
+    html += `<th class="border border-gray-300 px-3 py-2 text-left">S.No</th>`;
+    html += `<th class="border border-gray-300 px-3 py-2 text-left">Name of File</th>`;
+    html += `<th class="border border-gray-300 px-3 py-2 text-left">TAT</th>`;
+    html += `<th class="border border-gray-300 px-3 py-2 text-left">Status</th>`;
+    html += `<th class="border border-gray-300 px-3 py-2 text-left">Description</th>`;
+    html += `<th class="border border-gray-300 px-3 py-2 text-left">File</th>`;
+    html += `</tr></thead><tbody>`;
+    
+    const tats = ['Weekly', 'Once in a Month', 'Once in a Month', 'Once in a Month', 'Once in a Month', 'Once in a Month', 'Once in a Month', 'Once in a Month', 'Once in a Month', 'Once in a Semester', 'Once in a Semester', 'Once in a Semester', 'Once in a Semester', 'Once in a Semester', 'Once in a Semester', 'Once in a Semester', 'Once in a Semester'];
+    
+    for (let i = 1; i <= 17; i++) {
+      const status = details[`Status_${i}`] || '-';
+      const desc = details[`Description_${i}`] || '-';
+      const fileUrl = details[`Upload The Scanned File_${i}`];
+      
+      let statusColor = 'text-gray-700';
+      if (status.toLowerCase().includes('completed')) statusColor = 'text-green-600 font-semibold';
+      else if (status.toLowerCase().includes('under process')) statusColor = 'text-yellow-600 font-semibold';
+      else if (status.toLowerCase().includes('yet to be')) statusColor = 'text-orange-600 font-semibold';
+      
       let fileHtml = '-';
-      if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
-        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
+      if (fileUrl && typeof fileUrl === 'string' && fileUrl !== 'null' && fileUrl.trim() !== '' && fileUrl !== '-') {
+        fileHtml = `<a href='${fileUrl}' target='_blank' class='text-blue-600 hover:text-blue-800 underline'>📄 View</a>`;
       }
-      html += `<div><span class=\"font-semibold text-gray-700\">Upload The Scanned File_${i}:</span> <span>${fileHtml}</span></div>`;
+      
+      html += `<tr class="hover:bg-gray-50">`;
+      html += `<td class="border border-gray-300 px-3 py-2 text-center">${i}</td>`;
+      html += `<td class="border border-gray-300 px-3 py-2">${fileLabels[i-1]}</td>`;
+      html += `<td class="border border-gray-300 px-3 py-2">${tats[i-1]}</td>`;
+      html += `<td class="border border-gray-300 px-3 py-2 ${statusColor}">${status}</td>`;
+      html += `<td class="border border-gray-300 px-3 py-2">${desc}</td>`;
+      html += `<td class="border border-gray-300 px-3 py-2">${fileHtml}</td>`;
+      html += `</tr>`;
     }
-    html += `</div>`;
+    
+    html += `</tbody></table></div>`;
     return html;
   }
 
@@ -1102,7 +1490,84 @@ function getFormModalContent(row, details) {
     let freq = '';
     let tableName = row.table || '';
     
-    // Detect frequency from table name or portfolio
+    // If it's form8-monthly, show table view with all 13 rows
+    if (tableName.includes('form8-monthly')) {
+      html += `<div class=\"mb-4\"><span class=\"text-2xl font-bold text-purple-700\">Facilities & Technical support Member (Lab Member) - Monthly</span></div>`;
+      html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-6\">`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || details['Portfolio Memeber Name'] || details['faculty_name'] || details['Faculty Name'] || details['Name'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Week no:</span> <span>${details['Week no'] || details['Week No'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
+      html += `<div><span class=\"font-semibold text-gray-700\">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
+      html += `</div>`;
+      
+      // Table with 13 rows
+      const fileLabels = [
+        'Lab Student Entry Register File for all labs',
+        'Lab Observation and Record audit Report (2 Labs per week)',
+        'Nonteaching Faculty File',
+        'Non-Teaching Faculty Training File',
+        'List of Equipment\'s File for all Labs',
+        'Lab manual, Master Lab Manual with Readings Sample Observations & Records',
+        'Stock Register',
+        'Maintenance Register',
+        'Calibration register',
+        'Infrastructure File (Lab, Class, Seminar Hall Details with Geotag Photo)',
+        'New Lab Facility Created File',
+        'Library Book requirements File',
+        'Department Library File'
+      ];
+      
+      const tats = [
+        'Weekly', 'Weekly', 'Once in 3 Months', 'Once in 3 Months', 
+        'Once in a Semester', 'Once in a Semester', 'Once in a Semester', 
+        'Once in a Semester', 'Once in a Semester', 'Once in a Semester', 
+        'Once in a Semester', 'Once in a Semester', 'Once in a Semester'
+      ];
+      
+      html += `<div class="overflow-x-auto mt-6">`;
+      html += `<table class="min-w-full border-collapse border border-gray-300">`;
+      html += `<thead><tr style="background: linear-gradient(90deg, #f59e42 0%, #fbbf24 100%);" class="text-white">`;
+      html += `<th class="border border-gray-300 px-3 py-2 text-left">S.No</th>`;
+      html += `<th class="border border-gray-300 px-3 py-2 text-left">Name of File</th>`;
+      html += `<th class="border border-gray-300 px-3 py-2 text-left">TAT</th>`;
+      html += `<th class="border border-gray-300 px-3 py-2 text-left">Status</th>`;
+      html += `<th class="border border-gray-300 px-3 py-2 text-left">Description</th>`;
+      html += `<th class="border border-gray-300 px-3 py-2 text-left">File</th>`;
+      html += `</tr></thead><tbody>`;
+      
+      for (let i = 1; i <= 13; i++) {
+        const status = details[`Status_${i}`] || '-';
+        const desc = details[`Description_${i}`] || '-';
+        const fileUrl = details[`Upload The Scanned File_${i}`];
+        
+        let statusColor = 'text-gray-700';
+        if (status.toLowerCase().includes('completed')) statusColor = 'text-green-600 font-semibold';
+        else if (status.toLowerCase().includes('under process')) statusColor = 'text-yellow-600 font-semibold';
+        else if (status.toLowerCase().includes('yet to be')) statusColor = 'text-orange-600 font-semibold';
+        
+        let fileHtml = '-';
+        if (fileUrl && typeof fileUrl === 'string' && fileUrl !== 'null' && fileUrl.trim() !== '' && fileUrl !== '-') {
+          fileHtml = `<a href='${fileUrl}' target='_blank' class='text-blue-600 hover:text-blue-800 underline'>📄 View</a>`;
+        }
+        
+        html += `<tr class="hover:bg-gray-50">`;
+        html += `<td class="border border-gray-300 px-3 py-2 text-center">${i}</td>`;
+        html += `<td class="border border-gray-300 px-3 py-2">${fileLabels[i-1]}</td>`;
+        html += `<td class="border border-gray-300 px-3 py-2">${tats[i-1]}</td>`;
+        html += `<td class="border border-gray-300 px-3 py-2 ${statusColor}">${status}</td>`;
+        html += `<td class="border border-gray-300 px-3 py-2">${desc}</td>`;
+        html += `<td class="border border-gray-300 px-3 py-2">${fileHtml}</td>`;
+        html += `</tr>`;
+      }
+      
+      html += `</tbody></table></div>`;
+      return html;
+    }
+    
+    // Detect frequency from table name or portfolio for other form8 variants
     if (tableName.includes('weekly') || portfolio.includes('weekly')) freq = 'weekly';
     else if (tableName.includes('3 month') || tableName.includes('3months') || tableName.includes('3 Months') || portfolio.includes('3 month')) freq = '3months';
     else if (tableName.includes('semester') || tableName.includes('Semester') || portfolio.includes('semester')) freq = 'semester';
@@ -1156,123 +1621,87 @@ function getFormModalContent(row, details) {
     return html;
   }
 
-  // Faculty-form1.html
-  if (portfolio.includes('students performance in training & placement member')) {
-    let freq = '';
-    // Improved frequency detection for bi-weekly/15 days
-    if (tableName.includes('once in 15 days') || tableName.includes('bi-weekly') || tableName.includes('15 days') || portfolio.includes('once in 15 days') || portfolio.includes('bi-weekly') || portfolio.includes('15 days')) {
-      freq = '15days';
-    } else if (tableName.includes('weekly') || portfolio.includes('weekly')) {
-      freq = 'weekly';
-    } else if (tableName.includes('semester') || portfolio.includes('semester')) {
-      freq = 'semester';
-    } else if (tableName.includes('year') || portfolio.includes('year')) {
-      freq = 'yearly';
-    } else {
-      freq = 'weekly'; // default
-    }
-
-  html += `<div class="mb-4"><span class="text-lg font-bold text-purple-700">Students Performance in Training & Placement Member (${freq === '15days' ? 'Once in 15 Days' : freq === 'weekly' ? 'Weekly' : freq.charAt(0).toUpperCase() + freq.slice(1)})</span></div>`;
-    html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
-    html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
-    html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || details['Portfolio Memeber Name'] || details['faculty_name'] || details['Faculty Name'] || details['Name'] || '-'}</span></div>`;
-    if (freq === '15days') {
-      html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
-      html += `<div><span class=\"font-semibold text-gray-700\">Week no:</span> <span>${details['Week no'] || '-'}</span></div>`;
-      html += `<div><span class=\"font-semibold text-gray-700\">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
-      html += `<div><span class=\"font-semibold text-gray-700\">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
-      html += `<div class='grid grid-cols-1 md:grid-cols-2 gap-4 mt-4'>`;
-      html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>1. Department Meeting File</div>`;
-      html += `<div><span class=\"font-semibold text-gray-700\">Status_1:</span> <span>${details['Status_1'] || '-'}</span></div>`;
-      html += `<div><span class=\"font-semibold text-gray-700\">Description_1:</span> <span>${details['Description_1'] || '-'}</span></div>`;
-      function getFileButton(val) {
-        if (val && typeof val === 'string' && val !== '-' && val !== 'null' && val.trim() !== '') {
-          return `<a href='${val}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>`;
-        }
-        return '-';
-      }
-  html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file:</span> <span>${getFileButton(details['Upload The Scanned File_1'])}</span></div>`;
-  html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>2. Career Guidance Program File</div>`;
-  html += `<div><span class=\"font-semibold text-gray-700\">Status_2:</span> <span>${details['Status_2'] || '-'}</span></div>`;
-  html += `<div><span class=\"font-semibold text-gray-700\">Description_2:</span> <span>${details['Description_2'] || '-'}</span></div>`;
-  html += `<div><span class=\"font-semibold text-gray-700\">Upload the scanned file_2:</span> <span>${getFileButton(details['Upload The Scanned File_2'])}</span></div>`;
-      html += `</div>`;
-    } else if (freq === 'weekly') {
-      html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Week no:</span> <span>${details['Week no'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
-      html += `</div>`;
-      
-      html += `<div class='space-y-4'>`;
-      
-      // Define field labels for weekly Students Performance form
-      const weeklyLabels = [
-        'Lab Visit File',
-        'Theory Class Monitoring File',
-        'Placement File',
-        'Training File'
-      ];
-      
-      // Show only fields that have content
-      for (let i = 1; i <= weeklyLabels.length; i++) {
-        const hasStatus = details[`Status_${i}`] && details[`Status_${i}`] !== '-' && details[`Status_${i}`].trim() !== '';
-        const hasDescription = details[`Description_${i}`] && details[`Description_${i}`] !== '-' && details[`Description_${i}`].trim() !== '';
-        
-        // Try multiple possible field name patterns for file upload
-        let fileVal = details[`Upload The Scanned File_${i}`] || details[`Upload the scanned file_${i}`] || details[`Upload Scanned File_${i}`] || '-';
-        const hasFile = fileVal && fileVal !== '-' && fileVal.trim() !== '';
-        
-        // Only show this block if it has any content
-        if (hasStatus || hasDescription || hasFile) {
-          html += `<div class="border-b pb-2 mb-2">
-            <div class="font-semibold text-orange-500 mb-1">${i}. ${weeklyLabels[i-1]}</div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              <div class="flex flex-col"><span class="font-medium text-purple-700">Status:</span> <span>${details[`Status_${i}`] || '-'}</span></div>
-              <div class="flex flex-col"><span class="font-medium text-purple-700">Description:</span> <span>${details[`Description_${i}`] || '-'}</span></div>
-              <div class="flex flex-col"><span class="font-medium text-purple-700">Upload:</span> `;
-          if (fileVal && fileVal !== '-' && typeof fileVal === 'string' && (fileVal.startsWith('http://') || fileVal.startsWith('https://') || fileVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i))) {
-            html += `<a href="${fileVal}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block">View File</a>`;
-          } else {
-            html += '-';
-          }
-          html += `</div>
-            </div>
-          </div>`;
-        }
-      }
-      
-      html += `</div>`;
-      return html;
-    } else if (freq === 'yearly') {
-      html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Week No:</span> <span>${details['Week No'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
-      html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>1. Admission File</div>`;
-      html += `<div><span class="font-semibold text-gray-700">Status_1:</span> <span>${details['Status_1'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Description_1:</span> <span>${details['Description_1'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Upload Scanned File_1:</span> <span>${details['Upload Scanned File_1'] ? `<a href='${details['Upload Scanned File_1']}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
-      html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>2. Dept.Best Practices File</div>`;
-      html += `<div><span class="font-semibold text-gray-700">Status_2:</span> <span>${details['Status_2'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Description_2:</span> <span>${details['Description_2'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Upload Scanned File_2:</span> <span>${details['Upload Scanned File_2'] ? `<a href='${details['Upload Scanned File_2']}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
-    } else if (freq === 'semester') {
-      html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Week no:</span> <span>${details['Week no'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
-      html += `<div><span class="font-semibold text-gray-700">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
-      html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>Semester Workdone Details</div>`;
-      // Dynamically show all status/desc/file blocks for semester
-      for (let i = 1; i <= 10; i++) {
-  html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>${i}. Workdone Block</div>`;
-  html += `<div><span class='font-semibold text-gray-700'>Status-${i}:</span> <span>${details[`Status-${i}`] || '-'}</span></div>`;
-  html += `<div><span class='font-semibold text-gray-700'>Description-${i}:</span> <span>${details[`Description-${i}`] || '-'}</span></div>`;
-  let fileUrl = details[`Upload The Scanned File-${i}`] || '';
-  html += `<div><span class='font-semibold text-gray-700'>Upload The Scanned File-${i}:</span> <span>${fileUrl ? `<a href='${fileUrl}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
-      }
-    }
+  // Faculty-form1.html (form1-monthly table with 18 rows)
+  if (portfolio.includes('students performance in training & placement member') || 
+      (row.table && row.table.toLowerCase().includes('form1-monthly')) ||
+      (row.table && row.table.toLowerCase().includes('form1 - monthly'))) {
+    html += `<div class="mb-4"><span class="text-2xl font-extrabold text-purple-800 tracking-wide">HOD, Students Performance in Training & Placement Member</span></div>`;
+    html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">`;
+    html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || '-'}</span></div>`;
     html += `</div>`;
+    html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 bg-blue-50 p-4 rounded-lg">`;
+    html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || details['month'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Week No:</span> <span>${details['Week no'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
+    html += `</div>`;
+    
+    // 18 rows from faculty-form1.html
+    const fileLabels = [
+      { name: 'Lab Visit File', tat: 'Weekly' },
+      { name: 'Theory Class Monitoring File', tat: 'Weekly' },
+      { name: 'Placement File', tat: 'Weekly' },
+      { name: 'Training File', tat: 'Weekly' },
+      { name: 'Department Meeting File', tat: 'Once in 15 Days' },
+      { name: 'Career Guidance Program File', tat: 'Once in 15 Days' },
+      { name: 'Department Budget File', tat: 'Once in a Semester' },
+      { name: 'PAC File', tat: 'Once in a Semester' },
+      { name: 'IAAC File', tat: 'Once in a Semester' },
+      { name: 'BOS File', tat: 'Once in a Semester' },
+      { name: 'Department Academic Calendar File', tat: 'Once in a Semester' },
+      { name: 'Subject Allocation File', tat: 'Once in a Semester' },
+      { name: 'Workload File', tat: 'Once in a Semester' },
+      { name: 'Time Table File', tat: 'Once in a Semester' },
+      { name: 'Vision, Mission, PO, PEO Process & Dissemination File', tat: 'Once in a Semester' },
+      { name: 'Syllabus & Regulations File', tat: 'Once in a Semester' },
+      { name: 'Admission File', tat: 'Once in a Year' },
+      { name: 'Dept. Best Practices File', tat: 'Once in a Year' }
+    ];
+    
+    html += `<div class="overflow-x-auto rounded-xl">`;
+    html += `<table class="w-full min-w-[1000px] text-xs md:text-sm table-fixed mt-2 border border-orange-400">`;
+    html += `<thead class="bg-gradient-to-r from-orange-400 to-yellow-400"><tr>`;
+    html += `<th class="text-white font-bold py-2 px-2 text-center border-r border-white" style="width: 5%;">S.No</th>`;
+    html += `<th class="text-white font-bold py-2 px-2 border-r border-white" style="width: 30%;">Name of the File</th>`;
+    html += `<th class="text-white font-bold py-2 px-2 border-r border-white" style="width: 12%;">TAT</th>`;
+    html += `<th class="text-white font-bold py-2 px-2 border-r border-white" style="width: 15%;">Status</th>`;
+    html += `<th class="text-white font-bold py-2 px-2 border-r border-white" style="width: 23%;">Description</th>`;
+    html += `<th class="text-white font-bold py-2 px-2 text-center" style="width: 15%;">File</th>`;
+    html += `</tr></thead><tbody>`;
+    
+    for (let i = 0; i < fileLabels.length; i++) {
+      const idx = i + 1;
+      const statusKey = `Status-${idx}`;
+      const descKey = `Description-${idx}`;
+      const fileKey = `Upload The Scanned File-${idx}`;
+      const statusVal = details[statusKey] || '-';
+      const descVal = details[descKey] || '-';
+      const fileUrl = details[fileKey];
+      
+      let fileLink = '-';
+      if (fileUrl) {
+        const fileName = fileUrl.split('/').pop().split('?')[0];
+        fileLink = `<a href="${fileUrl}" target="_blank" class="text-blue-600 hover:text-blue-800 underline font-semibold break-words" title="${fileName}">📄 View File</a>`;
+      }
+      
+      const statusColor = statusVal === 'Completed' ? 'text-green-600 font-semibold' : 
+                         statusVal === 'Under Process' ? 'text-yellow-600 font-semibold' : 
+                         statusVal === 'Yet to be Completed' ? 'text-orange-600 font-semibold' : 
+                         statusVal === 'Not Applicable' ? 'text-gray-500' : 'text-gray-700';
+      
+      html += `<tr class="hover:bg-purple-50">`;
+      html += `<td class="border px-2 py-2 text-center font-semibold">${idx}</td>`;
+      html += `<td class="border px-2 py-2">${fileLabels[i].name}</td>`;
+      html += `<td class="border px-2 py-2 text-center">${fileLabels[i].tat}</td>`;
+      html += `<td class="border px-2 py-2 ${statusColor}">${statusVal}</td>`;
+      html += `<td class="border px-2 py-2 text-gray-700">${descVal}</td>`;
+      html += `<td class="border px-2 py-2 text-center">${fileLink}</td>`;
+      html += `</tr>`;
+    }
+    
+    html += `</tbody></table></div>`;
     return html;
   }
 
@@ -1323,22 +1752,93 @@ function getFormModalContent(row, details) {
       html += `<div><span class="font-semibold text-gray-700">Week no:</span> <span>${details['Week no'] || '-'}</span></div>`;
       html += `<div><span class="font-semibold text-gray-700">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
       html += `<div><span class="font-semibold text-gray-700">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
-      // 8 status/desc/upload blocks
-      const monthFiles = [
-        'Master Log Book',
-        'Attendence Report To Parents',
-        'ERP Attendence Entry',
-        'Test Report to Parents',
-        'Class Committee Meeting File',
-        'Scholarship file',
-        'Project File',
-        'Student Publications File'
-      ];
-      for (let i = 1; i <= 8; i++) {
-        html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>${i}. ${monthFiles[i-1]}</div>`;
-        html += `<div><span class="font-semibold text-gray-700">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
-        html += `<div><span class="font-semibold text-gray-700">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
-        html += `<div><span class="font-semibold text-gray-700">Upload The Scanned File_${i}:</span> <span>${details[`Upload The Scanned File_${i}`] ? `<a href='${details[`Upload The Scanned File_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+      html += `</div>`;
+      
+      // Table view for form2-monthly with 11 rows (removed first 2 daily rows)
+      if (tableName.includes('form2-monthly') || tableName.includes('form2 - monthly')) {
+        const fileNames = [
+          'Students Achievements File',
+          'Weekly Student Record',
+          'Master Attendance',
+          'Attendance Report to Parents',
+          'ERP Attendance Entry',
+          'Test Report to Parents',
+          'Class Committee Meeting',
+          'Student Representative Meeting',
+          'Project File',
+          'Student Publications File',
+          'Semester Report to Parents'
+        ];
+        const tatValues = [
+          'Weekly', 'Weekly',
+          'Once in a Month', 'Once in a Month', 'Once in a Month', 'Once in a Month',
+          'Once in a Month', 'Once in a Month', 'Once in a Month', 'Once in a Month',
+          'Once in a Semester'
+        ];
+        
+        html += `<div class="mt-4 overflow-x-auto">`;
+        html += `<table class="min-w-full border-collapse border border-gray-300">`;
+        html += `<thead>`;
+        html += `<tr class="bg-orange-400 text-white">`;
+        html += `<th class="border border-gray-300 px-3 py-2 text-left">S.No</th>`;
+        html += `<th class="border border-gray-300 px-3 py-2 text-left">Name of File</th>`;
+        html += `<th class="border border-gray-300 px-3 py-2 text-left">TAT</th>`;
+        html += `<th class="border border-gray-300 px-3 py-2 text-left">Status</th>`;
+        html += `<th class="border border-gray-300 px-3 py-2 text-left">File</th>`;
+        html += `<th class="border border-gray-300 px-3 py-2 text-left">Description</th>`;
+        html += `</tr>`;
+        html += `</thead>`;
+        html += `<tbody>`;
+        
+        for (let i = 1; i <= 11; i++) {
+          const status = details[`Status_${i}`] || '-';
+          const desc = details[`Description_${i}`] || '-';
+          const fileUrl = details[`Upload The Scanned File_${i}`];
+          
+          let statusColor = 'text-gray-700';
+          if (status.toLowerCase().includes('completed')) statusColor = 'text-green-600 font-semibold';
+          else if (status.toLowerCase().includes('process')) statusColor = 'text-yellow-600 font-semibold';
+          else if (status.toLowerCase().includes('yet')) statusColor = 'text-orange-600 font-semibold';
+          
+          html += `<tr class="hover:bg-gray-50">`;
+          html += `<td class="border border-gray-300 px-3 py-2 text-center">${i}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2">${fileNames[i-1]}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2">${tatValues[i-1]}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 ${statusColor}">${status}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2">`;
+          if (fileUrl) {
+            html += `<a href="${fileUrl}" target="_blank" class="text-blue-600 hover:text-blue-800">📄 View</a>`;
+          } else {
+            html += '-';
+          }
+          html += `</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2">${desc}</td>`;
+          html += `</tr>`;
+        }
+        
+        html += `</tbody>`;
+        html += `</table>`;
+        html += `</div>`;
+      } else {
+        // Old monthly view (8 rows)
+        html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+        const monthFiles = [
+          'Master Log Book',
+          'Attendence Report To Parents',
+          'ERP Attendence Entry',
+          'Test Report to Parents',
+          'Class Committee Meeting File',
+          'Scholarship file',
+          'Project File',
+          'Student Publications File'
+        ];
+        for (let i = 1; i <= 8; i++) {
+          html += `<div class='col-span-2 mt-2 mb-1 font-bold text-orange-700'>${i}. ${monthFiles[i-1]}</div>`;
+          html += `<div><span class="font-semibold text-gray-700">Status_${i}:</span> <span>${details[`Status_${i}`] || '-'}</span></div>`;
+          html += `<div><span class="font-semibold text-gray-700">Description_${i}:</span> <span>${details[`Description_${i}`] || '-'}</span></div>`;
+          html += `<div><span class="font-semibold text-gray-700">Upload The Scanned File_${i}:</span> <span>${details[`Upload The Scanned File_${i}`] ? `<a href='${details[`Upload The Scanned File_${i}`]}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View File</a>` : '-'}</span></div>`;
+        }
+        html += `</div>`;
       }
     } else if (freq === 'semester') {
       html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || '-'}</span></div>`;
@@ -1354,80 +1854,84 @@ function getFormModalContent(row, details) {
     return html;
   }
 
-  // Faculty-form3.html
-  if (portfolio.includes('faculty information & contribution member')) {
-    let freq = '';
-    let tableName = row.table || '';
-    // Detect frequency from table name or portfolio
-    if (tableName.includes('weekly') || tableName.includes('Weekly') || portfolio.includes('weekly')) freq = 'weekly';
-    else if (tableName.includes('15') || portfolio.includes('15')) freq = '15days';
-    else if (tableName.includes('semester') || portfolio.includes('semester')) freq = 'semester';
-    else freq = 'weekly'; // default
-
-    html += `<div class="mb-4"><span class="text-lg font-bold text-purple-700">Faculty Information & Contribution Member (${freq === '15days' ? 'Once in 15 Days' : freq.charAt(0).toUpperCase() + freq.slice(1)})</span></div>`;
-    // Render header fields in a single grid row for proper alignment
-    html += `<div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4 items-center">`;
-    html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
-    html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || details['Portfolio Memeber Name'] || details['faculty_name'] || details['Faculty Name'] || details['Name'] || '-'}</span></div>`;
+  // Faculty-form3.html (form3-monthly table with 14 rows)
+  if (portfolio.includes('faculty information & contribution member') ||
+      (row.table && row.table.toLowerCase().includes('form3-monthly')) ||
+      (row.table && row.table.toLowerCase().includes('form3 - monthly'))) {
+    html += `<div class="mb-4"><span class="text-2xl font-extrabold text-purple-800 tracking-wide">Faculty Information & Contributions Member</span></div>`;
+    html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">`;
+    html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || '-'}</span></div>`;
+    html += `</div>`;
+    html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 bg-blue-50 p-4 rounded-lg">`;
     html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || '-'}</span></div>`;
-    html += `<div><span class="font-semibold text-gray-700">Week no:</span> <span>${details['Week no'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Week No:</span> <span>${details['Week no'] || '-'}</span></div>`;
     html += `<div><span class="font-semibold text-gray-700">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
     html += `<div><span class="font-semibold text-gray-700">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
     html += `</div>`;
-    if (freq === 'weekly') {
-      const rowHeaders = [
-        'Faculty Achievements File(FDP,NPTEL,AWARDS,etc...)',
-        'Publications/Books/Book Chapter Publications File',
-        'Patents File',
-        'Faculty Funded Projects File',
-        'Faculty Consultancy work File',
-        'Faculty Industry Interaction File',
-        'Faculty Outside world Interaction file',
-        'Visiting/Adjunct/Emeritus Faculty/Prof. of Practice File',
-        'MOUs/Collaborations'
-      ];
+    
+    // 14 rows from faculty-form3.html
+    const fileLabels = [
+      { name: 'Faculty Achievements File (FDP, NPTEL, Awards, etc.,)', tat: 'Weekly' },
+      { name: 'Publications/Books/Book Chapter Publications File', tat: 'Once in 15 Days' },
+      { name: 'Patents File', tat: 'Once in 15 Days' },
+      { name: 'Faculty Funded Projects File', tat: 'Once in 15 Days' },
+      { name: 'Faculty Consultancy work File', tat: 'Once in 15 Days' },
+      { name: 'Faculty Industry Interaction File', tat: 'Once in 15 Days' },
+      { name: 'Faculty Outside world Interaction file', tat: 'Once in 15 Days' },
+      { name: 'Visiting/Adjunct/Emeritus Faculty/Prof. of Practice File', tat: 'Once in 15 Days' },
+      { name: 'Faculty Internship File', tat: 'Once in 15 Days' },
+      { name: 'Faculty File', tat: 'Once in a Semester' },
+      { name: 'Faculty Competency File', tat: 'Once in a Semester' },
+      { name: 'Faculty Performance Appraisal File', tat: 'Once in a Semester' },
+      { name: 'Faculty Training File', tat: 'Once in a Semester' },
+      { name: 'Faculty Participation in Exam duty, QP Setting, AUR File', tat: 'Once in a Semester' }
+    ];
+    
+    html += `<div class="overflow-x-auto rounded-xl">`;
+    html += `<table class="w-full min-w-[1000px] text-xs md:text-sm table-fixed mt-2 border border-orange-400">`;
+    html += `<thead class="bg-gradient-to-r from-orange-400 to-yellow-400"><tr>`;
+    html += `<th class="text-white font-bold py-2 px-2 text-center border-r border-white" style="width: 5%;">S.No</th>`;
+    html += `<th class="text-white font-bold py-2 px-2 border-r border-white" style="width: 30%;">Name of the File</th>`;
+    html += `<th class="text-white font-bold py-2 px-2 border-r border-white" style="width: 12%;">TAT</th>`;
+    html += `<th class="text-white font-bold py-2 px-2 border-r border-white" style="width: 15%;">Status</th>`;
+    html += `<th class="text-white font-bold py-2 px-2 border-r border-white" style="width: 15%;">Upload</th>`;
+    html += `<th class="text-white font-bold py-2 px-2 text-center" style="width: 23%;">Description</th>`;
+    html += `</tr></thead><tbody>`;
+    
+    for (let i = 0; i < fileLabels.length; i++) {
+      const idx = i + 1;
+      const statusKey = `Status-${idx}`;
+      const descKey = `Description-${idx}`;
+      const fileKey = `Upload The Scanned File-${idx}`;
+      const statusVal = details[statusKey] || '-';
+      const descVal = details[descKey] || '-';
+      const fileUrl = details[fileKey];
       
-      html += `<div class='space-y-4'>`;
-      
-      // Only show blocks that have some content (status, description, or file)
-      for (let i = 1; i <= rowHeaders.length; i++) {
-        const hasStatus = details[`Status-${i}`] && details[`Status-${i}`] !== '-' && details[`Status-${i}`].trim() !== '';
-        const hasDescription = details[`Description-${i}`] && details[`Description-${i}`] !== '-' && details[`Description-${i}`].trim() !== '';
-        
-        // Try multiple possible field name patterns for file upload
-        // For Faculty Information & Contribution Member, the field name is just "Upload The Scanned File" without number
-        let fileVal = '';
-        if (i === 1) {
-          // For the first item, try the field without number suffix
-          fileVal = details[`Upload The Scanned File`] || details[`Upload The Scanned File-${i}`] || details[`Upload The Scanned File_${i}`] || details[`Upload the scanned file_${i}`] || details[`Upload the Scanned File-${i}`] || '-';
-        } else {
-          // For other items, try with number suffix
-          fileVal = details[`Upload The Scanned File-${i}`] || details[`Upload The Scanned File_${i}`] || details[`Upload the scanned file_${i}`] || details[`Upload the Scanned File-${i}`] || '-';
-        }
-        const hasFile = fileVal && fileVal !== '-' && fileVal.trim() !== '';
-        
-        // Only show this block if it has any content
-        if (hasStatus || hasDescription || hasFile) {
-          html += `<div class="border-b pb-2 mb-2">
-            <div class="font-semibold text-orange-500 mb-1">${i}. ${rowHeaders[i-1]}</div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              <div class="flex flex-col"><span class="font-medium text-purple-700">Status:</span> <span>${details[`Status-${i}`] || '-'}</span></div>
-              <div class="flex flex-col"><span class="font-medium text-purple-700">Description:</span> <span>${details[`Description-${i}`] || '-'}</span></div>
-              <div class="flex flex-col"><span class="font-medium text-purple-700">Upload:</span> `;
-          if (fileVal && fileVal !== '-' && typeof fileVal === 'string' && (fileVal.startsWith('http://') || fileVal.startsWith('https://') || fileVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i))) {
-            html += `<a href="${fileVal}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block">View File</a>`;
-          } else {
-            html += '-';
-          }
-          html += `</div>
-            </div>
-          </div>`;
-        }
+      let fileLink = '-';
+      if (fileUrl) {
+        const fileName = fileUrl.split('/').pop().split('?')[0];
+        fileLink = `<a href="${fileUrl}" target="_blank" class="text-blue-600 hover:text-blue-800 underline font-semibold break-words" title="${fileName}">📄 View File</a>`;
       }
       
-      html += `</div>`;
-      return html;
+      const statusColor = statusVal === 'Completed' ? 'text-green-600 font-semibold' : 
+                         statusVal === 'Under Process' ? 'text-yellow-600 font-semibold' : 
+                         statusVal === 'Yet to be Completed' ? 'text-orange-600 font-semibold' : 
+                         statusVal === 'Not Applicable' ? 'text-gray-500' : 'text-gray-700';
+      
+      html += `<tr class="hover:bg-purple-50">`;
+      html += `<td class="border px-2 py-2 text-center font-semibold">${idx}</td>`;
+      html += `<td class="border px-2 py-2">${fileLabels[i].name}</td>`;
+      html += `<td class="border px-2 py-2 text-center">${fileLabels[i].tat}</td>`;
+      html += `<td class="border px-2 py-2 ${statusColor}">${statusVal}</td>`;
+      html += `<td class="border px-2 py-2 text-center">${fileLink}</td>`;
+      html += `<td class="border px-2 py-2 text-gray-700">${descVal}</td>`;
+      html += `</tr>`;
     }
+    
+    html += `</tbody></table></div>`;
+    return html;
   }
   if (portfolio.includes('course outcome & program outcome member')) {
       let freq = '';
@@ -1486,17 +1990,90 @@ function getFormModalContent(row, details) {
       return html;
     }
 
-    // Faculty-form5.html
+    // Faculty-form5.html (form5-monthly table with 12 rows)
     if (portfolio.includes('continuous improvement member')) {
       let freq = '';
       let tableName = row.table || '';
       
       // Detect frequency from table name or portfolio
-      if (tableName.includes('weekly') || portfolio.includes('weekly')) freq = 'weekly';
+      if (tableName.includes('monthly') || portfolio.includes('monthly')) freq = 'monthly';
+      else if (tableName.includes('weekly') || portfolio.includes('weekly')) freq = 'weekly';
       else if (tableName.includes('3 month') || tableName.includes('3months') || tableName.includes('3 Months') || portfolio.includes('3 month') || portfolio.includes('3months') || portfolio.includes('once in 3 months')) freq = '3months';
       else if (tableName.includes('semester') || portfolio.includes('semester')) freq = 'semester';
       else freq = 'weekly'; // default
       
+      // If it's form5-monthly, show table view with all 12 rows
+      if (tableName.includes('form5-monthly') || freq === 'monthly') {
+        html += `<div class=\"mb-4\"><span class=\"text-2xl font-bold text-purple-700\">Continuous Improvement Member (Program Member) - Monthly</span></div>`;
+        html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-6\">`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || details['Portfolio Memeber Name'] || details['faculty_name'] || details['Faculty Name'] || details['Name'] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Week no:</span> <span>${details['Week no'] || details['Week No'] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
+        html += `<div><span class=\"font-semibold text-gray-700\">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
+        html += `</div>`;
+        
+        // Table with 12 rows
+        const fileLabels = [
+          'Cocurricular Activities (Including MOU, Professional Body, Association, Club activities) File',
+          'MOU & Professional Body Documents (Including office Bearers)',
+          'Industry Visit file',
+          'Entrepreneurship Activities File',
+          'Student Internship File',
+          'Student In-plant Training File',
+          'Dept. Technical Magazine',
+          'Dept. News letter',
+          'Website Updation File',
+          'Action Taken Based on Results of Evaluation of COs, POs, PSO\'s',
+          'Improvement in Curriculum for mapping POs and PSOs',
+          'Indirect Assessment to show attainment of POs and PSOs'
+        ];
+        
+        html += `<div class="overflow-x-auto mt-6">`;
+        html += `<table class="min-w-full border-collapse border border-gray-300">`;
+        html += `<thead><tr style="background: linear-gradient(90deg, #f59e42 0%, #fbbf24 100%);" class="text-white">`;
+        html += `<th class="border border-gray-300 px-3 py-2 text-left">S.No</th>`;
+        html += `<th class="border border-gray-300 px-3 py-2 text-left">Name of File</th>`;
+        html += `<th class="border border-gray-300 px-3 py-2 text-left">TAT</th>`;
+        html += `<th class="border border-gray-300 px-3 py-2 text-left">Status</th>`;
+        html += `<th class="border border-gray-300 px-3 py-2 text-left">Description</th>`;
+        html += `<th class="border border-gray-300 px-3 py-2 text-left">File</th>`;
+        html += `</tr></thead><tbody>`;
+        
+        const tats = ['Weekly', 'Weekly', 'Weekly', 'Weekly', 'Weekly', 'Weekly', 'Once in 3 Months', 'Once in 3 Months', 'Once in 3 Months', 'Once in a Semester', 'Once in a Semester', 'Once in a Semester'];
+        
+        for (let i = 1; i <= 12; i++) {
+          const status = details[`Status_${i}`] || '-';
+          const desc = details[`Description_${i}`] || '-';
+          const fileUrl = details[`Upload a Scanned File_${i}`] || details[`Upload The Scanned File_${i}`];
+          
+          let statusColor = 'text-gray-700';
+          if (status.toLowerCase().includes('completed')) statusColor = 'text-green-600 font-semibold';
+          else if (status.toLowerCase().includes('under process')) statusColor = 'text-yellow-600 font-semibold';
+          else if (status.toLowerCase().includes('yet to be')) statusColor = 'text-orange-600 font-semibold';
+          
+          let fileHtml = '-';
+          if (fileUrl && typeof fileUrl === 'string' && fileUrl !== 'null' && fileUrl.trim() !== '' && fileUrl !== '-') {
+            fileHtml = `<a href='${fileUrl}' target='_blank' class='text-blue-600 hover:text-blue-800 underline'>📄 View</a>`;
+          }
+          
+          html += `<tr class="hover:bg-gray-50">`;
+          html += `<td class="border border-gray-300 px-3 py-2 text-center">${i}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2">${fileLabels[i-1]}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2">${tats[i-1]}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 ${statusColor}">${status}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2">${desc}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2">${fileHtml}</td>`;
+          html += `</tr>`;
+        }
+        
+        html += `</tbody></table></div>`;
+        return html;
+      }
+      
+      // Original frequency-based logic for other form5 variants
       html += `<div class="mb-4"><span class="text-lg font-bold text-purple-700">Continuous Improvement Member (Program Member) (${freq.charAt(0).toUpperCase() + freq.slice(1)})</span></div>`;
       html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
       html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
@@ -1554,7 +2131,87 @@ function getFormModalContent(row, details) {
         let freq = '';
         let tableName = row.table || '';
         
-        // Detect frequency from table name or portfolio
+        // If it's form6_monthly, show table view with all 16 rows
+        if (tableName.includes('form6_monthly') || tableName.includes('form6-monthly')) {
+          html += `<div class=\"mb-4\"><span class=\"text-2xl font-bold text-purple-700\">Teaching & Learning Process Member (IQAC) - Monthly</span></div>`;
+          html += `<div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-6\">`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || details['Portfolio Memeber Name'] || details['faculty_name'] || details['Faculty Name'] || details['Name'] || '-'}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Month:</span> <span>${details['Month'] || details['Month:'] || '-'}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Week no:</span> <span>${details['Week no'] || details['Week No'] || '-'}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Week Starting Date:</span> <span>${details['Week Starting Date'] || '-'}</span></div>`;
+          html += `<div><span class=\"font-semibold text-gray-700\">Week Ending Date:</span> <span>${details['Week Ending Date'] || '-'}</span></div>`;
+          html += `</div>`;
+          
+          // Table with 16 rows
+          const fileLabels = [
+            'Course File Audit Report',
+            'Logbook Audit Report',
+            'Master Logbook Audit Report',
+            'ERP Entry Report',
+            'Assignments File',
+            'Innovative teaching Tools File',
+            'Dept. YouTube Channel File',
+            'Google Class Room (3 Faculty)',
+            'Mentor Book Audit Report (2 Faculty)',
+            'Feedback from Alumni File',
+            'Feedback from Parents File',
+            'Feedback from Employer File',
+            'Feedback from Faculty File',
+            'Internal Audit File',
+            'External Audit File',
+            'Students Satisfaction Survey File'
+          ];
+          
+          const tats = [
+            'Once in 15 Days', 'Once in 15 Days', 'Once in 15 Days', 'Once in 15 Days', 
+            'Once in 15 Days', 'Once in 15 Days', 'Once in 15 Days', 'Once in 15 Days', 
+            'Once in 15 Days', 'Once in 2 Months', 'Once in 2 Months', 'Once in 2 Months', 
+            'Once in 2 Months', 'Once in a Semester', 'Once in a Semester', 'Once in a Semester'
+          ];
+          
+          html += `<div class="overflow-x-auto mt-6">`;
+          html += `<table class="min-w-full border-collapse border border-gray-300">`;
+          html += `<thead><tr style="background: linear-gradient(90deg, #f59e42 0%, #fbbf24 100%);" class="text-white">`;
+          html += `<th class="border border-gray-300 px-3 py-2 text-left">S.No</th>`;
+          html += `<th class="border border-gray-300 px-3 py-2 text-left">Name of File</th>`;
+          html += `<th class="border border-gray-300 px-3 py-2 text-left">TAT</th>`;
+          html += `<th class="border border-gray-300 px-3 py-2 text-left">Status</th>`;
+          html += `<th class="border border-gray-300 px-3 py-2 text-left">Description</th>`;
+          html += `<th class="border border-gray-300 px-3 py-2 text-left">File</th>`;
+          html += `</tr></thead><tbody>`;
+          
+          for (let i = 1; i <= 16; i++) {
+            const status = details[`Status_${i}`] || '-';
+            const desc = details[`Description_${i}`] || '-';
+            const fileUrl = details[`Upload The Scanned File_${i}`];
+            
+            let statusColor = 'text-gray-700';
+            if (status.toLowerCase().includes('completed')) statusColor = 'text-green-600 font-semibold';
+            else if (status.toLowerCase().includes('under process')) statusColor = 'text-yellow-600 font-semibold';
+            else if (status.toLowerCase().includes('yet to be')) statusColor = 'text-orange-600 font-semibold';
+            
+            let fileHtml = '-';
+            if (fileUrl && typeof fileUrl === 'string' && fileUrl !== 'null' && fileUrl.trim() !== '' && fileUrl !== '-') {
+              fileHtml = `<a href='${fileUrl}' target='_blank' class='text-blue-600 hover:text-blue-800 underline'>📄 View</a>`;
+            }
+            
+            html += `<tr class="hover:bg-gray-50">`;
+            html += `<td class="border border-gray-300 px-3 py-2 text-center">${i}</td>`;
+            html += `<td class="border border-gray-300 px-3 py-2">${fileLabels[i-1]}</td>`;
+            html += `<td class="border border-gray-300 px-3 py-2">${tats[i-1]}</td>`;
+            html += `<td class="border border-gray-300 px-3 py-2 ${statusColor}">${status}</td>`;
+            html += `<td class="border border-gray-300 px-3 py-2">${desc}</td>`;
+            html += `<td class="border border-gray-300 px-3 py-2">${fileHtml}</td>`;
+            html += `</tr>`;
+          }
+          
+          html += `</tbody></table></div>`;
+          return html;
+        }
+        
+        // Detect frequency from table name or portfolio for other form6 variants
         if (tableName.includes('weekly') || portfolio.includes('weekly')) freq = 'weekly';
         else if (tableName.includes('2 month') || tableName.includes('2months') || portfolio.includes('2 month') || portfolio.includes('2months') || portfolio.includes('once in 2 months')) freq = '2months';
         else if (tableName.includes('semester') || portfolio.includes('semester')) freq = 'semester';

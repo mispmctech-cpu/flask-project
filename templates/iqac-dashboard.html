@@ -85,17 +85,39 @@
     <div id="departmentPortfoliosStickyHeader" class="flex flex-wrap gap-4 items-center mb-4 bg-white z-20" style="position:sticky; top:0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
       <label for="portfolioDepartmentFilter" class="font-medium text-orange-700 mr-2">Filter by Department:</label>
       <select id="portfolioDepartmentFilter" class="p-2 border rounded"></select>
-      <label for="portfolioFrequencyFilter" class="font-medium text-orange-700 mr-2">Frequency:</label>
-      <select id="portfolioFrequencyFilter" class="p-2 border rounded">
-  <option value="Weekly">Weekly (Current Week)</option>
-  <option value="Monthly">Monthly</option>
-  <option value="OnceIn3Months">Once in 3 Months</option>
-  <option value="OnceIn2Months">Once in 2 Months</option>
-  <option value="OnceIn15Days">Once in 15 Days</option>
-  <option value="Semester">Once in a Semester</option>
-  <option value="Year">Once in a Year</option>
-  <option value="All">All</option>
+      
+      <label for="portfolioMonthFilter" class="font-medium text-orange-700 mr-2">Month:</label>
+      <select id="portfolioMonthFilter" class="p-2 border rounded">
+        <option value="Current">Current Month</option>
+        <option value="January">January</option>
+        <option value="February">February</option>
+        <option value="March">March</option>
+        <option value="April">April</option>
+        <option value="May">May</option>
+        <option value="June">June</option>
+        <option value="July">July</option>
+        <option value="August">August</option>
+        <option value="September">September</option>
+        <option value="October">October</option>
+        <option value="November">November</option>
+        <option value="December">December</option>
       </select>
+      
+      <!-- Hidden frequency filter (now only using monthly tables) -->
+      <div style="display: none;">
+        <label for="portfolioFrequencyFilter" class="font-medium text-orange-700 mr-2">Frequency:</label>
+        <select id="portfolioFrequencyFilter" class="p-2 border rounded">
+          <option value="Weekly">Weekly (Current Week)</option>
+          <option value="Monthly">Monthly</option>
+          <option value="OnceIn3Months">Once in 3 Months</option>
+          <option value="OnceIn2Months">Once in 2 Months</option>
+          <option value="OnceIn15Days">Once in 15 Days</option>
+          <option value="Semester">Once in a Semester</option>
+          <option value="Year">Once in a Year</option>
+          <option value="All">All</option>
+        </select>
+      </div>
+      <!-- Hidden weekly date filters -->
       <div id="weeklyDateFilters" class="flex gap-2 items-center" style="display: none;">
         <label for="weekStartDate" class="font-medium text-orange-700">Week Start:</label>
         <input type="date" id="weekStartDate" class="p-2 border rounded text-sm">
@@ -116,7 +138,10 @@
       </button>
     </div>
     <div id="departmentPortfoliosContainer" class="overflow-x-auto mt-2"></div>
-    <!-- Modal for viewing original form -->
+      
+    </div>
+
+    <!-- Modal for viewing Yearly form details from dashboard table -->
     <div id="viewFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
       <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
         <button onclick="closeViewFormModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
@@ -544,40 +569,135 @@ function attachExportButtons() {
           };
           allBtn.onclick = async () => {
             closeExportScopeModal();
-            // Export all departments: fetch all from ap_compliance, asp_compliance, prof_compliance
-            const apRes = await supabaseClient.from('ap_compliance').select('*');
-            const aspRes = await supabaseClient.from('asp_compliance').select('*');
-            const profRes = await supabaseClient.from('prof_compliance').select('*');
-            const allData = [
-              { label: 'AP', data: apRes.data || [] },
-              { label: 'ASP', data: aspRes.data || [] },
-              { label: 'Prof', data: profRes.data || [] }
-            ];
+            
+            // Show loading overlay
+            let loadingDiv = document.createElement('div');
+            loadingDiv.id = 'exportLoadingOverlay';
+            loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+            loadingDiv.innerHTML = `<div style="background:white;padding:32px 48px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;align-items:center;gap:16px;">
+              <svg class='animate-spin' style='height:48px;width:48px;color:#7c3aed;' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+                <circle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'></circle>
+                <path class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'></path>
+              </svg>
+              <div style='font-size:18px;color:#7c3aed;font-weight:600;'>Exporting all departments, please wait...</div>
+            </div>`;
+            document.body.appendChild(loadingDiv);
+            
+            // Export all departments: fetch all from yearly tables
+            const apRes = await supabaseClient.from('AP(Yearly)').select('*');
+            const aspRes = await supabaseClient.from('ASP(Yearly)').select('*');
+            const profRes = await supabaseClient.from('Prof(Yearly)').select('*');
+            
+            // Get all faculty data for department and designation mapping
+            const facultyRes = await supabaseClient.from('Faculty').select('*');
+            const facultyList = facultyRes.data || [];
+            
+            // Particulars for each designation
+            const particularsMap = {
+              AP: [
+                'Present at Conferences.',
+                'Guide student research and final-year projects.',
+                'Attend FDPs / workshop/Seminars',
+                'NPTEL/ MOOC certifications 2/Sem',
+                'Facilitate industry-institute interaction through guest lectures, internships.',
+                'Engage in extension activities, and social outreach programs.',
+                'Membership in professional body'
+              ],
+              ASP: [
+                'Publish in peer-reviewed journals',
+                'Apply for research grants',
+                'Guide student research and final-year projects.',
+                'Organize FDPs / workshop/Seminars',
+                'NPTEL/ MOOC certifications',
+                'Facilitate industry-institute interaction through guest lectures, internships.',
+                'Engage in Consultancy.',
+                'Membership in professional body'
+              ],
+              Prof: [
+                'Publish in peer-reviewed journals',
+                'Apply for research grants',
+                'Guide student research and final-year projects.',
+                'Organize FDPs / workshop/Seminars',
+                'NPTEL/ MOOC certifications',
+                'Facilitate MoU',
+                'Engage in Consultancy.',
+                'Membership in professional body'
+              ]
+            };
+            
             const wb = XLSX.utils.book_new();
-            allData.forEach(({ label, data }) => {
+            
+            // Process each designation type
+            const allDataSets = [
+              { label: 'AP', data: apRes.data || [], particulars: particularsMap.AP, statusCount: 7 },
+              { label: 'ASP', data: aspRes.data || [], particulars: particularsMap.ASP, statusCount: 8 },
+              { label: 'Prof', data: profRes.data || [], particulars: particularsMap.Prof, statusCount: 8 }
+            ];
+            
+            allDataSets.forEach(({ label, data, particulars, statusCount }) => {
               if (data.length === 0) return;
-              // Get all unique keys for columns
-              const keys = Array.from(new Set(data.flatMap(row => Object.keys(row))));
-              const sheetData = [keys];
+              
+              // Build headers: Department, Faculty Name, Percentage, then each particular
+              const headers = ['Department', 'Faculty Name', 'Percentage', ...particulars];
+              const sheetData = [headers];
+              
               data.forEach(row => {
-                sheetData.push(keys.map(k => row[k] || ''));
+                const dept = row['Department'] || '';
+                const facultyName = row['Portfolio Member Name'] || '';
+                
+                // Calculate percentage
+                let completedCount = 0;
+                for (let i = 1; i <= statusCount; i++) {
+                  const status = (row[`Status_${i}`] || '').toString().toLowerCase();
+                  if (status === 'completed' || status === 'completed and updated') {
+                    completedCount++;
+                  }
+                }
+                const percentage = statusCount > 0 ? Math.round((completedCount / statusCount) * 100) : 0;
+                
+                // Build row data
+                const rowData = [dept, facultyName, percentage + '%'];
+                
+                // Add status for each particular
+                for (let i = 1; i <= statusCount; i++) {
+                  rowData.push(row[`Status_${i}`] || '-');
+                }
+                
+                sheetData.push(rowData);
               });
+              
               const ws = XLSX.utils.aoa_to_sheet(sheetData);
               XLSX.utils.book_append_sheet(wb, ws, label);
             });
-            XLSX.writeFile(wb, 'IQAC_Dashboard_All_Departments.xlsx');
+            
+            XLSX.writeFile(wb, 'IQAC_Dashboard_Yearly_All_Departments.xlsx');
+            
+            // Remove loading overlay
+            const overlay = document.getElementById('exportLoadingOverlay');
+            if (overlay) overlay.remove();
           };
         }
       }, 600);
     }
     document.getElementById('exportDepartmentPortfoliosBtn').onclick = async () => {
-      // Export based on current filter
-      const frequencyFilter = document.getElementById('portfolioFrequencyFilter');
-      const selectedFrequency = frequencyFilter ? frequencyFilter.value : 'Weekly';
+      // Export based on current filter (only monthly tables now)
       const statusFilter = document.getElementById('portfolioStatusFilter');
       const selectedStatus = statusFilter ? statusFilter.value : 'All';
       const deptFilter = document.getElementById('portfolioDepartmentFilter');
       const selectedDept = deptFilter ? deptFilter.value : 'All';
+      
+      // Get month filter value
+      const monthFilter = document.getElementById('portfolioMonthFilter');
+      let selectedMonth = monthFilter ? monthFilter.value : 'Current';
+      
+      // If "Current" is selected, get current month name
+      if (selectedMonth === 'Current') {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        const currentDate = new Date();
+        selectedMonth = monthNames[currentDate.getMonth()];
+      }
+      
       // Fetch all faculty data
       const { data, error } = await supabaseClient
         .from('Faculty')
@@ -589,122 +709,111 @@ function attachExportButtons() {
       // Get all unique departments
       let departments = Array.from(new Set(data.map(row => row.department).filter(Boolean)));
       if (selectedDept !== 'All') departments = [selectedDept];
-      // Get headers and table mapping for selected frequency
-      const portfolioHeadersMap = window._iqacPortfolioHeadersMap;
-      const headersConfig = portfolioHeadersMap[selectedFrequency] || [];
-      const headers = ["Department", ...headersConfig.map(h => h.label)];
+      // Portfolio headers (only 8 monthly forms)
+      const portfolioHeaders = [
+        { label: "1. Training & Placement", table: 'form1-monthly' },
+        { label: "2. Class Advisor", table: 'form2-monthly' },
+        { label: "3. Info & Contribution", table: 'form3-monthly' },
+        { label: "4. Outcome & Exam Cell", table: 'form4-monthly' },
+        { label: "5. Continuous Improvement", table: 'form5-monthly' },
+        { label: "6. T&L Process (IQAC)", table: 'form6-monthly' },
+        { label: "7. Student Support", table: 'form7-monthly' },
+        { label: "8. Facilities & Lab", table: 'form8-monthly' }
+      ];
+      const headers = ["Department", "Designation", "Faculty Name", "Portfolio Name", "Percentage"];
       // Fetch all relevant form data for each portfolio column
-      const tableMap = window._iqacTableMap;
-      const formTableNames = headersConfig.map(h => h.table);
+      const formTableNames = portfolioHeaders.map(h => h.table);
       const formTableData = {};
       for (const tableName of formTableNames) {
         let query = supabaseClient.from(tableName).select('*');
-        
-        // If frequency is Weekly, filter by date range
-        if (selectedFrequency === 'Weekly') {
-          const weekStartInput = document.getElementById('weekStartDate');
-          const weekEndInput = document.getElementById('weekEndDate');
-          
-          if (weekStartInput.value && weekEndInput.value) {
-            // Use custom date range
-            const startDate = new Date(weekStartInput.value);
-            startDate.setHours(0, 0, 0, 0);
-            const endDate = new Date(weekEndInput.value);
-            endDate.setHours(23, 59, 59, 999);
-            
-            const startStr = startDate.toISOString();
-            const endStr = endDate.toISOString();
-            
-            query = query
-              .gte('submitted_at', startStr)
-              .lte('submitted_at', endStr);
-          } else {
-            // Fallback to current week
-            const now = new Date();
-            const currentDay = now.getDay();
-            const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
-            const monday = new Date(now);
-            monday.setDate(now.getDate() + mondayOffset);
-            monday.setHours(0, 0, 0, 0);
-            
-            const sunday = new Date(monday);
-            sunday.setDate(monday.getDate() + 6);
-            sunday.setHours(23, 59, 59, 999);
-            
-            const startStr = monday.toISOString();
-            const endStr = sunday.toISOString();
-            
-            query = query
-              .gte('submitted_at', startStr)
-              .lte('submitted_at', endStr);
-          }
-        }
-        
         const { data: tdata } = await query;
         formTableData[tableName] = tdata || [];
       }
       const exportRows = [];
       for (const dept of departments) {
         const facultyList = data.filter(fac => (fac.department || 'Unknown') === dept);
-        const row = [dept];
-        for (let hIdx = 0; hIdx < headersConfig.length; hIdx++) {
-          const h = headersConfig[hIdx];
-          const formKey = h.label.match(/\d+/) ? `form${h.label.match(/\d+/)[0]}` : '';
-          const tableName = h.table;
-          const assignedList = facultyList.filter(fac => (fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes'));
-          let names = [];
-          for (const fac of assignedList) {
-            const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
-            // Robust percentage calculation (same as UI)
-            let percentage = 0;
-            let filled = false;
-            const tdata = formTableData[tableName];
-            let bestRow = null;
-            if (tdata && tdata.length > 0) {
-              // Robust faculty name matching
-              const filteredRows = tdata.filter(row => {
-                const rowName = row['Portfolio Member Name:'] || row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
-                return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase() && (row['Department'] || row['Department:'] || '').toString().trim().toLowerCase() === dept.toString().trim().toLowerCase();
-              });
-              if (filteredRows.length > 0) {
-                filled = true;
-                bestRow = filteredRows.sort((a, b) => (b.id || 0) - (a.id || 0))[0];
-              }
-            }
-            if (bestRow) {
-              let completedCount = 0;
-              let applicableCount = 0;
-              const statusKeys = Object.keys(bestRow).filter(k => k.startsWith('Status'));
-              for (const key of statusKeys) {
-                const val = (bestRow[key] || '').toString().trim().toLowerCase();
-                if (val === 'not applicable' || val === 'na') continue;
-                applicableCount += 1;
-                if (val === 'completed' || val === 'completed and updated') {
-                  completedCount += 1;
+        
+        // Create one row per faculty per portfolio assignment
+        for (const fac of facultyList) {
+          const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+          const designation = fac.Designation || fac.designation || 'N/A';
+          
+          // Check which portfolios this faculty is assigned to
+          for (const h of portfolioHeaders) {
+            const formKey = h.label.match(/\d+/) ? `form${h.label.match(/\d+/)[0]}` : '';
+            const isAssigned = fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes';
+            
+            if (isAssigned) {
+              const tableName = h.table;
+              // Robust percentage calculation (same as UI)
+              let percentage = 0;
+              let filled = false;
+              const tdata = formTableData[tableName];
+              let bestRow = null;
+              if (tdata && tdata.length > 0) {
+                // Robust faculty name matching with month filtering
+                const filteredRows = tdata.filter(row => {
+                  const rowName = row['Portfolio Member Name:'] || row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+                  const rowMonth = row['Month'] || row['month'] || row['Month:'] || '';
+                  const nameMatches = rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase();
+                  const deptMatches = (row['Department'] || row['Department:'] || '').toString().trim().toLowerCase() === dept.toString().trim().toLowerCase();
+                  const monthMatches = rowMonth.toString().trim().toLowerCase() === selectedMonth.toLowerCase();
+                  return nameMatches && deptMatches && monthMatches;
+                });
+                if (filteredRows.length > 0) {
+                  filled = true;
+                  bestRow = filteredRows.sort((a, b) => (b.id || 0) - (a.id || 0))[0];
                 }
               }
-              if (applicableCount > 0) {
-                percentage = Math.round((completedCount / applicableCount) * 100);
+              if (bestRow) {
+                let completedCount = 0;
+                let applicableCount = 0;
+                const statusKeys = Object.keys(bestRow).filter(k => k.startsWith('Status'));
+                for (const key of statusKeys) {
+                  const val = (bestRow[key] || '').toString().trim().toLowerCase();
+                  if (val === 'not applicable' || val === 'na') continue;
+                  applicableCount += 1;
+                  if (val === 'completed' || val === 'completed and updated') {
+                    completedCount += 1;
+                  }
+                }
+                if (applicableCount > 0) {
+                  percentage = Math.round((completedCount / applicableCount) * 100);
+                } else {
+                  percentage = 0;
+                }
               } else {
                 percentage = 0;
               }
-            } else {
-              percentage = 0;
+              
+              // Filter by status
+              if (selectedStatus === 'Completed' && !filled) continue;
+              if (selectedStatus === 'Pending' && filled) continue;
+              
+              // Create row: Department, Designation, Faculty Name, Portfolio Name, Percentage
+              const percentageDisplay = filled ? `${percentage}%` : `0% (Not Submitted)`;
+              exportRows.push([dept, designation, facultyName, h.label, percentageDisplay]);
             }
-            // Filter by status
-            if (selectedStatus === 'Completed' && !filled) continue;
-            if (selectedStatus === 'Pending' && filled) continue;
-            // Always use brackets for percentage
-            names.push(`${facultyName} (${percentage}%)`);
           }
-          row.push(names.length > 0 ? names.join(', ') : '-');
         }
-        exportRows.push(row);
       }
+      
+      // Sort export rows: first by department, then by portfolio number (1-8)
+      exportRows.sort((a, b) => {
+        // First sort by department (index 0)
+        if (a[0] !== b[0]) {
+          return a[0].localeCompare(b[0]);
+        }
+        // Then sort by portfolio number (extract from index 3 - Portfolio Name)
+        const aNum = parseInt(a[3].match(/^\d+/)?.[0] || '99');
+        const bNum = parseInt(b[3].match(/^\d+/)?.[0] || '99');
+        return aNum - bNum;
+      });
+      
       const ws = XLSX.utils.aoa_to_sheet([headers, ...exportRows]);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Portfolios');
-      XLSX.writeFile(wb, `IQAC_Portfolios_${selectedFrequency}_${selectedDept}.xlsx`);
+      XLSX.writeFile(wb, `IQAC_Portfolios_${selectedMonth}_${selectedDept}.xlsx`);
     };
   }, 500);
 }
@@ -731,282 +840,174 @@ function attachExportButtons() {
       // Get selected filter values (re-read each time for correct filtering)
       const selectedDept = deptFilter.options[deptFilter.selectedIndex]?.value || 'All';
       const selectedStatus = statusFilter.options[statusFilter.selectedIndex]?.value || 'All';
+      
+      // Get month filter value
+      const monthFilter = document.getElementById('portfolioMonthFilter');
+      let selectedMonth = monthFilter.options[monthFilter.selectedIndex]?.value || 'Current';
+      
+      // If "Current" is selected, get current month name
+      if (selectedMonth === 'Current') {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        const currentDate = new Date();
+        selectedMonth = monthNames[currentDate.getMonth()];
+      }
 
-  // Frequency filter logic
-  const frequencyFilter = document.getElementById('portfolioFrequencyFilter');
-  const selectedFrequency = frequencyFilter ? frequencyFilter.value : 'Weekly';
-  
-  // Show/hide date filters based on frequency
-  const weeklyDateFilters = document.getElementById('weeklyDateFilters');
-  if (selectedFrequency === 'Weekly') {
-    weeklyDateFilters.style.display = 'flex';
-    // Set default current week dates if not already set
-    const weekStartInput = document.getElementById('weekStartDate');
-    const weekEndInput = document.getElementById('weekEndDate');
-    if (!weekStartInput.value || !weekEndInput.value) {
-      setCurrentWeekDates();
-    }
-  } else {
-    weeklyDateFilters.style.display = 'none';
-  }
-  // Table mapping for each frequency (declare only once)
-  if (!window._iqacTableMap) {
-    window._iqacTableMap = {
-      Weekly: [
-        'form1-Weekly', 'form2-weekly', 'form3-Weekly', 'form4-Weekly', 'form5-weekly', 'form6_weekly', 'form7-Weekly', 'form8-weekly'
-      ],
-      Monthly: [
-        'form2-once in a month', 'form4-once in a month'
-      ],
-      OnceIn3Months: [
-        'form5-Once in a 3 Months', 'form8-once in 3 Months'
-      ],
-      OnceIn2Months: [
-        'form6-once in 2 month', 'form7-Once in 2 Months'
-      ],
-      OnceIn15Days: [
-        'form1-once in 15 days', 'form3- once in 15 days'
-      ],
-      Semester: [
-        'form1-once in a semester', 'form2-once in a semester', 'form3-once in a semester', 'form4-once in a semester', 'form5-once in a semester', 'form6-once in a semester', 'form7-Once in a Semester', 'form8-Once in Semester'
-      ],
-      Year: [
-        'form1-once in a year'
-      ],
-      All: [
-        'form1-Weekly', 'form2-weekly', 'form3-Weekly', 'form4-Weekly', 'form5-weekly', 'form6_weekly', 'form7-Weekly', 'form8-weekly',
-        'form2-once in a month', 'form4-once in a month',
-        'form5-Once in a 3 Months', 'form8-once in 3 Months',
-        'form6-once in 2 month', 'form7-Once in 2 Months',
-        'form1-once in 15 days', 'form3- once in 15 days',
-        'form1-once in a semester', 'form2-once in a semester', 'form3-once in a semester', 'form4-once in a semester', 'form5-once in a semester', 'form6-once in a semester', 'form7-Once in a Semester', 'form8-Once in Semester',
-        'form1-once in a year'
-      ]
-    };
-  }
-  const tableMap = window._iqacTableMap;
-  // Portfolio headers and their corresponding table for each frequency (declare only once)
-  if (!window._iqacPortfolioHeadersMap) {
-    window._iqacPortfolioHeadersMap = {
-      Weekly: [
-        { label: "1. Training & Placement", table: 'form1-Weekly' },
-        { label: "2. Class Advisor", table: 'form2-weekly' },
-        { label: "3. Info & Contribution", table: 'form3-Weekly' },
-        { label: "4. Outcome & Exam Cell", table: 'form4-Weekly' },
-        { label: "5. Continuous Improvement", table: 'form5-weekly' },
-        { label: "6. T&L Process (IQAC)", table: 'form6_weekly' },
-        { label: "7. Student Support", table: 'form7-Weekly' },
-        { label: "8. Facilities & Lab", table: 'form8-weekly' }
-      ],
-      Monthly: [
-        { label: "2. Class Advisor", table: 'form2-once in a month' },
-        { label: "4. Outcome & Exam Cell", table: 'form4-once in a month' }
-      ],
-      OnceIn3Months: [
-        { label: "5. Continuous Improvement", table: 'form5-Once in a 3 Months' },
-        { label: "8. Facilities & Lab", table: 'form8-once in 3 Months' }
-      ],
-      OnceIn2Months: [
-        { label: "6. T&L Process (IQAC)", table: 'form6-once in 2 month' },
-        { label: "7. Student Support", table: 'form7-Once in 2 Months' }
-      ],
-      OnceIn15Days: [
-        { label: "1. Training & Placement", table: 'form1-once in 15 days' },
-        { label: "3. Info & Contribution", table: 'form3- once in 15 days' }
-      ],
-      Semester: [
-        { label: "1. Training & Placement", table: 'form1-once in a semester' },
-        { label: "2. Class Advisor", table: 'form2-once in a semester' },
-        { label: "3. Info & Contribution", table: 'form3-once in a semester' },
-        { label: "4. Outcome & Exam Cell", table: 'form4-once in a semester' },
-        { label: "5. Continuous Improvement", table: 'form5-once in a semester' },
-        { label: "6. T&L Process (IQAC)", table: 'form6-once in a semester' },
-        { label: "7. Student Support", table: 'form7-Once in a Semester' },
-        { label: "8. Facilities & Lab", table: 'form8-Once in Semester' }
-      ],
-      Year: [
-        { label: "1. Training & Placement", table: 'form1-once in a year' }
-      ],
-      All: [
-        { label: "1. Training & Placement", table: 'form1-Weekly' },
-        { label: "2. Class Advisor", table: 'form2-weekly' },
-        { label: "3. Info & Contribution", table: 'form3-Weekly' },
-        { label: "4. Outcome & Exam Cell", table: 'form4-Weekly' },
-        { label: "5. Continuous Improvement", table: 'form5-weekly' },
-        { label: "6. T&L Process (IQAC)", table: 'form6_weekly' },
-        { label: "7. Student Support", table: 'form7-Weekly' },
-        { label: "8. Facilities & Lab", table: 'form8-weekly' },
-        { label: "2. Class Advisor", table: 'form2-once in a month' },
-        { label: "4. Outcome & Exam Cell", table: 'form4-once in a month' },
-        { label: "5. Continuous Improvement", table: 'form5-Once in a 3 Months' },
-        { label: "8. Facilities & Lab", table: 'form8-once in 3 Months' },
-        { label: "6. T&L Process (IQAC)", table: 'form6-once in 2 month' },
-        { label: "7. Student Support", table: 'form7-Once in 2 Months' },
-        { label: "1. Training & Placement", table: 'form1-once in 15 days' },
-        { label: "3. Info & Contribution", table: 'form3- once in 15 days' },
-        { label: "1. Training & Placement", table: 'form1-once in a semester' },
-        { label: "2. Class Advisor", table: 'form2-once in a semester' },
-        { label: "3. Info & Contribution", table: 'form3-once in a semester' },
-        { label: "4. Outcome & Exam Cell", table: 'form4-once in a semester' },
-        { label: "5. Continuous Improvement", table: 'form5-once in a semester' },
-        { label: "6. T&L Process (IQAC)", table: 'form6-once in a semester' },
-        { label: "7. Student Support", table: 'form7-Once in a Semester' },
-        { label: "8. Facilities & Lab", table: 'form8-Once in Semester' },
-        { label: "1. Training & Placement", table: 'form1-once in a year' }
-      ]
-    };
-  }
-  const portfolioHeadersMap = window._iqacPortfolioHeadersMap;
+  // Portfolio headers and their corresponding monthly tables (only 8 monthly forms)
+  const portfolioHeaders = [
+    { label: "1. Training & Placement", table: 'form1-monthly' },
+    { label: "2. Class Advisor", table: 'form2-monthly' },
+    { label: "3. Info & Contribution", table: 'form3-monthly' },
+    { label: "4. Outcome & Exam Cell", table: 'form4-monthly' },
+    { label: "5. Continuous Improvement", table: 'form5-monthly' },
+    { label: "6. T&L Process (IQAC)", table: 'form6-monthly' },
+    { label: "7. Student Support", table: 'form7-monthly' },
+    { label: "8. Facilities & Lab", table: 'form8-monthly' }
+  ];
   let html = '';
-  html += '<div style="position:sticky; top:0; z-index:30; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.04);">';
   html += '<h3 class="text-xl font-bold text-orange-500 mb-2">Department Portfolios</h3>';
-  html += '<table class="w-full text-xs border border-gray-400 rounded-lg overflow-hidden shadow-sm bg-white" style="table-layout:fixed; font-size:12px;">';
-  html += '<thead class="bg-orange-100 text-orange-700">';
-  html += '<tr style="position:sticky; top:56px; background:#FEF3C7; z-index:20;">';
-  html += '<th class="px-1 py-1 border border-gray-400" style="width:90px; position:sticky; top:56px; background:#FEF3C7; z-index:21;">Department</th>';
-  const headers = portfolioHeadersMap[selectedFrequency] || [];
-  for (const h of headers) html += `<th class="px-1 py-1 border border-gray-400" style="width:120px; position:sticky; top:56px; background:#FEF3C7; z-index:21;">${h.label}</th>`;
-  html += '</tr></thead></table>';
-  html += '</div>';
-  html += '<div style="overflow-x:auto; max-height:500px; overflow-y:auto;">';
-  html += '<table class="w-full text-xs border border-gray-400 rounded-lg overflow-hidden shadow-sm bg-white" style="table-layout:fixed; font-size:12px; margin-top:-1px;">';
+  html += '<div style="overflow-x:auto; max-height:600px; overflow-y:auto; border:1px solid #9ca3af; border-radius:8px;">';
+  html += '<table class="w-full text-sm bg-white" style="border-collapse:collapse;">';
+  html += '<thead class="bg-orange-100 text-orange-700" style="position:sticky; top:0; z-index:10;">';
+  html += '<tr>';
+  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:120px;">Department</th>';
+  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:100px;">Designation</th>';
+  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:180px;">Faculty Name</th>';
+  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:200px;">Portfolio Name</th>';
+  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:150px;">Percentage</th>';
+  html += '</tr></thead>';
   html += '<tbody>';
+  
+  // Build rows: one row per faculty per portfolio
+  const tableRows = [];
   for (const dept of departments) {
     if (selectedDept !== 'All' && dept !== selectedDept) continue;
     const facultyList = data.filter(fac => (fac.department || 'Unknown') === dept);
-    html += `<tr>`;
-    html += `<td class="px-1 py-1 font-semibold text-purple-700 border border-gray-400" style="word-break:break-word;">${dept}</td>`;
-    for (const h of headers) {
-      // Find which form this header maps to
-      const formKey = h.label.match(/\d+/) ? `form${h.label.match(/\d+/)[0]}` : '';
-      html += `<td class="px-1 py-1 border border-gray-400" style="word-break:break-word;">`;
-      const assignedList = facultyList.filter(fac => (fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes'));
-      if (assignedList.length > 0) {
-        for (const fac of assignedList) {
-          const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
-          // Add a span for tick/cross and percentage (percentage will be filled in as (85%) after name)
-          html += `<div class="flex items-center gap-1" style="font-size:11px;">
-            <span id="portfolio-status-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}" class="inline-block"></span>
-            <span class="inline-block">${facultyName} <span id="portfolio-percent-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}"></span></span>
-          </div>`;
+    
+    for (const fac of facultyList) {
+      const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+      const designation = fac.Designation || fac.designation || 'N/A';
+      
+      // Check which portfolios this faculty is assigned to
+      for (const h of portfolioHeaders) {
+        const formKey = h.label.match(/\d+/) ? `form${h.label.match(/\d+/)[0]}` : '';
+        const isAssigned = fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes';
+        
+        if (isAssigned) {
+          const rowId = `${dept.replace(/[^a-zA-Z0-9]/g, '')}-${formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
+          tableRows.push({
+            dept,
+            designation,
+            facultyName,
+            portfolioName: h.label,
+            tableName: h.table,
+            formKey,
+            rowId
+          });
         }
-      } else {
-        html += '-';
       }
-      html += `</td>`;
     }
-    html += '</tr>';
   }
+  
+  // Sort rows: first by department, then by portfolio number (1-8)
+  tableRows.sort((a, b) => {
+    // First sort by department
+    if (a.dept !== b.dept) {
+      return a.dept.localeCompare(b.dept);
+    }
+    // Then sort by portfolio number (extract number from portfolioName like "1. Training & Placement")
+    const aNum = parseInt(a.portfolioName.match(/^\d+/)?.[0] || '99');
+    const bNum = parseInt(b.portfolioName.match(/^\d+/)?.[0] || '99');
+    return aNum - bNum;
+  });
+  
+  // Render rows
+  for (const row of tableRows) {
+    html += `<tr class="hover:bg-gray-50">`;
+    html += `<td class="px-3 py-2 border border-gray-400" style="min-width:120px;">${row.dept}</td>`;
+    html += `<td class="px-3 py-2 border border-gray-400" style="min-width:100px;">${row.designation}</td>`;
+    html += `<td class="px-3 py-2 border border-gray-400" style="min-width:180px;">${row.facultyName}</td>`;
+    html += `<td class="px-3 py-2 border border-gray-400" style="min-width:200px;">${row.portfolioName}</td>`;
+    html += `<td class="px-3 py-2 border border-gray-400" style="min-width:150px;" id="percent-${row.rowId}">Loading...</td>`;
+    html += `</tr>`;
+  }
+  
   html += '</tbody></table></div>';
   document.getElementById('departmentPortfoliosContainer').innerHTML = html;
 
-      // Async tick/cross logic for assigned faculty
-      for (const dept of departments) {
-        if (selectedDept !== 'All' && dept !== selectedDept) continue;
-        const facultyList = data.filter(fac => (fac.department || 'Unknown') === dept);
-        const headers = portfolioHeadersMap[selectedFrequency] || [];
-        for (const h of headers) {
-          const formKey = h.label.match(/\d+/) ? `form${h.label.match(/\d+/)[0]}` : '';
-          const tableName = h.table;
-          const assignedList = facultyList.filter(fac => (fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes'));
-          for (const fac of assignedList) {
-            const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email;
-            const statusSpanId = `portfolio-status-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
-            const percentSpanId = `portfolio-percent-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
-            (async () => {
-              let filled = false;
-              let percentage = 0;
-              let query = supabaseClient.from(tableName).select('*').eq('Department', dept);
-              // If frequency is Weekly, filter by date range
-              if (selectedFrequency === 'Weekly') {
-                const weekStartInput = document.getElementById('weekStartDate');
-                const weekEndInput = document.getElementById('weekEndDate');
-                if (weekStartInput.value && weekEndInput.value) {
-                  const startDate = new Date(weekStartInput.value);
-                  startDate.setHours(0, 0, 0, 0);
-                  const endDate = new Date(weekEndInput.value);
-                  endDate.setHours(23, 59, 59, 999);
-                  const startStr = startDate.toISOString();
-                  const endStr = endDate.toISOString();
-                  query = query.gte('submitted_at', startStr).lte('submitted_at', endStr);
-                } else {
-                  const now = new Date();
-                  const currentDay = now.getDay();
-                  const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
-                  const monday = new Date(now);
-                  monday.setDate(now.getDate() + mondayOffset);
-                  monday.setHours(0, 0, 0, 0);
-                  const sunday = new Date(monday);
-                  sunday.setDate(monday.getDate() + 6);
-                  sunday.setHours(23, 59, 59, 999);
-                  const mondayStr = monday.toISOString();
-                  const sundayStr = sunday.toISOString();
-                  query = query.gte('submitted_at', mondayStr).lte('submitted_at', sundayStr);
-                }
-              }
-              const { data: formData, error } = await query;
-              let bestRow = null;
-              if (!error && formData && formData.length > 0) {
-                // Robust faculty name matching (as in workdone-table.js)
-                const filteredRows = formData.filter(row => {
-                  const rowName = row['Portfolio Member Name:'] || row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
-                  return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase();
-                });
-                if (filteredRows.length > 0) {
-                  filled = true;
-                  // Use the latest row (by id or timestamp)
-                  bestRow = filteredRows.sort((a, b) => (b.id || 0) - (a.id || 0))[0];
-                }
-              }
-              // Calculate percentage if bestRow exists, using all keys starting with 'Status'
-              if (bestRow) {
-                let completedCount = 0;
-                let applicableCount = 0;
-                // Use all keys starting with 'Status' (case-sensitive, as in workdone-table.js)
-                const statusKeys = Object.keys(bestRow).filter(k => k.startsWith('Status'));
-                for (const key of statusKeys) {
-                  const val = (bestRow[key] || '').toString().trim().toLowerCase();
-                  if (val === 'not applicable' || val === 'na') continue;
-                  // Treat null, empty, or '-' as applicable (mark=0)
-                  applicableCount += 1;
-                  if (val === 'completed' || val === 'completed and updated') {
-                    completedCount += 1;
-                  }
-                }
-                if (applicableCount > 0) {
-                  percentage = Math.round((completedCount / applicableCount) * 100);
-                } else {
-                  percentage = 0;
-                }
-              } else {
-                percentage = 0;
-              }
-              // Set tick/cross and percentage
-              const statusSpan = document.getElementById(statusSpanId);
-              const percentSpan = document.getElementById(percentSpanId);
-              if (statusSpan) {
-                if (selectedStatus === 'Completed' && !filled) {
-                  statusSpan.parentElement.style.display = 'none';
-                  return;
-                }
-                if (selectedStatus === 'Pending' && filled) {
-                  statusSpan.parentElement.style.display = 'none';
-                  return;
-                }
-                statusSpan.innerHTML = filled
-                  ? `<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 text-green-500\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M5 13l4 4L19 7\" /></svg>`
-                  : `<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-6 w-6 text-red-500\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M6 18L18 6M6 6l12 12\" /></svg>`;
-                if (percentSpan) {
-                  percentSpan.innerHTML = `<span class='text-xs font-semibold ${percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600'}'>(${percentage}%)</span>`;
-                }
-              }
-            })();
+      // Async percentage calculation for each faculty-portfolio combination
+      for (const row of tableRows) {
+        (async () => {
+          let filled = false;
+          let percentage = 0;
+          let query = supabaseClient.from(row.tableName).select('*').eq('Department', row.dept);
+          const { data: formData, error } = await query;
+          let bestRow = null;
+          if (!error && formData && formData.length > 0) {
+            // Robust faculty name matching with month filtering
+            const filteredRows = formData.filter(dataRow => {
+              const rowName = dataRow['Portfolio Member Name:'] || dataRow['Portfolio Member Name'] || dataRow['Portfolio Memeber Name'] || dataRow['faculty_name'] || dataRow['Faculty Name'] || dataRow['Name'] || '';
+              // Check month field (Month, month, or Month:)
+              const rowMonth = dataRow['Month'] || dataRow['month'] || dataRow['Month:'] || '';
+              const nameMatches = rowName.toString().trim().toLowerCase() === row.facultyName.toString().trim().toLowerCase();
+              const monthMatches = rowMonth.toString().trim().toLowerCase() === selectedMonth.toLowerCase();
+              return nameMatches && monthMatches;
+            });
+            if (filteredRows.length > 0) {
+              filled = true;
+              // Use the latest row (by id or timestamp)
+              bestRow = filteredRows.sort((a, b) => (b.id || 0) - (a.id || 0))[0];
+            }
           }
-        }
+          // Calculate percentage if bestRow exists, using all keys starting with 'Status'
+          if (bestRow) {
+            let completedCount = 0;
+            let applicableCount = 0;
+            // Use all keys starting with 'Status' (case-sensitive)
+            const statusKeys = Object.keys(bestRow).filter(k => k.startsWith('Status'));
+            for (const key of statusKeys) {
+              const val = (bestRow[key] || '').toString().trim().toLowerCase();
+              if (val === 'not applicable' || val === 'na') continue;
+              // Treat null, empty, or '-' as applicable (mark=0)
+              applicableCount += 1;
+              if (val === 'completed' || val === 'completed and updated') {
+                completedCount += 1;
+              }
+            }
+            if (applicableCount > 0) {
+              percentage = Math.round((completedCount / applicableCount) * 100);
+            } else {
+              percentage = 0;
+            }
+          } else {
+            percentage = 0;
+          }
+          
+          // Update the percentage cell
+          const percentCell = document.getElementById(`percent-${row.rowId}`);
+          if (percentCell) {
+            // Apply status filter
+            if (selectedStatus === 'Completed' && !filled) {
+              percentCell.parentElement.style.display = 'none';
+              return;
+            }
+            if (selectedStatus === 'Pending' && filled) {
+              percentCell.parentElement.style.display = 'none';
+              return;
+            }
+            
+            // Display percentage with color coding
+            if (filled) {
+              percentCell.innerHTML = `<span class="font-semibold ${percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600'}">${percentage}%</span>`;
+            } else {
+              percentCell.innerHTML = `<span class="text-red-600 font-semibold">0% (Not Submitted)</span>`;
+            }
+          }
+        })();
       }
 
-      // Add filter event listeners
-  deptFilter.onchange = statusFilter.onchange = frequencyFilter.onchange = () => loadDepartmentPortfoliosIQAC();
+      // Add filter event listeners (department, month, and status filters)
+  monthFilter.onchange = deptFilter.onchange = statusFilter.onchange = () => loadDepartmentPortfoliosIQAC();
   
   // Setup date filter event listeners
   if (!document.getElementById('applyWeekFilter').dataset.listenerAdded) {
@@ -1346,10 +1347,6 @@ function attachExportButtons() {
       renderDashboardTable(data);
     }
     function renderDashboardTable(facultyList) {
-  // ...existing code...
-  // After rendering dashboard table, render department portfolios table
-  loadDepartmentPortfoliosIQAC();
-  attachExportButtons();
       const designationFilter = document.getElementById('designationFilter').value;
       const groups = { AP: [], ASP: [], Prof: [] };
       facultyList.forEach(fac => {
@@ -1392,134 +1389,233 @@ function attachExportButtons() {
       };
       (async function renderDashboardAsync() {
         const [apRes, aspRes, profRes] = await Promise.all([
-          supabaseClient.from('ap_compliance').select('*').eq('department', selectedDepartment),
-          supabaseClient.from('asp_compliance').select('*').eq('department', selectedDepartment),
-          supabaseClient.from('prof_compliance').select('*').eq('department', selectedDepartment)
+          supabaseClient.from('AP(Yearly)').select('*').eq('Department', selectedDepartment),
+          supabaseClient.from('ASP(Yearly)').select('*').eq('Department', selectedDepartment),
+          supabaseClient.from('Prof(Yearly)').select('*').eq('Department', selectedDepartment)
         ]);
-        function getBestComplianceRows(data) {
+        function getBestYearlyRows(data) {
           const facultyData = {};
           
-          // Group all rows by faculty email
+          // Group all rows by faculty name
           data.forEach(row => {
-            const email = row.faculty_email;
-            if (!facultyData[email]) {
-              facultyData[email] = [];
-            }
-            facultyData[email].push(row);
+            const facultyName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+            if (!facultyName) return;
+            if (!facultyData[facultyName]) facultyData[facultyName] = [];
+            facultyData[facultyName].push(row);
           });
           
-          // For each faculty, create a best-case compliance record
+          // For each faculty, get the latest row by input_id or id
           const result = [];
-          Object.keys(facultyData).forEach(email => {
-            const rows = facultyData[email];
-            
-            // Start with the most recent row as base
-            rows.sort((a, b) => (b.id || 0) - (a.id || 0));
-            const latestRow = { ...rows[0] };
-            
-            // Check each compliance field and keep "completed" if found in any submission
-            for (let i = 1; i <= 20; i++) { // Assuming max 20 compliance fields
-              const fieldName = `compliance_${i}`;
-              let hasCompleted = false;
-              
-              // Check all submissions for this faculty
-              for (const row of rows) {
-                const value = (row[fieldName] || '').toString().trim().toLowerCase();
-                if (value === 'yes' || value === 'completed') {
-                  hasCompleted = true;
-                  break;
-                }
-              }
-              
-              // If any submission shows completed, override with completed
-              if (hasCompleted) {
-                latestRow[fieldName] = 'completed';
-              }
-              // Otherwise keep the latest row's value
-            }
-            
-            result.push(latestRow);
+          Object.keys(facultyData).forEach(facultyName => {
+            const rows = facultyData[facultyName];
+            rows.sort((a, b) => (b.input_id || b.id || 0) - (a.input_id || a.id || 0));
+            result.push(rows[0]);
           });
           
           return result;
         }
-        const apDataLatest = getBestComplianceRows(apRes.data || []);
-        const aspDataLatest = getBestComplianceRows(aspRes.data || []);
-        const profDataLatest = getBestComplianceRows(profRes.data || []);
+        const apDataLatest = getBestYearlyRows(apRes.data || []);
+        const aspDataLatest = getBestYearlyRows(aspRes.data || []);
+        const profDataLatest = getBestYearlyRows(profRes.data || []);
         for (const key of ['AP', 'ASP', 'Prof']) {
           if (designationFilter !== 'All' && designationFilter !== key) continue;
           const group = groups[key];
           if (group.length === 0) continue;
           html += `<h3 class="text-xl font-semibold text-purple-700 mt-8 mb-2">${key === 'AP' ? 'Assistant Professor (AP)' : key === 'ASP' ? 'Associate Professor (ASP)' : 'Professor (Prof)'}</h3>`;
           const particulars = particularsMap[key];
-          html += `<div class="overflow-x-auto mb-6"><table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white"><thead class="bg-purple-700 text-white"><tr><th class="px-4 py-2">Faculty Name</th>`;
+          html += `<div class="overflow-x-auto mb-6"><table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white"><thead class="bg-purple-700 text-white"><tr><th class="px-4 py-2">Faculty Name</th><th class="px-4 py-2">Percentage</th>`;
           particulars.forEach(particular => {
             html += `<th class="px-4 py-2">${particular}</th>`;
           });
           html += `</tr></thead><tbody>`;
           for (const fac of group) {
-            let complianceRow = null;
-            if (key === 'AP') complianceRow = apDataLatest.find(r => r.faculty_email === fac.email);
-            else if (key === 'ASP') complianceRow = aspDataLatest.find(r => r.faculty_email === fac.email);
-            else if (key === 'Prof') complianceRow = profDataLatest.find(r => r.faculty_email === fac.email);
+            const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || '';
+            const nameTrimmed = facultyName.toString().trim().toLowerCase();
             
-            // Calculate percentage (completed=1, others=0, skip not applicable)
+            // Find matching yearly data for this faculty
+            let yearlyData = null;
+            if (key === 'AP') yearlyData = apDataLatest;
+            else if (key === 'ASP') yearlyData = aspDataLatest;
+            else if (key === 'Prof') yearlyData = profDataLatest;
+            
+            const row = yearlyData ? yearlyData.find(r => 
+              (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
+            ) : null;
+            
+            // Calculate percentage based on Status fields
             let completedCount = 0;
-            let applicableCount = 0;
-            for (let i = 0; i < particulars.length; i++) {
-              let compliance = complianceRow ? complianceRow[`compliance_${i+1}`] : null;
-              const val = (compliance || '').trim().toLowerCase();
-              if (val === 'not applicable' || val === 'na') continue;
-              // All other values, including '-', are counted as applicable (0 unless completed)
-              applicableCount += 1;
-              if (val === 'completed') {
-                completedCount += 1;
+            let totalCount = key === 'AP' ? 7 : 8; // AP has 7 items, ASP/Prof have 8
+            
+            if (row) {
+              for (let i = 1; i <= totalCount; i++) {
+                const status = (row[`Status_${i}`] || '').toString().toLowerCase();
+                if (status === 'completed' || status === 'completed and updated') {
+                  completedCount++;
+                }
               }
             }
-            const percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) : 0;
             
-            html += `<tr><td class="px-2 py-2">
-              <div class="font-medium text-purple-700 cursor-pointer underline" onclick="viewFacultyForm('${fac.email}','${key}','${fac.Name ? fac.Name.replace(/'/g, "\'") : ''}')">${fac.Name || ''}</div>
-              <div class="text-sm ${percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600'} font-semibold">${percentage}%</div>
+            const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+            
+            html += `<tr><td class="px-2 py-2 font-medium text-purple-700 cursor-pointer underline" onclick="viewYearlyFacultyForm('${key}','${facultyName.replace(/'/g, "\\'")}', '${selectedDepartment.replace(/'/g, "\\'")}')">
+                ${facultyName}
             </td>`;
             
-            for (let i = 0; i < particulars.length; i++) {
-              let compliance = complianceRow ? complianceRow[`compliance_${i+1}`] : null;
-              let complianceClass = '';
-              let display = '-';
-              if (compliance) {
-                const val = compliance.trim().toLowerCase();
-                if (val === 'completed') {
-                  complianceClass = 'text-green-600 font-bold';
-                  display = 'Completed';
-                } else if (val === 'in progress' || val === 'inprogress') {
-                  complianceClass = 'text-blue-600 font-bold';
-                  display = 'In Progress';
-                } else if (val === 'not started') {
-                  complianceClass = 'text-orange-600 font-bold';
-                  display = 'Not Started';
-                } else if (val === 'no' || val === 'incomplete') {
-                  complianceClass = 'text-red-600 font-bold';
-                  display = 'Incomplete';
-                } else {
-                  complianceClass = 'text-gray-500';
-                  display = val;
-                }
-              } else {
-                complianceClass = 'text-gray-500';
+            // Percentage column with color coding
+            html += `<td class="px-2 py-2 text-center font-bold ${percentage >= 70 ? 'bg-green-100 text-green-700' : percentage >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}">${percentage}%</td>`;
+            
+            // Display status for each particular
+            for (let i = 1; i <= totalCount; i++) {
+              const status = row ? (row[`Status_${i}`] || '-') : '-';
+              const statusLower = status.toString().toLowerCase();
+              let bgColor = 'bg-gray-100';
+              let textColor = 'text-gray-600';
+              
+              if (statusLower === 'completed' || statusLower === 'completed and updated') {
+                bgColor = 'bg-green-100';
+                textColor = 'text-green-700';
+              } else if (statusLower === 'in progress') {
+                bgColor = 'bg-yellow-100';
+                textColor = 'text-yellow-700';
+              } else if (statusLower === 'not applicable' || statusLower === 'na' || statusLower === 'n/a') {
+                bgColor = 'bg-gray-100';
+                textColor = 'text-gray-500';
+              } else if (statusLower !== '-') {
+                bgColor = 'bg-red-100';
+                textColor = 'text-red-700';
               }
-              html += `<td class="px-2 py-2 ${complianceClass}">${display}</td>`;
+              
+              html += `<td class="px-2 py-2 ${bgColor} ${textColor} text-center font-medium">${status}</td>`;
             }
             html += `</tr>`;
           }
           html += `</tbody></table></div>`;
         }
-        document.getElementById('dashboardTableContainer').innerHTML = html || '<div class="text-gray-500">No compliance data found.</div>';
+        document.getElementById('dashboardTableContainer').innerHTML = html || '<div class="text-gray-500">No yearly data found.</div>';
+        
+        // Attach export buttons after table is rendered
+        attachExportButtons();
+        
+        // Load department portfolios table
+        loadDepartmentPortfoliosIQAC();
       })();
     }
     document.getElementById('designationFilter').addEventListener('change', () => {
       loadDashboardTable();
     });
+    
+    // Modal function for viewing yearly form details
+    async function viewYearlyFacultyForm(designation, facultyName, department) {
+      document.getElementById('viewFormModal').classList.remove('hidden');
+      document.getElementById('viewFormModalContent').innerHTML = '<div class="text-center text-gray-500">Loading form data...</div>';
+      
+      let tableName = '';
+      if (designation === 'AP') tableName = 'AP(Yearly)';
+      else if (designation === 'ASP') tableName = 'ASP(Yearly)';
+      else if (designation === 'Prof') tableName = 'Prof(Yearly)';
+      else {
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Unknown designation.</div>';
+        return;
+      }
+      
+      const { data, error } = await supabaseClient
+        .from(tableName)
+        .select('*')
+        .eq('Department', department)
+        .order('input_id', { ascending: false });
+      
+      if (error || !data || data.length === 0) {
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Form data not found.</div>';
+        return;
+      }
+      
+      const nameTrimmed = (facultyName || '').toString().trim().toLowerCase();
+      let filtered = data.filter(row => {
+        let rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+        return rowName === nameTrimmed;
+      });
+      
+      if (filtered.length === 0) {
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">No form data found for this faculty name.</div>';
+        return;
+      }
+      
+      const row = filtered[0];
+      let html = '';
+      html += `<div class="mb-4">
+        <div class="font-semibold text-purple-700">Department:</div>
+        <div class="mb-2">${row['Department'] || ''}</div>
+        <div class="font-semibold text-purple-700">Portfolio Name:</div>
+        <div class="mb-2">${row['Portfolio Name'] || ''}</div>
+        <div class="font-semibold text-purple-700">Portfolio Member Name:</div>
+        <div class="mb-2">${row['Portfolio Member Name'] || ''}</div>
+        <div class="font-semibold text-purple-700">Month:</div>
+        <div class="mb-2">${row['Month'] || ''}</div>
+      </div>`;
+      
+      // Item descriptions for each designation
+      let items = [];
+      if (designation === 'AP') {
+        items = [
+          'Present at Conferences.',
+          'Guide student research and final-year projects.',
+          'Attend FDPs / workshop/Seminars',
+          'NPTEL/ MOOC certifications 2/Sem',
+          'Facilitate industry-institute interaction through guest lectures, internships.',
+          'Engage in extension activities, and social outreach programs.',
+          'Membership in professional body'
+        ];
+      } else if (designation === 'ASP') {
+        items = [
+          'Publish in peer-reviewed journals',
+          'Apply for research grants',
+          'Guide student research and final-year projects.',
+          'Organize FDPs / workshop/Seminars',
+          'NPTEL/ MOOC certifications',
+          'Facilitate industry-institute interaction through guest lectures, internships.',
+          'Engage in Consultancy.',
+          'Membership in professional body'
+        ];
+      } else if (designation === 'Prof') {
+        items = [
+          'Publish in peer-reviewed journals',
+          'Apply for research grants',
+          'Guide student research and final-year projects.',
+          'Organize FDPs / workshop/Seminars',
+          'NPTEL/ MOOC certifications',
+          'Facilitate MoU',
+          'Engage in Consultancy.',
+          'Membership in professional body'
+        ];
+      }
+      
+      html += `<div class="space-y-4">`;
+      for (let i = 1; i <= items.length; i++) {
+        const statusVal = row[`Status_${i}`] || '-';
+        const descVal = row[`Description_${i}`] || '-';
+        let uploadVal = row[`Upload The Scanned File_${i}`] || '-';
+        let uploadHtml = '-';
+        if (uploadVal && uploadVal !== '-' && typeof uploadVal === 'string') {
+          if (uploadVal.startsWith('http')) {
+            uploadHtml = `<a href="${uploadVal}" target="_blank" class="text-blue-600 underline">View File</a>`;
+          } else {
+            uploadHtml = uploadVal;
+          }
+        }
+        html += `<div class="border-b pb-2 mb-2">
+          <div class="font-semibold text-purple-700">${i}. ${items[i-1]}</div>
+          <div class="grid grid-cols-3 gap-2 mt-1 text-sm">
+            <div><span class="font-medium">Status:</span> ${statusVal}</div>
+            <div><span class="font-medium">Description:</span> ${descVal}</div>
+            <div><span class="font-medium">File:</span> ${uploadHtml}</div>
+          </div>
+        </div>`;
+      }
+      html += `</div>`;
+      document.getElementById('viewFormModalContent').innerHTML = html;
+      document.getElementById('viewFormModalTitle').textContent = `${designation} Yearly Form Details`;
+    }
+    
     function closeViewFormModal() {
       document.getElementById('viewFormModal').classList.add('hidden');
       document.getElementById('viewFormModalContent').innerHTML = '';
@@ -1645,124 +1741,7 @@ function attachExportButtons() {
       document.getElementById('viewStatusFormModalContent').innerHTML = html;
       document.getElementById('viewStatusFormModalTitle').textContent = `${designation} Portfolio Form Details`;
     }
-    async function viewFacultyForm(email, designation, facultyName) {
-      document.getElementById('viewFormModal').classList.remove('hidden');
-      document.getElementById('viewFormModalContent').innerHTML = '<div class="text-center text-gray-500">Loading form data...</div>';
-      let tableName = '';
-      if (designation === 'AP') tableName = 'AP';
-      else if (designation === 'ASP') tableName = 'ASP';
-      else if (designation === 'Prof') tableName = 'Prof';
-      else {
-        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Unknown designation.</div>';
-        return;
-      }
-      const { data, error } = await supabaseClient
-        .from(tableName)
-        .select('*')
-        .eq('Department', selectedDepartment);
-      if (error || !data || data.length === 0) {
-        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Form data not found.</div>';
-        return;
-      }
-      const nameTrimmed = (facultyName || '').toString().trim().toLowerCase();
-      let filtered = data.filter(row => {
-        let rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
-        return rowName === nameTrimmed;
-      });
-      if (filtered.length === 0) {
-        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">No form data found for this faculty name.</div>';
-        return;
-      }
-      filtered.sort((a, b) => (b.id || 0) - (a.id || 0));
-      const row = filtered[0];
-      let html = '';
-      html += `<div class="mb-4">
-        <div class="font-semibold text-purple-700">Department:</div>
-        <div class="mb-2">${row['Department'] || row['Department:'] || ''}</div>
-        <div class="font-semibold text-purple-700">Portfolio Name:</div>
-        <div class="mb-2">${row['Portfolio Name'] || row['Portfolio Name:'] || ''}</div>
-        <div class="font-semibold text-purple-700">Portfolio Member Name:</div>
-        <div class="mb-2">${row['Portfolio Member Name'] || ''}</div>
-      </div>`;
-      let sections = [];
-      if (designation === 'AP') {
-        sections = [
-          'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
-          'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
-          'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
-          'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
-          'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
-          'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
-          'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
-          'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
-          'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
-          'Research and Development: Present at conferences.',
-          'Research and Development: Guide student research and final-year projects',
-          'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
-          'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
-          'Institutional Development: Serve on academic and administrative committees.',
-          'Professional Development: Attend FDP/ workshops/ seminar.',
-          'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.',
-          'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
-          'Community and Industry Engagement: Engage in extension activities, and social outreach Programs.',
-          'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
-          'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
-          'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.'
-        ];
-      } else if (designation === 'ASP' || designation === 'Prof') {
-        sections = [
-          'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
-          'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
-          'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
-          'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
-          'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
-          'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
-          'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
-          'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
-          'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
-          'Research and Development: Present at conferences.',
-          'Research and Development: Guide student research and final-year projects',
-          'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
-          'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
-          'Institutional Development: Serve on academic and administrative committees.',
-          'Professional Development: Attend FDP/ workshops/ seminar.',
-          'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.',
-          'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
-          'Community and Industry Engagement: Engage in extension activities, and social outreach Programs.',
-          'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
-          'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
-          'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.'
-        ];
-      }
-      html += `<div class="space-y-4">`;
-      for (let i = 1; i <= sections.length; i++) {
-        const statusVal = row[`Status_${i}`] || '-';
-        const descVal = row[`Description_${i}`] || '-';
-        let uploadVal = row[`Upload The Scanned File_${i}`] || row[`Upload the scanned file_${i}`] || '-';
-        let uploadHtml = '-';
-        if (uploadVal && uploadVal !== '-' && typeof uploadVal === 'string') {
-          // Check if it's a valid URL or file path
-          const isUrl = uploadVal.startsWith('http://') || uploadVal.startsWith('https://');
-          const isFile = uploadVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i);
-          if (isUrl || isFile) {
-            uploadHtml = `<a href="${uploadVal}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block">View</a>`;
-          } else {
-            uploadHtml = uploadVal;
-          }
-        }
-        html += `<div class="border-b pb-2 mb-2">
-          <div class="font-semibold text-orange-500 mb-1">${i}. ${sections[i-1]}</div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-            <div><span class="font-medium text-purple-700">Status:</span> ${statusVal}</div>
-            <div><span class="font-medium text-purple-700">Description:</span> ${descVal}</div>
-            <div><span class="font-medium text-purple-700">Upload:</span> ${uploadHtml}</div>
-          </div>
-        </div>`;
-      }
-      html += `</div>`;
-      document.getElementById('viewFormModalContent').innerHTML = html;
-      document.getElementById('viewFormModalTitle').textContent = `${designation} Form Details`;
-    }
+    
   loadDepartments().then(loadDashboardTable);
   // NEW: Load status table departments and table
   loadStatusDepartments().then(loadFacultyStatusTable);
