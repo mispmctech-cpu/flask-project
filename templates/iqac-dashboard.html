@@ -42,6 +42,21 @@
         <option value="ASP">Associate Professor (ASP)</option>
         <option value="Prof">Professor (Prof)</option>
       </select>
+      <label for="yearlyMonthFilter" class="font-medium text-purple-700 mr-2">Month:</label>
+      <select id="yearlyMonthFilter" class="p-2 border rounded">
+        <option value="January">January</option>
+        <option value="February">February</option>
+        <option value="March">March</option>
+        <option value="April">April</option>
+        <option value="May">May</option>
+        <option value="June">June</option>
+        <option value="July">July</option>
+        <option value="August">August</option>
+        <option value="September">September</option>
+        <option value="October">October</option>
+        <option value="November">November</option>
+        <option value="December">December</option>
+      </select>
       <button id="exportDashboardTableBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export dashboard table to Excel">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
         Export Dashboard Table
@@ -49,38 +64,49 @@
     </div>
     <div id="dashboardTableContainer" class="overflow-x-auto"></div>
 
-    <!-- NEW: Faculty Status Table from AP, ASP, Prof tables -->
-    <h2 class="text-2xl font-bold text-blue-700 mt-12 mb-6">Faculty Core Scope - Monthly</h2>
+    <!-- NEW: Faculty Core Scope - Monthly Table -->
+    <h2 class="text-2xl font-bold text-green-700 mt-12 mb-6">Faculty Core Scope - Monthly</h2>
     <div class="mb-6 flex flex-wrap gap-4 items-center">
-      <label for="statusDepartmentFilter" class="font-medium text-blue-700 mr-2">Filter by Department:</label>
-      <select id="statusDepartmentFilter" class="p-2 border rounded"></select>
-      <label for="statusDesignationFilter" class="font-medium text-blue-700 mr-2">Filter by Designation:</label>
-      <select id="statusDesignationFilter" class="p-2 border rounded">
+      <label for="coreScopeDepartmentFilter" class="font-medium text-green-700 mr-2">Filter by Department:</label>
+      <select id="coreScopeDepartmentFilter" class="p-2 border rounded"></select>
+      <label for="coreScopeDesignationFilter" class="font-medium text-green-700 mr-2">Filter by Designation:</label>
+      <select id="coreScopeDesignationFilter" class="p-2 border rounded">
         <option value="All">All</option>
-        <option value="AP">Assistant Professor (AP)</option>
-        <option value="ASP">Associate Professor (ASP)</option>
-        <option value="Prof">Professor (Prof)</option>
+        <option value="AP">AP</option>
+        <option value="ASP">ASP</option>
+        <option value="Prof">Prof</option>
       </select>
-      <button id="exportStatusTableBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export status table to Excel">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-        Export Status Table
+      <label for="coreScopeMonthFilter" class="font-medium text-green-700 mr-2">Month:</label>
+      <select id="coreScopeMonthFilter" class="p-2 border rounded">
+        <option value="January">January</option>
+        <option value="February">February</option>
+        <option value="March">March</option>
+        <option value="April">April</option>
+        <option value="May">May</option>
+        <option value="June">June</option>
+        <option value="July">July</option>
+        <option value="August">August</option>
+        <option value="September">September</option>
+        <option value="October">October</option>
+        <option value="November">November</option>
+        <option value="December">December</option>
+      </select>
+      <button id="exportCoreScopeTableBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export core scope table to Excel">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Export to Excel
       </button>
     </div>
-    <!-- Export Modal for Status Table -->
-    <div id="exportStatusModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+    <!-- Export Modal for Core Scope Table -->
+    <div id="exportCoreScopeModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
       <div class="bg-white rounded-lg shadow-lg max-w-sm w-full p-6 relative">
-        <button onclick="closeExportStatusModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
-        <h3 class="text-lg font-bold mb-4 text-blue-700">Export Status Table</h3>
-        <p class="mb-4 text-gray-700">Select export scope:</p>
-        <div class="flex flex-col gap-3">
-          <button id="exportStatusCurrentDeptBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow">Current Department</button>
-          <button id="exportStatusAllDeptBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">All Departments</button>
-        </div>
+        <h3 class="text-lg font-bold text-green-700 mb-4">Export Core Scope Table</h3>
+        <button id="exportCoreScopeCurrentDeptBtn" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded mb-3">Current Department</button>
+        <button id="exportCoreScopeAllDeptBtn" class="w-full bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded mb-3">All Departments</button>
+        <button onclick="closeExportCoreScopeModal()" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded">Cancel</button>
       </div>
     </div>
+    <div id="coreScopeTableContainer" class="overflow-x-auto"></div>
 
-
-    <div id="facultyStatusTableContainer" class="overflow-x-auto"></div>
     <!-- Department Portfolios Table -->
     <div id="departmentPortfoliosStickyHeader" class="flex flex-wrap gap-4 items-center mb-4 bg-white z-20" style="position:sticky; top:0; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
       <label for="portfolioDepartmentFilter" class="font-medium text-orange-700 mr-2">Filter by Department:</label>
@@ -88,7 +114,6 @@
       
       <label for="portfolioMonthFilter" class="font-medium text-orange-700 mr-2">Month:</label>
       <select id="portfolioMonthFilter" class="p-2 border rounded">
-        <option value="Current">Current Month</option>
         <option value="January">January</option>
         <option value="February">February</option>
         <option value="March">March</option>
@@ -161,325 +186,185 @@
   </main>
   <script src="/static/javascript/form-modal-mapper.js"></script>
 <script>
-// Export Status Table Modal logic
-function openExportStatusModal() {
-  document.getElementById('exportStatusModal').classList.remove('hidden');
+
+// ===== CORE SCOPE TABLE EXPORT =====
+function openExportCoreScopeModal() {
+  document.getElementById('exportCoreScopeModal').classList.remove('hidden');
 }
-function closeExportStatusModal() {
-  document.getElementById('exportStatusModal').classList.add('hidden');
+function closeExportCoreScopeModal() {
+  document.getElementById('exportCoreScopeModal').classList.add('hidden');
 }
-// Export Status Table to Excel utility
-function exportStatusTableToExcel(scope) {
+
+// Export Core Scope Table to Excel utility
+async function exportCoreScopeTableToExcel(scope) {
   // scope: 'current' or 'all'
+  closeExportCoreScopeModal();
+  
   // Show loading overlay
   let loadingDiv = document.createElement('div');
   loadingDiv.id = 'exportLoadingOverlay';
   loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
   loadingDiv.innerHTML = `<div style="background:white;padding:32px 48px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;align-items:center;gap:16px;">
-    <svg class='animate-spin' style='height:48px;width:48px;color:#2563eb;' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+    <svg class='animate-spin' style='height:48px;width:48px;color:#16a34a;' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
       <circle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'></circle>
       <path class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'></path>
     </svg>
-    <div style='font-size:18px;color:#2563eb;font-weight:600;'>Exporting, please wait...</div>
+    <div style='font-size:18px;color:#16a34a;font-weight:600;'>Exporting Core Scope data, please wait...</div>
   </div>`;
   document.body.appendChild(loadingDiv);
-  if (scope === 'current') {
-    // Export only currently visible table
-    const container = document.getElementById('facultyStatusTableContainer');
-    if (!container) return;
-    let tables = Array.from(container.querySelectorAll('table'));
-    if (tables.length === 0) return;
-    let data = [];
-    let headers = [];
-    tables = [tables[0]];
-    tables.forEach((table, tIdx) => {
-      const thead = table.querySelector('thead');
-      const tbody = table.querySelector('tbody');
-      if (!thead || !tbody) return;
-      const ths = Array.from(thead.querySelectorAll('th'));
-      const tableHeaders = ths.map(th => th.innerText.trim());
-      if (tIdx === 0) headers = tableHeaders;
-      Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
-        const row = Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim());
-        data.push(row);
-      });
-    });
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'StatusTable');
-    XLSX.writeFile(wb, `FacultyStatusTable_CurrentDepartment.xlsx`);
-    return;
-  }
-  // Export all departments side by side
-  // 1. Fetch all departments
-  supabaseClient.from('Faculty').select('department').then(async ({ data, error }) => {
-    if (error || !data) return;
-    const departments = Array.from(new Set(data.map(row => row.department).filter(Boolean)));
-    if (departments.length === 0) return;
-    // 2. For each department, render the status table HTML and parse it
-    let allTables = [];
-    for (let dept of departments) {
-      // Simulate the logic of loadFacultyStatusTable for each department
-      // Fetch all faculty for the department
-      const { data: facultyList, error: facErr } = await supabaseClient
-        .from('Faculty')
-        .select('*')
-        .eq('department', dept);
-      if (facErr || !facultyList || facultyList.length === 0) continue;
-      // Group by designation
-      const groups = { AP: [], ASP: [], Prof: [] };
-      facultyList.forEach(fac => {
-        const desig = (fac.Designation || '').toUpperCase();
-        if (desig === 'AP' || desig === 'ASSISTANT PROFESSOR') groups.AP.push(fac);
-        else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') groups.ASP.push(fac);
-        else if (desig === 'PROF' || desig === 'PROFESSOR') groups.Prof.push(fac);
-      });
-      for (const key of ['AP', 'ASP', 'Prof']) {
-        const group = groups[key];
-        if (group.length === 0) continue;
-        // Table header
-        let scopes = [];
-        let generalIdx = [];
-        if (key === 'AP') {
-          scopes = [
-            'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
-            'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
-            'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
-            'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
-            'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
-            'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
-            'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
-            'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
-            'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
-            'Research and Development: Present at conferences.',
-            'Research and Development: Guide student research and final-year projects',
-            'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
-            'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
-            'Institutional Development: Serve on academic and administrative committees.',
-            'Professional Development: Attend FDP/ workshops/ seminar.',
-            'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.',
-            'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
-            'Community and Industry Engagement: Engage in extension activities, and social outreach Programs.',
-            'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
-            'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
-            'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.'
-          ];
-          generalIdx = [1,2,3,4,5,6,7,8,9,12,13,14,20,21,22];
-        } else if (key === 'ASP') {
-          scopes = [
-            'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
-            'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
-            'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
-            'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
-            'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
-            'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
-            'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
-            'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
-            'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
-            'Research and Development: Publish in peer-reviewed journals',
-            'Research and Development: Apply for research grants',
-            'Research and Development: Guide student research and final-year projects',
-            'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
-            'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
-            'Institutional Development: Serve on academic and administrative committees.',
-            'Professional Development: Organize FDP/ workshops/ seminar.',
-            'Professional Development: NPTEL/MOOC and certifications.',
-            'Professional Development: Memberships in professional bodies.',
-            'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
-            'Community and Industry Engagement: Engage in consultancy',
-            'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
-            'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
-            'Memberships in professional bodies.'
-          ];
-          generalIdx = [1,2,3,4,5,6,7,8,9,13,14,15,20,21];
-        } else if (key === 'Prof') {
-          scopes = [
-            'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
-            'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
-            'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
-            'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
-            'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
-            'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
-            'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
-            'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
-            'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
-            'Research and Development: Publish in peer-reviewed journals',
-            'Research and Development: Apply for research grants',
-            'Research and Development: Guide student research and final-year projects',
-            'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
-            'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
-            'Institutional Development: Serve on academic and administrative committees.',
-            'Professional Development: Organize FDP/ workshops/ seminar.',
-            'Professional Development: NPTEL/MOOC and certifications.',
-            'Professional Development: Memberships in professional bodies.',
-            'Community and Industry Engagement: Facilitate MoUs',
-            'Community and Industry Engagement: Engage in consultancy',
-            'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
-            'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
-            'Memberships in professional bodies.'
-          ];
-          generalIdx = [1,2,3,4,5,6,7,8,9,13,14,15,20,21];
-        }
-        // Build table data
-        let tableHeaders = ['Department', 'Faculty Name'];
-        for (let idx of generalIdx) {
-          let desc = scopes[idx-1] ? scopes[idx-1].trim() : '';
-          if (key === 'AP' && idx === 22) {
-            desc = scopes[21] || 'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.';
-          }
-          tableHeaders.push(desc ? desc : 'Status ' + idx);
-        }
-        let tableRows = [];
-        for (const fac of group) {
-          let tableName = '';
-          let nameField = '';
-          let deptField = '';
-          if (key === 'AP') {
-            tableName = 'AP';
-            nameField = 'Portfolio Member Name';
-            deptField = 'Department';
-          } else if (key === 'ASP') {
-            tableName = 'ASP';
-            nameField = 'Portfolio Member Name';
-            deptField = '"Department:"';
-          } else if (key === 'Prof') {
-            tableName = 'Prof';
-            nameField = 'Portfolio Member Name';
-            deptField = '"Department:"';
-          }
-          // Fetch latest row for this faculty in this dept
-          let { data: rows, error: rowErr } = await supabaseClient
-            .from(tableName)
-            .select('*')
-            .eq(deptField, dept)
-            .order('input_id', { ascending: false });
-          // Debug: log how many rows fetched for this dept/designation
-          if (!window._exportStatusDebug) window._exportStatusDebug = [];
-          window._exportStatusDebug.push({ dept, designation: key, fetchedRows: rows ? rows.length : 0 });
-          // Robust faculty name matching for ASP/Prof (and all designations)
-          let facNamesToTry = [];
-          if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
-          if (fac.Name) facNamesToTry.push(fac.Name);
-          if (fac.email) facNamesToTry.push(fac.email);
-          // Remove duplicates, normalize
-          facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n || '').toString().trim().toLowerCase()).filter(Boolean)));
-          let row = null;
-          if (rows && rows.length > 0) {
-            for (let r of rows) {
-              // Try all possible name fields, normalize
-              let possibleRowNames = [
-                r['Portfolio Member Name'],
-                r['Portfolio Member Name:'],
-                r['Portfolio Memeber Name'],
-                r['faculty_name'],
-                r['Faculty Name'],
-                r['Name'],
-                r['email']
-              ].map(x => (x || '').toString().trim().toLowerCase()).filter(Boolean);
-              // Also normalize department field for matching
-              let rowDept = (r['Department:'] || r['Department'] || '').toString().trim().toLowerCase();
-              let matchDept = (dept || '').toString().trim().toLowerCase();
-              if (rowDept === matchDept && facNamesToTry.some(n => possibleRowNames.includes(n))) {
-                row = r;
-                break;
-              }
-            }
-          }
-          // Calculate percentage for this faculty
-          let percentage = 0;
-          if (row) {
-            let completedCount = 0;
-            let applicableCount = 0;
-            for (let idx of generalIdx) {
-              let statusVal = row ? (row[`Status_${idx}`] || row[`Status_${idx}`] || '-') : '-';
-              const val = (statusVal || '').toString().trim().toLowerCase();
-              if (val === 'not applicable' || val === 'na') continue;
-              applicableCount += 1;
-              if (val === 'completed' || val === 'completed and updated') {
-                completedCount += 1;
-              }
-            }
-            if (applicableCount > 0) {
-              percentage = Math.round((completedCount / applicableCount) * 100);
-            } else {
-              percentage = 0;
-            }
-          }
-          // Add percentage in brackets to faculty name
-          let facultyDisplayName = (fac.Name || fac['Portfolio Member Name'] || fac.email || '') + ` (${percentage}%)`;
-          let rowArr = [dept, facultyDisplayName];
-          for (let idx of generalIdx) {
-            let statusVal = row ? (row[`Status_${idx}`] || row[`Status_${idx}`] || '-') : '-';
-            let display = '-';
-            if (statusVal && typeof statusVal === 'string') {
-              const val = statusVal.trim().toLowerCase();
-              if (val === 'completed') display = 'Completed';
-              else if (val === 'in progress') display = 'In Progress';
-              else if (val === 'not started') display = 'Not Started';
-              else if (val === 'not applicable' || val === 'na') display = 'N/A';
-              else if (val === 'no' || val === 'incomplete') display = 'Incomplete';
-              else display = statusVal;
-            }
-            rowArr.push(display);
-          }
-          tableRows.push(rowArr);
-        }
-        allTables.push({
-          dept,
-          designation: key,
-          headers: tableHeaders,
-          rows: tableRows
+
+  try {
+    // Core Scope field labels (15 fields) - Full descriptions
+    const coreScopeLabels = [
+      'Teaching & Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+      'Teaching & Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+      'Teaching & Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+      'Teaching & Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+      'Student Mentorship & Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
+      'Student Mentorship & Support: Monitor student attendance, performance, and well-being.',
+      'Student Mentorship & Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+      'Student Mentorship & Support: Maintain the Mentor book for assigned mentee.',
+      'Student Mentorship & Support: Consolidate innovative course material, Lab manuals',
+      'Research and Development: Present at conferences.',
+      'Research and Development: Guide student research and final-year projects',
+      'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
+      'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
+      'Institutional Development: Serve on academic and administrative committees.',
+      'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.'
+    ];
+
+    let deptFilter = document.getElementById('coreScopeDepartmentFilter');
+    let selectedDept = scope === 'current' ? (deptFilter ? deptFilter.value : 'All') : 'All';
+    
+    // Fetch all Faculty data
+    let facultyQuery = supabaseClient.from('Faculty').select('*');
+    if (scope === 'current' && selectedDept && selectedDept !== 'All') {
+      facultyQuery = facultyQuery.eq('department', selectedDept);
+    }
+    
+    const { data: facultyData, error: facErr } = await facultyQuery;
+    
+    if (facErr) throw facErr;
+    if (!facultyData || facultyData.length === 0) {
+      alert('No faculty data found');
+      return;
+    }
+    
+    // Get selected month
+    let monthFilter = document.getElementById('coreScopeMonthFilter');
+    let selectedMonth = monthFilter ? monthFilter.value : 'January';
+    
+    // Fetch Core_scope data filtered by month
+    let coreScopeQuery = supabaseClient.from('Core_scope').select('*').eq('Month', selectedMonth);
+    if (scope === 'current' && selectedDept && selectedDept !== 'All') {
+      coreScopeQuery = coreScopeQuery.eq('Department', selectedDept);
+    }
+    
+    const { data: coreScopeData, error: csErr } = await coreScopeQuery;
+
+    // Build headers: Department, Designation, Faculty Name, Percentage, then 15 status columns with full descriptions
+    const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', ...coreScopeLabels];
+    const allRows = [];
+
+    // Process each faculty
+    for (const fac of facultyData) {
+      const dept = fac.department || 'Unknown';
+      const designation = fac.Designation || 'N/A';
+      const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+      
+      // Normalize designation
+      const desig = designation.toUpperCase();
+      if (desig !== 'AP' && desig !== 'ASSISTANT PROFESSOR' && 
+          desig !== 'ASP' && desig !== 'ASSOCIATE PROFESSOR' && 
+          desig !== 'PROF' && desig !== 'PROFESSOR') {
+        continue; // Skip non-teaching staff
+      }
+      
+      // Find matching Core_scope data for this faculty
+      let facNamesToTry = [];
+      if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
+      if (fac.Name) facNamesToTry.push(fac.Name);
+      if (fac.email) facNamesToTry.push(fac.email);
+      facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n || '').toString().trim().toLowerCase()).filter(Boolean)));
+      
+      let matchingRows = [];
+      if (coreScopeData && coreScopeData.length > 0) {
+        matchingRows = coreScopeData.filter(row => {
+          const rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+          const rowDept = (row.Department || '').toString().trim().toLowerCase();
+          return facNamesToTry.includes(rowName) && rowDept === dept.toLowerCase();
         });
       }
-    }
-    // 3. Combine all tables stacked vertically (one long table)
-    // Use a single set of headers: Department, Designation, Faculty Name, ...status columns...
-    let allRows = [];
-    let headersSet = false;
-    let headers = [];
-    for (const t of allTables) {
-      // t.headers: [Department, Faculty Name, ...]
-      // Add Designation column after Department
-      let localHeaders = t.headers.slice();
-      if (!headersSet) {
-        headers = localHeaders.slice(0,1).concat(['Designation'], localHeaders.slice(1));
-        headersSet = true;
+      
+      // Get the latest row (by input_id)
+      let row = null;
+      if (matchingRows.length > 0) {
+        matchingRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
+        row = matchingRows[0];
       }
-      for (const row of t.rows) {
-        // Insert designation after department
-        let newRow = row.slice(0,1).concat([t.designation], row.slice(1));
-        allRows.push(newRow);
+      
+      // Calculate percentage
+      let completedCount = 0;
+      let applicableCount = 0;
+      
+      if (row) {
+        for (let i = 1; i <= 15; i++) {
+          const statusVal = (row[`Status_${i}`] || '').toString().trim().toLowerCase();
+          if (statusVal === 'not applicable' || statusVal === 'na') continue;
+          applicableCount += 1;
+          if (statusVal === 'completed') completedCount += 1;
+        }
       }
+      
+      const percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+      
+      // Build row data
+      const rowData = [dept, designation, facultyName, percentage];
+      
+      // Add status values for all 15 fields
+      for (let i = 1; i <= 15; i++) {
+        rowData.push(row ? (row[`Status_${i}`] || '-') : '-');
+      }
+      
+      allRows.push(rowData);
     }
+
+    // Sort by department, then designation, then faculty name
+    allRows.sort((a, b) => {
+      if (a[0] !== b[0]) return a[0].localeCompare(b[0]);
+      if (a[1] !== b[1]) return a[1].localeCompare(b[1]);
+      return a[2].localeCompare(b[2]);
+    });
+
+    // Create workbook and export
     const ws = XLSX.utils.aoa_to_sheet([headers, ...allRows]);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'StatusTable');
-  XLSX.writeFile(wb, `FacultyStatusTable_AllDepartments.xlsx`);
-  // Remove loading overlay
-  const overlay = document.getElementById('exportLoadingOverlay');
-  if (overlay) overlay.remove();
-    // Remove loading overlay on error/exit
-    const overlay2 = document.getElementById('exportLoadingOverlay');
-    if (overlay2) overlay2.remove();
-  });
+    XLSX.utils.book_append_sheet(wb, ws, 'Core Scope');
+    
+    const filename = scope === 'current' ? `CoreScope_Monthly_${selectedDept}.xlsx` : `CoreScope_Monthly_All_Departments.xlsx`;
+    XLSX.writeFile(wb, filename);
+    
+  } catch (error) {
+    console.error('Export error:', error);
+    alert('Failed to export data: ' + error.message);
+  } finally {
+    // Remove loading overlay
+    const overlay = document.getElementById('exportLoadingOverlay');
+    if (overlay) overlay.remove();
+  }
 }
-// Attach export button listeners for status table
+
+// Attach export button listeners for core scope table
 setTimeout(() => {
-  const exportBtn = document.getElementById('exportStatusTableBtn');
+  const exportBtn = document.getElementById('exportCoreScopeTableBtn');
   if (exportBtn) {
-    exportBtn.onclick = () => openExportStatusModal();
+    exportBtn.onclick = () => openExportCoreScopeModal();
     setTimeout(() => {
-      const currentBtn = document.getElementById('exportStatusCurrentDeptBtn');
-      const allBtn = document.getElementById('exportStatusAllDeptBtn');
+      const currentBtn = document.getElementById('exportCoreScopeCurrentDeptBtn');
+      const allBtn = document.getElementById('exportCoreScopeAllDeptBtn');
       if (currentBtn && allBtn) {
-        currentBtn.onclick = () => {
-          closeExportStatusModal();
-          exportStatusTableToExcel('current');
-        };
-        allBtn.onclick = () => {
-          closeExportStatusModal();
-          exportStatusTableToExcel('all');
-        };
+        currentBtn.onclick = () => exportCoreScopeTableToExcel('current');
+        allBtn.onclick = () => exportCoreScopeTableToExcel('all');
       }
     }, 600);
   }
@@ -511,12 +396,16 @@ async function exportYearlyCurrentDepartment() {
   document.body.appendChild(loadingDiv);
   
   try {
-    // Fetch faculty for current department AND their form submissions
+    // Get selected month
+    let monthFilter = document.getElementById('yearlyMonthFilter');
+    let selectedMonth = monthFilter ? monthFilter.value : 'January';
+    
+    // Fetch faculty for current department AND their form submissions filtered by month
     const [facultyRes, apRes, aspRes, profRes] = await Promise.all([
       supabaseClient.from('Faculty').select('*').eq('department', selectedDepartment),
-      supabaseClient.from('AP(Yearly)').select('*').eq('Department', selectedDepartment),
-      supabaseClient.from('ASP(Yearly)').select('*').eq('Department', selectedDepartment),
-      supabaseClient.from('Prof(Yearly)').select('*').eq('Department', selectedDepartment)
+      supabaseClient.from('AP(Yearly)').select('*').eq('Department', selectedDepartment).eq('Month', selectedMonth),
+      supabaseClient.from('ASP(Yearly)').select('*').eq('Department', selectedDepartment).eq('Month', selectedMonth),
+      supabaseClient.from('Prof(Yearly)').select('*').eq('Department', selectedDepartment).eq('Month', selectedMonth)
     ]);
     
     const deptFaculty = facultyRes.data || [];
@@ -678,12 +567,16 @@ async function exportYearlyAllDepartments() {
   document.body.appendChild(loadingDiv);
   
   try {
-    // Fetch ALL faculty from Faculty table AND yearly form submissions
+    // Get selected month
+    let monthFilter = document.getElementById('yearlyMonthFilter');
+    let selectedMonth = monthFilter ? monthFilter.value : 'January';
+    
+    // Fetch ALL faculty from Faculty table AND yearly form submissions filtered by month
     const [facultyRes, apRes, aspRes, profRes] = await Promise.all([
       supabaseClient.from('Faculty').select('*'),
-      supabaseClient.from('AP(Yearly)').select('*'),
-      supabaseClient.from('ASP(Yearly)').select('*'),
-      supabaseClient.from('Prof(Yearly)').select('*')
+      supabaseClient.from('AP(Yearly)').select('*').eq('Month', selectedMonth),
+      supabaseClient.from('ASP(Yearly)').select('*').eq('Month', selectedMonth),
+      supabaseClient.from('Prof(Yearly)').select('*').eq('Month', selectedMonth)
     ]);
     
     const allFaculty = facultyRes.data || [];
@@ -859,15 +752,7 @@ function attachExportButtons() {
       
       // Get month filter value
       const monthFilter = document.getElementById('portfolioMonthFilter');
-      let selectedMonth = monthFilter ? monthFilter.value : 'Current';
-      
-      // If "Current" is selected, get current month name
-      if (selectedMonth === 'Current') {
-        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                           'July', 'August', 'September', 'October', 'November', 'December'];
-        const currentDate = new Date();
-        selectedMonth = monthNames[currentDate.getMonth()];
-      }
+      let selectedMonth = monthFilter ? monthFilter.value : 'January';
       
       // Fetch all faculty data
       const { data, error } = await supabaseClient
@@ -1014,15 +899,7 @@ function attachExportButtons() {
       
       // Get month filter value
       const monthFilter = document.getElementById('portfolioMonthFilter');
-      let selectedMonth = monthFilter.options[monthFilter.selectedIndex]?.value || 'Current';
-      
-      // If "Current" is selected, get current month name
-      if (selectedMonth === 'Current') {
-        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                           'July', 'August', 'September', 'October', 'November', 'December'];
-        const currentDate = new Date();
-        selectedMonth = monthNames[currentDate.getMonth()];
-      }
+      let selectedMonth = monthFilter.options[monthFilter.selectedIndex]?.value || 'January';
 
   // Portfolio headers and their corresponding monthly tables (only 8 monthly forms)
   const portfolioHeaders = [
@@ -1223,268 +1100,240 @@ function attachExportButtons() {
       "https://cbhodgwaazmjszkujrti.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
     );
-    // --- NEW: Faculty Status Table from AP, ASP, Prof tables ---
-    let allStatusDepartments = [];
-    let selectedStatusDepartment = '';
-    let selectedStatusDesignation = 'All';
-    async function loadStatusDepartments() {
+
+    // --- NEW: Faculty Core Scope - Monthly Table from Core_scope table ---
+    let allCoreScopeDepartments = [];
+    let selectedCoreScopeDepartment = '';
+    let selectedCoreScopeDesignation = 'All';
+    
+    async function loadCoreScopeDepartments() {
       const { data, error } = await supabaseClient
         .from('Faculty')
         .select('department');
       if (error || !data) return;
       const depts = Array.from(new Set(data.map(row => row.department).filter(Boolean)));
-      allStatusDepartments = depts;
-      const select = document.getElementById('statusDepartmentFilter');
+      allCoreScopeDepartments = depts;
+      const select = document.getElementById('coreScopeDepartmentFilter');
       select.innerHTML = depts.map(d => `<option value="${d}">${d}</option>`).join('');
-      selectedStatusDepartment = depts[0] || '';
-      select.value = selectedStatusDepartment;
+      selectedCoreScopeDepartment = depts[0] || '';
+      select.value = selectedCoreScopeDepartment;
       select.addEventListener('change', () => {
-        selectedStatusDepartment = select.value;
-        loadFacultyStatusTable();
+        selectedCoreScopeDepartment = select.value;
+        loadCoreScopeTable();
       });
     }
-    document.getElementById('statusDesignationFilter').addEventListener('change', () => {
-      selectedStatusDesignation = document.getElementById('statusDesignationFilter').value;
-      loadFacultyStatusTable();
+    
+    document.getElementById('coreScopeDesignationFilter').addEventListener('change', () => {
+      selectedCoreScopeDesignation = document.getElementById('coreScopeDesignationFilter').value;
+      loadCoreScopeTable();
     });
-    async function loadFacultyStatusTable() {
-      if (!selectedStatusDepartment) {
-        document.getElementById('facultyStatusTableContainer').innerHTML = '<div class="text-gray-500">No department selected.</div>';
+    
+    document.getElementById('coreScopeMonthFilter').addEventListener('change', () => {
+      selectedCoreScopeMonth = document.getElementById('coreScopeMonthFilter').value;
+      loadCoreScopeTable();
+    });
+    
+    async function loadCoreScopeTable() {
+      if (!selectedCoreScopeDepartment) {
+        document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500">No department selected.</div>';
         return;
       }
-      // Fetch all faculty for the department
+      
+      // Fetch all faculty from Faculty table for the selected department
       const { data: facultyList, error: facErr } = await supabaseClient
         .from('Faculty')
         .select('*')
-        .eq('department', selectedStatusDepartment);
+        .eq('department', selectedCoreScopeDepartment);
+      
       if (facErr || !facultyList || facultyList.length === 0) {
-        document.getElementById('facultyStatusTableContainer').innerHTML = '<div class="text-red-500">Failed to load faculty data.</div>';
+        document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-red-500">Failed to load faculty data.</div>';
         return;
       }
-      // Group by designation
-      const groups = { AP: [], ASP: [], Prof: [] };
-      facultyList.forEach(fac => {
-        const desig = (fac.Designation || '').toUpperCase();
-        if (desig === 'AP' || desig === 'ASSISTANT PROFESSOR') groups.AP.push(fac);
-        else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') groups.ASP.push(fac);
-        else if (desig === 'PROF' || desig === 'PROFESSOR') groups.Prof.push(fac);
-      });
-      // Fetch all AP/ASP/Prof rows for this department for aggregation
-      const [apRows, aspRows, profRows] = await Promise.all([
-        supabaseClient.from('AP').select('*').eq('Department', selectedStatusDepartment),
-        supabaseClient.from('ASP').select('*').eq('"Department:"', selectedStatusDepartment),
-        supabaseClient.from('Prof').select('*').eq('"Department:"', selectedStatusDepartment)
-      ]);
-      // Helper to aggregate all rows for a faculty and status index
-      function getBestStatusForFaculty(fac, key, idx) {
-        let rows = [];
-        let facNamesToTry = [];
-        if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
-        if (fac.Name) facNamesToTry.push(fac.Name);
-        if (fac.email) facNamesToTry.push(fac.email);
-        facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n || '').toString().trim().toLowerCase()).filter(Boolean)));
-        if (key === 'AP') rows = apRows.data || [];
-        else if (key === 'ASP') rows = aspRows.data || [];
-        else if (key === 'Prof') rows = profRows.data || [];
-        // Find all rows for this faculty
-        let facRows = rows.filter(r => {
-          let rowName = (r['Portfolio Member Name'] || r['Portfolio Member Name:'] || r['Portfolio Memeber Name'] || r['faculty_name'] || r['Faculty Name'] || r['Name'] || r['email'] || '').toString().trim().toLowerCase();
-          return facNamesToTry.includes(rowName);
-        });
-        // If any row for this status is completed, return 'Completed'
-        for (let r of facRows) {
-          let statusVal = r[`Status_${idx}`] || '-';
-          const val = (statusVal || '').trim().toLowerCase();
-          if (val === 'completed') return 'Completed';
-        }
-        // Otherwise, return the latest row's value if exists
-        if (facRows.length > 0) {
-          let statusVal = facRows[0][`Status_${idx}`] || '-';
-          return statusVal;
-        }
-        return '-';
-      }
-      let html = '';
-      // Define scope/description arrays for headers
-      // Only show General Section columns (not compliance/targeted)
-      // AP: complianceRows = [10, 11, 15, 16, 17, 18, 19]
-      // ASP/Prof: complianceRows = [10, 11, 12, 16, 17, 18, 19, 23]
-      const apScopes = [
-        'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
-        'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
-        'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
-        'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
-        'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
-        'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
-        'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
-        'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
-        'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
+      
+      // Fetch Core_scope data for the selected department and month
+      const { data: coreScopeData, error: csErr } = await supabaseClient
+        .from('Core_scope')
+        .select('*')
+        .eq('Department', selectedCoreScopeDepartment)
+        .eq('Month', selectedCoreScopeMonth);
+      
+      // Core Scope field labels (15 fields) - Full descriptions from faculty-core-scope.html
+      const coreScopeLabels = [
+        'Teaching & Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+        'Teaching & Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+        'Teaching & Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+        'Teaching & Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+        'Student Mentorship & Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
+        'Student Mentorship & Support: Monitor student attendance, performance, and well-being.',
+        'Student Mentorship & Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+        'Student Mentorship & Support: Maintain the Mentor book for assigned mentee.',
+        'Student Mentorship & Support: Consolidate innovative course material, Lab manuals',
         'Research and Development: Present at conferences.',
         'Research and Development: Guide student research and final-year projects',
         'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
         'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
         'Institutional Development: Serve on academic and administrative committees.',
-        'Professional Development: Attend FDP/ workshops/ seminar.',
-        'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.',
-        'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
-        'Community and Industry Engagement: Engage in extension activities, and social outreach Programs.',
-        'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
-        'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
-        'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.',
-  '',
+        'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.'
       ];
-      const apGeneralIdx = [1,2,3,4,5,6,7,8,9,12,13,14,20,21,22];
-      const aspScopes = [
-        'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
-        'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
-        'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
-        'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
-        'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
-        'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
-        'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
-        'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
-        'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
-        'Research and Development: Publish in peer-reviewed journals',
-        'Research and Development: Apply for research grants',
-        'Research and Development: Guide student research and final-year projects',
-        'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
-        'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
-        'Institutional Development: Serve on academic and administrative committees.',
-        'Professional Development: Organize FDP/ workshops/ seminar.',
-        'Professional Development: NPTEL/MOOC and certifications.',
-        'Professional Development: Memberships in professional bodies.',
-        'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
-        'Community and Industry Engagement: Engage in consultancy',
-        'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
-        'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
-        'Memberships in professional bodies.'
+      
+      // Shorter labels for table headers
+      const coreScopeShortLabels = [
+        'Design & deliver lectures',
+        'Develop course materials',
+        'Innovative teaching methods',
+        'Product model & Chart',
+        'Academic mentors (30 students)',
+        'Monitor attendance',
+        'Remedial support',
+        'Maintain Mentor book',
+        'Innovative course material',
+        'Present at conferences',
+        'Guide research projects',
+        'Curriculum development',
+        'Accreditation processes',
+        'Academic committees',
+        'Maintain records'
       ];
-      const aspGeneralIdx = [1,2,3,4,5,6,7,8,9,13,14,15,20,21];
-      const profScopes = [
-        'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
-        'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
-        'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
-        'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
-        'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
-        'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
-        'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
-        'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
-        'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
-        'Research and Development: Publish in peer-reviewed journals',
-        'Research and Development: Apply for research grants',
-        'Research and Development: Guide student research and final-year projects',
-        'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
-        'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
-        'Institutional Development: Serve on academic and administrative committees.',
-        'Professional Development: Organize FDP/ workshops/ seminar.',
-        'Professional Development: NPTEL/MOOC and certifications.',
-        'Professional Development: Memberships in professional bodies.',
-        'Community and Industry Engagement: Facilitate MoUs',
-        'Community and Industry Engagement: Engage in consultancy',
-        'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
-        'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
-        'Memberships in professional bodies.'
-      ];
-      const profGeneralIdx = [1,2,3,4,5,6,7,8,9,13,14,15,20,21];
-      for (const key of ['AP', 'ASP', 'Prof']) {
-        if (selectedStatusDesignation !== 'All' && selectedStatusDesignation !== key) continue;
-        const group = groups[key];
-        if (group.length === 0) continue;
-        html += `<h3 class="text-xl font-semibold text-blue-700 mt-8 mb-2">${key === 'AP' ? 'Assistant Professor (AP)' : key === 'ASP' ? 'Associate Professor (ASP)' : 'Professor (Prof)'}</h3>`;
-        // Table header
-        html += `<div class="overflow-x-auto mb-6"><table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white"><thead class="bg-blue-700 text-white"><tr><th class="px-4 py-2">Faculty Name</th>`;
-        let scopes = [];
-        let generalIdx = [];
-        if (key === 'AP') { scopes = apScopes; generalIdx = apGeneralIdx; }
-        else if (key === 'ASP') { scopes = aspScopes; generalIdx = aspGeneralIdx; }
-        else if (key === 'Prof') { scopes = profScopes; generalIdx = profGeneralIdx; }
-        for (let idx of generalIdx) {
-          // Always include Status 22 (idx==22) even if description is blank, and use correct description from apScopes[21]
-          let desc = scopes[idx-1] ? scopes[idx-1].trim() : '';
-          if (key === 'AP' && idx === 22) {
-            desc = scopes[21] || 'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.';
-          }
-          html += `<th class="px-4 py-2" title="${desc}">${desc ? desc : 'Status ' + idx}</th>`;
+      
+      // Filter faculty by designation if needed
+      let filteredFacultyList = facultyList;
+      if (selectedCoreScopeDesignation !== 'All') {
+        filteredFacultyList = facultyList.filter(fac => {
+          const desig = (fac.Designation || '').toUpperCase();
+          if (selectedCoreScopeDesignation === 'AP') return desig === 'AP' || desig === 'ASSISTANT PROFESSOR';
+          if (selectedCoreScopeDesignation === 'ASP') return desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR';
+          if (selectedCoreScopeDesignation === 'Prof') return desig === 'PROF' || desig === 'PROFESSOR';
+          return false;
+        });
+      }
+      
+      let html = '';
+      
+      if (filteredFacultyList.length === 0) {
+        document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500">No faculty data found.</div>';
+        return;
+      }
+      
+      // Single table header with Designation column
+      html += `<div class="overflow-x-auto mb-6"><table class="min-w-full text-xs border rounded-lg overflow-hidden shadow-sm bg-white" style="table-layout: auto;"><thead class="bg-green-700 text-white"><tr>`;
+      html += `<th class="px-3 py-2 sticky left-0 bg-green-700 z-10" style="min-width: 150px;">Department</th>`;
+      html += `<th class="px-3 py-2 bg-green-700" style="min-width: 120px;">Designation</th>`;
+      html += `<th class="px-3 py-2" style="min-width: 180px;">Faculty Name</th>`;
+      html += `<th class="px-3 py-2" style="min-width: 100px;">Percentage</th>`;
+      
+      // Add columns for all 15 status fields with full descriptions as tooltips
+      for (let i = 0; i < 15; i++) {
+        html += `<th class="px-2 py-2" style="min-width: 120px;" title="${coreScopeLabels[i]}">${coreScopeShortLabels[i]}</th>`;
+      }
+      
+      html += `</tr></thead><tbody>`;
+      
+      // Process each faculty
+      for (const fac of filteredFacultyList) {
+        const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+        const dept = fac.department || selectedCoreScopeDepartment;
+        const designation = fac.Designation || 'N/A';
+        
+        // Normalize designation for display
+        let desigDisplay = designation;
+        const desigUpper = designation.toUpperCase();
+        if (desigUpper === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
+        else if (desigUpper === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
+        else if (desigUpper === 'PROFESSOR') desigDisplay = 'Prof';
+        
+        // Find matching Core_scope data for this faculty
+        let facNamesToTry = [];
+        if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
+        if (fac.Name) facNamesToTry.push(fac.Name);
+        if (fac.email) facNamesToTry.push(fac.email);
+        facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n || '').toString().trim().toLowerCase()).filter(Boolean)));
+        
+        let matchingRows = [];
+        if (coreScopeData && coreScopeData.length > 0) {
+          matchingRows = coreScopeData.filter(row => {
+            const rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+            return facNamesToTry.includes(rowName);
+          });
         }
-        html += `</tr></thead><tbody>`;
-        for (const fac of group) {
-          let tableName = '';
-          let nameField = '';
-          let deptField = '';
-          if (key === 'AP') { tableName = 'AP'; nameField = 'Portfolio Member Name'; deptField = 'Department'; }
-          else if (key === 'ASP') { tableName = 'ASP'; nameField = 'Portfolio Member Name'; deptField = '"Department:"'; }
-          else if (key === 'Prof') { tableName = 'Prof'; nameField = 'Portfolio Member Name'; deptField = '"Department:"'; }
-          // Fetch latest row for this faculty in this dept
-          let { data: rows, error: rowErr } = await supabaseClient
-            .from(tableName)
-            .select('*')
-            .eq(deptField, selectedStatusDepartment)
-            .order('input_id', { ascending: false });
-          // Robust faculty name matching for ASP (and all designations)
-          let facNamesToTry = [];
-          if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
-          if (fac.Name) facNamesToTry.push(fac.Name);
-          if (fac.email) facNamesToTry.push(fac.email);
-          facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n || '').toString().trim().toLowerCase()).filter(Boolean)));
-          let row = null;
-          if (rows && rows.length > 0) {
-            for (let r of rows) {
-              let rowName = (r['Portfolio Member Name'] || r['Portfolio Member Name:'] || r['Portfolio Memeber Name'] || r['faculty_name'] || r['Faculty Name'] || r['Name'] || r['email'] || '').toString().trim().toLowerCase();
-              if (facNamesToTry.includes(rowName)) {
-                row = r;
-                break;
-              }
-            }
-          }
-          // Percentage calculation: completed=1 if any row for that status is completed, not applicable/na=skip, any other=0
-          let completedCount = 0;
-          let applicableCount = 0;
-          for (let idx of generalIdx) {
-            // Use the new aggregation logic
-            let statusVal = getBestStatusForFaculty(fac, key, idx);
-            const val = (statusVal || '').trim().toLowerCase();
-            if (val === 'not applicable' || val === 'na') continue;
+        
+        // Get the latest row (by input_id)
+        let row = null;
+        if (matchingRows.length > 0) {
+          matchingRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
+          row = matchingRows[0];
+        }
+        
+        // Calculate percentage
+        let completedCount = 0;
+        let applicableCount = 0;
+        
+        if (row) {
+          for (let i = 1; i <= 15; i++) {
+            const statusVal = (row[`Status_${i}`] || '').toString().trim().toLowerCase();
+            if (statusVal === 'not applicable' || statusVal === 'na') continue;
             applicableCount += 1;
-            if (val === 'completed') completedCount += 1;
+            if (statusVal === 'completed') completedCount += 1;
           }
-          const percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) : 0;
-          html += `<tr><td class="px-2 py-2 font-medium text-blue-700 cursor-pointer underline" onclick="viewStatusFacultyForm('${key}','${(fac.Name || '').replace(/'/g, "\'")}', '${selectedStatusDepartment.replace(/'/g, "\'")})">${fac.Name || fac['Portfolio Member Name'] || fac.email || ''}<div class='text-sm ${percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600'} font-semibold'>${percentage}%</div></td>`;
-          for (let idx of generalIdx) {
-            let statusVal = getBestStatusForFaculty(fac, key, idx);
-            let display = '-';
-            let statusClass = '';
-            if (statusVal && typeof statusVal === 'string') {
-              const val = statusVal.trim().toLowerCase();
-              if (val === 'completed') {
-                display = 'Completed';
-                statusClass = 'text-green-600 font-semibold';
-              } else if (val === 'in progress' || val === 'inprogress' || val === 'underprocess' || val === 'under process') {
-                display = statusVal;
-                statusClass = 'text-yellow-600 font-semibold';
-              } else if (val === 'yet to be completed' || val === 'not started' || val === 'no' || val === 'incomplete') {
-                display = statusVal;
-                statusClass = 'text-red-600 font-semibold';
-              } else if (val === '-' || val === '' || val === null) {
-                display = '-';
-                statusClass = 'text-gray-500';
-              } else {
-                display = statusVal;
-                statusClass = 'text-blue-600 font-semibold';
-              }
-            } else {
+        }
+        
+        const percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) : 0;
+        const percentageDisplay = row ? `${percentage}%` : '0% (Not Submitted)';
+        const percentageClass = row ? (percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600') : 'text-red-600';
+        
+        html += `<tr class="hover:bg-gray-50">`;
+        html += `<td class="px-3 py-2 border sticky left-0 bg-white z-10 font-medium">${dept}</td>`;
+        html += `<td class="px-3 py-2 border font-medium">${desigDisplay}</td>`;
+        html += `<td class="px-3 py-2 border font-medium text-green-700">${facultyName}</td>`;
+        html += `<td class="px-3 py-2 border ${percentageClass} font-semibold">${percentageDisplay}</td>`;
+        
+        // Add status cells for all 15 fields
+        for (let i = 1; i <= 15; i++) {
+          const statusVal = row ? (row[`Status_${i}`] || '-') : '-';
+          let display = '-';
+          let statusClass = '';
+          
+          if (row && statusVal && typeof statusVal === 'string') {
+            const val = statusVal.trim().toLowerCase();
+            if (val === 'completed') {
+              display = 'Completed';
+              statusClass = 'text-green-600 font-semibold';
+            } else if (val === 'in progress' || val === 'inprogress') {
+              display = 'In Progress';
+              statusClass = 'text-yellow-600 font-semibold';
+            } else if (val === 'yet to be completed' || val === 'not started') {
+              display = 'Yet to be Completed';
+              statusClass = 'text-red-600 font-semibold';
+            } else if (val === 'not applicable' || val === 'na') {
+              display = 'N/A';
+              statusClass = 'text-gray-400';
+            } else if (val === '-' || val === '' || val === null) {
               display = '-';
               statusClass = 'text-gray-500';
+            } else {
+              display = statusVal;
+              statusClass = 'text-blue-600 font-semibold';
             }
-            html += `<td class="px-2 py-2 ${statusClass}">${display}</td>`;
+          } else {
+            display = '-';
+            statusClass = 'text-gray-500';
           }
-          html += `</tr>`;
+          
+          html += `<td class="px-2 py-2 border ${statusClass}">${display}</td>`;
         }
-        html += `</tbody></table></div>`;
+        
+        html += `</tr>`;
       }
-      document.getElementById('facultyStatusTableContainer').innerHTML = html || '<div class="text-gray-500">No status data found.</div>';
+      
+      html += `</tbody></table></div>`;
+      
+      document.getElementById('coreScopeTableContainer').innerHTML = html || '<div class="text-gray-500">No faculty data found.</div>';
     }
+    // --- END NEW: Core Scope Table ---
+
     let allDepartments = [];
     let selectedDepartment = '';
+    let selectedYearlyMonth = 'January';
+    let selectedCoreScopeMonth = 'January';
     async function loadDepartments() {
       const { data, error } = await supabaseClient
         .from('Faculty')
@@ -1560,9 +1409,9 @@ function attachExportButtons() {
       };
       (async function renderDashboardAsync() {
         const [apRes, aspRes, profRes] = await Promise.all([
-          supabaseClient.from('AP(Yearly)').select('*').eq('Department', selectedDepartment),
-          supabaseClient.from('ASP(Yearly)').select('*').eq('Department', selectedDepartment),
-          supabaseClient.from('Prof(Yearly)').select('*').eq('Department', selectedDepartment)
+          supabaseClient.from('AP(Yearly)').select('*').eq('Department', selectedDepartment).eq('Month', selectedYearlyMonth),
+          supabaseClient.from('ASP(Yearly)').select('*').eq('Department', selectedDepartment).eq('Month', selectedYearlyMonth),
+          supabaseClient.from('Prof(Yearly)').select('*').eq('Department', selectedDepartment).eq('Month', selectedYearlyMonth)
         ]);
         function getBestYearlyRows(data) {
           const facultyData = {};
@@ -1672,6 +1521,11 @@ function attachExportButtons() {
       })();
     }
     document.getElementById('designationFilter').addEventListener('change', () => {
+      loadDashboardTable();
+    });
+    
+    document.getElementById('yearlyMonthFilter').addEventListener('change', () => {
+      selectedYearlyMonth = document.getElementById('yearlyMonthFilter').value;
       loadDashboardTable();
     });
     
@@ -1914,8 +1768,10 @@ function attachExportButtons() {
     }
     
   loadDepartments().then(loadDashboardTable);
-  // NEW: Load status table departments and table
-  loadStatusDepartments().then(loadFacultyStatusTable);
+  // NEW: Load core scope table departments and table
+  loadCoreScopeDepartments().then(loadCoreScopeTable);
+  // Load department portfolios IQAC
+  loadDepartmentPortfoliosIQAC();
   </script>
   <footer class="text-center py-4 mt-8">
     <div class="flex flex-col items-center gap-1">
