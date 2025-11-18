@@ -493,60 +493,341 @@ function openExportScopeModal() {
 function closeExportScopeModal() {
   document.getElementById('exportScopeModal').classList.add('hidden');
 }
-// Export table to Excel utility
-function exportTableToExcelById(tableId, filenamePrefix) {
-  const table = document.getElementById(tableId);
-  if (!table) return;
-  const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
-  const rows = Array.from(table.querySelectorAll('tbody tr'));
-  const data = [headers];
-  // Special handling for Department Portfolios table
-  if (tableId === 'portfoliosTableExport') {
-    rows.forEach(row => {
-      const cells = [];
-      Array.from(row.querySelectorAll('td')).forEach((td, idx) => {
-        // For portfolio columns, faculty names may have tick/cross SVGs
-        if (idx === 0) {
-          // Department column, just text
-          cells.push(td.innerText.trim());
-        } else {
-          // Portfolio columns: may have multiple faculty names
-          const divs = td.querySelectorAll('div');
-          if (divs.length === 0) {
-            cells.push('-');
-          } else {
-            let names = [];
-            divs.forEach(div => {
-              let name = '';
-              // Check for tick/cross SVG
-              if (div.querySelector('svg.h-6.w-6.text-green-500')) {
-                // Tick
-                name = div.textContent.replace(/\s+/g, ' ').trim() + ' (C)';
-              } else if (div.querySelector('svg.h-6.w-6.text-red-500')) {
-                // Cross
-                name = div.textContent.replace(/\s+/g, ' ').trim() + ' (N)';
-              } else {
-                name = div.textContent.replace(/\s+/g, ' ').trim();
-              }
-              names.push(name);
-            });
-            cells.push(names.join(', '));
+// Export Yearly Dashboard to Excel - Current Department
+async function exportYearlyCurrentDepartment() {
+  closeExportScopeModal();
+  
+  // Show loading overlay
+  let loadingDiv = document.createElement('div');
+  loadingDiv.id = 'exportLoadingOverlay';
+  loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+  loadingDiv.innerHTML = `<div style="background:white;padding:32px 48px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;align-items:center;gap:16px;">
+    <svg class='animate-spin' style='height:48px;width:48px;color:#7c3aed;' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+      <circle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'></circle>
+      <path class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'></path>
+    </svg>
+    <div style='font-size:18px;color:#7c3aed;font-weight:600;'>Exporting current department, please wait...</div>
+  </div>`;
+  document.body.appendChild(loadingDiv);
+  
+  try {
+    // Fetch faculty for current department AND their form submissions
+    const [facultyRes, apRes, aspRes, profRes] = await Promise.all([
+      supabaseClient.from('Faculty').select('*').eq('department', selectedDepartment),
+      supabaseClient.from('AP(Yearly)').select('*').eq('Department', selectedDepartment),
+      supabaseClient.from('ASP(Yearly)').select('*').eq('Department', selectedDepartment),
+      supabaseClient.from('Prof(Yearly)').select('*').eq('Department', selectedDepartment)
+    ]);
+    
+    const deptFaculty = facultyRes.data || [];
+    
+    // Particulars for each designation
+    const particularsMap = {
+      AP: [
+        'Present at Conferences.',
+        'Guide student research and final-year projects.',
+        'Attend FDPs / workshop/Seminars',
+        'NPTEL/ MOOC certifications 2/Sem',
+        'Facilitate industry-institute interaction through guest lectures, internships.',
+        'Engage in extension activities, and social outreach programs.',
+        'Membership in professional body'
+      ],
+      ASP: [
+        'Publish in peer-reviewed journals',
+        'Apply for research grants',
+        'Guide student research and final-year projects.',
+        'Organize FDPs / workshop/Seminars',
+        'NPTEL/ MOOC certifications',
+        'Facilitate industry-institute interaction through guest lectures, internships.',
+        'Engage in Consultancy.',
+        'Membership in professional body'
+      ],
+      Prof: [
+        'Publish in peer-reviewed journals',
+        'Apply for research grants',
+        'Guide student research and final-year projects.',
+        'Organize FDPs / workshop/Seminars',
+        'NPTEL/ MOOC certifications',
+        'Facilitate MoU',
+        'Engage in Consultancy.',
+        'Membership in professional body'
+      ]
+    };
+    
+    // Build single combined sheet with all designations
+    const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', ...particularsMap.AP];
+    const allRows = [headers];
+    
+    // Create lookup maps for form submissions
+    const formDataMaps = {
+      AP: {},
+      ASP: {},
+      Prof: {}
+    };
+    
+    // Build lookup maps: key = facultyName (lowercase), value = latest row
+    [
+      { designation: 'AP', data: apRes.data || [] },
+      { designation: 'ASP', data: aspRes.data || [] },
+      { designation: 'Prof', data: profRes.data || [] }
+    ].forEach(({ designation, data }) => {
+      const grouped = {};
+      data.forEach(row => {
+        const facultyName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+        if (!facultyName) return;
+        if (!grouped[facultyName]) grouped[facultyName] = [];
+        grouped[facultyName].push(row);
+      });
+      
+      // Get latest row for each faculty
+      Object.keys(grouped).forEach(facultyName => {
+        const rows = grouped[facultyName].sort((a, b) => (b.input_id || b.id || 0) - (a.input_id || a.id || 0));
+        formDataMaps[designation][facultyName] = rows[0];
+      });
+    });
+    
+    // Process all faculty from current department
+    deptFaculty.forEach(fac => {
+      const dept = fac.department || selectedDepartment;
+      const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+      const designation = (fac.Designation || '').toUpperCase();
+      
+      // Normalize designation
+      let desig = '';
+      if (designation === 'AP' || designation === 'ASSISTANT PROFESSOR') desig = 'AP';
+      else if (designation === 'ASP' || designation === 'ASSOCIATE PROFESSOR') desig = 'ASP';
+      else if (designation === 'PROF' || designation === 'PROFESSOR') desig = 'Prof';
+      else return; // Skip if designation not recognized
+      
+      const statusCount = desig === 'AP' ? 7 : 8;
+      const key = facultyName.trim().toLowerCase();
+      const formRow = formDataMaps[desig][key];
+      
+      let percentage = 0;
+      const rowData = [dept, desig, facultyName];
+      
+      if (formRow) {
+        // Faculty has submitted form - calculate percentage
+        let completedCount = 0;
+        for (let i = 1; i <= statusCount; i++) {
+          const status = (formRow[`Status_${i}`] || '').toString().toLowerCase();
+          if (status === 'completed' || status === 'completed and updated') {
+            completedCount++;
           }
         }
-      });
-      data.push(cells);
+        percentage = statusCount > 0 ? Math.round((completedCount / statusCount) * 100) : 0;
+        rowData.push(percentage + '%');
+        
+        // Add status columns
+        for (let i = 1; i <= 8; i++) {
+          if (i <= statusCount) {
+            rowData.push(formRow[`Status_${i}`] || '-');
+          } else {
+            rowData.push('-');
+          }
+        }
+      } else {
+        // Faculty has NOT submitted form - show 0% and empty columns
+        rowData.push('0%');
+        for (let i = 1; i <= 8; i++) {
+          rowData.push('-');
+        }
+      }
+      
+      allRows.push(rowData);
     });
-  } else {
-    // Default: just text
-    rows.forEach(row => {
-      const cells = Array.from(row.querySelectorAll('td')).map(td => td.innerText.trim());
-      data.push(cells);
+    
+    // Sort by designation, then faculty name
+    const dataRows = allRows.slice(1);
+    dataRows.sort((a, b) => {
+      if (a[1] !== b[1]) return a[1].localeCompare(b[1]);
+      return a[2].localeCompare(b[2]);
     });
+    
+    // Create workbook and export
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, selectedDepartment);
+    XLSX.writeFile(wb, `IQAC_Dashboard_Yearly_${selectedDepartment}.xlsx`);
+    
+  } catch (error) {
+    console.error('Export error:', error);
+    alert('Failed to export data. Please try again.');
+  } finally {
+    // Remove loading overlay
+    const overlay = document.getElementById('exportLoadingOverlay');
+    if (overlay) overlay.remove();
   }
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
-  XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+}
+
+// Export Yearly Dashboard to Excel - All Departments
+async function exportYearlyAllDepartments() {
+  closeExportScopeModal();
+  
+  // Show loading overlay
+  let loadingDiv = document.createElement('div');
+  loadingDiv.id = 'exportLoadingOverlay';
+  loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+  loadingDiv.innerHTML = `<div style="background:white;padding:32px 48px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;align-items:center;gap:16px;">
+    <svg class='animate-spin' style='height:48px;width:48px;color:#7c3aed;' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+      <circle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'></circle>
+      <path class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'></path>
+    </svg>
+    <div style='font-size:18px;color:#7c3aed;font-weight:600;'>Exporting all departments, please wait...</div>
+  </div>`;
+  document.body.appendChild(loadingDiv);
+  
+  try {
+    // Fetch ALL faculty from Faculty table AND yearly form submissions
+    const [facultyRes, apRes, aspRes, profRes] = await Promise.all([
+      supabaseClient.from('Faculty').select('*'),
+      supabaseClient.from('AP(Yearly)').select('*'),
+      supabaseClient.from('ASP(Yearly)').select('*'),
+      supabaseClient.from('Prof(Yearly)').select('*')
+    ]);
+    
+    const allFaculty = facultyRes.data || [];
+    
+    // Particulars for each designation
+    const particularsMap = {
+      AP: [
+        'Present at Conferences.',
+        'Guide student research and final-year projects.',
+        'Attend FDPs / workshop/Seminars',
+        'NPTEL/ MOOC certifications 2/Sem',
+        'Facilitate industry-institute interaction through guest lectures, internships.',
+        'Engage in extension activities, and social outreach programs.',
+        'Membership in professional body'
+      ],
+      ASP: [
+        'Publish in peer-reviewed journals',
+        'Apply for research grants',
+        'Guide student research and final-year projects.',
+        'Organize FDPs / workshop/Seminars',
+        'NPTEL/ MOOC certifications',
+        'Facilitate industry-institute interaction through guest lectures, internships.',
+        'Engage in Consultancy.',
+        'Membership in professional body'
+      ],
+      Prof: [
+        'Publish in peer-reviewed journals',
+        'Apply for research grants',
+        'Guide student research and final-year projects.',
+        'Organize FDPs / workshop/Seminars',
+        'NPTEL/ MOOC certifications',
+        'Facilitate MoU',
+        'Engage in Consultancy.',
+        'Membership in professional body'
+      ]
+    };
+    
+    // Build single combined sheet with all designations and departments
+    const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', ...particularsMap.AP];
+    const allRows = [headers];
+    
+    // Create lookup maps for form submissions
+    const formDataMaps = {
+      AP: {},
+      ASP: {},
+      Prof: {}
+    };
+    
+    // Build lookup maps: key = "dept|facultyName", value = latest row
+    [
+      { designation: 'AP', data: apRes.data || [] },
+      { designation: 'ASP', data: aspRes.data || [] },
+      { designation: 'Prof', data: profRes.data || [] }
+    ].forEach(({ designation, data }) => {
+      const grouped = {};
+      data.forEach(row => {
+        const dept = (row['Department'] || '').toString().trim();
+        const facultyName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+        if (!dept || !facultyName) return;
+        const key = `${dept}|${facultyName}`;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(row);
+      });
+      
+      // Get latest row for each faculty
+      Object.keys(grouped).forEach(key => {
+        const rows = grouped[key].sort((a, b) => (b.input_id || b.id || 0) - (a.input_id || a.id || 0));
+        formDataMaps[designation][key] = rows[0];
+      });
+    });
+    
+    // Process all faculty from Faculty table
+    allFaculty.forEach(fac => {
+      const dept = fac.department || 'Unknown';
+      const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+      const designation = (fac.Designation || '').toUpperCase();
+      
+      // Normalize designation
+      let desig = '';
+      if (designation === 'AP' || designation === 'ASSISTANT PROFESSOR') desig = 'AP';
+      else if (designation === 'ASP' || designation === 'ASSOCIATE PROFESSOR') desig = 'ASP';
+      else if (designation === 'PROF' || designation === 'PROFESSOR') desig = 'Prof';
+      else return; // Skip if designation not recognized
+      
+      const statusCount = desig === 'AP' ? 7 : 8;
+      const key = `${dept}|${facultyName.trim().toLowerCase()}`;
+      const formRow = formDataMaps[desig][key];
+      
+      let percentage = 0;
+      const rowData = [dept, desig, facultyName];
+      
+      if (formRow) {
+        // Faculty has submitted form - calculate percentage
+        let completedCount = 0;
+        for (let i = 1; i <= statusCount; i++) {
+          const status = (formRow[`Status_${i}`] || '').toString().toLowerCase();
+          if (status === 'completed' || status === 'completed and updated') {
+            completedCount++;
+          }
+        }
+        percentage = statusCount > 0 ? Math.round((completedCount / statusCount) * 100) : 0;
+        rowData.push(percentage + '%');
+        
+        // Add status columns
+        for (let i = 1; i <= 8; i++) {
+          if (i <= statusCount) {
+            rowData.push(formRow[`Status_${i}`] || '-');
+          } else {
+            rowData.push('-');
+          }
+        }
+      } else {
+        // Faculty has NOT submitted form - show 0% and empty columns
+        rowData.push('0%');
+        for (let i = 1; i <= 8; i++) {
+          rowData.push('-');
+        }
+      }
+      
+      allRows.push(rowData);
+    });
+    
+    // Sort by department, then designation, then faculty name
+    const dataRows = allRows.slice(1);
+    dataRows.sort((a, b) => {
+      if (a[0] !== b[0]) return a[0].localeCompare(b[0]);
+      if (a[1] !== b[1]) return a[1].localeCompare(b[1]);
+      return a[2].localeCompare(b[2]);
+    });
+    
+    // Create workbook and export
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'All Departments');
+    XLSX.writeFile(wb, `IQAC_Dashboard_Yearly_All_Departments.xlsx`);
+    
+  } catch (error) {
+    console.error('Export error:', error);
+    alert('Failed to export data. Please try again.');
+  } finally {
+    // Remove loading overlay
+    const overlay = document.getElementById('exportLoadingOverlay');
+    if (overlay) overlay.remove();
+  }
 }
 
 // Attach export button listeners after tables are rendered
@@ -557,128 +838,18 @@ function attachExportButtons() {
       document.getElementById('exportDashboardTableBtn').onclick = () => {
         openExportScopeModal();
       };
-      dashboardTable.id = dashboardTable.id || 'dashboardTableExport';
+      
       // Attach modal button logic
       setTimeout(() => {
         const currentBtn = document.getElementById('exportCurrentDeptBtn');
         const allBtn = document.getElementById('exportAllDeptBtn');
         if (currentBtn && allBtn) {
-          currentBtn.onclick = () => {
-            closeExportScopeModal();
-            exportTableToExcelById(dashboardTable.id || 'dashboardTableExport', 'IQAC_Dashboard_' + selectedDepartment);
-          };
-          allBtn.onclick = async () => {
-            closeExportScopeModal();
-            
-            // Show loading overlay
-            let loadingDiv = document.createElement('div');
-            loadingDiv.id = 'exportLoadingOverlay';
-            loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
-            loadingDiv.innerHTML = `<div style="background:white;padding:32px 48px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;align-items:center;gap:16px;">
-              <svg class='animate-spin' style='height:48px;width:48px;color:#7c3aed;' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
-                <circle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'></circle>
-                <path class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'></path>
-              </svg>
-              <div style='font-size:18px;color:#7c3aed;font-weight:600;'>Exporting all departments, please wait...</div>
-            </div>`;
-            document.body.appendChild(loadingDiv);
-            
-            // Export all departments: fetch all from yearly tables
-            const apRes = await supabaseClient.from('AP(Yearly)').select('*');
-            const aspRes = await supabaseClient.from('ASP(Yearly)').select('*');
-            const profRes = await supabaseClient.from('Prof(Yearly)').select('*');
-            
-            // Get all faculty data for department and designation mapping
-            const facultyRes = await supabaseClient.from('Faculty').select('*');
-            const facultyList = facultyRes.data || [];
-            
-            // Particulars for each designation
-            const particularsMap = {
-              AP: [
-                'Present at Conferences.',
-                'Guide student research and final-year projects.',
-                'Attend FDPs / workshop/Seminars',
-                'NPTEL/ MOOC certifications 2/Sem',
-                'Facilitate industry-institute interaction through guest lectures, internships.',
-                'Engage in extension activities, and social outreach programs.',
-                'Membership in professional body'
-              ],
-              ASP: [
-                'Publish in peer-reviewed journals',
-                'Apply for research grants',
-                'Guide student research and final-year projects.',
-                'Organize FDPs / workshop/Seminars',
-                'NPTEL/ MOOC certifications',
-                'Facilitate industry-institute interaction through guest lectures, internships.',
-                'Engage in Consultancy.',
-                'Membership in professional body'
-              ],
-              Prof: [
-                'Publish in peer-reviewed journals',
-                'Apply for research grants',
-                'Guide student research and final-year projects.',
-                'Organize FDPs / workshop/Seminars',
-                'NPTEL/ MOOC certifications',
-                'Facilitate MoU',
-                'Engage in Consultancy.',
-                'Membership in professional body'
-              ]
-            };
-            
-            const wb = XLSX.utils.book_new();
-            
-            // Process each designation type
-            const allDataSets = [
-              { label: 'AP', data: apRes.data || [], particulars: particularsMap.AP, statusCount: 7 },
-              { label: 'ASP', data: aspRes.data || [], particulars: particularsMap.ASP, statusCount: 8 },
-              { label: 'Prof', data: profRes.data || [], particulars: particularsMap.Prof, statusCount: 8 }
-            ];
-            
-            allDataSets.forEach(({ label, data, particulars, statusCount }) => {
-              if (data.length === 0) return;
-              
-              // Build headers: Department, Faculty Name, Percentage, then each particular
-              const headers = ['Department', 'Faculty Name', 'Percentage', ...particulars];
-              const sheetData = [headers];
-              
-              data.forEach(row => {
-                const dept = row['Department'] || '';
-                const facultyName = row['Portfolio Member Name'] || '';
-                
-                // Calculate percentage
-                let completedCount = 0;
-                for (let i = 1; i <= statusCount; i++) {
-                  const status = (row[`Status_${i}`] || '').toString().toLowerCase();
-                  if (status === 'completed' || status === 'completed and updated') {
-                    completedCount++;
-                  }
-                }
-                const percentage = statusCount > 0 ? Math.round((completedCount / statusCount) * 100) : 0;
-                
-                // Build row data
-                const rowData = [dept, facultyName, percentage + '%'];
-                
-                // Add status for each particular
-                for (let i = 1; i <= statusCount; i++) {
-                  rowData.push(row[`Status_${i}`] || '-');
-                }
-                
-                sheetData.push(rowData);
-              });
-              
-              const ws = XLSX.utils.aoa_to_sheet(sheetData);
-              XLSX.utils.book_append_sheet(wb, ws, label);
-            });
-            
-            XLSX.writeFile(wb, 'IQAC_Dashboard_Yearly_All_Departments.xlsx');
-            
-            // Remove loading overlay
-            const overlay = document.getElementById('exportLoadingOverlay');
-            if (overlay) overlay.remove();
-          };
+          currentBtn.onclick = exportYearlyCurrentDepartment;
+          allBtn.onclick = exportYearlyAllDepartments;
         }
       }, 600);
     }
+    
     document.getElementById('exportDepartmentPortfoliosBtn').onclick = async () => {
       // Export based on current filter (only monthly tables now)
       const statusFilter = document.getElementById('portfolioStatusFilter');
