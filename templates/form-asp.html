@@ -1,4 +1,4 @@
-﻿</script>
+</script>
 <script>
 // Auto-fill Department, Portfolio Name, and Portfolio Member Name from localStorage
 document.addEventListener('DOMContentLoaded', function() {
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </tr>
                         </thead>
                         <tbody id="asp-yearly-table-body">
-                            <!-- JS will render 7 rows here -->
+                            <!-- JS will render 8 rows here -->
                         </tbody>
                     </table>
                 </div>
@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Table data from image (7 rows for ASP Yearly - matching exact image content)
+    // Table data from image (8 rows for ASP Yearly - matching exact database schema)
     const tableData = [
         { 
             particular: 'Publish in peer-reviewed journals',
@@ -234,6 +234,11 @@ document.addEventListener('DOMContentLoaded', function() {
         { 
             particular: 'Engage in Consultancy.',
             target: '1 / YEAR',
+            tat: '31st May'
+        },
+        { 
+            particular: 'Additional Research Activities',
+            target: 'As Required',
             tat: '31st May'
         }
     ];
@@ -315,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const file = e.target.files[0];
             if (!file) return;
             const uploadBtn = document.querySelector(`button.upload-btn[data-row='${row}']`);
-            const bucket = 'Asp';
+            const bucket = 'Asp files';
             const path = `aspyearly_${row}_${Date.now()}_${file.name}`;
             try {
                 await uploadFileToStorage(file, path, bucket, uploadBtn);
@@ -351,11 +356,11 @@ document.addEventListener('DOMContentLoaded', function() {
             "Month": formData.get('Month')
         };
 
-        // Process all 7 rows (note: 8 rows in table but only 7 fields in schema)
-        const rowCount = Math.min(tableData.length, 7);
+        // Process all 8 rows to match database schema
+        const rowCount = 8;
         for (let i = 1; i <= rowCount; i++) {
-            dataRow[`Status_${i}`] = formData.get(`Status_${i}`);
-            dataRow[`Description_${i}`] = formData.get(`Description_${i}`);
+            dataRow[`Status_${i}`] = formData.get(`Status_${i}`) || null;
+            dataRow[`Description_${i}`] = formData.get(`Description_${i}`) || null;
             
             // Get the file input for this row
             const fileInput = document.querySelector(`input.file-input-row[data-row='${i}']`);
@@ -364,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const ts = Date.now();
                 const path = `aspyearly_${i}_${ts}_${file.name}`;
                 try {
-                    dataRow[`Upload The Scanned File_${i}`] = await uploadFileToStorage(file, path, 'Asp');
+                    dataRow[`Upload The Scanned File_${i}`] = await uploadFileToStorage(file, path, 'Asp files');
                 } catch (err) {
                     window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
                     return;
