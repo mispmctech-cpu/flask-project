@@ -519,17 +519,19 @@
           const [res1, res2] = await Promise.all([
             supabaseClient
               .from('Hod-workdone')
-              .select('input_id, department, portfolio_name, portfolio_member_name, verified_at, table_name, submitted_at'),
+              .select('input_id, department, portfolio_name, portfolio_member_name, verified_at, table_name, submitted_at')
+              .eq('department', department),
             supabaseClient
               .from('hod-workdone')
               .select('input_id, department, portfolio_name, portfolio_member_name, verified_at, table_name, submitted_at')
+              .eq('department', department)
           ]);
           if (res1.error && res2.error) {
             console.warn('Error fetching verified records:', res1.error || res2.error);
           } else {
             if (res1.data) verifiedRows = verifiedRows.concat(res1.data);
             if (res2.data) verifiedRows = verifiedRows.concat(res2.data);
-            console.log(`🔍 DEBUG: Found ${verifiedRows.length} verified records in both tables`);
+            console.log(`🔍 DEBUG: Found ${verifiedRows.length} verified records in both tables for department: ${department}`);
           }
         } catch (err) {
           console.warn('Exception fetching verified records:', err);
@@ -1530,13 +1532,20 @@
           document.body.removeChild(loadingDiv);
           return;
         }
-        window._allWorkdoneRows.splice(idx, 1);
-        window._filteredWorkdoneRows = window._allWorkdoneRows;
-        window._workingWorkdoneRows = window._allWorkdoneRows;
-        renderFilteredWorkdoneTable(workdoneCurrentPage);
-        await loadWorkdone();
-        await loadVerifiedWorkdone();
+        
+        console.log('✅ Record verified successfully, reloading tables...');
+        
+        // Remove loading overlay
         document.body.removeChild(loadingDiv);
+        
+        // Reload all tables to reflect the change
+        await Promise.all([
+          loadWorkdone(),
+          loadVerifiedWorkdone()
+        ]);
+        
+        // Show success message
+        alert('✅ Record verified successfully and moved to Verified Workdone table!');
       } catch (err) {
         alert('Error verifying record: ' + err.message);
         btn.disabled = false;
