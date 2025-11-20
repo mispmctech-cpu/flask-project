@@ -308,12 +308,15 @@ async function exportCoreScopeTableToExcel(scope) {
       let applicableCount = 0;
       
       if (row) {
-        for (let i = 1; i <= 15; i++) {
-          const statusVal = (row[`Status_${i}`] || '').toString().trim().toLowerCase();
-          if (statusVal === 'not applicable' || statusVal === 'na') continue;
+        console.log('DEBUG - Faculty:', facultyName, 'Row keys:', Object.keys(row).filter(k => k.startsWith('Status')));
+        for (let i = 1; i <= 18; i++) {
+          const statusVal = (row[`Status-${i}`] || '').toString().trim().toLowerCase();
+          console.log(`Status-${i}:`, statusVal);
+          if (statusVal === 'not applicable' || statusVal === 'na' || statusVal === '') continue;
           applicableCount += 1;
           if (statusVal === 'completed') completedCount += 1;
         }
+        console.log('Completed:', completedCount, 'Applicable:', applicableCount);
       }
       
       const percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
@@ -323,7 +326,7 @@ async function exportCoreScopeTableToExcel(scope) {
       
       // Add status values for all 15 fields
       for (let i = 1; i <= 15; i++) {
-        rowData.push(row ? (row[`Status_${i}`] || '-') : '-');
+        rowData.push(row ? (row[`Status-${i}`] || '-') : '-');
       }
       
       allRows.push(rowData);
