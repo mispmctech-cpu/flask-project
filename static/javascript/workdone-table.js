@@ -97,11 +97,8 @@ class WorkdoneTable {
       { table: "form8-weekly", portfolio: "Facilities & Technical Support Member (Lab Member) (Weekly)" },
       { table: "form8-once in 3 Months", portfolio: "Facilities & Technical Support Member (Lab Member) (Quarterly)" },
       // Core Scope Forms (ASP, AP, Professor)
-      { table: "ASP", portfolio: "ASP Core Scope Form" },
       { table: "ASP(Yearly)", portfolio: "ASP Yearly Form" },
-      { table: "AP", portfolio: "AP Core Scope Form" },
       { table: "AP(Yearly)", portfolio: "AP Yearly Form" },
-      { table: "Prof", portfolio: "Professor Core Scope Form" },
       { table: "Prof(Yearly)", portfolio: "Prof Yearly Form" },
       { table: "Core_scope", portfolio: "Faculty Core Scope (Monthly)" },
     ];
