@@ -380,9 +380,24 @@
 		}
 	});
 
-	// Form submission
+	// Form submission with double-submit prevention
+	let isSubmitting = false;
 	document.getElementById('facultyCoreScope').addEventListener('submit', async function(e) {
 		e.preventDefault();
+		
+		// Prevent double submission
+		if (isSubmitting) {
+			console.log('Form is already submitting, ignoring duplicate submission');
+			return;
+		}
+		isSubmitting = true;
+		
+		// Disable submit button
+		const submitBtn = e.target.querySelector('button[type="submit"]');
+		const originalText = submitBtn.textContent;
+		submitBtn.disabled = true;
+		submitBtn.textContent = 'Submitting...';
+		submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
 		
 		// Save autofetch values to localStorage for next time
 		try {
@@ -425,6 +440,10 @@
 				try {
 					dataRow[`Upload The Scanned File_${i}`] = await uploadFileToStorage(file, path, 'form1-files');
 				} catch (err) {
+					isSubmitting = false;
+					submitBtn.disabled = false;
+					submitBtn.textContent = originalText;
+					submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
 					window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
 					return;
 				}
@@ -436,10 +455,15 @@
 		// Submit to Supabase
 		const { data, error } = await supabase.from('Core_scope').insert([dataRow]);
 		if (error) {
+			isSubmitting = false;
+			submitBtn.disabled = false;
+			submitBtn.textContent = originalText;
+			submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
 			window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
 			return;
 		}
 
+		// Don't reset isSubmitting - let the page redirect happen
 		window.location.href = 'notification.html?status=success';
 	});
 	</script>
