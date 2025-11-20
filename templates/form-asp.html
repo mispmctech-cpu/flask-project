@@ -1,4 +1,4 @@
-﻿</script>
+</script>
 <script>
 // Auto-fill Department, Portfolio Name, and Portfolio Member Name from localStorage
 document.addEventListener('DOMContentLoaded', function() {
@@ -159,12 +159,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             </tr>
                         </thead>
                         <tbody id="asp-yearly-table-body">
-                            <!-- JS will render 7 rows here -->
+                            <!-- JS will render 8 rows here -->
                         </tbody>
                     </table>
                 </div>
                 <div class="flex justify-center mt-10">
-                    <button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
+                    <button type="submit" id="submitBtn" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="submitText">Submit</span>
+                        <i id="submitSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                    </button>
                 </div>
             </form>
         </div>
@@ -199,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Table data from image (7 rows for ASP Yearly - matching exact image content)
+    // Table data from image (8 rows for ASP Yearly - matching exact database schema)
     const tableData = [
         { 
             particular: 'Publish in peer-reviewed journals',
@@ -234,6 +237,11 @@ document.addEventListener('DOMContentLoaded', function() {
         { 
             particular: 'Engage in Consultancy.',
             target: '1 / YEAR',
+            tat: '31st May'
+        },
+        { 
+            particular: 'Additional Research Activities',
+            target: 'As Required',
             tat: '31st May'
         }
     ];
@@ -314,13 +322,45 @@ document.addEventListener('DOMContentLoaded', function() {
             const row = e.target.getAttribute('data-row');
             const file = e.target.files[0];
             if (!file) return;
+            
             const uploadBtn = document.querySelector(`button.upload-btn[data-row='${row}']`);
-            const bucket = 'Asp';
+            const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
+            
+            // Set uploading state
+            uploadBtn.textContent = 'Uploading...';
+            uploadBtn.className = 'bg-yellow-200 text-yellow-800 font-semibold px-3 py-1 rounded w-full';
+            uploadBtn.disabled = true;
+            
+            const bucket = 'Asp files';
             const path = `aspyearly_${row}_${Date.now()}_${file.name}`;
+            
             try {
                 await uploadFileToStorage(file, path, bucket, uploadBtn);
+                
+                // Success state (uploadFileToStorage already handles this, but ensure consistency)
+                uploadBtn.textContent = 'Uploaded';
+                uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
+                if (checkMark) {
+                    checkMark.classList.remove('hidden');
+                }
             } catch (err) {
+                // Error state
+                uploadBtn.textContent = 'Upload Failed';
+                uploadBtn.className = 'bg-red-200 text-red-800 font-semibold px-3 py-1 rounded w-full';
+                uploadBtn.disabled = false;
+                
+                // Hide checkmark on error
+                if (checkMark) {
+                    checkMark.classList.add('hidden');
+                }
+                
                 alert('File upload failed for row ' + row + ': ' + err.message);
+                
+                // Reset to original state after 3 seconds
+                setTimeout(() => {
+                    uploadBtn.textContent = 'Upload';
+                    uploadBtn.className = 'upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full';
+                }, 3000);
             }
         }
     });
@@ -329,59 +369,108 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('aspYearlyForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        // Save autofetch values to localStorage for next time
-        try {
-            var autofetchForm = e.target;
-            var dept = autofetchForm.querySelector('input[name="Department"]').value || '';
-            var portfolio = autofetchForm.querySelector('input[name="Portfolio Name"]').value || '';
-            var member = autofetchForm.querySelector('input[name="Portfolio Member Name"]').value || '';
-            localStorage.setItem('department', dept);
-            localStorage.setItem('selectedPortfolio', portfolio);
-            localStorage.setItem('selectedMemberName', member);
-        } catch (err) { /* ignore */ }
-
-        const form = e.target;
-        const formData = new FormData(form);
+        // Get submit button and elements for loading state
+        const submitBtn = document.getElementById('submitBtn');
+        const submitText = document.getElementById('submitText');
+        const submitSpinner = document.getElementById('submitSpinner');
         
-        // Build the data object matching the ASP(Yearly) schema
-        const dataRow = {
-            "Department": formData.get('Department'),
-            "Portfolio Name": formData.get('Portfolio Name'),
-            "Portfolio Member Name": formData.get('Portfolio Member Name'),
-            "Month": formData.get('Month')
-        };
+        // Set loading state
+        submitBtn.disabled = true;
+        submitText.textContent = 'Submitting...';
+        submitSpinner.classList.remove('hidden');
+        submitBtn.classList.add('opacity-75');
+        
+        try {
+            // Save autofetch values to localStorage for next time
+            try {
+                var autofetchForm = e.target;
+                var dept = autofetchForm.querySelector('input[name="Department"]').value || '';
+                var portfolio = autofetchForm.querySelector('input[name="Portfolio Name"]').value || '';
+                var member = autofetchForm.querySelector('input[name="Portfolio Member Name"]').value || '';
+                localStorage.setItem('department', dept);
+                localStorage.setItem('selectedPortfolio', portfolio);
+                localStorage.setItem('selectedMemberName', member);
+            } catch (err) { /* ignore */ }
 
-        // Process all 7 rows (note: 8 rows in table but only 7 fields in schema)
-        const rowCount = Math.min(tableData.length, 7);
-        for (let i = 1; i <= rowCount; i++) {
-            dataRow[`Status_${i}`] = formData.get(`Status_${i}`);
-            dataRow[`Description_${i}`] = formData.get(`Description_${i}`);
+            const form = e.target;
+            const formData = new FormData(form);
             
-            // Get the file input for this row
-            const fileInput = document.querySelector(`input.file-input-row[data-row='${i}']`);
-            const file = fileInput && fileInput.files[0];
-            if (file && file.size > 0) {
-                const ts = Date.now();
-                const path = `aspyearly_${i}_${ts}_${file.name}`;
-                try {
-                    dataRow[`Upload The Scanned File_${i}`] = await uploadFileToStorage(file, path, 'Asp');
-                } catch (err) {
-                    window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
-                    return;
+            // Build the data object matching the ASP(Yearly) schema
+            const dataRow = {
+                "Department": formData.get('Department'),
+                "Portfolio Name": formData.get('Portfolio Name'),
+                "Portfolio Member Name": formData.get('Portfolio Member Name'),
+                "Month": formData.get('Month')
+            };
+
+            // Process all 8 rows to match database schema
+            const rowCount = 8;
+            for (let i = 1; i <= rowCount; i++) {
+                dataRow[`Status_${i}`] = formData.get(`Status_${i}`) || null;
+                dataRow[`Description_${i}`] = formData.get(`Description_${i}`) || null;
+                
+                // Get the file input for this row
+                const fileInput = document.querySelector(`input.file-input-row[data-row='${i}']`);
+                const file = fileInput && fileInput.files[0];
+                if (file && file.size > 0) {
+                    // Update submit button text to show file upload progress
+                    submitText.textContent = `Uploading file ${i}...`;
+                    
+                    const ts = Date.now();
+                    const path = `aspyearly_${i}_${ts}_${file.name}`;
+                    try {
+                        dataRow[`Upload The Scanned File_${i}`] = await uploadFileToStorage(file, path, 'Asp files');
+                    } catch (err) {
+                        // Reset button state on error
+                        submitBtn.disabled = false;
+                        submitText.textContent = 'Submit';
+                        submitSpinner.classList.add('hidden');
+                        submitBtn.classList.remove('opacity-75');
+                        
+                        window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
+                        return;
+                    }
+                } else {
+                    dataRow[`Upload The Scanned File_${i}`] = null;
                 }
-            } else {
-                dataRow[`Upload The Scanned File_${i}`] = null;
             }
-        }
 
-        // Submit to Supabase
-        const { data, error } = await supabase.from('ASP(Yearly)').insert([dataRow]);
-        if (error) {
-            window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
-            return;
-        }
+            // Update submit button text for database submission
+            submitText.textContent = 'Saving data...';
 
-        window.location.href = 'notification.html?status=success';
+            // Submit to Supabase
+            const { data, error } = await supabase.from('ASP(Yearly)').insert([dataRow]);
+            if (error) {
+                // Reset button state on error
+                submitBtn.disabled = false;
+                submitText.textContent = 'Submit';
+                submitSpinner.classList.add('hidden');
+                submitBtn.classList.remove('opacity-75');
+                
+                window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
+                return;
+            }
+
+            // Success - show completion message briefly before redirect
+            submitText.textContent = 'Success!';
+            submitSpinner.classList.add('hidden');
+            submitBtn.classList.remove('bg-purple-800', 'hover:bg-purple-700');
+            submitBtn.classList.add('bg-green-600');
+            
+            // Wait a moment then redirect
+            setTimeout(() => {
+                window.location.href = 'notification.html?status=success';
+            }, 1000);
+            
+        } catch (error) {
+            // Reset button state on unexpected error
+            submitBtn.disabled = false;
+            submitText.textContent = 'Submit';
+            submitSpinner.classList.add('hidden');
+            submitBtn.classList.remove('opacity-75');
+            
+            window.location.href = `notification.html?status=error&msg=${encodeURIComponent('Unexpected error: ' + error.message)}`;
+        }
     });
     </script>  <!-- Footer -->
   <footer class="text-center py-4 mt-8">
