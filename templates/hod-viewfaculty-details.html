@@ -164,21 +164,24 @@
             <button type="button" id="editDetailsTableBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded font-semibold">Edit</button>
             <button type="button" id="saveDetailsTableBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded font-semibold hidden">Save</button>
             <span id="detailsTableStatusMsg" class="ml-2 text-sm"></span>
-          </div>
+          </div> 
           <div id="facultyDetailsTable" class="mt-1"></div>
-        <!-- Faculty Responsibilities Status Table -->
+        </div>
+        
+        <!-- Faculty Mandatory Scope - Yearly -->
         <div class="mt-8">
-          <label class="text-base font-bold text-green-700 uppercase tracking-wide block mb-1">FACULTY RESPONSIBILITIES STATUS</label>
-          <div id="facultyResponsibilitiesStatusTable" class="mt-1"></div>
-        <!-- Modal for viewing original responsibilities data -->
-        <div id="viewResponsibilitiesModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
-          <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeResponsibilitiesModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
-            <div id="viewResponsibilitiesModalContent"></div>
-          </div>
+          <label class="text-base font-bold text-purple-700 uppercase tracking-wide block mb-1">Faculty Mandatory Scope - Yearly</label>
+          <div id="facultyYearlyTableContainer" class="mt-1"></div>
         </div>
+        
+        <!-- Faculty Core Scope - Monthly -->
+        <div class="mt-8">
+          <label class="text-base font-bold text-blue-700 uppercase tracking-wide block mb-1">Faculty Core Scope - Monthly</label>
+          <button id="toggleCoreScopeRowsBtn" class="mb-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded font-semibold text-sm">Show All Rows</button>
+          <div id="facultyCoreScopeTableContainer" class="mt-1"></div>
         </div>
-        </div>
+        
+        <!-- Faculty Responsibilities Status Table -->
       </section>
       <section class="card-shadow rounded-xl overflow-hidden mb-8">
         <div class="bg-white p-4">
@@ -448,6 +451,405 @@
           setEditMode(false);
         }
       });
+
+        // --- Begin: Faculty Mandatory Scope - Yearly Table ---
+        async function loadFacultyYearlyTable() {
+          const facultyName = data["Name"] || "";
+          const department = data["department"] || "";
+          const designation = (data["Designation"] || "").toUpperCase();
+          
+          // Normalize designation
+          let desig = '';
+          if (designation === 'AP' || designation === 'ASSISTANT PROFESSOR') desig = 'AP';
+          else if (designation === 'ASP' || designation === 'ASSOCIATE PROFESSOR') desig = 'ASP';
+          else if (designation === 'PROF' || designation === 'PROFESSOR') desig = 'Prof';
+          else {
+            document.getElementById('facultyYearlyTableContainer').innerHTML = '<div class="text-gray-400 p-4">No yearly scope data available for this designation.</div>';
+            return;
+          }
+          
+          // Particulars for each designation
+          const particularsMap = {
+            AP: [
+              'Book/Book Chapter with ISSN/ISBN',
+              'Publication in UGC Care Journal/Scopus/Web of Science/UGC CARE List Group-I and II/SCI',
+              'Sponsored Research Projects',
+              'Consultancy',
+              'Patents',
+              'Organizing Conference/Seminar/Webinar/Workshop/FDP',
+              'Membership in professional body'
+            ],
+            ASP: [
+              'Book/Book Chapter with ISSN/ISBN',
+              'Publication in UGC Care Journal/Scopus/Web of Science/UGC CARE List Group-I and II/SCI',
+              'Sponsored Research Projects',
+              'Consultancy',
+              'Patents',
+              'Organizing Conference/Seminar/Webinar/Workshop/FDP',
+              'Awards/Achievements/Honors',
+              'Membership in professional body'
+            ],
+            Prof: [
+              'Book/Book Chapter with ISSN/ISBN',
+              'Publication in UGC Care Journal/Scopus/Web of Science/UGC CARE List Group-I and II/SCI',
+              'Sponsored Research Projects',
+              'Consultancy',
+              'Patents',
+              'Organizing Conference/Seminar/Webinar/Workshop/FDP',
+              'Awards/Achievements/Honors',
+              'Ph.D Guided'
+            ]
+          };
+          
+          const particulars = particularsMap[desig];
+          const tableName = desig === 'Prof' ? 'Prof(Yearly)' : `${desig}(Yearly)`;
+          
+          // All months
+          const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+          
+          // Fetch ALL form data for this faculty (all months)
+          // Prof(Yearly) uses created_at, others use submitted_at
+          const orderColumn = desig === 'Prof' ? 'created_at' : 'submitted_at';
+          const { data: allFormData, error } = await supabaseClient
+            .from(tableName)
+            .select('*')
+            .eq('Department', department)
+            .order(orderColumn, { ascending: false });
+          
+          if (error) {
+            console.error('Error fetching yearly data:', error);
+            document.getElementById('facultyYearlyTableContainer').innerHTML = `<div class="text-red-600 p-4">Error loading data: ${error.message || error}</div>`;
+            return;
+          }
+          
+          // Find matching rows for this faculty
+          const facNamesLower = [facultyName, data['Portfolio Member Name'], data.email]
+            .filter(Boolean)
+            .map(n => n.toString().trim().toLowerCase());
+          
+          const matchingRows = (allFormData || []).filter(row => {
+            const rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+            return facNamesLower.includes(rowName);
+          });
+          
+          // Group by month and get latest for each month
+          const monthDataMap = {};
+          months.forEach(month => {
+            const monthRows = matchingRows.filter(r => r.Month === month);
+            if (monthRows.length > 0) {
+              monthDataMap[month] = monthRows[0]; // Latest row for this month
+            }
+          });
+          
+          // Build table HTML - Vertical particulars, Horizontal months
+          let html = '<div style="overflow-x:auto; max-height:600px; overflow-y:auto; border:1px solid #9ca3af; border-radius:8px;">';
+          html += '<table class="w-full text-sm bg-white" style="border-collapse:collapse; min-width:1400px;">';
+          html += '<thead class="bg-purple-100 text-purple-700" style="position:sticky; top:0; z-index:10;">';
+          html += '<tr>';
+          html += '<th class="px-3 py-2 border border-gray-400" style="background:#EDE9FE; position:sticky; left:0; z-index:20;">Particulars</th>';
+          
+          // Add month columns
+          for (const month of months) {
+            html += `<th class="px-3 py-2 border border-gray-400" style="background:#EDE9FE;">${month}</th>`;
+          }
+          html += '</tr></thead>';
+          html += '<tbody>';
+          
+          // Add row for each particular
+          for (let i = 0; i < particulars.length; i++) {
+            const particularIndex = i + 1;
+            html += '<tr class="hover:bg-gray-50">';
+            html += `<td class="px-3 py-2 border border-gray-400 font-semibold" style="position:sticky; left:0; background:white; z-index:5;">${particularIndex}. ${particulars[i]}</td>`;
+            
+            // Add status for each month
+            for (const month of months) {
+              const monthData = monthDataMap[month];
+              let statusVal = '<span class="text-red-600 font-bold">✗</span>'; // Default to wrong mark
+              
+              if (monthData) {
+                const status = monthData[`Status_${particularIndex}`];
+                if (status) {
+                  const statusLower = status.toString().trim().toLowerCase();
+                  if (statusLower === 'completed') {
+                    statusVal = '<span class="text-green-600 font-bold">✓</span>';
+                  } else if (statusLower === 'not applicable') {
+                    statusVal = '<span class="text-gray-400">N/A</span>';
+                  } else {
+                    // For "in progress", "yet to be completed", "not started", or any other value
+                    statusVal = '<span class="text-red-600 font-bold">✗</span>';
+                  }
+                } else {
+                  // Null or empty status
+                  statusVal = '<span class="text-red-600 font-bold">✗</span>';
+                }
+              }
+              
+              html += `<td class="px-3 py-2 border border-gray-400 text-center">${statusVal}</td>`;
+            }
+            html += '</tr>';
+          }
+          
+          // Add percentage row at the bottom
+          html += '<tr class="bg-purple-50 font-bold">';
+          html += '<td class="px-3 py-2 border border-gray-400" style="position:sticky; left:0; background:#F3E8FF; z-index:5;">Percentage</td>';
+          
+          for (const month of months) {
+            const monthData = monthDataMap[month];
+            let percentage = 0;
+            
+            if (monthData) {
+              let completedCount = 0;
+              let applicableCount = 0; // Count only applicable fields (exclude N/A)
+              
+              for (let i = 1; i <= particulars.length; i++) {
+                const status = monthData[`Status_${i}`];
+                const statusLower = status ? status.toString().trim().toLowerCase() : '';
+                
+                // Exclude "Not Applicable" from calculation
+                if (statusLower === 'not applicable') {
+                  continue; // Skip this field
+                }
+                
+                // Count this field as applicable
+                applicableCount++;
+                
+                // Count as completed if status is "completed"
+                if (statusLower === 'completed') {
+                  completedCount++;
+                }
+              }
+              
+              percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) : 0;
+            }
+            
+            const percentColor = percentage === 100 ? 'text-green-600' : percentage >= 50 ? 'text-orange-600' : 'text-red-600';
+            html += `<td class="px-3 py-2 border border-gray-400 text-center ${percentColor}">${percentage}%</td>`;
+          }
+          
+          html += '</tr>';
+          
+          // Add N/A count row
+          html += '<tr class="bg-gray-100 font-semibold">';
+          html += '<td class="px-3 py-2 border border-gray-400" style="position:sticky; left:0; background:#F3F4F6; z-index:5;">Number of N/A</td>';
+          
+          for (const month of months) {
+            const monthData = monthDataMap[month];
+            let naCount = 0;
+            
+            if (monthData) {
+              for (let i = 1; i <= particulars.length; i++) {
+                const status = monthData[`Status_${i}`];
+                const statusLower = status ? status.toString().trim().toLowerCase() : '';
+                
+                if (statusLower === 'not applicable') {
+                  naCount++;
+                }
+              }
+            }
+            
+            html += `<td class="px-3 py-2 border border-gray-400 text-center text-gray-600">${naCount}</td>`;
+          }
+          
+          html += '</tr>';
+          html += '</tbody></table></div>';
+          
+          document.getElementById('facultyYearlyTableContainer').innerHTML = html;
+        }
+        
+        loadFacultyYearlyTable();
+        // --- End: Faculty Mandatory Scope - Yearly Table ---
+        
+        // --- Begin: Faculty Core Scope - Monthly Table ---
+        let showAllCoreScopeRows = false;
+        
+        document.getElementById('toggleCoreScopeRowsBtn').addEventListener('click', () => {
+          showAllCoreScopeRows = !showAllCoreScopeRows;
+          const btn = document.getElementById('toggleCoreScopeRowsBtn');
+          btn.textContent = showAllCoreScopeRows ? 'Hide Rows' : 'Show All Rows';
+          loadFacultyCoreScopeTable();
+        });
+        
+        async function loadFacultyCoreScopeTable() {
+          const container = document.getElementById('facultyCoreScopeTableContainer');
+          container.innerHTML = '<p class="text-gray-400 text-center py-4">Loading...</p>';
+          
+          const facultyName = data["Name"] || "";
+          const department = data["department"] || "";
+          const designation = (data["Designation"] || "").toUpperCase();
+          
+          // Fetch ALL Core_scope data for this department (all months)
+          const { data: allData, error } = await supabaseClient
+            .from('Core_scope')
+            .select('*')
+            .eq('Department', department)
+            .order('submitted_at', { ascending: false });
+          
+          if (error) {
+            console.error('Error fetching Core Scope data:', error);
+            container.innerHTML = `<div class="text-red-600 p-4">Error loading data: ${error.message || error}</div>`;
+            return;
+          }
+          
+          if (!allData || allData.length === 0) {
+            container.innerHTML = `<p class="text-gray-400 text-center">No Core Scope data available.</p>`;
+            return;
+          }
+          
+          // Find matching rows for this faculty
+          const facNamesLower = [facultyName, data['Portfolio Member Name'], data.email]
+            .filter(Boolean)
+            .map(n => n.toString().trim().toLowerCase());
+          
+          const matchingRows = (allData || []).filter(row => {
+            const rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+            return facNamesLower.includes(rowName);
+          });
+          
+          // Group by month and get latest row per month
+          const monthData = {};
+          const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+          
+          months.forEach(m => monthData[m] = null);
+          
+          matchingRows.forEach(row => {
+            const month = row.Month;
+            if (month && months.includes(month)) {
+              if (!monthData[month]) monthData[month] = row;
+            }
+          });
+          
+          // Core Scope particulars (15 items)
+          const particulars = [
+            'Teaching & Curriculum Delivery',
+            'Learning Process',
+            'Assessment & Evaluation',
+            'Innovation & Best Practices',
+            'Student Support, Feedback & Analysis',
+            'Student Progression',
+            'Result / Outcome',
+            'Research, Projects & Consultancy',
+            'Teachers / Staff Training',
+            'Academic / Outcome Support',
+            'Professional Activities',
+            'Institutional Responsibilities / Administrative Activities',
+            'Co-Curricular & Extra-Curricular Activities',
+            'Technical Services & Maintenance',
+            'Community Engagement'
+          ];
+          
+          // Build month-wise matrix table
+          let html = '<div class="overflow-x-auto">';
+          html += '<table class="w-full border border-gray-700 text-left text-xs">';
+          html += '<thead><tr class="bg-gray-800 text-white">';
+          html += '<th class="px-2 py-2 border border-gray-700 sticky left-0 bg-gray-800 z-10">Particulars</th>';
+          
+          months.forEach(month => {
+            html += `<th class="px-2 py-2 border border-gray-700 text-center">${month}</th>`;
+          });
+          
+          html += '</tr></thead>';
+          html += '<tbody>';
+          
+          // Render particular rows (hidden by default)
+          particulars.forEach((particular, idx) => {
+            const rowDisplay = showAllCoreScopeRows ? '' : 'display:none;';
+            html += `<tr class="hover:bg-gray-100 particular-row" style="${rowDisplay}">`;
+            html += `<td class="px-2 py-2 border border-gray-700 font-semibold sticky left-0 bg-white z-5">${particular}</td>`;
+            
+            months.forEach(month => {
+              const row = monthData[month];
+              let statusVal = '-';
+              
+              if (row) {
+                const statusKey = `Status_${idx + 1}`;
+                const status = row[statusKey];
+                const statusLower = (status + '').toLowerCase().trim();
+                
+                if (statusLower === 'completed') {
+                  statusVal = '<span class="text-green-600 font-bold">✓</span>';
+                } else if (statusLower === 'in progress') {
+                  statusVal = '<span class="text-orange-600 font-bold">✗</span>';
+                } else if (statusLower === 'yet to be completed') {
+                  statusVal = '<span class="text-red-600 font-bold">✗</span>';
+                } else if (statusLower === 'not applicable') {
+                  statusVal = '<span class="text-gray-400">N/A</span>';
+                } else {
+                  statusVal = '<span class="text-red-600 font-bold">✗</span>';
+                }
+              }
+              
+              html += `<td class="px-2 py-2 border border-gray-700 text-center">${statusVal}</td>`;
+            });
+            
+            html += '</tr>';
+          });
+          
+          // Calculate and render percentage row (always visible)
+          html += '<tr class="bg-blue-100 font-bold">';
+          html += '<td class="px-2 py-2 border border-gray-700 sticky left-0 bg-blue-100 z-5">Percentage</td>';
+          
+          months.forEach(month => {
+            const row = monthData[month];
+            let percentage = 0;
+            
+            if (row) {
+              let completedCount = 0;
+              let notApplicableCount = 0;
+              const totalCount = particulars.length;
+              
+              for (let i = 1; i <= particulars.length; i++) {
+                const status = row[`Status_${i}`];
+                const statusLower = (status + '').toLowerCase().trim();
+                
+                if (statusLower === 'not applicable') {
+                  notApplicableCount++;
+                } else if (statusLower === 'completed') {
+                  completedCount++;
+                }
+              }
+              
+              const applicableCount = totalCount - notApplicableCount;
+              percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) : 0;
+            }
+            
+            html += `<td class="px-2 py-2 border border-gray-700 text-center">${percentage}%</td>`;
+          });
+          
+          html += '</tr>';
+          
+          // Add N/A count row (always visible)
+          html += '<tr class="bg-gray-100 font-semibold">';
+          html += '<td class="px-2 py-2 border border-gray-700 sticky left-0 bg-gray-100 z-5">Number of N/A</td>';
+          
+          months.forEach(month => {
+            const row = monthData[month];
+            let naCount = 0;
+            
+            if (row) {
+              for (let i = 1; i <= particulars.length; i++) {
+                const status = row[`Status_${i}`];
+                const statusLower = (status + '').toLowerCase().trim();
+                
+                if (statusLower === 'not applicable') {
+                  naCount++;
+                }
+              }
+            }
+            
+            html += `<td class="px-2 py-2 border border-gray-700 text-center text-gray-600">${naCount}</td>`;
+          });
+          
+          html += '</tr>';
+          html += '</tbody></table>';
+          html += '</div>';
+          
+          container.innerHTML = html;
+        }
+        
+        loadFacultyCoreScopeTable();
+        // --- End: Faculty Core Scope - Monthly Table ---
+
         // SEM, SUBJECT, CLASS Table
         // SEM_SUBJECT_CLASS
         try {
