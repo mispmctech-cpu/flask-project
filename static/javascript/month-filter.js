@@ -4,85 +4,81 @@
  * This file should be included in all faculty and institution forms
  */
 
+
 (function() {
     'use strict';
 
-    // Function to filter month dropdowns
-    function filterMonthDropdowns() {
-        // Get enabled months from localStorage
-        const enabledMonthsStr = localStorage.getItem('enabledMonths');
-        
-        // If no settings found, allow all months (default behavior)
-        if (!enabledMonthsStr) {
-            console.log('No month filter settings found. All months enabled by default.');
-            return;
-        }
+    // Supabase config (same as admin-dashboard.html)
+    const SUPABASE_URL = "https://cbhodgwaazmjszkujrti.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU";
+    const supabaseClient = window.supabase
+        ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        : null;
 
-        let enabledMonths;
+    // Fetch enabled months from Supabase
+    async function fetchEnabledMonths() {
+        if (!supabaseClient) return null;
         try {
-            enabledMonths = JSON.parse(enabledMonthsStr);
-        } catch (e) {
-            console.error('Error parsing enabled months:', e);
-            return;
+            const { data, error } = await supabaseClient
+                .from('month_control')
+                .select('enabled_months')
+                .eq('id', 1)
+                .single();
+            if (error) throw error;
+            return data && data.enabled_months ? data.enabled_months : [];
+        } catch (err) {
+            console.error('Error fetching enabled months from Supabase:', err);
+            return null;
+        }
+    }
+
+    // Function to filter month dropdowns
+    async function filterMonthDropdowns() {
+        let enabledMonths = await fetchEnabledMonths();
+        if (!enabledMonths) {
+            // fallback: all months enabled
+            enabledMonths = [
+                "January","February","March","April","May","June","July","August","September","October","November","December"
+            ];
         }
 
         // Find all month select elements (both "Month" and "Month:" attribute names)
         const monthSelects = document.querySelectorAll('select[name="Month"], select[name="Month:"]');
-        
         if (monthSelects.length === 0) {
             console.log('No month dropdowns found on this page.');
             return;
         }
 
-        console.log(`Found ${monthSelects.length} month dropdown(s). Enabled months:`, enabledMonths);
-
         // Filter each month dropdown
         monthSelects.forEach(function(select) {
-            // Get all option elements
             const options = Array.from(select.options);
-            
-            // Keep track of currently selected value
             const currentValue = select.value;
-            
-            // Filter options
             options.forEach(function(option) {
                 const monthValue = option.value;
-                
-                // Skip empty/placeholder options
                 if (!monthValue || monthValue === '' || monthValue.toLowerCase() === 'select') {
                     option.disabled = false;
                     option.style.display = '';
                     return;
                 }
-
-                // Check if this month is enabled
                 if (enabledMonths.includes(monthValue)) {
-                    // Month is enabled - show it
                     option.disabled = false;
                     option.style.display = '';
                 } else {
-                    // Month is disabled - hide it
                     option.disabled = true;
                     option.style.display = 'none';
-                    
-                    // If this was the selected value, reset selection
                     if (monthValue === currentValue) {
                         select.value = '';
                     }
                 }
             });
-
-            // Add visual indicator to the dropdown if months are restricted
             if (enabledMonths.length < 12) {
-                select.style.borderColor = '#f59e0b'; // Orange border to indicate restriction
+                select.style.borderColor = '#f59e0b';
                 select.title = `Only ${enabledMonths.length} month(s) are currently available for selection`;
             } else {
-                select.style.borderColor = ''; // Reset to default
+                select.style.borderColor = '';
                 select.title = '';
             }
         });
-
-        // Show notification if months are restricted
         if (enabledMonths.length < 12 && enabledMonths.length > 0) {
             showMonthRestrictionNotice(enabledMonths);
         } else if (enabledMonths.length === 0) {

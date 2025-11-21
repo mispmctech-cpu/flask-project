@@ -159,17 +159,22 @@
                         const monthToggles = document.querySelectorAll('.month-toggle');
                         const monthControlStatus = document.getElementById('monthControlStatus');
 
-                        // Load saved month settings
-                        function loadMonthSettings() {
-                            const savedSettings = localStorage.getItem('enabledMonths');
-                            if (savedSettings) {
-                                const enabledMonths = JSON.parse(savedSettings);
+                        // Load saved month settings from Supabase
+                        async function loadMonthSettings() {
+                            try {
+                                const { data, error } = await supabaseClient
+                                    .from('month_control')
+                                    .select('enabled_months')
+                                    .eq('id', 1)
+                                    .single();
+                                if (error) throw error;
+                                const enabledMonths = data && data.enabled_months ? data.enabled_months : [];
                                 monthToggles.forEach(toggle => {
                                     const month = toggle.getAttribute('data-month');
                                     toggle.checked = enabledMonths.includes(month);
                                 });
-                            } else {
-                                // Default: all months enabled
+                            } catch (err) {
+                                // Default: all months enabled if error
                                 monthToggles.forEach(toggle => {
                                     toggle.checked = true;
                                 });
@@ -177,25 +182,32 @@
                             }
                         }
 
-                        // Save month settings
-                        function saveMonthSettings() {
+                        // Save month settings to Supabase
+                        async function saveMonthSettings() {
                             const enabledMonths = [];
                             monthToggles.forEach(toggle => {
                                 if (toggle.checked) {
                                     enabledMonths.push(toggle.getAttribute('data-month'));
                                 }
                             });
-                            localStorage.setItem('enabledMonths', JSON.stringify(enabledMonths));
-                            
-                            // Show status message
-                            const enabledCount = enabledMonths.length;
-                            const disabledCount = 12 - enabledCount;
-                            monthControlStatus.textContent = `Settings saved! ${enabledCount} months enabled, ${disabledCount} months disabled.`;
-                            monthControlStatus.className = 'mt-3 text-sm text-green-600';
-                            
-                            setTimeout(() => {
-                                monthControlStatus.textContent = '';
-                            }, 3000);
+                            try {
+                                const { error } = await supabaseClient
+                                    .from('month_control')
+                                    .update({ enabled_months: enabledMonths })
+                                    .eq('id', 1);
+                                if (error) throw error;
+                                // Show status message
+                                const enabledCount = enabledMonths.length;
+                                const disabledCount = 12 - enabledCount;
+                                monthControlStatus.textContent = `Settings saved! ${enabledCount} months enabled, ${disabledCount} months disabled.`;
+                                monthControlStatus.className = 'mt-3 text-sm text-green-600';
+                                setTimeout(() => {
+                                    monthControlStatus.textContent = '';
+                                }, 3000);
+                            } catch (err) {
+                                monthControlStatus.textContent = 'Error saving month settings!';
+                                monthControlStatus.className = 'mt-3 text-sm text-red-600';
+                            }
                         }
 
                         // Add change listeners to all month toggles
