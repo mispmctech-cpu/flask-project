@@ -126,6 +126,15 @@
               </div>
               <div>
                 <label class="text-sm font-medium text-gray-600"
+                  >Mobile Number</label
+                >
+                <div
+                  id="facultyNumber"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600"
+                ></div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600"
                   >Designation</label
                 >
                 <div
@@ -872,6 +881,8 @@
           data["department"] || "";
         document.getElementById("facultyEmail").textContent =
           data["email"] || "";
+        document.getElementById("facultyNumber").textContent =
+          data["Number"] || "";
         document.getElementById("facultyUsername").textContent =
           data["Username"] || "";
         document.getElementById("facultySalary").textContent =

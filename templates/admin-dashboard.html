@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -57,6 +57,80 @@
                         <span id="facultyDetailsStatus" class="ml-4 text-sm text-gray-500"></span>
                     </div>
                 </section>
+
+                <!-- Month Control Section -->
+                <section class="max-w-4xl mx-auto mt-8 mb-8 bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-bold text-blue-700 mb-4 flex items-center gap-2">
+                        <i class="fas fa-calendar-alt"></i> Month Dropdown Control (All Forms)
+                    </h2>
+                    <p class="text-sm text-gray-600 mb-4">Enable or disable specific months in all Faculty Forms (1-8) and Institution Forms (1-17). Disabled months will not appear in the month dropdown for users.</p>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <label class="font-medium text-gray-700 cursor-pointer flex-1" for="month-january">January</label>
+                            <input type="checkbox" id="month-january" data-month="January" class="month-toggle form-checkbox h-5 w-5 text-blue-600" checked />
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <label class="font-medium text-gray-700 cursor-pointer flex-1" for="month-february">February</label>
+                            <input type="checkbox" id="month-february" data-month="February" class="month-toggle form-checkbox h-5 w-5 text-blue-600" checked />
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <label class="font-medium text-gray-700 cursor-pointer flex-1" for="month-march">March</label>
+                            <input type="checkbox" id="month-march" data-month="March" class="month-toggle form-checkbox h-5 w-5 text-blue-600" checked />
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <label class="font-medium text-gray-700 cursor-pointer flex-1" for="month-april">April</label>
+                            <input type="checkbox" id="month-april" data-month="April" class="month-toggle form-checkbox h-5 w-5 text-blue-600" checked />
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <label class="font-medium text-gray-700 cursor-pointer flex-1" for="month-may">May</label>
+                            <input type="checkbox" id="month-may" data-month="May" class="month-toggle form-checkbox h-5 w-5 text-blue-600" checked />
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <label class="font-medium text-gray-700 cursor-pointer flex-1" for="month-june">June</label>
+                            <input type="checkbox" id="month-june" data-month="June" class="month-toggle form-checkbox h-5 w-5 text-blue-600" checked />
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <label class="font-medium text-gray-700 cursor-pointer flex-1" for="month-july">July</label>
+                            <input type="checkbox" id="month-july" data-month="July" class="month-toggle form-checkbox h-5 w-5 text-blue-600" checked />
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <label class="font-medium text-gray-700 cursor-pointer flex-1" for="month-august">August</label>
+                            <input type="checkbox" id="month-august" data-month="August" class="month-toggle form-checkbox h-5 w-5 text-blue-600" checked />
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <label class="font-medium text-gray-700 cursor-pointer flex-1" for="month-september">September</label>
+                            <input type="checkbox" id="month-september" data-month="September" class="month-toggle form-checkbox h-5 w-5 text-blue-600" checked />
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <label class="font-medium text-gray-700 cursor-pointer flex-1" for="month-october">October</label>
+                            <input type="checkbox" id="month-october" data-month="October" class="month-toggle form-checkbox h-5 w-5 text-blue-600" checked />
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <label class="font-medium text-gray-700 cursor-pointer flex-1" for="month-november">November</label>
+                            <input type="checkbox" id="month-november" data-month="November" class="month-toggle form-checkbox h-5 w-5 text-blue-600" checked />
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <label class="font-medium text-gray-700 cursor-pointer flex-1" for="month-december">December</label>
+                            <input type="checkbox" id="month-december" data-month="December" class="month-toggle form-checkbox h-5 w-5 text-blue-600" checked />
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-between">
+                        <div class="text-sm text-gray-600">
+                            <span class="font-semibold">Note:</span> Checked = Enabled (visible in forms), Unchecked = Disabled (hidden in forms)
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="enableAllMonths()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm">
+                                <i class="fas fa-check-circle mr-1"></i>Enable All
+                            </button>
+                            <button onclick="disableAllMonths()" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 text-sm">
+                                <i class="fas fa-times-circle mr-1"></i>Disable All
+                            </button>
+                        </div>
+                    </div>
+                    <div id="monthControlStatus" class="mt-3 text-sm text-green-600"></div>
+                </section>
                 <script>
                     // Admin toggle for faculty details visibility
                     document.addEventListener('DOMContentLoaded', function() {
@@ -78,6 +152,79 @@
                             updateFacultyDetailsUI();
                         });
                         loadFacultyDetailsSetting();
+                    });
+
+                    // Month Control System
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const monthToggles = document.querySelectorAll('.month-toggle');
+                        const monthControlStatus = document.getElementById('monthControlStatus');
+
+                        // Load saved month settings
+                        function loadMonthSettings() {
+                            const savedSettings = localStorage.getItem('enabledMonths');
+                            if (savedSettings) {
+                                const enabledMonths = JSON.parse(savedSettings);
+                                monthToggles.forEach(toggle => {
+                                    const month = toggle.getAttribute('data-month');
+                                    toggle.checked = enabledMonths.includes(month);
+                                });
+                            } else {
+                                // Default: all months enabled
+                                monthToggles.forEach(toggle => {
+                                    toggle.checked = true;
+                                });
+                                saveMonthSettings();
+                            }
+                        }
+
+                        // Save month settings
+                        function saveMonthSettings() {
+                            const enabledMonths = [];
+                            monthToggles.forEach(toggle => {
+                                if (toggle.checked) {
+                                    enabledMonths.push(toggle.getAttribute('data-month'));
+                                }
+                            });
+                            localStorage.setItem('enabledMonths', JSON.stringify(enabledMonths));
+                            
+                            // Show status message
+                            const enabledCount = enabledMonths.length;
+                            const disabledCount = 12 - enabledCount;
+                            monthControlStatus.textContent = `Settings saved! ${enabledCount} months enabled, ${disabledCount} months disabled.`;
+                            monthControlStatus.className = 'mt-3 text-sm text-green-600';
+                            
+                            setTimeout(() => {
+                                monthControlStatus.textContent = '';
+                            }, 3000);
+                        }
+
+                        // Add change listeners to all month toggles
+                        monthToggles.forEach(toggle => {
+                            toggle.addEventListener('change', function() {
+                                saveMonthSettings();
+                            });
+                        });
+
+                        // Enable all months
+                        window.enableAllMonths = function() {
+                            monthToggles.forEach(toggle => {
+                                toggle.checked = true;
+                            });
+                            saveMonthSettings();
+                        };
+
+                        // Disable all months
+                        window.disableAllMonths = function() {
+                            if (confirm('Are you sure you want to disable all months? This will hide all month options in all forms.')) {
+                                monthToggles.forEach(toggle => {
+                                    toggle.checked = false;
+                                });
+                                saveMonthSettings();
+                            }
+                        };
+
+                        // Load settings on page load
+                        loadMonthSettings();
                     });
                 </script>
         <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 mb-8 text-white">
