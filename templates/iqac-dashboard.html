@@ -214,6 +214,12 @@ async function exportCoreScopeTableToExcel(scope) {
   document.body.appendChild(loadingDiv);
 
   try {
+    console.log('🔍 Export Debug - Scope:', scope);
+    console.log('🔍 Filter Values:', {
+      dept: window.selectedCoreScopeDepartment,
+      designation: window.selectedCoreScopeDesignation,
+      month: window.selectedCoreScopeMonth
+    });
     // Core Scope field labels (15 fields) - Full descriptions
     const coreScopeLabels = [
       'Teaching & Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
@@ -233,8 +239,10 @@ async function exportCoreScopeTableToExcel(scope) {
       'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.'
     ];
 
-    let deptFilter = document.getElementById('coreScopeDepartmentFilter');
-    let selectedDept = scope === 'current' ? (deptFilter ? deptFilter.value : 'All') : 'All';
+    // Use global variables that track the current filter state
+    let selectedDept = scope === 'current' ? (window.selectedCoreScopeDepartment || 'All') : 'All';
+    let selectedDesignation = scope === 'current' ? (window.selectedCoreScopeDesignation || 'All') : 'All';
+    let selectedMonth = window.selectedCoreScopeMonth || 'January';
     
     // Fetch all Faculty data
     let facultyQuery = supabaseClient.from('Faculty').select('*');
@@ -250,17 +258,23 @@ async function exportCoreScopeTableToExcel(scope) {
       return;
     }
     
-    // Get selected month
-    let monthFilter = document.getElementById('coreScopeMonthFilter');
-    let selectedMonth = monthFilter ? monthFilter.value : 'January';
-    
     // Fetch Core_scope data filtered by month
+    console.log('🔍 Building query - Month:', selectedMonth, 'Dept:', selectedDept, 'Scope:', scope);
     let coreScopeQuery = supabaseClient.from('Core_scope').select('*').eq('Month', selectedMonth);
     if (scope === 'current' && selectedDept && selectedDept !== 'All') {
       coreScopeQuery = coreScopeQuery.eq('Department', selectedDept);
+      console.log('🔍 Added department filter:', selectedDept);
     }
     
     const { data: coreScopeData, error: csErr } = await coreScopeQuery;
+    if (csErr) {
+      console.error('❌ Query error:', csErr);
+      throw csErr;
+    }
+    console.log('✅ Core_scope data retrieved:', coreScopeData?.length, 'records');
+    if (coreScopeData && coreScopeData.length > 0) {
+      console.log('📊 Sample record:', coreScopeData[0]);
+    }
 
     // Build headers: Department, Designation, Faculty Name, Percentage, then 15 status columns with full descriptions
     const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', ...coreScopeLabels];
@@ -280,6 +294,18 @@ async function exportCoreScopeTableToExcel(scope) {
         continue; // Skip non-teaching staff
       }
       
+      // Apply designation filter if scope is 'current'
+      if (scope === 'current' && selectedDesignation !== 'All') {
+        let normalizedDesig = '';
+        if (desig === 'AP' || desig === 'ASSISTANT PROFESSOR') normalizedDesig = 'AP';
+        else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') normalizedDesig = 'ASP';
+        else if (desig === 'PROF' || desig === 'PROFESSOR') normalizedDesig = 'Prof';
+        
+        if (normalizedDesig !== selectedDesignation) {
+          continue; // Skip faculty not matching designation filter
+        }
+      }
+      
       // Find matching Core_scope data for this faculty
       let facNamesToTry = [];
       if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
@@ -291,8 +317,7 @@ async function exportCoreScopeTableToExcel(scope) {
       if (coreScopeData && coreScopeData.length > 0) {
         matchingRows = coreScopeData.filter(row => {
           const rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
-          const rowDept = (row.Department || '').toString().trim().toLowerCase();
-          return facNamesToTry.includes(rowName) && rowDept === dept.toLowerCase();
+          return facNamesToTry.includes(rowName);
         });
       }
       
@@ -308,15 +333,12 @@ async function exportCoreScopeTableToExcel(scope) {
       let applicableCount = 0;
       
       if (row) {
-        console.log('DEBUG - Faculty:', facultyName, 'Row keys:', Object.keys(row).filter(k => k.startsWith('Status')));
-        for (let i = 1; i <= 18; i++) {
-          const statusVal = (row[`Status-${i}`] || '').toString().trim().toLowerCase();
-          console.log(`Status-${i}:`, statusVal);
+        for (let i = 1; i <= 15; i++) {
+          const statusVal = (row[`Status_${i}`] || '').toString().trim().toLowerCase();
           if (statusVal === 'not applicable' || statusVal === 'na' || statusVal === '') continue;
           applicableCount += 1;
           if (statusVal === 'completed') completedCount += 1;
         }
-        console.log('Completed:', completedCount, 'Applicable:', applicableCount);
       }
       
       const percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
@@ -326,7 +348,7 @@ async function exportCoreScopeTableToExcel(scope) {
       
       // Add status values for all 15 fields
       for (let i = 1; i <= 15; i++) {
-        rowData.push(row ? (row[`Status-${i}`] || '-') : '-');
+        rowData.push(row ? (row[`Status_${i}`] || '-') : '-');
       }
       
       allRows.push(rowData);
@@ -340,12 +362,33 @@ async function exportCoreScopeTableToExcel(scope) {
     });
 
     // Create workbook and export
+    console.log('✅ Export Summary:', {
+      totalFaculty: facultyData.length,
+      filteredFaculty: allRows.length,
+      coreScopeRecords: coreScopeData?.length || 0,
+      month: selectedMonth,
+      dept: selectedDept,
+      designation: selectedDesignation
+    });
+    
     const ws = XLSX.utils.aoa_to_sheet([headers, ...allRows]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Core Scope');
     
-    const filename = scope === 'current' ? `CoreScope_Monthly_${selectedDept}.xlsx` : `CoreScope_Monthly_All_Departments.xlsx`;
+    // Build filename with filters
+    let filename = 'CoreScope_Monthly';
+    if (scope === 'current') {
+      if (selectedDept !== 'All') filename += `_${selectedDept}`;
+      if (selectedDesignation !== 'All') filename += `_${selectedDesignation}`;
+      filename += `_${selectedMonth}`;
+    } else {
+      filename += '_All_Departments';
+      filename += `_${selectedMonth}`;
+    }
+    filename += '.xlsx';
+    
     XLSX.writeFile(wb, filename);
+    console.log('📥 File exported:', filename);
     
   } catch (error) {
     console.error('Export error:', error);
@@ -1109,6 +1152,10 @@ function attachExportButtons() {
     let selectedCoreScopeDepartment = '';
     let selectedCoreScopeDesignation = 'All';
     
+    // Make variables globally accessible
+    window.selectedCoreScopeDepartment = selectedCoreScopeDepartment;
+    window.selectedCoreScopeDesignation = selectedCoreScopeDesignation;
+    
     async function loadCoreScopeDepartments() {
       const { data, error } = await supabaseClient
         .from('Faculty')
@@ -1119,20 +1166,24 @@ function attachExportButtons() {
       const select = document.getElementById('coreScopeDepartmentFilter');
       select.innerHTML = '<option value="All">All</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
       selectedCoreScopeDepartment = 'All';
+      window.selectedCoreScopeDepartment = selectedCoreScopeDepartment;
       select.value = selectedCoreScopeDepartment;
       select.addEventListener('change', () => {
         selectedCoreScopeDepartment = select.value;
+        window.selectedCoreScopeDepartment = selectedCoreScopeDepartment;
         loadCoreScopeTable();
       });
     }
     
     document.getElementById('coreScopeDesignationFilter').addEventListener('change', () => {
       selectedCoreScopeDesignation = document.getElementById('coreScopeDesignationFilter').value;
+      window.selectedCoreScopeDesignation = selectedCoreScopeDesignation;
       loadCoreScopeTable();
     });
     
     document.getElementById('coreScopeMonthFilter').addEventListener('change', () => {
       selectedCoreScopeMonth = document.getElementById('coreScopeMonthFilter').value;
+      window.selectedCoreScopeMonth = selectedCoreScopeMonth;
       loadCoreScopeTable();
     });
     
@@ -1340,6 +1391,9 @@ function attachExportButtons() {
     let selectedDepartment = '';
     let selectedYearlyMonth = 'January';
     let selectedCoreScopeMonth = 'January';
+    
+    // Make month globally accessible
+    window.selectedCoreScopeMonth = selectedCoreScopeMonth;
     async function loadDepartments() {
       const { data, error } = await supabaseClient
         .from('Faculty')
