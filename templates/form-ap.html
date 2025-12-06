@@ -189,6 +189,11 @@
             particular: 'Membership in professional body',
             target: '1 per year',
             tat: '31st May'
+        },
+        { 
+            particular: 'No of Proposals submitted in Manthan Portal',
+            target: '1 per Sem',
+            tat: ''
         }
     ];
 
@@ -306,7 +311,7 @@
         };
 
         // Process all 7 rows
-        for (let i = 1; i <= 7; i++) {
+        for (let i = 1; i <= 8; i++) {
             dataRow[`Status_${i}`] = formData.get(`Status_${i}`);
             dataRow[`Description_${i}`] = formData.get(`Description_${i}`);
             

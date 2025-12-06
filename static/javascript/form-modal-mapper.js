@@ -139,7 +139,8 @@ function getFormModalContent(row, details) {
       'NPTEL/ MOOC certifications',
       'Facilitate industry-institute interaction through guest lectures, Internships.',
       'Engage in extension activities, and social outreach programs.',
-      'Membership in professional body'
+      'Membership in professional body',
+      'No of Proposals submitted in Manthan Portal'
     ];
     
     const apYearlyTargets = [
@@ -149,7 +150,8 @@ function getFormModalContent(row, details) {
       '2/Sem',
       '1/SEM',
       '1 / SEM',
-      '1 per year'
+      '1 per year',
+      '1 per Sem'
     ];
     
     const apYearlyTAT = [
@@ -159,7 +161,8 @@ function getFormModalContent(row, details) {
       '31st DEC/ 31st May',
       '31st DEC/ 31st May',
       '31st DEC / 31st May',
-      '31st May'
+      '31st May',
+      ''
     ];
     
     html += `<div class="overflow-x-auto"><table class="w-full text-sm border">`;
@@ -173,7 +176,7 @@ function getFormModalContent(row, details) {
     html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">File</th>`;
     html += `</tr></thead><tbody>`;
     
-    for (let i = 1; i <= 7; i++) {
+    for (let i = 1; i <= 8; i++) {
       const status = details[`Status_${i}`] || '-';
       const description = details[`Description_${i}`] || '-';
       const fileVal = details[`Upload The Scanned File_${i}`];
@@ -233,7 +236,9 @@ function getFormModalContent(row, details) {
       'Organize FDPs / workshop/Seminars',
       'NPTEL/ MOOC certifications',
       'Facilitate industry-institute interaction through guest lectures, Internships.',
-      'Engage in Consultancy.'
+      'Membership in professional body',
+      'Engage in Consultancy.',
+      'No of Proposals submitted in Manthan Portal'
     ];
     
     const aspYearlyTargets = [
@@ -243,7 +248,9 @@ function getFormModalContent(row, details) {
       '1/Year',
       '1/Sem',
       '1/SEM',
-      '1 / YEAR'
+      '1 / YEAR',
+      'As Required',
+      '1 per Sem'
     ];
     
     const aspYearlyTAT = [
@@ -253,7 +260,8 @@ function getFormModalContent(row, details) {
       '31st May',
       '31st DEC/ 31st May',
       '31st DEC/ 31st May',
-      '31st May'
+      '31st May',
+      ''
     ];
     
     html += `<div class="overflow-x-auto"><table class="w-full text-sm border">`;
@@ -267,7 +275,7 @@ function getFormModalContent(row, details) {
     html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">File</th>`;
     html += `</tr></thead><tbody>`;
     
-    for (let i = 1; i <= 7; i++) {
+    for (let i = 1; i <= 9; i++) {
       const status = details[`Status_${i}`] || '-';
       const description = details[`Description_${i}`] || '-';
       const fileVal = details[`Upload The Scanned File_${i}`];
@@ -329,7 +337,8 @@ function getFormModalContent(row, details) {
       'NPTEL/ MOOC certifications',
       'Facilitate MoU',
       'Engage in Consultancy.',
-      'Membership in professional body'
+      'Membership in professional body',
+      'No of Proposals submitted in Manthan Portal'
     ];
     
     const profYearlyTargets = [
@@ -340,7 +349,8 @@ function getFormModalContent(row, details) {
       '1/Sem',
       '1/Year',
       '1 / YEAR',
-      '1 per year'
+      '1 per year',
+      '1 per Sem'
     ];
     
     const profYearlyTAT = [
@@ -351,7 +361,8 @@ function getFormModalContent(row, details) {
       '31st DEC/ 31st May',
       '31st DEC/ 31st May',
       '31st May',
-      '31st May'
+      '31st May',
+      ''
     ];
     
     html += `<div class="overflow-x-auto"><table class="w-full text-sm border">`;
@@ -365,7 +376,7 @@ function getFormModalContent(row, details) {
     html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">File</th>`;
     html += `</tr></thead><tbody>`;
     
-    for (let i = 1; i <= 8; i++) {
+    for (let i = 1; i <= 9; i++) {
       const status = details[`Status_${i}`] || '-';
       const description = details[`Description_${i}`] || '-';
       const fileVal = details[`Upload The Scanned File_${i}`];

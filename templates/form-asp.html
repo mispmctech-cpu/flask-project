@@ -243,6 +243,11 @@ document.addEventListener('DOMContentLoaded', function() {
             particular: 'Membership in professional body',
             target: 'As Required',
             tat: '31st May'
+        },
+        { 
+            particular: 'No of Proposals submitted in Manthan Portal',
+            target: '1 per Sem',
+            tat: ''
         }
     ];
 
@@ -404,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             // Process all 8 rows to match database schema
-            const rowCount = 8;
+            const rowCount = 9;
             for (let i = 1; i <= rowCount; i++) {
                 dataRow[`Status_${i}`] = formData.get(`Status_${i}`) || null;
                 dataRow[`Description_${i}`] = formData.get(`Description_${i}`) || null;

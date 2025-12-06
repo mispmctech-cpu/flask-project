@@ -465,7 +465,8 @@ async function exportYearlyCurrentDepartment() {
         'NPTEL/ MOOC certifications 2/Sem',
         'Facilitate industry-institute interaction through guest lectures, internships.',
         'Engage in extension activities, and social outreach programs.',
-        'Membership in professional body'
+        'Membership in professional body',
+        'No of Proposals submitted in Manthan Portal'
       ],
       ASP: [
         'Publish in peer-reviewed journals',
@@ -475,7 +476,8 @@ async function exportYearlyCurrentDepartment() {
         'NPTEL/ MOOC certifications',
         'Facilitate industry-institute interaction through guest lectures, internships.',
         'Engage in Consultancy.',
-        'Membership in professional body'
+        'Membership in professional body',
+        'No of Proposals submitted in Manthan Portal'
       ],
       Prof: [
         'Publish in peer-reviewed journals',
@@ -485,7 +487,8 @@ async function exportYearlyCurrentDepartment() {
         'NPTEL/ MOOC certifications',
         'Facilitate MoU',
         'Engage in Consultancy.',
-        'Membership in professional body'
+        'Membership in professional body',
+        'No of Proposals submitted in Manthan Portal'
       ]
     };
     
@@ -636,7 +639,8 @@ async function exportYearlyAllDepartments() {
         'NPTEL/ MOOC certifications 2/Sem',
         'Facilitate industry-institute interaction through guest lectures, internships.',
         'Engage in extension activities, and social outreach programs.',
-        'Membership in professional body'
+        'Membership in professional body',
+        'No of Proposals submitted in Manthan Portal'
       ],
       ASP: [
         'Publish in peer-reviewed journals',
@@ -646,7 +650,8 @@ async function exportYearlyAllDepartments() {
         'NPTEL/ MOOC certifications',
         'Facilitate industry-institute interaction through guest lectures, internships.',
         'Engage in Consultancy.',
-        'Membership in professional body'
+        'Membership in professional body',
+        'No of Proposals submitted in Manthan Portal'
       ],
       Prof: [
         'Publish in peer-reviewed journals',
@@ -656,7 +661,8 @@ async function exportYearlyAllDepartments() {
         'NPTEL/ MOOC certifications',
         'Facilitate MoU',
         'Engage in Consultancy.',
-        'Membership in professional body'
+        'Membership in professional body',
+        'No of Proposals submitted in Manthan Portal'
       ]
     };
     
@@ -1235,21 +1241,21 @@ function attachExportButtons() {
       
       // Shorter labels for table headers
       const coreScopeShortLabels = [
-        'Design & deliver lectures',
-        'Develop course materials',
-        'Innovative teaching methods',
-        'Product model & Chart',
-        'Academic mentors (30 students)',
-        'Monitor attendance',
-        'Remedial support',
-        'Maintain Mentor book',
-        'Innovative course material',
-        'Present at conferences',
-        'Guide research projects',
-        'Curriculum development',
-        'Accreditation processes',
-        'Academic committees',
-        'Maintain records'
+            'Design and deliver lectures and lab sessions',
+            'Develop course materials, lesson plans and assessments ',
+            'Incorporating innovative teaching methods including ICT tools ',
+            'Prepare Product model and instructional Chart ',
+            'Mentoring 30 students on coursework, projects and career planning.',
+            'Monitoring student attendance, performance, and well-being.',
+            'Provide remedial support and encourage participation in co-curricular and extra- curricular activities.',
+            'Maintain the Mentor book for assigned mentee.',
+            'Consolidate innovative course material & Lab manuals ',
+            'Participate in curriculum development and revision through BOS',
+            'Contribute to accreditation processes (NBA, NAAC) and quality Assurance initiatives.',
+            'Serve on academic and administrative committees.',
+            'Maintain academic records, course files and Log Book and student evaluations.',
+            'Assist in exam duties, QP setting, Invigilation and evaluation.',
+            'Submit the FPBA (Faculty performance Based Appraisal) with the documents'
       ];
       
       // Filter faculty by designation if needed
@@ -1448,7 +1454,8 @@ function attachExportButtons() {
           'NPTEL/ MOOC certifications 2/Sem',
           'Facilitate industry-institute interaction through guest lectures, internships.',
           'Engage in extension activities, and social outreach programs.',
-          'Membership in professional body'
+          'Membership in professional body',
+          'No of Proposals submitted in Manthan Portal'
         ],
         ASP: [
           'Publish in peer-reviewed journals',
@@ -1458,7 +1465,8 @@ function attachExportButtons() {
           'NPTEL/ MOOC certifications',
           'Facilitate industry-institute interaction through guest lectures, internships.',
           'Engage in Consultancy.',
-          'Membership in professional body'
+          'Membership in professional body',
+          'No of Proposals submitted in Manthan Portal'
         ],
         Prof: [
           'Publish in peer-reviewed journals',
@@ -1468,7 +1476,8 @@ function attachExportButtons() {
           'NPTEL/ MOOC certifications',
           'Facilitate MoU',
           'Engage in Consultancy.',
-          'Membership in professional body'
+          'Membership in professional body',
+          'No of Proposals submitted in Manthan Portal'
         ]
       };
       (async function renderDashboardAsync() {
@@ -1524,7 +1533,6 @@ function attachExportButtons() {
             const nameTrimmed = facultyName.toString().trim().toLowerCase();
             const dept = fac.department || selectedDepartment;
             const designation = fac.Designation || key;
-            
             // Normalize designation for display
             let desigDisplay = designation;
             const desigUpper = designation.toUpperCase();
@@ -1532,21 +1540,17 @@ function attachExportButtons() {
             else if (desigUpper === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
             else if (desigUpper === 'PROFESSOR') desigDisplay = 'Prof';
             else desigDisplay = key; // fallback to key if not recognized
-            
             // Find matching yearly data for this faculty
             let yearlyData = null;
             if (key === 'AP') yearlyData = apDataLatest;
             else if (key === 'ASP') yearlyData = aspDataLatest;
             else if (key === 'Prof') yearlyData = profDataLatest;
-            
             const row = yearlyData ? yearlyData.find(r => 
               (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
             ) : null;
-            
             // Calculate percentage based on Status fields
             let completedCount = 0;
-            let totalCount = key === 'AP' ? 7 : 8; // AP has 7 items, ASP/Prof have 8
-            
+            let totalCount = key === 'AP' ? 8 : 9; // AP has 7 items, ASP/Prof have 8
             if (row) {
               for (let i = 1; i <= totalCount; i++) {
                 const status = (row[`Status_${i}`] || '').toString().toLowerCase();
@@ -1555,41 +1559,64 @@ function attachExportButtons() {
                 }
               }
             }
-            
             const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-            
             html += `<tr class="hover:bg-gray-50"><td class="px-2 py-2 border font-medium sticky left-0 bg-white z-10">${dept}</td>`;
             html += `<td class="px-2 py-2 border font-medium">${desigDisplay}</td>`;
             html += `<td class="px-2 py-2 border font-medium text-purple-700 cursor-pointer underline" onclick="viewYearlyFacultyForm('${key}','${facultyName.replace(/'/g, "\\'")}', '${selectedDepartment.replace(/'/g, "\\'")}')">
                 ${facultyName}
             </td>`;
-            
             // Percentage column with color coding
             html += `<td class="px-2 py-2 border text-center font-bold ${percentage >= 70 ? 'bg-green-100 text-green-700' : percentage >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}">${percentage}%</td>`;
-            
-            // Display status for each particular
-            for (let i = 1; i <= totalCount; i++) {
-              const status = row ? (row[`Status_${i}`] || '-') : '-';
-              const statusLower = status.toString().toLowerCase();
+            // Display each particular's value in order, matching the header
+            particulars.forEach((particular, idx) => {
+              let value = '-';
               let bgColor = 'bg-gray-100';
               let textColor = 'text-gray-600';
-              
-              if (statusLower === 'completed' || statusLower === 'completed and updated') {
-                bgColor = 'bg-green-100';
-                textColor = 'text-green-700';
-              } else if (statusLower === 'in progress') {
-                bgColor = 'bg-yellow-100';
-                textColor = 'text-yellow-700';
-              } else if (statusLower === 'not applicable' || statusLower === 'na' || statusLower === 'n/a') {
-                bgColor = 'bg-gray-100';
-                textColor = 'text-gray-500';
-              } else if (statusLower !== '-') {
-                bgColor = 'bg-red-100';
-                textColor = 'text-red-700';
+              if (particular === 'No of Proposals submitted in Manthan Portal') {
+                // For AP: Status_8, for ASP/Prof: Status_9
+                if (row) {
+                  if (key === 'AP') {
+                    value = row['Status_8'] || '-';
+                  } else if (key === 'ASP' || key === 'Prof') {
+                    value = row['Status_9'] || '-';
+                  }
+                }
+                const statusLower = value.toString().toLowerCase();
+                if (statusLower === 'completed' || statusLower === 'completed and updated') {
+                  bgColor = 'bg-green-100';
+                  textColor = 'text-green-700';
+                } else if (statusLower === 'in progress') {
+                  bgColor = 'bg-yellow-100';
+                  textColor = 'text-yellow-700';
+                } else if (statusLower === 'not applicable' || statusLower === 'na' || statusLower === 'n/a') {
+                  bgColor = 'bg-gray-100';
+                  textColor = 'text-gray-500';
+                } else if (statusLower !== '-') {
+                  bgColor = 'bg-red-100';
+                  textColor = 'text-red-700';
+                }
+                html += `<td class=\"px-2 py-2 ${bgColor} ${textColor} text-center font-medium\">${value}</td>`;
+              } else {
+                // Status columns
+                const statusIdx = idx + 1; // Status_1 ... Status_N
+                value = row ? (row[`Status_${statusIdx}`] || '-') : '-';
+                const statusLower = value.toString().toLowerCase();
+                if (statusLower === 'completed' || statusLower === 'completed and updated') {
+                  bgColor = 'bg-green-100';
+                  textColor = 'text-green-700';
+                } else if (statusLower === 'in progress') {
+                  bgColor = 'bg-yellow-100';
+                  textColor = 'text-yellow-700';
+                } else if (statusLower === 'not applicable' || statusLower === 'na' || statusLower === 'n/a') {
+                  bgColor = 'bg-gray-100';
+                  textColor = 'text-gray-500';
+                } else if (statusLower !== '-') {
+                  bgColor = 'bg-red-100';
+                  textColor = 'text-red-700';
+                }
+                html += `<td class="px-2 py-2 ${bgColor} ${textColor} text-center font-medium">${value}</td>`;
               }
-              
-              html += `<td class="px-2 py-2 ${bgColor} ${textColor} text-center font-medium">${status}</td>`;
-            }
+            });
             html += `</tr>`;
           }
           html += `</tbody></table></div>`;
