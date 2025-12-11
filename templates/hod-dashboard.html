@@ -6,6 +6,8 @@
   <title>HOD Dashboard - Faculty Core Scope Compliance</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body class="bg-pmcBg min-h-screen">
   <header class="bg-purple-700 text-white w-full">
@@ -105,6 +107,32 @@
     </select>
   </div>
   <div id="departmentPortfoliosContainer" class="overflow-x-auto mt-2"></div>
+
+  <!-- NEW: Consolidated Summary Table -->
+  <h2 class="text-2xl font-bold text-blue-700 mt-12 mb-6">Consolidated Faculty Performance Summary</h2>
+  <div class="mb-6 flex flex-wrap gap-4 items-center">
+    <label for="summaryMonthFilter" class="font-medium text-blue-700 mr-2">Month:</label>
+    <select id="summaryMonthFilter" class="p-2 border rounded">
+      <option value="January">January</option>
+      <option value="February">February</option>
+      <option value="March">March</option>
+      <option value="April">April</option>
+      <option value="May">May</option>
+      <option value="June">June</option>
+      <option value="July">July</option>
+      <option value="August">August</option>
+      <option value="September">September</option>
+      <option value="October">October</option>
+      <option value="November">November</option>
+      <option value="December">December</option>
+    </select>
+    <button id="exportSummaryTableBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export summary table to Excel">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+      Export Summary Table
+    </button>
+  </div>
+  <div id="summaryTableContainer" class="overflow-x-auto"></div>
+
     <!-- Modal for viewing original form -->
     <div id="viewFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
       <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
@@ -850,10 +878,511 @@
       loadDashboardTable();
     });
     
+    // Consolidated Summary Table Logic
+    let selectedSummaryMonth = 'January';
+
+    // Institution portfolio form mappings
+    const institutionFormTableMap = [
+      { name: "Director – Students welfare & Admission", table: "Institution-form1-monthly" },
+      { name: "Head - HR", table: "Institution-form2" },
+      { name: "Principal", table: "Institution-form3-monthly" },
+      { name: "Dean - IQAC", table: "Institution-form4-monthly" },
+      { name: "Director - Academics", table: "Institution-form5" },
+      { name: "Controller of Examinations", table: "Institution-form6-monthly" },
+      { name: "Executive Dean – International Affairs", table: "Institution-form7-monthly" },
+      { name: "Head - Placements", table: "Institution-form8" },
+      { name: "Placement Officer", table: "Institution-form9" },
+      { name: "Head – Training", table: "Institution-form10" },
+      { name: "Training Officer", table: "Institution-form11" },
+      { name: "Head - RISE", table: "Institution-form12" },
+      { name: "IT Infra – Coordinator", table: "Institution-form13-monthly" },
+      { name: "Website – Coordinator", table: "Institution-form14-monthly" },
+      { name: "ERP Coordinator", table: "Institution-form15" },
+      { name: "Public Relations Officer", table: "Institution-form16" },
+      { name: "Logistics Coordinator", table: "Institution-form17" }
+    ];
+
+    // Department portfolio form mappings (8 forms)
+    const deptPortfolioFormMap = [
+      { label: "1. Training & Placement", table: 'form1-monthly', formKey: 'form1' },
+      { label: "2. Class Advisor", table: 'form2-monthly', formKey: 'form2' },
+      { label: "3. Info & Contribution", table: 'form3-monthly', formKey: 'form3' },
+      { label: "4. Outcome & Exam Cell", table: 'form4-monthly', formKey: 'form4' },
+      { label: "5. Continuous Improvement", table: 'form5-monthly', formKey: 'form5' },
+      { label: "6. T&L Process (IQAC)", table: 'form6_monthly', formKey: 'form6' },
+      { label: "7. Student Support", table: 'form7-monthly', formKey: 'form7' },
+      { label: "8. Facilities & Lab", table: 'form8-monthly', formKey: 'form8' }
+    ];
+
+    async function loadConsolidatedSummaryTable() {
+      document.getElementById('summaryMonthFilter').addEventListener('change', () => {
+        selectedSummaryMonth = document.getElementById('summaryMonthFilter').value;
+        renderConsolidatedSummaryTable();
+      });
+      
+      // Export button
+      document.getElementById('exportSummaryTableBtn').onclick = exportSummaryTableToExcel;
+      
+      await renderConsolidatedSummaryTable();
+    }
+
+    async function renderConsolidatedSummaryTable() {
+      if (!department) {
+        document.getElementById('summaryTableContainer').innerHTML = '<div class="text-gray-500">No department selected.</div>';
+        return;
+      }
+      
+      const container = document.getElementById('summaryTableContainer');
+      container.innerHTML = '<div class="text-center text-gray-500 py-4">Loading summary data...</div>';
+      
+      try {
+        // Fetch faculty for current department only
+        const { data: allFaculty, error: facErr } = await supabaseClient
+          .from('Faculty')
+          .select('*')
+          .eq('department', department);
+        if (facErr) throw facErr;
+        
+        // Fetch Core Scope Monthly data
+        const { data: coreScopeData } = await supabaseClient
+          .from('Core_scope')
+          .select('*')
+          .eq('Month', selectedSummaryMonth)
+          .eq('Department', department);
+        
+        // Fetch Yearly Mandatory Scope data (AP, ASP, Prof)
+        const [apRes, aspRes, profRes] = await Promise.all([
+          supabaseClient.from('AP(Yearly)').select('*').eq('Month', selectedSummaryMonth).eq('Department', department),
+          supabaseClient.from('ASP(Yearly)').select('*').eq('Month', selectedSummaryMonth).eq('Department', department),
+          supabaseClient.from('Prof(Yearly)').select('*').eq('Month', selectedSummaryMonth).eq('Department', department)
+        ]);
+        
+        // Fetch department portfolio data for all 8 forms
+        const deptPortfolioPromises = deptPortfolioFormMap.map(form => 
+          supabaseClient.from(form.table).select('*').eq('Month', selectedSummaryMonth)
+        );
+        const deptPortfolioResults = await Promise.all(deptPortfolioPromises);
+        
+        // Fetch institution portfolio data for all 17 forms
+        const instPortfolioPromises = institutionFormTableMap.map(form => 
+          supabaseClient.from(form.table).select('*')
+        );
+        const instPortfolioResults = await Promise.all(instPortfolioPromises);
+        
+        // Build summary data
+        const summaryRows = [];
+        
+        for (const fac of allFaculty) {
+          const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || '';
+          const nameTrimmed = facultyName.toString().trim().toLowerCase();
+          const dept = fac.department || 'Unknown';
+          const designation = fac.Designation || 'N/A';
+          
+          // Normalize designation
+          const desig = designation.toUpperCase();
+          if (desig !== 'AP' && desig !== 'ASSISTANT PROFESSOR' && 
+              desig !== 'ASP' && desig !== 'ASSOCIATE PROFESSOR' && 
+              desig !== 'PROF' && desig !== 'PROFESSOR') {
+            continue; // Skip non-teaching staff
+          }
+          
+          let desigDisplay = '';
+          if (desig === 'AP' || desig === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
+          else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
+          else if (desig === 'PROF' || desig === 'PROFESSOR') desigDisplay = 'Prof';
+          
+          // Calculate Core Scope Monthly %
+          let coreScopePercent = '-';
+          if (coreScopeData && coreScopeData.length > 0) {
+            const coreScopeRow = coreScopeData.find(r => 
+              (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
+            );
+            if (coreScopeRow) {
+              let completedCount = 0;
+              let applicableCount = 0;
+              for (let i = 1; i <= 15; i++) {
+                const status = (coreScopeRow[`Status_${i}`] || '').toString().toLowerCase();
+                if (status === 'not applicable' || status === 'na' || status === '') continue;
+                applicableCount += 1;
+                if (status === 'completed') completedCount += 1;
+              }
+              coreScopePercent = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+            }
+          }
+          
+          // Calculate Mandatory Scope Yearly %
+          let yearlyPercent = '-';
+          let yearlyData = desigDisplay === 'AP' ? apRes.data : desigDisplay === 'ASP' ? aspRes.data : profRes.data;
+          if (yearlyData && yearlyData.length > 0) {
+            const yearlyRow = yearlyData.find(r => 
+              (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
+            );
+            if (yearlyRow) {
+              let completedCount = 0;
+              let totalCount = desigDisplay === 'AP' ? 7 : 8;
+              for (let i = 1; i <= totalCount; i++) {
+                const status = (yearlyRow[`Status_${i}`] || '').toString().toLowerCase();
+                if (status === 'completed' || status === 'completed and updated') {
+                  completedCount++;
+                }
+              }
+              yearlyPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
+            }
+          }
+          
+          // Calculate Department Portfolio Scope percentages
+          let deptPortfolio1Percent = '-';
+          let deptPortfolio2Percent = '-';
+          let deptPortfolioCount = 0;
+          
+          for (let i = 0; i < deptPortfolioFormMap.length; i++) {
+            const formMapping = deptPortfolioFormMap[i];
+            const isAssigned = fac[formMapping.formKey] && fac[formMapping.formKey].toString().trim().toLowerCase() === 'yes';
+            
+            if (isAssigned) {
+              const formData = deptPortfolioResults[i].data || [];
+              const formRow = formData.find(r => {
+                const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || r['Portfolio Memeber Name'] || r['faculty_name'] || r['Faculty Name'] || r['Name'] || '';
+                const rowMonth = r['Month'] || r['month'] || r['Month:'] || '';
+                const deptMatches = (r['Department'] || r['Department:'] || '').toString().trim().toLowerCase() === dept.toString().trim().toLowerCase();
+                return rowName.toString().trim().toLowerCase() === nameTrimmed && rowMonth === selectedSummaryMonth && deptMatches;
+              });
+              
+              if (formRow) {
+                let completedCount = 0;
+                let applicableCount = 0;
+                const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status'));
+                for (const key of statusKeys) {
+                  const val = (formRow[key] || '').toString().trim().toLowerCase();
+                  if (val === 'not applicable' || val === 'na') continue;
+                  applicableCount += 1;
+                  if (val === 'completed' || val === 'completed and updated') {
+                    completedCount += 1;
+                  }
+                }
+                const percent = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+                
+                if (deptPortfolioCount === 0) {
+                  deptPortfolio1Percent = percent;
+                } else if (deptPortfolioCount === 1) {
+                  deptPortfolio2Percent = percent;
+                }
+                deptPortfolioCount++;
+              }
+            }
+          }
+          
+          // Calculate Institution Portfolio percentages
+          let instPortfolio1Percent = '-';
+          let instPortfolio2Percent = '-';
+          let instPortfolioCount = 0;
+          
+          for (let i = 0; i < institutionFormTableMap.length; i++) {
+            const formMapping = institutionFormTableMap[i];
+            const formData = instPortfolioResults[i].data || [];
+            const formRow = formData.find(r => {
+              const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || '';
+              return rowName.toString().trim().toLowerCase() === nameTrimmed;
+            });
+            
+            if (formRow) {
+              let completedCount = 0;
+              let totalFields = 0;
+              for (const key in formRow) {
+                if (key.toLowerCase().includes('status')) {
+                  const value = (formRow[key] || '').toString().trim();
+                  if (value === 'Not Applicable') continue;
+                  totalFields++;
+                  if (value === 'Completed' || value === 'Completed and Updated') {
+                    completedCount++;
+                  }
+                }
+              }
+              const percent = totalFields > 0 ? ((completedCount / totalFields) * 100).toFixed(0) + '%' : '0%';
+              
+              if (instPortfolioCount === 0) {
+                instPortfolio1Percent = percent;
+              } else if (instPortfolioCount === 1) {
+                instPortfolio2Percent = percent;
+              }
+              instPortfolioCount++;
+            }
+          }
+          
+          summaryRows.push({
+            dept,
+            designation: desigDisplay,
+            facultyName,
+            coreScopePercent,
+            yearlyPercent,
+            deptPortfolio1Percent,
+            deptPortfolio2Percent,
+            instPortfolio1Percent,
+            instPortfolio2Percent
+          });
+        }
+        
+        // Render table
+        let html = '<div class="overflow-auto border rounded-lg shadow-sm" style="max-height: 600px;">';
+        html += '<table class="min-w-full text-sm bg-white"><thead class="bg-blue-700 text-white sticky top-0 z-20"><tr>';
+        html += '<th class="px-3 py-2 sticky left-0 bg-blue-700 z-30">Dept</th>';
+        html += '<th class="px-3 py-2 bg-blue-700">Desig</th>';
+        html += '<th class="px-3 py-2 bg-blue-700">Faculty Name</th>';
+        html += '<th class="px-3 py-2 bg-blue-700">Faculty Core Scope Monthly</th>';
+        html += '<th class="px-3 py-2 bg-blue-700">Faculty Mandatory Scope (Yearly)</th>';
+        html += '<th class="px-3 py-2 bg-blue-700">Department Portfolio Scope-1</th>';
+        html += '<th class="px-3 py-2 bg-blue-700">Department Portfolio Scope-2</th>';
+        html += '<th class="px-3 py-2 bg-blue-700">Institution Portfolio-1</th>';
+        html += '<th class="px-3 py-2 bg-blue-700">Institution Portfolio-2</th>';
+        html += '</tr></thead><tbody>';
+        
+        for (const row of summaryRows) {
+          html += '<tr class="hover:bg-gray-50">';
+          html += `<td class="px-2 py-2 border sticky left-0 bg-white z-10">${row.dept}</td>`;
+          html += `<td class="px-2 py-2 border text-center">${row.designation}</td>`;
+          html += `<td class="px-2 py-2 border">${row.facultyName}</td>`;
+          html += `<td class="px-2 py-2 border text-center font-semibold">${row.coreScopePercent}</td>`;
+          html += `<td class="px-2 py-2 border text-center font-semibold">${row.yearlyPercent}</td>`;
+          html += `<td class="px-2 py-2 border text-center font-semibold">${row.deptPortfolio1Percent}</td>`;
+          html += `<td class="px-2 py-2 border text-center font-semibold">${row.deptPortfolio2Percent}</td>`;
+          html += `<td class="px-2 py-2 border text-center font-semibold">${row.instPortfolio1Percent}</td>`;
+          html += `<td class="px-2 py-2 border text-center font-semibold">${row.instPortfolio2Percent}</td>`;
+          html += '</tr>';
+        }
+        
+        html += '</tbody></table></div>';
+        container.innerHTML = html || '<div class="text-gray-500 text-center py-4">No summary data found.</div>';
+        
+      } catch (error) {
+        console.error('Summary table error:', error);
+        container.innerHTML = '<div class="text-red-500 text-center py-4">Failed to load summary data.</div>';
+      }
+    }
+
+    async function exportSummaryTableToExcel() {
+      if (!department) {
+        alert('No department selected.');
+        return;
+      }
+      
+      try {
+        // Fetch faculty for current department only
+        const { data: allFaculty, error: facErr } = await supabaseClient
+          .from('Faculty')
+          .select('*')
+          .eq('department', department);
+        if (facErr) throw facErr;
+        
+        // Fetch Core Scope Monthly data
+        const { data: coreScopeData } = await supabaseClient
+          .from('Core_scope')
+          .select('*')
+          .eq('Month', selectedSummaryMonth)
+          .eq('Department', department);
+        
+        // Fetch Yearly Mandatory Scope data (AP, ASP, Prof)
+        const [apRes, aspRes, profRes] = await Promise.all([
+          supabaseClient.from('AP(Yearly)').select('*').eq('Month', selectedSummaryMonth).eq('Department', department),
+          supabaseClient.from('ASP(Yearly)').select('*').eq('Month', selectedSummaryMonth).eq('Department', department),
+          supabaseClient.from('Prof(Yearly)').select('*').eq('Month', selectedSummaryMonth).eq('Department', department)
+        ]);
+        
+        // Fetch department portfolio data for all 8 forms
+        const deptPortfolioPromises = deptPortfolioFormMap.map(form => 
+          supabaseClient.from(form.table).select('*').eq('Month', selectedSummaryMonth)
+        );
+        const deptPortfolioResults = await Promise.all(deptPortfolioPromises);
+        
+        // Fetch institution portfolio data for all 17 forms
+        const instPortfolioPromises = institutionFormTableMap.map(form => 
+          supabaseClient.from(form.table).select('*')
+        );
+        const instPortfolioResults = await Promise.all(instPortfolioPromises);
+        
+        // Build summary data for Excel
+        const excelData = [];
+        
+        for (const fac of allFaculty) {
+          const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || '';
+          const nameTrimmed = facultyName.toString().trim().toLowerCase();
+          const dept = fac.department || 'Unknown';
+          const designation = fac.Designation || 'N/A';
+          
+          // Normalize designation
+          const desig = designation.toUpperCase();
+          if (desig !== 'AP' && desig !== 'ASSISTANT PROFESSOR' && 
+              desig !== 'ASP' && desig !== 'ASSOCIATE PROFESSOR' && 
+              desig !== 'PROF' && desig !== 'PROFESSOR') {
+            continue; // Skip non-teaching staff
+          }
+          
+          let desigDisplay = '';
+          if (desig === 'AP' || desig === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
+          else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
+          else if (desig === 'PROF' || desig === 'PROFESSOR') desigDisplay = 'Prof';
+          
+          // Calculate Core Scope Monthly %
+          let coreScopePercent = '-';
+          if (coreScopeData && coreScopeData.length > 0) {
+            const coreScopeRow = coreScopeData.find(r => 
+              (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
+            );
+            if (coreScopeRow) {
+              let completedCount = 0;
+              let applicableCount = 0;
+              for (let i = 1; i <= 15; i++) {
+                const status = (coreScopeRow[`Status_${i}`] || '').toString().toLowerCase();
+                if (status === 'not applicable' || status === 'na' || status === '') continue;
+                applicableCount += 1;
+                if (status === 'completed') completedCount += 1;
+              }
+              coreScopePercent = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+            }
+          }
+          
+          // Calculate Mandatory Scope Yearly %
+          let yearlyPercent = '-';
+          let yearlyData = desigDisplay === 'AP' ? apRes.data : desigDisplay === 'ASP' ? aspRes.data : profRes.data;
+          if (yearlyData && yearlyData.length > 0) {
+            const yearlyRow = yearlyData.find(r => 
+              (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
+            );
+            if (yearlyRow) {
+              let completedCount = 0;
+              let totalCount = desigDisplay === 'AP' ? 7 : 8;
+              for (let i = 1; i <= totalCount; i++) {
+                const status = (yearlyRow[`Status_${i}`] || '').toString().toLowerCase();
+                if (status === 'completed' || status === 'completed and updated') {
+                  completedCount++;
+                }
+              }
+              yearlyPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
+            }
+          }
+          
+          // Calculate Department Portfolio Scope percentages
+          let deptPortfolio1Percent = '-';
+          let deptPortfolio2Percent = '-';
+          let deptPortfolioCount = 0;
+          
+          for (let i = 0; i < deptPortfolioFormMap.length; i++) {
+            const formMapping = deptPortfolioFormMap[i];
+            const isAssigned = fac[formMapping.formKey] && fac[formMapping.formKey].toString().trim().toLowerCase() === 'yes';
+            
+            if (isAssigned) {
+              const formData = deptPortfolioResults[i].data || [];
+              const formRow = formData.find(r => {
+                const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || r['Portfolio Memeber Name'] || r['faculty_name'] || r['Faculty Name'] || r['Name'] || '';
+                const rowMonth = r['Month'] || r['month'] || r['Month:'] || '';
+                const deptMatches = (r['Department'] || r['Department:'] || '').toString().trim().toLowerCase() === dept.toString().trim().toLowerCase();
+                return rowName.toString().trim().toLowerCase() === nameTrimmed && rowMonth === selectedSummaryMonth && deptMatches;
+              });
+              
+              if (formRow) {
+                let completedCount = 0;
+                let applicableCount = 0;
+                const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status'));
+                for (const key of statusKeys) {
+                  const val = (formRow[key] || '').toString().trim().toLowerCase();
+                  if (val === 'not applicable' || val === 'na') continue;
+                  applicableCount += 1;
+                  if (val === 'completed' || val === 'completed and updated') {
+                    completedCount += 1;
+                  }
+                }
+                const percent = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+                
+                if (deptPortfolioCount === 0) {
+                  deptPortfolio1Percent = percent;
+                } else if (deptPortfolioCount === 1) {
+                  deptPortfolio2Percent = percent;
+                }
+                deptPortfolioCount++;
+              }
+            }
+          }
+          
+          // Calculate Institution Portfolio percentages
+          let instPortfolio1Percent = '-';
+          let instPortfolio2Percent = '-';
+          let instPortfolioCount = 0;
+          
+          for (let i = 0; i < institutionFormTableMap.length; i++) {
+            const formMapping = institutionFormTableMap[i];
+            const formData = instPortfolioResults[i].data || [];
+            const formRow = formData.find(r => {
+              const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || '';
+              return rowName.toString().trim().toLowerCase() === nameTrimmed;
+            });
+            
+            if (formRow) {
+              let completedCount = 0;
+              let totalFields = 0;
+              for (const key in formRow) {
+                if (key.toLowerCase().includes('status')) {
+                  const value = (formRow[key] || '').toString().trim();
+                  if (value === 'Not Applicable') continue;
+                  totalFields++;
+                  if (value === 'Completed' || value === 'Completed and Updated') {
+                    completedCount++;
+                  }
+                }
+              }
+              const percent = totalFields > 0 ? ((completedCount / totalFields) * 100).toFixed(0) + '%' : '0%';
+              
+              if (instPortfolioCount === 0) {
+                instPortfolio1Percent = percent;
+              } else if (instPortfolioCount === 1) {
+                instPortfolio2Percent = percent;
+              }
+              instPortfolioCount++;
+            }
+          }
+          
+          excelData.push({
+            'Department': dept,
+            'Designation': desigDisplay,
+            'Faculty Name': facultyName,
+            'Faculty Core Scope Monthly': coreScopePercent,
+            'Faculty Mandatory Scope (Yearly)': yearlyPercent,
+            'Department Portfolio Scope-1': deptPortfolio1Percent,
+            'Department Portfolio Scope-2': deptPortfolio2Percent,
+            'Institution Portfolio-1': instPortfolio1Percent,
+            'Institution Portfolio-2': instPortfolio2Percent
+          });
+        }
+        
+        // Create workbook and export
+        const ws = XLSX.utils.json_to_sheet(excelData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Consolidated Summary');
+        
+        // Auto-size columns
+        const maxWidth = 50;
+        const colWidths = Object.keys(excelData[0] || {}).map(key => {
+          const maxLen = Math.max(
+            key.length,
+            ...excelData.map(row => (row[key] || '').toString().length)
+          );
+          return { wch: Math.min(maxLen + 2, maxWidth) };
+        });
+        ws['!cols'] = colWidths;
+        
+        const fileName = `Consolidated_Summary_${department}_${selectedSummaryMonth}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        
+      } catch (error) {
+        console.error('Export error:', error);
+        alert('Failed to export data to Excel. Please try again.');
+      }
+    }
+
     // Initialize tables
     loadDashboardTable();
     loadCoreScopeTable();
     loadDepartmentPortfolios();
+    loadConsolidatedSummaryTable();
+    
     // Modal logic
     function closeViewFormModal() {
       document.getElementById('viewFormModal').classList.add('hidden');

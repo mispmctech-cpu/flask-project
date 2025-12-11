@@ -152,13 +152,37 @@ class WorkdoneTable {
         if (entry.table === "AP" && designation?.toUpperCase() !== "AP") continue;
         if (entry.table === "Prof" && !["PROF", "PROFESSOR"].includes(designation?.toUpperCase())) continue;
 
-        const { data, error } = await this.supabaseClient
-          .from(entry.table)
-          .select("*");
+        // Fetch all records with pagination (handle >1000 records)
+        let allData = [];
+        let rangeStart = 0;
+        const rangeSize = 1000;
+        let hasMore = true;
+
+        while (hasMore) {
+          const { data, error, count } = await this.supabaseClient
+            .from(entry.table)
+            .select("*", { count: 'exact' })
+            .range(rangeStart, rangeStart + rangeSize - 1);
+
+          if (error) {
+            console.warn(`Error fetching from ${entry.table}:`, error);
+            errors.push(`${entry.table}: ${error.message}`);
+            break;
+          }
+
+          if (data && data.length > 0) {
+            allData = allData.concat(data);
+          }
+
+          // Check if there are more records
+          hasMore = data && data.length === rangeSize;
+          rangeStart += rangeSize;
+        }
+
+        const data = allData;
+        const error = null;
 
         if (error) {
-          console.warn(`Error fetching from ${entry.table}:`, error);
-          errors.push(`${entry.table}: ${error.message}`);
           continue;
         }
 
@@ -274,13 +298,37 @@ class WorkdoneTable {
 
     for (const entry of this.formTables) {
       try {
-        const { data, error } = await this.supabaseClient
-          .from(entry.table)
-          .select("*");
+        // Fetch all records with pagination (handle >1000 records)
+        let allData = [];
+        let rangeStart = 0;
+        const rangeSize = 1000;
+        let hasMore = true;
+
+        while (hasMore) {
+          const { data: pageData, error: pageError } = await this.supabaseClient
+            .from(entry.table)
+            .select("*")
+            .range(rangeStart, rangeStart + rangeSize - 1);
+
+          if (pageError) {
+            console.warn(`Error fetching from ${entry.table}:`, pageError);
+            errors.push(`${entry.table}: ${pageError.message}`);
+            break;
+          }
+
+          if (pageData && pageData.length > 0) {
+            allData = allData.concat(pageData);
+          }
+
+          // Check if there are more records
+          hasMore = pageData && pageData.length === rangeSize;
+          rangeStart += rangeSize;
+        }
+
+        const data = allData;
+        const error = null;
 
         if (error) {
-          console.warn(`Error fetching from ${entry.table}:`, error);
-          errors.push(`${entry.table}: ${error.message}`);
           continue;
         }
 
