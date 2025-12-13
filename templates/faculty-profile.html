@@ -1061,27 +1061,20 @@
             
             if (monthData) {
               let completedCount = 0;
-              let applicableCount = 0; // Count only applicable fields (exclude N/A)
+              const totalCount = 8; // Fixed denominator of 8 for all designations
               
-              for (let i = 1; i <= particulars.length; i++) {
+              for (let i = 1; i <= 8; i++) {
                 const status = monthData[`Status_${i}`];
                 const statusLower = status ? status.toString().trim().toLowerCase() : '';
                 
-                // Exclude "Not Applicable" from calculation
-                if (statusLower === 'not applicable') {
-                  continue; // Skip this field
-                }
-                
-                // Count this field as applicable
-                applicableCount++;
-                
-                // Count as completed if status is "completed"
-                if (statusLower === 'completed') {
+                // Count as completed if status is "completed" or "completed and updated"
+                if (statusLower === 'completed' || statusLower === 'completed and updated') {
                   completedCount++;
                 }
+                // All statuses (including 'Not Applicable', null, empty) are included in denominator
               }
               
-              percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) : 0;
+              percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
             }
             
             const percentColor = percentage === 100 ? 'text-green-600' : percentage >= 50 ? 'text-orange-600' : 'text-red-600';
@@ -1257,22 +1250,20 @@
             
             if (row) {
               let completedCount = 0;
-              let notApplicableCount = 0;
-              const totalCount = particulars.length;
+              const totalCount = 15; // Fixed denominator for Core Scope
               
-              for (let i = 1; i <= particulars.length; i++) {
+              for (let i = 1; i <= 15; i++) {
                 const status = row[`Status_${i}`];
                 const statusLower = (status + '').toLowerCase().trim();
                 
-                if (statusLower === 'not applicable') {
-                  notApplicableCount++;
-                } else if (statusLower === 'completed') {
+                // Count as completed if status is "completed" or "completed and updated"
+                if (statusLower === 'completed' || statusLower === 'completed and updated') {
                   completedCount++;
                 }
+                // All statuses (including 'Not Applicable', null, empty) are included in denominator
               }
               
-              const applicableCount = totalCount - notApplicableCount;
-              percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) : 0;
+              percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
             }
             
             html += `<td class="px-2 py-2 border border-gray-700 text-center">${percentage}%</td>`;
@@ -1389,13 +1380,14 @@
               .eq('Month', selectedFacultySummaryMonth)
               .eq('Department', dept);
             
-            // Fetch Yearly Mandatory Scope data
+            // Fetch Yearly Mandatory Scope data (don't filter by Month - it's stored as column data)
             let yearlyTableName = desigDisplay === 'Prof' ? 'Prof(Yearly)' : `${desigDisplay}(Yearly)`;
+            const orderColumn = desigDisplay === 'Prof' ? 'created_at' : 'submitted_at';
             const { data: yearlyData } = await supabaseClient
               .from(yearlyTableName)
               .select('*')
-              .eq('Month', selectedFacultySummaryMonth)
-              .eq('Department', dept);
+              .eq('Department', dept)
+              .order(orderColumn, { ascending: false });
             
             // Fetch department portfolio data for all 8 forms
             const deptPortfolioPromises = deptPortfolioFormMap.map(form => 
@@ -1411,38 +1403,56 @@
             
             // Calculate Core Scope Monthly %
             let coreScopePercent = '-';
+            console.log('[Consolidated Core Scope DEBUG] Faculty:', facultyName, '| Month:', selectedFacultySummaryMonth);
+            console.log('[Consolidated Core Scope DEBUG] Core scope data rows:', coreScopeData?.length || 0);
             if (coreScopeData && coreScopeData.length > 0) {
               const coreScopeRow = coreScopeData.find(r => 
                 (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
               );
+              console.log('[Consolidated Core Scope DEBUG] Found row:', coreScopeRow);
               if (coreScopeRow) {
                 let completedCount = 0;
-                let applicableCount = 0;
+                const totalCount = 15; // Fixed denominator for Core Scope
                 for (let i = 1; i <= 15; i++) {
                   const status = (coreScopeRow[`Status_${i}`] || '').toString().toLowerCase();
-                  if (status === 'not applicable' || status === 'na' || status === '') continue;
-                  applicableCount += 1;
-                  if (status === 'completed') completedCount += 1;
+                  console.log(`[Consolidated Core Scope DEBUG] Status_${i}: "${status}"`);
+                  // Count as completed if status is "completed" or "completed and updated"
+                  if (status === 'completed' || status === 'completed and updated') {
+                    completedCount += 1;
+                  }
+                  // All statuses (including 'Not Applicable', null, empty) are included in denominator
                 }
-                coreScopePercent = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+                console.log(`[Consolidated Core Scope DEBUG] Result: ${completedCount}/${totalCount} = ${Math.round((completedCount / totalCount) * 100)}%`);
+                coreScopePercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
               }
             }
             
             // Calculate Mandatory Scope Yearly %
             let yearlyPercent = '-';
+            console.log('[Consolidated Yearly DEBUG] Faculty:', facultyName, '| Month:', selectedFacultySummaryMonth);
+            console.log('[Consolidated Yearly DEBUG] Yearly data rows:', yearlyData?.length || 0);
             if (yearlyData && yearlyData.length > 0) {
-              const yearlyRow = yearlyData.find(r => 
+              // Find rows matching this faculty
+              const matchingRows = yearlyData.filter(r => 
                 (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
               );
+              console.log('[Consolidated Yearly DEBUG] Matching rows:', matchingRows.length);
+              
+              // Filter by selected month
+              const yearlyRow = matchingRows.find(r => r.Month === selectedFacultySummaryMonth);
+              console.log('[Consolidated Yearly DEBUG] Found row for month:', yearlyRow);
+              
               if (yearlyRow) {
                 let completedCount = 0;
-                let totalCount = desigDisplay === 'AP' ? 7 : 8;
-                for (let i = 1; i <= totalCount; i++) {
+                let totalCount = 8; // Fixed denominator of 8 for all designations
+                for (let i = 1; i <= 8; i++) {
                   const status = (yearlyRow[`Status_${i}`] || '').toString().toLowerCase();
+                  console.log(`[Consolidated Yearly DEBUG] Status_${i}: "${status}"`);
                   if (status === 'completed' || status === 'completed and updated') {
                     completedCount++;
                   }
                 }
+                console.log(`[Consolidated Yearly DEBUG] Result: ${completedCount}/${totalCount} = ${Math.round((completedCount / totalCount) * 100)}%`);
                 yearlyPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
               }
             }
@@ -1467,17 +1477,16 @@
                 
                 if (formRow) {
                   let completedCount = 0;
-                  let applicableCount = 0;
-                  const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status'));
-                  for (const key of statusKeys) {
-                    const val = (formRow[key] || '').toString().trim().toLowerCase();
-                    if (val === 'not applicable' || val === 'na') continue;
-                    applicableCount += 1;
-                    if (val === 'completed' || val === 'completed and updated') {
+                  const totalCount = 8; // Fixed denominator for Department Portfolio
+                  for (let i = 1; i <= 8; i++) {
+                    const status = (formRow[`Status_${i}`] || '').toString().trim().toLowerCase();
+                    // Count as completed if status is \"completed\" or \"completed and updated\"
+                    if (status === 'completed' || status === 'completed and updated') {
                       completedCount += 1;
                     }
+                    // All statuses (including 'Not Applicable', null, empty) are included in denominator
                   }
-                  const percent = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+                  const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
                   
                   if (deptPortfolioCount === 0) {
                     deptPortfolio1Percent = percent;
@@ -1504,20 +1513,20 @@
               
               if (formRow) {
                 let completedCount = 0;
-                let totalFields = 0;
-                for (const key in formRow) {
-                  if (key.toLowerCase().includes('status')) {
-                    const value = (formRow[key] || '').toString().trim();
-                    if (value === 'Not Applicable') continue;
-                    totalFields++;
-                    if (value === 'Completed' || value === 'Completed and Updated') {
-                      completedCount++;
-                    }
+                // Dynamically count actual Status fields (Institution forms have varying counts)
+                const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status_'));
+                const totalCount = statusKeys.length;
+                for (const key of statusKeys) {
+                  const value = (formRow[key] || '').toString().trim().toLowerCase();
+                  // Count as completed if status is "completed" or "completed and updated"
+                  if (value === 'completed' || value === 'completed and updated') {
+                    completedCount++;
                   }
+                  // All statuses (including 'Not Applicable', null, empty) are included in denominator
                 }
-                const percent = totalFields > 0 ? ((completedCount / totalFields) * 100).toFixed(0) + '%' : '0%';
+                const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
                 
-                if (instPortfolioCount === 0) {
+                if (instPortfolio1Percent === 0) {
                   instPortfolio1Percent = percent;
                 } else if (instPortfolioCount === 1) {
                   instPortfolio2Percent = percent;
@@ -1614,27 +1623,34 @@
               );
               if (coreScopeRow) {
                 let completedCount = 0;
-                let applicableCount = 0;
+                const totalCount = 15; // Fixed denominator for Core Scope
                 for (let i = 1; i <= 15; i++) {
                   const status = (coreScopeRow[`Status_${i}`] || '').toString().toLowerCase();
-                  if (status === 'not applicable' || status === 'na' || status === '') continue;
-                  applicableCount += 1;
-                  if (status === 'completed') completedCount += 1;
+                  // Count as completed if status is "completed" or "completed and updated"
+                  if (status === 'completed' || status === 'completed and updated') {
+                    completedCount += 1;
+                  }
+                  // All statuses (including 'Not Applicable', null, empty) are included in denominator
                 }
-                coreScopePercent = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+                coreScopePercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
               }
             }
             
             // Calculate Mandatory Scope Yearly %
             let yearlyPercent = '-';
             if (yearlyData && yearlyData.length > 0) {
-              const yearlyRow = yearlyData.find(r => 
+              // Find rows matching this faculty
+              const matchingRows = yearlyData.filter(r => 
                 (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
               );
+              
+              // Filter by selected month
+              const yearlyRow = matchingRows.find(r => r.Month === selectedFacultySummaryMonth);
+              
               if (yearlyRow) {
                 let completedCount = 0;
-                let totalCount = desigDisplay === 'AP' ? 7 : 8;
-                for (let i = 1; i <= totalCount; i++) {
+                let totalCount = 8; // Fixed denominator of 8 for all designations
+                for (let i = 1; i <= 8; i++) {
                   const status = (yearlyRow[`Status_${i}`] || '').toString().toLowerCase();
                   if (status === 'completed' || status === 'completed and updated') {
                     completedCount++;
@@ -1664,17 +1680,16 @@
                 
                 if (formRow) {
                   let completedCount = 0;
-                  let applicableCount = 0;
-                  const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status'));
-                  for (const key of statusKeys) {
-                    const val = (formRow[key] || '').toString().trim().toLowerCase();
-                    if (val === 'not applicable' || val === 'na') continue;
-                    applicableCount += 1;
-                    if (val === 'completed' || val === 'completed and updated') {
+                  const totalCount = 8; // Fixed denominator for Department Portfolio
+                  for (let i = 1; i <= 8; i++) {
+                    const status = (formRow[`Status_${i}`] || '').toString().trim().toLowerCase();
+                    // Count as completed if status is \"completed\" or \"completed and updated\"
+                    if (status === 'completed' || status === 'completed and updated') {
                       completedCount += 1;
                     }
+                    // All statuses (including 'Not Applicable', null, empty) are included in denominator
                   }
-                  const percent = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+                  const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
                   
                   if (deptPortfolioCount === 0) {
                     deptPortfolio1Percent = percent;
@@ -1701,18 +1716,18 @@
               
               if (formRow) {
                 let completedCount = 0;
-                let totalFields = 0;
-                for (const key in formRow) {
-                  if (key.toLowerCase().includes('status')) {
-                    const value = (formRow[key] || '').toString().trim();
-                    if (value === 'Not Applicable') continue;
-                    totalFields++;
-                    if (value === 'Completed' || value === 'Completed and Updated') {
-                      completedCount++;
-                    }
+                // Dynamically count actual Status fields (Institution forms have varying counts)
+                const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status_'));
+                const totalCount = statusKeys.length;
+                for (const key of statusKeys) {
+                  const value = (formRow[key] || '').toString().trim().toLowerCase();
+                  // Count as completed if status is "completed" or "completed and updated"
+                  if (value === 'completed' || value === 'completed and updated') {
+                    completedCount++;
                   }
+                  // All statuses (including 'Not Applicable', null, empty) are included in denominator
                 }
-                const percent = totalFields > 0 ? ((completedCount / totalFields) * 100).toFixed(0) + '%' : '0%';
+                const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
                 
                 if (instPortfolioCount === 0) {
                   instPortfolio1Percent = percent;
@@ -2042,25 +2057,30 @@
             countDept++;
           }
         }
-        // Add the 9th form based on Designation
+        // Add the Monthly and Yearly forms based on Designation
         let designation = (data["Designation"] || "")
           .toString()
           .trim()
           .toUpperCase();
-        let ninthFormName = "";
-        let ninthFormLink = "";
+        let yearlyFormName = "";
+        let yearlyFormLink = "";
         if (designation === "AP") {
-          ninthFormName = "AP Core Scope Form";
-          ninthFormLink = "form-ap.html";
+          yearlyFormName = "AP Core Scope Form (Yearly)";
+          yearlyFormLink = "form-ap.html";
         } else if (designation === "ASP") {
-          ninthFormName = "ASP Core Scope Form";
-          ninthFormLink = "form-asp.html";
+          yearlyFormName = "ASP Core Scope Form (Yearly)";
+          yearlyFormLink = "form-asp.html";
         } else if (designation === "PROF" || designation === "PROFESSOR") {
-          ninthFormName = "Professor Core Scope Form";
-          ninthFormLink = "form-prof.html";
+          yearlyFormName = "Professor Core Scope Form (Yearly)";
+          yearlyFormLink = "form-prof.html";
         }
-        if (ninthFormName && ninthFormLink) {
-          formsHtmlCore += `<tr><td class="px-4 py-2">1</td><td class="px-4 py-2">${ninthFormName}</td><td class="px-4 py-2"><button onclick="openCoreScopeModal('${ninthFormLink}', '${data['department']}', '${ninthFormName}', '${data['Name']}', '${designation}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button></td></tr>`;
+        
+        // Add Monthly form (row 1)
+        formsHtmlCore += `<tr><td class="px-4 py-2">1</td><td class="px-4 py-2">Faculty Core Scope (Monthly)</td><td class="px-4 py-2"><button onclick="openForm('faculty-core-scope.html', '${data['department']}', 'Faculty Core Scope (Monthly)', '${data['Name']}', '${designation}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button></td></tr>`;
+        
+        // Add Yearly form (row 2)
+        if (yearlyFormName && yearlyFormLink) {
+          formsHtmlCore += `<tr><td class="px-4 py-2">2</td><td class="px-4 py-2">${yearlyFormName}</td><td class="px-4 py-2"><button onclick="openForm('${yearlyFormLink}', '${data['department']}', '${yearlyFormName}', '${data['Name']}', '${designation}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button></td></tr>`;
         }
         document.getElementById("facultyFormsDept").innerHTML =
           formsHtmlDept ||
@@ -2068,42 +2088,6 @@
         document.getElementById("facultyFormsCore").innerHTML =
           formsHtmlCore ||
           '<tr><td colspan="3" class="text-gray-400 text-center p-4">No core scope form assigned.</td></tr>';
-      
-      // Core Scope Modal Functions
-      let _coreScopeFormData = {};
-      
-      window.openCoreScopeModal = function(yearlyFormUrl, department, portfolio, memberName, designation) {
-        // Store data for later use
-        _coreScopeFormData = {
-          yearlyFormUrl: yearlyFormUrl,
-          department: department,
-          portfolio: portfolio,
-          memberName: memberName,
-          designation: designation
-        };
-        
-        // Show modal
-        document.getElementById('coreScopeSelectionModal').classList.remove('hidden');
-      };
-      
-      window.closeCoreScopeModal = function() {
-        document.getElementById('coreScopeSelectionModal').classList.add('hidden');
-        _coreScopeFormData = {};
-      };
-      
-      // Monthly Form Button Handler
-      document.getElementById('monthlyFormBtn').addEventListener('click', function() {
-        // For monthly, always use faculty-core-scope.html regardless of designation
-        openForm('faculty-core-scope.html', _coreScopeFormData.department, 'Faculty Core Scope (Monthly)', _coreScopeFormData.memberName, _coreScopeFormData.designation);
-        closeCoreScopeModal();
-      });
-      
-      // Yearly Form Button Handler
-      document.getElementById('yearlyFormBtn').addEventListener('click', function() {
-        // For yearly, use the designation-specific form
-        openForm(_coreScopeFormData.yearlyFormUrl, _coreScopeFormData.department, _coreScopeFormData.portfolio, _coreScopeFormData.memberName, _coreScopeFormData.designation);
-        closeCoreScopeModal();
-      });
       
       // Auto-fetch Open Form logic with form status check
       window.openForm = async function(formUrl, department, portfolio, memberName, designation) {

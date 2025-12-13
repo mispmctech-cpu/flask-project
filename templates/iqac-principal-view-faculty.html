@@ -186,11 +186,6 @@
           <label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-1">SUBJECT ALLOTTED</label>
           <div id="facultySemSubjectClassTable" class="mt-1"></div>
         </div>
-        <!-- Details Table -->
-        <div class="mt-8">
-          <label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-1">FACULTY MANDATORY SCOPE IN RESEARCH, INNOVATIONS AND EXTENSION ACTIVITY/FACULTY CONTRIBUTIONS</label>
-          <div id="facultyDetailsTable" class="mt-1"></div>
-        </div>
         
         <!-- Faculty Mandatory Scope - Yearly -->
         <div class="mt-8">
@@ -203,12 +198,6 @@
           <label class="text-base font-bold text-blue-700 uppercase tracking-wide block mb-1">Faculty Core Scope - Monthly</label>
           <button id="toggleCoreScopeRowsBtn" class="mb-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded font-semibold text-sm">Show All Rows</button>
           <div id="facultyCoreScopeTableContainer" class="mt-1"></div>
-        </div>
-        
-        <!-- Faculty Responsibilities Status Table -->
-        <div class="mt-8">
-          <label class="text-base font-bold text-green-700 uppercase tracking-wide block mb-1">FACULTY RESPONSIBILITIES STATUS</label>
-          <div id="facultyResponsibilitiesStatusTable" class="mt-1"></div>
         </div>
         
         <!-- Modal for viewing original responsibilities data -->
@@ -342,114 +331,6 @@
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
       );
       async function loadFacultyProfile() {
-        // --- Begin: Faculty Responsibilities Status Table ---
-  let facultyData = null;
-  async function renderFacultyResponsibilitiesStatusTable(data) {
-          const name = data["Name"] || "";
-          const department = data["department"] || "";
-          const designation = (data["Designation"] || "").toUpperCase();
-          let tableName = null;
-          if (designation === "AP") tableName = "AP";
-          else if (designation === "ASP") tableName = "ASP";
-          else if (designation === "PROF" || designation === "PROFESSOR") tableName = "Prof";
-          if (!tableName) {
-            document.getElementById("facultyResponsibilitiesStatusTable").innerHTML = '<div class="text-gray-400">No responsibilities status available for this designation.</div>';
-            return;
-          }
-          // Responsibility descriptions (order matches Status_1, Status_2, ...)
-          const responsibilities = [
-            "Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.",
-            "Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.",
-            "Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.",
-            "Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.",
-            "Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.",
-            "Student Mentorship and Support: Monitor student attendance, performance, and well-being.",
-            "Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.",
-            "Student Mentorship and Support: Maintain the Mentor book for assigned mentee.",
-            "Student Mentorship and Support: Consolidate innovative course material, Lab manuals",
-            "Institutional Development: Participate in curriculum development and revision through Boards of Studies.",
-            "Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.",
-            "Institutional Development: Serve on academic and administrative committees.",
-            "Community and Industry Engagement: Engage in consultancy",
-            "Administrative Duties: Maintain academic records, course files, Log Book and student evaluations."
-          ];
-          // Fetch the most recent submission for this faculty (match Portfolio Member Name and Department)
-          const { data: portfolioRows, error } = await supabaseClient
-            .from(tableName)
-            .select('*')
-            .eq('Portfolio Member Name', name)
-            .eq('Department', department)
-            .order('submitted_at', { ascending: false })
-            .limit(1);
-          if (error || !portfolioRows || portfolioRows.length === 0) {
-            document.getElementById("facultyResponsibilitiesStatusTable").innerHTML = '<div class="text-gray-400">No recent responsibilities submission found.</div>';
-            return;
-          }
-          const row = portfolioRows[0];
-          let html = '<div class="overflow-x-auto"><table class="min-w-full text-xs border border-gray-400 rounded-lg overflow-hidden shadow-sm bg-white"><thead class="bg-green-100 text-green-700"><tr>';
-          html += '<th class="px-2 py-1 border border-gray-400">Faculty Name</th>';
-          for (const resp of responsibilities) {
-            html += `<th class="px-2 py-1 border border-gray-400">${resp}</th>`;
-          }
-          html += '</tr></thead><tbody><tr>';
-          // Make faculty name clickable to show modal with original data
-          html += `<td class="px-2 py-1 border border-gray-400 font-semibold text-blue-700 underline cursor-pointer" onclick='showResponsibilitiesModal(${JSON.stringify(row).replace(/'/g,"&#39;")})'>${name}</td>`;
-          for (let i = 1; i <= responsibilities.length; i++) {
-            let status = row[`Status_${i}`];
-            if (status === undefined || status === null || status === "") status = "-";
-            html += `<td class="px-2 py-1 border border-gray-400">${status}</td>`;
-          }
-          html += '</tr></tbody></table></div>';
-          document.getElementById("facultyResponsibilitiesStatusTable").innerHTML = html;
-
-        // Modal logic for viewing original responsibilities data
-        window.closeResponsibilitiesModal = function() {
-          document.getElementById('viewResponsibilitiesModal').classList.add('hidden');
-          document.getElementById('viewResponsibilitiesModalContent').innerHTML = '';
-        }
-        window.showResponsibilitiesModal = function(row) {
-          let html = '<h3 class="text-lg font-bold text-green-700 mb-4">Original Responsibilities Data</h3>';
-          // Section titles (same as table headers)
-          const sections = responsibilities;
-          html += `<div class="mb-4">
-            <div class="font-semibold text-blue-700">Department:</div>
-            <div class="mb-2">${row['Department'] || ''}</div>
-            <div class="font-semibold text-blue-700">Portfolio Name:</div>
-            <div class="mb-2">${row['Portfolio Name'] || ''}</div>
-            <div class="font-semibold text-blue-700">Portfolio Member Name:</div>
-            <div class="mb-2">${row['Portfolio Member Name'] || ''}</div>
-          </div>`;
-          html += `<div class="space-y-4">`;
-          for (let i = 1; i <= sections.length; i++) {
-            const statusVal = row[`Status_${i}`] || '-';
-            const descVal = row[`Description_${i}`] || '-';
-            let uploadVal = row[`Upload The Scanned File_${i}`] || row[`Upload the scanned file_${i}`] || '-';
-            let uploadHtml = '-';
-            if (uploadVal && uploadVal !== '-' && typeof uploadVal === 'string') {
-              const isUrl = uploadVal.startsWith('http://') || uploadVal.startsWith('https://');
-              const isFile = uploadVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i);
-              if (isUrl || isFile) {
-                uploadHtml = `<a href="${uploadVal}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block">View</a>`;
-              } else {
-                uploadHtml = uploadVal;
-              }
-            }
-            html += `<div class="border-b pb-2 mb-2">
-              <div class="font-semibold text-orange-500 mb-1">${i}. ${sections[i-1]}</div>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                <div><span class="font-medium text-blue-700">Status:</span> ${statusVal}</div>
-                <div><span class="font-medium text-blue-700">Description:</span> ${descVal}</div>
-                <div><span class="font-medium text-blue-700">Upload:</span> ${uploadHtml}</div>
-              </div>
-            </div>`;
-          }
-          html += `</div>`;
-          document.getElementById('viewResponsibilitiesModalContent').innerHTML = html;
-          document.getElementById('viewResponsibilitiesModal').classList.remove('hidden');
-        }
-        }
-  // call this after data is loaded
-        // --- End: Faculty Responsibilities Status Table ---
         if (!email) {
           document.body.innerHTML =
             '<div class="text-center mt-20 text-red-500">No faculty selected.</div>';
@@ -465,8 +346,6 @@
             '<div class="text-center mt-20 text-red-500">Faculty not found.</div>';
           return;
         }
-          facultyData = data;
-          await renderFacultyResponsibilitiesStatusTable(facultyData);
           
         // --- Begin: Consolidated Summary Table ---
         (function() {
@@ -539,13 +418,14 @@
                 .eq('Month', selectedMonth)
                 .eq('Department', dept);
               
-              // Fetch Yearly Mandatory Scope data
+              // Fetch Yearly Mandatory Scope data (don't filter by Month - it's stored as column data)
               let yearlyTableName = desigDisplay === 'Prof' ? 'Prof(Yearly)' : `${desigDisplay}(Yearly)`;
+              const orderColumn = desigDisplay === 'Prof' ? 'created_at' : 'submitted_at';
               const { data: yearlyData } = await supabaseClient
                 .from(yearlyTableName)
                 .select('*')
-                .eq('Month', selectedMonth)
-                .eq('Department', dept);
+                .eq('Department', dept)
+                .order(orderColumn, { ascending: false });
               
               // Fetch department portfolio data for all 8 forms
               const deptPortfolioPromises = deptPortfolioFormMap.map(form => 
@@ -567,27 +447,34 @@
                 );
                 if (coreScopeRow) {
                   let completedCount = 0;
-                  let applicableCount = 0;
+                  const totalCount = 15; // Fixed denominator for Core Scope
                   for (let i = 1; i <= 15; i++) {
                     const status = (coreScopeRow[`Status_${i}`] || '').toString().toLowerCase();
-                    if (status === 'not applicable' || status === 'na' || status === '') continue;
-                    applicableCount += 1;
-                    if (status === 'completed') completedCount += 1;
+                    // Count as completed if status is "completed" or "completed and updated"
+                    if (status === 'completed' || status === 'completed and updated') {
+                      completedCount += 1;
+                    }
+                    // All statuses (including 'Not Applicable', null, empty) are included in denominator
                   }
-                  coreScopePercent = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+                  coreScopePercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
                 }
               }
               
               // Calculate Mandatory Scope Yearly %
               let yearlyPercent = '-';
               if (yearlyData && yearlyData.length > 0) {
-                const yearlyRow = yearlyData.find(r => 
+                // Find rows matching this faculty
+                const matchingRows = yearlyData.filter(r => 
                   (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
                 );
+                
+                // Filter by selected month
+                const yearlyRow = matchingRows.find(r => r.Month === selectedMonth);
+                
                 if (yearlyRow) {
                   let completedCount = 0;
-                  let totalCount = desigDisplay === 'AP' ? 7 : 8;
-                  for (let i = 1; i <= totalCount; i++) {
+                  let totalCount = 8; // Fixed denominator of 8 for all designations
+                  for (let i = 1; i <= 8; i++) {
                     const status = (yearlyRow[`Status_${i}`] || '').toString().toLowerCase();
                     if (status === 'completed' || status === 'completed and updated') {
                       completedCount++;
@@ -617,17 +504,16 @@
                   
                   if (formRow) {
                     let completedCount = 0;
-                    let applicableCount = 0;
-                    const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status'));
-                    for (const key of statusKeys) {
-                      const val = (formRow[key] || '').toString().trim().toLowerCase();
-                      if (val === 'not applicable' || val === 'na') continue;
-                      applicableCount += 1;
-                      if (val === 'completed' || val === 'completed and updated') {
+                    const totalCount = 8; // Fixed denominator for Department Portfolio
+                    for (let i = 1; i <= 8; i++) {
+                      const status = (formRow[`Status_${i}`] || '').toString().trim().toLowerCase();
+                      // Count as completed if status is "completed" or "completed and updated"
+                      if (status === 'completed' || status === 'completed and updated') {
                         completedCount += 1;
                       }
+                      // All statuses (including 'Not Applicable', null, empty) are included in denominator
                     }
-                    const percent = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+                    const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
                     
                     if (deptPortfolioCount === 0) {
                       deptPortfolio1Percent = percent;
@@ -654,18 +540,19 @@
                 
                 if (formRow) {
                   let completedCount = 0;
-                  let totalFields = 0;
+                  let totalStatusFields = 0;
+                  // Count all Status_ fields for dynamic denominator
                   for (const key in formRow) {
-                    if (key.toLowerCase().includes('status')) {
+                    if (key.startsWith('Status_')) {
+                      totalStatusFields++;
                       const value = (formRow[key] || '').toString().trim();
-                      if (value === 'Not Applicable') continue;
-                      totalFields++;
                       if (value === 'Completed' || value === 'Completed and Updated') {
                         completedCount++;
                       }
                     }
                   }
-                  const percent = totalFields > 0 ? ((completedCount / totalFields) * 100).toFixed(0) + '%' : '0%';
+                  // Dynamic denominator based on Status_ field count
+                  const percent = totalStatusFields > 0 ? ((completedCount / totalStatusFields) * 100).toFixed(0) + '%' : '0%';
                   
                   if (instPortfolioCount === 0) {
                     instPortfolio1Percent = percent;
@@ -866,27 +753,20 @@
             
             if (monthData) {
               let completedCount = 0;
-              let applicableCount = 0; // Count only applicable fields (exclude N/A)
+              const totalCount = 8; // Fixed denominator of 8 for all designations
               
-              for (let i = 1; i <= particulars.length; i++) {
+              for (let i = 1; i <= 8; i++) {
                 const status = monthData[`Status_${i}`];
                 const statusLower = status ? status.toString().trim().toLowerCase() : '';
                 
-                // Exclude "Not Applicable" from calculation
-                if (statusLower === 'not applicable') {
-                  continue; // Skip this field
-                }
-                
-                // Count this field as applicable
-                applicableCount++;
-                
-                // Count as completed if status is "completed"
-                if (statusLower === 'completed') {
+                // Count as completed if status is "completed" or "completed and updated"
+                if (statusLower === 'completed' || statusLower === 'completed and updated') {
                   completedCount++;
                 }
+                // All statuses (including 'Not Applicable', null, empty) are included in denominator
               }
               
-              percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) : 0;
+              percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
             }
             
             const percentColor = percentage === 100 ? 'text-green-600' : percentage >= 50 ? 'text-orange-600' : 'text-red-600';
@@ -1062,22 +942,20 @@
             
             if (row) {
               let completedCount = 0;
-              let notApplicableCount = 0;
-              const totalCount = particulars.length;
+              const totalCount = 15; // Fixed denominator for Core Scope
               
-              for (let i = 1; i <= particulars.length; i++) {
+              for (let i = 1; i <= 15; i++) {
                 const status = row[`Status_${i}`];
                 const statusLower = (status + '').toLowerCase().trim();
                 
-                if (statusLower === 'not applicable') {
-                  notApplicableCount++;
-                } else if (statusLower === 'completed') {
+                // Count as completed if status is "completed" or "completed and updated"
+                if (statusLower === 'completed' || statusLower === 'completed and updated') {
                   completedCount++;
                 }
+                // All statuses (including 'Not Applicable', null, empty) are included in denominator
               }
               
-              const applicableCount = totalCount - notApplicableCount;
-              percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) : 0;
+              percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
             }
             
             html += `<td class="px-2 py-2 border border-gray-700 text-center">${percentage}%</td>`;

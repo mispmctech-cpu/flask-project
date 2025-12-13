@@ -115,8 +115,8 @@
             }
             if (rows.length > 0) {
                 rows.forEach((row, idx) => {
-                    const memberName = row["Portfolio Member Name:"] || '';
-                    const month = row["Month:"] || '';
+                    const memberName = row["Portfolio Member Name:"] || row["Portfolio Member Name"] || '';
+                    const month = row["Month:"] || row["Month"] || row["month"] || '';
                     row.table = form.table;
                     row.formName = form.name;
                     allFormRows.push({ form, row, memberName, month, isLatest: idx === 0 });
@@ -144,19 +144,18 @@
     }
 
     function calculateCompletionPercentage(latestRow) {
-        let totalFields = 0;
-        let marks = 0;
-        for (const key in latestRow) {
-            if (key.toLowerCase().includes('status')) {
-                const value = (latestRow[key] || '').toString().trim();
-                if (value === 'Not Applicable') continue;
-                totalFields++;
-                if (value === 'Completed' || value === 'Completed and Updated') {
-                    marks++;
-                }
+        let completedCount = 0;
+        // Dynamically count actual Status fields (Institution forms have varying counts)
+        const statusKeys = Object.keys(latestRow).filter(k => k.startsWith('Status_'));
+        const totalCount = statusKeys.length;
+        for (const key of statusKeys) {
+            const value = (latestRow[key] || '').toString().trim().toLowerCase();
+            if (value === 'completed' || value === 'completed and updated') {
+                completedCount++;
             }
+            // All statuses (including 'Not Applicable', null, empty) are included in denominator
         }
-        return totalFields > 0 ? ((marks / totalFields) * 100).toFixed(2) : 'N/A';
+        return totalCount > 0 ? ((completedCount / totalCount) * 100).toFixed(2) : 'N/A';
     }
 
     function renderPortfolioTable() {
@@ -170,39 +169,38 @@
             if (!grouped[entry.form.name]) grouped[entry.form.name] = [];
             grouped[entry.form.name].push(entry);
         }
-        // For each form, show latest row first, then others (hidden unless filter matches)
+        // For each form, show only the latest matching row
         for (const formName in grouped) {
             const rows = grouped[formName];
-            let anyShown = false;
-            for (let i = 0; i < rows.length; i++) {
-                const { form, row, memberName, month, errorMsg, isLatest } = rows[i];
+            let latestMatchingRow = null;
+            
+            // Find the latest row that matches filters
+            for (const entry of rows) {
+                const { form, row, memberName, month, errorMsg } = entry;
+                
                 if (!row) {
-                    // Only show 'no data' if it's the only entry
-                    if (i === 0) {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td class="border px-2 py-2">${form.name}</td>
-                            <td class="border px-2 py-2 text-gray-400 italic" colspan="3">No data available</td>
-                            <td class="border px-2 py-2 text-red-500 text-xs">${errorMsg ? 'Error: ' + errorMsg : ''}</td>
-                        `;
-                        tbody.appendChild(tr);
-                    }
+                    // Skip null rows when looking for matches
                     continue;
                 }
-                let percentage = calculateCompletionPercentage(row);
-                // Filter logic
-                let show = false;
-                if (!selectedMonth && !selectedPercent) {
-                    // Default: show only latest
-                    show = isLatest;
-                } else {
-                    // Show if matches filter
-                    let monthMatch = !selectedMonth || month === selectedMonth;
-                    let percentMatch = !selectedPercent || (percentage && percentage !== 'N/A' && parseFloat(percentage) >= parseFloat(selectedPercent));
-                    show = monthMatch && percentMatch;
+                
+                const percentage = calculateCompletionPercentage(row);
+                
+                // Check if this row matches filters
+                let monthMatch = !selectedMonth || month === selectedMonth;
+                let percentMatch = !selectedPercent || (percentage && percentage !== 'N/A' && parseFloat(percentage) >= parseFloat(selectedPercent));
+                
+                if (monthMatch && percentMatch) {
+                    // This is the first (latest) matching row
+                    latestMatchingRow = entry;
+                    break;
                 }
+            }
+            
+            // Display the latest matching row or show "no data"
+            if (latestMatchingRow) {
+                const { form, row, memberName, month } = latestMatchingRow;
+                const percentage = calculateCompletionPercentage(row);
                 const tr = document.createElement('tr');
-                tr.style.display = show ? '' : 'none';
                 tr.innerHTML = `
                     <td class="border px-2 py-2">${form.name}</td>
                     <td class="border px-2 py-2">${memberName}</td>
@@ -213,36 +211,69 @@
                     </td>
                 `;
                 tbody.appendChild(tr);
-                if (show) anyShown = true;
-            }
-            // If filter applied and nothing shown, show 'no data' row
-            if ((selectedMonth || selectedPercent) && !anyShown) {
+            } else if (rows.length > 0 && !rows[0].row) {
+                // No data exists for this form at all
                 const form = rows[0].form;
+                const errorMsg = rows[0].errorMsg || '';
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="border px-2 py-2">${form.name}</td>
                     <td class="border px-2 py-2 text-gray-400 italic" colspan="3">No data available</td>
-                    <td class="border px-2 py-2 text-red-500 text-xs"></td>
+                    <td class="border px-2 py-2 text-red-500 text-xs">${errorMsg ? 'Error: ' + errorMsg : ''}</td>
                 `;
                 tbody.appendChild(tr);
             }
+            // If filters are applied and no match found, don't show anything for this form
         }
     }
 
     // Export to Excel logic
     document.getElementById('export-excel-btn').addEventListener('click', function() {
         const selectedMonth = document.getElementById('month-filter').value;
+        const selectedPercent = document.getElementById('percent-filter').value;
         let rows = [];
         // Table headers (excluding View)
         rows.push(['Form', 'Portfolio Member Name', 'Month', '%']);
-        for (const { form, latestRow, memberName, month, errorMsg } of allLatestRows) {
-            if (selectedMonth && month !== selectedMonth) continue;
-            if (!latestRow) {
-                rows.push([form.name, 'No data available', '', '', errorMsg ? 'Error: ' + errorMsg : '']);
-            } else {
-                const percentage = calculateCompletionPercentage(latestRow);
-                rows.push([form.name, memberName, month, percentage + '%']);
+        
+        // Group by form and get latest matching row per form
+        const grouped = {};
+        for (const entry of allFormRows) {
+            if (!grouped[entry.form.name]) grouped[entry.form.name] = [];
+            grouped[entry.form.name].push(entry);
+        }
+        
+        for (const formName in grouped) {
+            const entries = grouped[formName];
+            let latestMatchingRow = null;
+            
+            // Find the latest row that matches filters
+            for (const entry of entries) {
+                const { form, row, memberName, month } = entry;
+                
+                if (!row) continue;
+                
+                const percentage = calculateCompletionPercentage(row);
+                
+                // Check if this row matches filters
+                let monthMatch = !selectedMonth || month === selectedMonth;
+                let percentMatch = !selectedPercent || (percentage && percentage !== 'N/A' && parseFloat(percentage) >= parseFloat(selectedPercent));
+                
+                if (monthMatch && percentMatch) {
+                    latestMatchingRow = entry;
+                    break;
+                }
             }
+            
+            // Add the latest matching row to export
+            if (latestMatchingRow) {
+                const { form, memberName, month } = latestMatchingRow;
+                const percentage = calculateCompletionPercentage(latestMatchingRow.row);
+                rows.push([form.name, memberName, month, percentage + '%']);
+            } else if (entries.length > 0 && !entries[0].row) {
+                // No data exists for this form at all
+                rows.push([entries[0].form.name, 'No data available', '', 'N/A']);
+            }
+            // If filters applied and no match, don't include this form in export
         }
         // Convert to CSV
         let csvContent = '';

@@ -163,16 +163,6 @@
           </div>
           <div id="facultySemSubjectClassTable" class="mt-1"></div>
         </div>
-        <!-- Details Table -->
-        <div class="mt-8">
-          <div class="flex items-center gap-2 mb-2">
-            <label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-0 flex-1">FACULTY MANDATORY SCOPE IN RESEARCH, INNOVATIONS AND EXTENSION ACTIVITY/FACULTY CONTRIBUTIONS</label>
-            <button type="button" id="editDetailsTableBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded font-semibold">Edit</button>
-            <button type="button" id="saveDetailsTableBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded font-semibold hidden">Save</button>
-            <span id="detailsTableStatusMsg" class="ml-2 text-sm"></span>
-          </div> 
-          <div id="facultyDetailsTable" class="mt-1"></div>
-        </div>
         
         <!-- Faculty Mandatory Scope - Yearly -->
         <div class="mt-8">
@@ -186,8 +176,6 @@
           <button id="toggleCoreScopeRowsBtn" class="mb-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded font-semibold text-sm">Show All Rows</button>
           <div id="facultyCoreScopeTableContainer" class="mt-1"></div>
         </div>
-        
-        <!-- Faculty Responsibilities Status Table -->
         
         <!-- Consolidated Summary Table -->
         <div class="mt-8">
@@ -504,33 +492,36 @@
           // Particulars for each designation
           const particularsMap = {
             AP: [
-              'Book/Book Chapter with ISSN/ISBN',
-              'Publication in UGC Care Journal/Scopus/Web of Science/UGC CARE List Group-I and II/SCI',
-              'Sponsored Research Projects',
-              'Consultancy',
-              'Patents',
-              'Organizing Conference/Seminar/Webinar/Workshop/FDP',
-              'Membership in professional body'
+              'Present at Conference',
+              'Guide student research and final year projects',
+              'Attend FDPs / Workshop / Seminars',
+              'NPTEL/ MOOC Certifications',
+              'Facilitate Industry-Institutte interaction through Guest lectures, Internship',
+              'Engage in extention activities and social outrich programs',
+              'Membership in professional body',
+              'No of Proposals submitted in Manthan Portal'
             ],
             ASP: [
-              'Book/Book Chapter with ISSN/ISBN',
-              'Publication in UGC Care Journal/Scopus/Web of Science/UGC CARE List Group-I and II/SCI',
-              'Sponsored Research Projects',
-              'Consultancy',
-              'Patents',
-              'Organizing Conference/Seminar/Webinar/Workshop/FDP',
-              'Awards/Achievements/Honors',
-              'Membership in professional body'
+              'Publish in peer-reviewed journals',
+              'Apply for research grants',
+              'Guide student research and final year projects',
+              'Organise FDPs / Workshop / Seminars',
+              'NPTEL/ MOOC Certifications',
+              'Facilitate Industry-Institutte interaction through Guest lectures, Internship',
+              'Engage in consultancy',
+              'Membership in professional body',
+              'No of Proposals submitted in Manthan Portal'
             ],
             Prof: [
-              'Book/Book Chapter with ISSN/ISBN',
-              'Publication in UGC Care Journal/Scopus/Web of Science/UGC CARE List Group-I and II/SCI',
-              'Sponsored Research Projects',
-              'Consultancy',
-              'Patents',
-              'Organizing Conference/Seminar/Webinar/Workshop/FDP',
-              'Awards/Achievements/Honors',
-              'Ph.D Guided'
+              'Publish in peer-reviewed journals',
+              'Apply for research grants',
+              'Guide student research and final year projects',
+              'Organise FDPs / Workshop / Seminars',
+              'NPTEL/ MOOC Certifications',
+              'Facilitate MOU',
+              'Engage in consultancy',
+              'Membership in professional body',
+              'No of Proposals submitted in Manthan Portal'
             ]
           };
           
@@ -828,22 +819,20 @@
             
             if (row) {
               let completedCount = 0;
-              let notApplicableCount = 0;
-              const totalCount = particulars.length;
+              const totalCount = 15; // Fixed denominator of 15 for Core Scope
               
-              for (let i = 1; i <= particulars.length; i++) {
+              for (let i = 1; i <= 15; i++) {
                 const status = row[`Status_${i}`];
                 const statusLower = (status + '').toLowerCase().trim();
                 
-                if (statusLower === 'not applicable') {
-                  notApplicableCount++;
-                } else if (statusLower === 'completed') {
+                // Count as completed if status is "completed" or "completed and updated"
+                if (statusLower === 'completed' || statusLower === 'completed and updated') {
                   completedCount++;
                 }
+                // All statuses (including 'Not Applicable', null, empty) are included in denominator
               }
               
-              const applicableCount = totalCount - notApplicableCount;
-              percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) : 0;
+              percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
             }
             
             html += `<td class="px-2 py-2 border border-gray-700 text-center">${percentage}%</td>`;
@@ -1118,13 +1107,18 @@
               // Calculate Mandatory Scope Yearly %
               let yearlyPercent = '-';
               if (yearlyData && yearlyData.length > 0) {
-                const yearlyRow = yearlyData.find(r => 
+                // Find rows matching this faculty
+                const matchingRows = yearlyData.filter(r => 
                   (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
                 );
+                
+                // Filter by selected month
+                const yearlyRow = matchingRows.find(r => r.Month === selectedMonth);
+                
                 if (yearlyRow) {
                   let completedCount = 0;
-                  let totalCount = desigDisplay === 'AP' ? 7 : 8;
-                  for (let i = 1; i <= totalCount; i++) {
+                  let totalCount = 8; // Fixed denominator of 8 for all designations
+                  for (let i = 1; i <= 8; i++) {
                     const status = (yearlyRow[`Status_${i}`] || '').toString().toLowerCase();
                     if (status === 'completed' || status === 'completed and updated') {
                       completedCount++;
@@ -1154,17 +1148,16 @@
                   
                   if (formRow) {
                     let completedCount = 0;
-                    let applicableCount = 0;
-                    const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status'));
-                    for (const key of statusKeys) {
-                      const val = (formRow[key] || '').toString().trim().toLowerCase();
-                      if (val === 'not applicable' || val === 'na') continue;
-                      applicableCount += 1;
-                      if (val === 'completed' || val === 'completed and updated') {
+                    const totalCount = 8; // Fixed denominator for Department Portfolio
+                    for (let i = 1; i <= 8; i++) {
+                      const status = (formRow[`Status_${i}`] || '').toString().trim().toLowerCase();
+                      // Count as completed if status is "completed" or "completed and updated"
+                      if (status === 'completed' || status === 'completed and updated') {
                         completedCount += 1;
                       }
+                      // All statuses (including 'Not Applicable', null, empty) are included in denominator
                     }
-                    const percent = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+                    const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
                     
                     if (deptPortfolioCount === 0) {
                       deptPortfolio1Percent = percent;
@@ -1191,18 +1184,19 @@
                 
                 if (formRow) {
                   let completedCount = 0;
-                  let totalFields = 0;
+                  let totalStatusFields = 0;
+                  // Count all Status_ fields for dynamic denominator
                   for (const key in formRow) {
-                    if (key.toLowerCase().includes('status')) {
+                    if (key.startsWith('Status_')) {
+                      totalStatusFields++;
                       const value = (formRow[key] || '').toString().trim();
-                      if (value === 'Not Applicable') continue;
-                      totalFields++;
                       if (value === 'Completed' || value === 'Completed and Updated') {
                         completedCount++;
                       }
                     }
                   }
-                  const percent = totalFields > 0 ? ((completedCount / totalFields) * 100).toFixed(0) + '%' : '0%';
+                  // Dynamic denominator based on Status_ field count
+                  const percent = totalStatusFields > 0 ? ((completedCount / totalStatusFields) * 100).toFixed(0) + '%' : '0%';
                   
                   if (instPortfolioCount === 0) {
                     instPortfolio1Percent = percent;
@@ -1613,6 +1607,14 @@
       <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
         <button onclick="closeViewModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
         <div id="viewModalContent"></div>
+      </div>
+    </div>
+
+    <!-- View Responsibilities Modal -->
+    <div id="viewResponsibilitiesModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-4xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+        <button onclick="closeResponsibilitiesModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <div id="viewResponsibilitiesModalContent"></div>
       </div>
     </div>
 

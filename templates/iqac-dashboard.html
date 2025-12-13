@@ -355,20 +355,20 @@ async function exportCoreScopeTableToExcel(scope) {
         row = matchingRows[0];
       }
       
-      // Calculate percentage
+      // Calculate percentage (fixed denominator: 15)
       let completedCount = 0;
-      let applicableCount = 0;
-      
+      const totalCount = 15;
       if (row) {
         for (let i = 1; i <= 15; i++) {
           const statusVal = (row[`Status_${i}`] || '').toString().trim().toLowerCase();
-          if (statusVal === 'not applicable' || statusVal === 'na' || statusVal === '') continue;
-          applicableCount += 1;
-          if (statusVal === 'completed') completedCount += 1;
+          if (statusVal === 'completed' || statusVal === 'completed and updated') {
+            completedCount++;
+          }
+          // All statuses (including 'Not Applicable') are included in denominator
         }
       }
       
-      const percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+      const percentage = Math.round((completedCount / totalCount) * 100) + '%';
       
       // Build row data
       const rowData = [dept, designation, facultyName, percentage];
@@ -572,15 +572,16 @@ async function exportYearlyCurrentDepartment() {
       const rowData = [dept, desig, facultyName];
       
       if (formRow) {
-        // Faculty has submitted form - calculate percentage
+        // Faculty has submitted form - calculate percentage (fixed denominator: 7 for AP, 8 for ASP/Prof)
         let completedCount = 0;
         for (let i = 1; i <= statusCount; i++) {
           const status = (formRow[`Status_${i}`] || '').toString().toLowerCase();
           if (status === 'completed' || status === 'completed and updated') {
             completedCount++;
           }
+          // All statuses (including 'Not Applicable') are included in denominator
         }
-        percentage = statusCount > 0 ? Math.round((completedCount / statusCount) * 100) : 0;
+        percentage = Math.round((completedCount / statusCount) * 100);
         rowData.push(percentage + '%');
         
         // Add status columns
@@ -748,15 +749,16 @@ async function exportYearlyAllDepartments() {
       const rowData = [dept, desig, facultyName];
       
       if (formRow) {
-        // Faculty has submitted form - calculate percentage
+        // Faculty has submitted form - calculate percentage (fixed denominator: 7 for AP, 8 for ASP/Prof)
         let completedCount = 0;
         for (let i = 1; i <= statusCount; i++) {
           const status = (formRow[`Status_${i}`] || '').toString().toLowerCase();
           if (status === 'completed' || status === 'completed and updated') {
             completedCount++;
           }
+          // All statuses (including 'Not Applicable') are included in denominator
         }
-        percentage = statusCount > 0 ? Math.round((completedCount / statusCount) * 100) : 0;
+        percentage = Math.round((completedCount / statusCount) * 100);
         rowData.push(percentage + '%');
         
         // Add status columns
@@ -902,21 +904,15 @@ function attachExportButtons() {
               }
               if (bestRow) {
                 let completedCount = 0;
-                let applicableCount = 0;
-                const statusKeys = Object.keys(bestRow).filter(k => k.startsWith('Status'));
-                for (const key of statusKeys) {
-                  const val = (bestRow[key] || '').toString().trim().toLowerCase();
-                  if (val === 'not applicable' || val === 'na') continue;
-                  applicableCount += 1;
+                const totalCount = 8;
+                for (let i = 1; i <= totalCount; i++) {
+                  const val = (bestRow[`Status_${i}`] || '').toString().trim().toLowerCase();
                   if (val === 'completed' || val === 'completed and updated') {
-                    completedCount += 1;
+                    completedCount++;
                   }
+                  // All statuses (including 'Not Applicable') are included in denominator
                 }
-                if (applicableCount > 0) {
-                  percentage = Math.round((completedCount / applicableCount) * 100);
-                } else {
-                  percentage = 0;
-                }
+                percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
               } else {
                 percentage = 0;
               }
@@ -1086,26 +1082,18 @@ function attachExportButtons() {
               bestRow = filteredRows.sort((a, b) => (b.id || 0) - (a.id || 0))[0];
             }
           }
-          // Calculate percentage if bestRow exists, using all keys starting with 'Status'
+          // Calculate percentage if bestRow exists (fixed denominator: 8)
           if (bestRow) {
             let completedCount = 0;
-            let applicableCount = 0;
-            // Use all keys starting with 'Status' (case-sensitive)
-            const statusKeys = Object.keys(bestRow).filter(k => k.startsWith('Status'));
-            for (const key of statusKeys) {
-              const val = (bestRow[key] || '').toString().trim().toLowerCase();
-              if (val === 'not applicable' || val === 'na') continue;
-              // Treat null, empty, or '-' as applicable (mark=0)
-              applicableCount += 1;
+            const totalCount = 8;
+            for (let i = 1; i <= totalCount; i++) {
+              const val = (bestRow[`Status_${i}`] || '').toString().trim().toLowerCase();
               if (val === 'completed' || val === 'completed and updated') {
-                completedCount += 1;
+                completedCount++;
               }
+              // All statuses (including 'Not Applicable') are included in denominator
             }
-            if (applicableCount > 0) {
-              percentage = Math.round((completedCount / applicableCount) * 100);
-            } else {
-              percentage = 0;
-            }
+            percentage = Math.round((completedCount / totalCount) * 100);
           } else {
             percentage = 0;
           }
@@ -1353,20 +1341,18 @@ function attachExportButtons() {
           row = matchingRows[0];
         }
         
-        // Calculate percentage
+        // Calculate percentage (fixed denominator: 15)
         let completedCount = 0;
-        let applicableCount = 0;
-        
+        const totalCount = 15;
         if (row) {
           for (let i = 1; i <= 15; i++) {
             const statusVal = (row[`Status_${i}`] || '').toString().trim().toLowerCase();
-            if (statusVal === 'not applicable' || statusVal === 'na') continue;
-            applicableCount += 1;
-            if (statusVal === 'completed') completedCount += 1;
+            if (statusVal === 'completed' || statusVal === 'completed and updated') {
+              completedCount++;
+            }
           }
         }
-        
-        const percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) : 0;
+        const percentage = Math.round((completedCount / totalCount) * 100);
         const percentageDisplay = row ? `${percentage}%` : '0% (Not Submitted)';
         const percentageClass = row ? (percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600') : 'text-red-600';
         
@@ -1575,18 +1561,19 @@ function attachExportButtons() {
             const row = yearlyData ? yearlyData.find(r => 
               (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
             ) : null;
-            // Calculate percentage based on Status fields
+            // Calculate percentage based on Status fields (fixed denominator: 7 for AP, 8 for ASP/Prof)
             let completedCount = 0;
-            let totalCount = key === 'AP' ? 8 : 9; // AP has 7 items, ASP/Prof have 8
+            const totalCount = key === 'AP' ? 7 : 8;
             if (row) {
               for (let i = 1; i <= totalCount; i++) {
                 const status = (row[`Status_${i}`] || '').toString().toLowerCase();
                 if (status === 'completed' || status === 'completed and updated') {
                   completedCount++;
                 }
+                // All statuses (including 'Not Applicable') are included in denominator
               }
             }
-            const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+            const percentage = Math.round((completedCount / totalCount) * 100);
             html += `<tr class="hover:bg-gray-50"><td class="px-2 py-2 border font-medium sticky left-0 bg-white z-10">${dept}</td>`;
             html += `<td class="px-2 py-2 border font-medium">${desigDisplay}</td>`;
             html += `<td class="px-2 py-2 border font-medium text-purple-700 cursor-pointer underline" onclick="viewYearlyFacultyForm('${key}','${facultyName.replace(/'/g, "\\'")}', '${selectedDepartment.replace(/'/g, "\\'")}')">
@@ -2048,19 +2035,24 @@ function attachExportButtons() {
           // Calculate Core Scope Monthly %
           let coreScopePercent = '-';
           if (coreScopeData && coreScopeData.length > 0) {
-            const coreScopeRow = coreScopeData.find(r => 
+            const matchingRows = coreScopeData.filter(r => 
               (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
             );
-            if (coreScopeRow) {
+            if (matchingRows.length > 0) {
+              // Get the latest row by input_id
+              matchingRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
+              const coreScopeRow = matchingRows[0];
+              
               let completedCount = 0;
-              let applicableCount = 0;
+              const totalCount = 15;
               for (let i = 1; i <= 15; i++) {
                 const status = (coreScopeRow[`Status_${i}`] || '').toString().toLowerCase();
-                if (status === 'not applicable' || status === 'na' || status === '') continue;
-                applicableCount += 1;
-                if (status === 'completed') completedCount += 1;
+                if (status === 'completed' || status === 'completed and updated') {
+                  completedCount++;
+                }
+                // All statuses (including 'Not Applicable') are included in denominator
               }
-              coreScopePercent = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+              coreScopePercent = Math.round((completedCount / totalCount) * 100) + '%';
             }
           }
           
@@ -2104,17 +2096,15 @@ function attachExportButtons() {
               
               if (formRow) {
                 let completedCount = 0;
-                let applicableCount = 0;
-                const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status'));
-                for (const key of statusKeys) {
-                  const val = (formRow[key] || '').toString().trim().toLowerCase();
-                  if (val === 'not applicable' || val === 'na') continue;
-                  applicableCount += 1;
+                const totalCount = 8;
+                for (let i = 1; i <= totalCount; i++) {
+                  const val = (formRow[`Status_${i}`] || '').toString().trim().toLowerCase();
                   if (val === 'completed' || val === 'completed and updated') {
-                    completedCount += 1;
+                    completedCount++;
                   }
+                  // All statuses (including 'Not Applicable') are included in denominator
                 }
-                const percent = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+                const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
                 
                 if (deptPortfolioCount === 0) {
                   deptPortfolio1Percent = percent;
@@ -2134,25 +2124,28 @@ function attachExportButtons() {
           for (let i = 0; i < institutionFormTableMap.length; i++) {
             const formMapping = institutionFormTableMap[i];
             const formData = instPortfolioResults[i].data || [];
+            const isMonthlyForm = formMapping.table.includes('-monthly');
             const formRow = formData.find(r => {
               const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || '';
-              return rowName.toString().trim().toLowerCase() === nameTrimmed;
+              const rowMonth = r['Month:'] || r['Month'] || r['month'] || '';
+              const nameMatches = rowName.toString().trim().toLowerCase() === nameTrimmed;
+              const monthMatches = !isMonthlyForm || rowMonth.toString().trim().toLowerCase() === selectedSummaryMonth.toLowerCase();
+              return nameMatches && monthMatches;
             });
             
             if (formRow) {
               let completedCount = 0;
-              let totalFields = 0;
-              for (const key in formRow) {
-                if (key.toLowerCase().includes('status')) {
-                  const value = (formRow[key] || '').toString().trim();
-                  if (value === 'Not Applicable') continue;
-                  totalFields++;
-                  if (value === 'Completed' || value === 'Completed and Updated') {
-                    completedCount++;
-                  }
+              // Dynamically count actual Status fields (Institution forms have varying counts)
+              const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status_'));
+              const totalCount = statusKeys.length;
+              for (const key of statusKeys) {
+                const value = (formRow[key] || '').toString().trim().toLowerCase();
+                if (value === 'completed' || value === 'completed and updated') {
+                  completedCount++;
                 }
+                // All statuses (including 'Not Applicable', null, empty) are included in denominator
               }
-              const percent = totalFields > 0 ? ((completedCount / totalFields) * 100).toFixed(0) + '%' : '0%';
+              const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
               
               if (instPortfolioCount === 0) {
                 instPortfolio1Percent = percent;
@@ -2280,19 +2273,24 @@ function attachExportButtons() {
           // Calculate Core Scope Monthly %
           let coreScopePercent = '-';
           if (coreScopeData && coreScopeData.length > 0) {
-            const coreScopeRow = coreScopeData.find(r => 
+            const matchingRows = coreScopeData.filter(r => 
               (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
             );
-            if (coreScopeRow) {
+            if (matchingRows.length > 0) {
+              // Get the latest row by input_id
+              matchingRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
+              const coreScopeRow = matchingRows[0];
+              
               let completedCount = 0;
-              let applicableCount = 0;
+              const totalCount = 15;
               for (let i = 1; i <= 15; i++) {
                 const status = (coreScopeRow[`Status_${i}`] || '').toString().toLowerCase();
-                if (status === 'not applicable' || status === 'na' || status === '') continue;
-                applicableCount += 1;
-                if (status === 'completed') completedCount += 1;
+                if (status === 'completed' || status === 'completed and updated') {
+                  completedCount++;
+                }
+                // All statuses (including 'Not Applicable') are included in denominator
               }
-              coreScopePercent = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+              coreScopePercent = Math.round((completedCount / totalCount) * 100) + '%';
             }
           }
           
@@ -2336,17 +2334,15 @@ function attachExportButtons() {
               
               if (formRow) {
                 let completedCount = 0;
-                let applicableCount = 0;
-                const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status'));
-                for (const key of statusKeys) {
-                  const val = (formRow[key] || '').toString().trim().toLowerCase();
-                  if (val === 'not applicable' || val === 'na') continue;
-                  applicableCount += 1;
+                const totalCount = 8;
+                for (let i = 1; i <= totalCount; i++) {
+                  const val = (formRow[`Status_${i}`] || '').toString().trim().toLowerCase();
                   if (val === 'completed' || val === 'completed and updated') {
-                    completedCount += 1;
+                    completedCount++;
                   }
+                  // All statuses (including 'Not Applicable') are included in denominator
                 }
-                const percent = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) + '%' : '0%';
+                const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
                 
                 if (deptPortfolioCount === 0) {
                   deptPortfolio1Percent = percent;
@@ -2366,25 +2362,28 @@ function attachExportButtons() {
           for (let i = 0; i < institutionFormTableMap.length; i++) {
             const formMapping = institutionFormTableMap[i];
             const formData = instPortfolioResults[i].data || [];
+            const isMonthlyForm = formMapping.table.includes('-monthly');
             const formRow = formData.find(r => {
               const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || '';
-              return rowName.toString().trim().toLowerCase() === nameTrimmed;
+              const rowMonth = r['Month:'] || r['Month'] || r['month'] || '';
+              const nameMatches = rowName.toString().trim().toLowerCase() === nameTrimmed;
+              const monthMatches = !isMonthlyForm || rowMonth.toString().trim().toLowerCase() === selectedSummaryMonth.toLowerCase();
+              return nameMatches && monthMatches;
             });
             
             if (formRow) {
               let completedCount = 0;
-              let totalFields = 0;
-              for (const key in formRow) {
-                if (key.toLowerCase().includes('status')) {
-                  const value = (formRow[key] || '').toString().trim();
-                  if (value === 'Not Applicable') continue;
-                  totalFields++;
-                  if (value === 'Completed' || value === 'Completed and Updated') {
-                    completedCount++;
-                  }
+              // Dynamically count actual Status fields (Institution forms have varying counts)
+              const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status_'));
+              const totalCount = statusKeys.length;
+              for (const key of statusKeys) {
+                const value = (formRow[key] || '').toString().trim().toLowerCase();
+                if (value === 'completed' || value === 'completed and updated') {
+                  completedCount++;
                 }
+                // All statuses (including 'Not Applicable', null, empty) are included in denominator
               }
-              const percent = totalFields > 0 ? ((completedCount / totalFields) * 100).toFixed(0) + '%' : '0%';
+              const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
               
               if (instPortfolioCount === 0) {
                 instPortfolio1Percent = percent;
