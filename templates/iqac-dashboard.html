@@ -1107,7 +1107,9 @@ function attachExportButtons() {
             let completedCount = 0;
             const totalCount = 8;
             for (let i = 1; i <= 8; i++) {
-              const val = (bestRow[`Status_${i}`] || '').toString().trim().toLowerCase();
+              // Try both Status_i (underscore) and Status-i (hyphen) formats
+              const val = (bestRow[`Status_${i}`] || bestRow[`Status-${i}`] || '').toString().trim().toLowerCase();
+              
               if (val === 'completed' || val === 'completed and updated') {
                 completedCount++;
               }
@@ -2193,7 +2195,8 @@ function attachExportButtons() {
                 let completedCount = 0;
                 const totalCount = 8;
                 for (let i = 1; i <= 8; i++) {
-                  const val = (formRow[`Status_${i}`] || '').toString().trim().toLowerCase();
+                  // Check both Status_i and Status-i formats (some tables use hyphens, others use underscores)
+                  const val = (formRow[`Status_${i}`] || formRow[`Status-${i}`] || '').toString().trim().toLowerCase();
                   if (val === 'completed' || val === 'completed and updated') {
                     completedCount++;
                   }
@@ -2455,7 +2458,8 @@ function attachExportButtons() {
                 let completedCount = 0;
                 const totalCount = 8;
                 for (let i = 1; i <= 8; i++) {
-                  const val = (formRow[`Status_${i}`] || '').toString().trim().toLowerCase();
+                  // Check both Status_i and Status-i formats (some tables use hyphens, others use underscores)
+                  const val = (formRow[`Status_${i}`] || formRow[`Status-${i}`] || '').toString().trim().toLowerCase();
                   if (val === 'completed' || val === 'completed and updated') {
                     completedCount++;
                   }
@@ -2589,6 +2593,7 @@ function attachExportButtons() {
   </footer>
 </body>
 </html>
+
 
 
 

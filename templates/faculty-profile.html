@@ -1625,7 +1625,8 @@
                   let completedCount = 0;
                   const totalCount = 8; // Fixed denominator for Department Portfolio
                   for (let i = 1; i <= 8; i++) {
-                    const status = (formRow[`Status_${i}`] || '').toString().trim().toLowerCase();
+                    // Check both Status_i and Status-i formats (some tables use hyphens, others use underscores)
+                    const status = (formRow[`Status_${i}`] || formRow[`Status-${i}`] || '').toString().trim().toLowerCase();
                     // Count as completed if status is \"completed\" or \"completed and updated\"
                     if (status === 'completed' || status === 'completed and updated') {
                       completedCount += 1;
@@ -1852,7 +1853,8 @@
                   let completedCount = 0;
                   const totalCount = 8; // Fixed denominator for Department Portfolio
                   for (let i = 1; i <= 8; i++) {
-                    const status = (formRow[`Status_${i}`] || '').toString().trim().toLowerCase();
+                    // Check both Status_i and Status-i formats (some tables use hyphens, others use underscores)
+                    const status = (formRow[`Status_${i}`] || formRow[`Status-${i}`] || '').toString().trim().toLowerCase();
                     // Count as completed if status is \"completed\" or \"completed and updated\"
                     if (status === 'completed' || status === 'completed and updated') {
                       completedCount += 1;
@@ -2394,3 +2396,4 @@
 </body>
 </html>
         
+
