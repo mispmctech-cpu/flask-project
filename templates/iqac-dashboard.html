@@ -8,6 +8,26 @@
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <!-- SheetJS for Excel export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    .star-rating {
+      font-size: 18px;
+      color: #FFD700;
+      white-space: nowrap;
+    }
+    .star-rating .shining {
+      animation: shine 1.5s infinite;
+      font-size: 20px;
+      display: inline-block;
+    }
+    @keyframes shine {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.2); }
+    }
+    .rating-excellent { color: #10b981; font-weight: 600; }
+    .rating-good { color: #3b82f6; font-weight: 600; }
+    .rating-average { color: #f59e0b; font-weight: 600; }
+    .rating-poor { color: #ef4444; font-weight: 600; }
+  </style>
 </head>
 <body class="bg-pmcBg min-h-screen">
   <header class="bg-purple-700 text-white w-full">
@@ -905,7 +925,7 @@ function attachExportButtons() {
               if (bestRow) {
                 let completedCount = 0;
                 const totalCount = 8;
-                for (let i = 1; i <= totalCount; i++) {
+                for (let i = 1; i <= 8; i++) {
                   const val = (bestRow[`Status_${i}`] || '').toString().trim().toLowerCase();
                   if (val === 'completed' || val === 'completed and updated') {
                     completedCount++;
@@ -1086,7 +1106,7 @@ function attachExportButtons() {
           if (bestRow) {
             let completedCount = 0;
             const totalCount = 8;
-            for (let i = 1; i <= totalCount; i++) {
+            for (let i = 1; i <= 8; i++) {
               const val = (bestRow[`Status_${i}`] || '').toString().trim().toLowerCase();
               if (val === 'completed' || val === 'completed and updated') {
                 completedCount++;
@@ -1565,7 +1585,7 @@ function attachExportButtons() {
             let completedCount = 0;
             const totalCount = key === 'AP' ? 7 : 8;
             if (row) {
-              for (let i = 1; i <= totalCount; i++) {
+              for (let i = 1; i <= 8; i++) {
                 const status = (row[`Status_${i}`] || '').toString().toLowerCase();
                 if (status === 'completed' || status === 'completed and updated') {
                   completedCount++;
@@ -1895,6 +1915,78 @@ function attachExportButtons() {
     let selectedSummaryDepartment = '';
     let selectedSummaryMonth = 'January';
 
+    // Function to calculate faculty rating
+    function calculateFacultyRating(coreScopePercent, yearlyPercent, deptPortfolio1, deptPortfolio2, instPortfolio1, instPortfolio2) {
+      let validScores = [];
+      
+      // Helper function to parse percentage
+      const parsePercent = (val, isMandatory = false) => {
+        // If mandatory and not filled, treat as 0
+        if (isMandatory && (!val || val === '-' || val === 'N/A')) return 0;
+        // If not allocated (shown as '-'), return null to skip
+        if (!val || val === '-' || val === 'N/A') return null;
+        const num = parseFloat(val.toString().replace('%', ''));
+        return isNaN(num) ? (isMandatory ? 0 : null) : num;
+      };
+      
+      // Mandatory scopes - always include (0 if not filled)
+      validScores.push(parsePercent(coreScopePercent, true));
+      validScores.push(parsePercent(yearlyPercent, true));
+      
+      // Optional portfolios - only include if allocated (0 if allocated but not filled)
+      [deptPortfolio1, deptPortfolio2, instPortfolio1, instPortfolio2].forEach(score => {
+        const parsed = parsePercent(score, false);
+        if (parsed !== null) validScores.push(parsed);
+      });
+      
+      // Calculate average
+      let average = validScores.length > 0 
+        ? validScores.reduce((a, b) => a + b, 0) / validScores.length 
+        : 0;
+      
+      // Determine stars and color
+      let stars = '';
+      let starCount = 0;
+      let colorClass = '';
+      
+      if (average >= 91) {
+        starCount = 5;
+        stars = '★★★★★ <span class="shining">✨</span>';
+        colorClass = 'rating-excellent';
+      } else if (average >= 81) {
+        starCount = 5;
+        stars = '★★★★★';
+        colorClass = 'rating-excellent';
+      } else if (average >= 61) {
+        starCount = 4;
+        stars = '★★★★☆';
+        colorClass = 'rating-good';
+      } else if (average >= 41) {
+        starCount = 3;
+        stars = '★★★☆☆';
+        colorClass = 'rating-average';
+      } else if (average >= 21) {
+        starCount = 2;
+        stars = '★★☆☆☆';
+        colorClass = 'rating-average';
+      } else if (average >= 1) {
+        starCount = 1;
+        stars = '★☆☆☆☆';
+        colorClass = 'rating-poor';
+      } else {
+        starCount = 0;
+        stars = '☆☆☆☆☆';
+        colorClass = 'rating-poor';
+      }
+      
+      return {
+        average: average.toFixed(1),
+        stars: stars,
+        starCount: starCount,
+        colorClass: colorClass
+      };
+    }
+
     // Institution portfolio form mappings
     const institutionFormTableMap = [
       { name: "Director – Students welfare & Admission", table: "Institution-form1-monthly" },
@@ -2044,15 +2136,15 @@ function attachExportButtons() {
               const coreScopeRow = matchingRows[0];
               
               let completedCount = 0;
-              const totalCount = 15;
+              const totalCount = 15; // Fixed denominator for Core Scope
               for (let i = 1; i <= 15; i++) {
-                const status = (coreScopeRow[`Status_${i}`] || '').toString().toLowerCase();
+                const status = (coreScopeRow[`Status_${i}`] || '').toString().trim().toLowerCase();
                 if (status === 'completed' || status === 'completed and updated') {
-                  completedCount++;
+                  completedCount += 1;
                 }
-                // All statuses (including 'Not Applicable') are included in denominator
+                // All statuses (including 'Not Applicable', null, empty) are included in denominator
               }
-              coreScopePercent = Math.round((completedCount / totalCount) * 100) + '%';
+              coreScopePercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
             }
           }
           
@@ -2065,9 +2157,9 @@ function attachExportButtons() {
             );
             if (yearlyRow) {
               let completedCount = 0;
-              let totalCount = desigDisplay === 'AP' ? 7 : 8;
-              for (let i = 1; i <= totalCount; i++) {
-                const status = (yearlyRow[`Status_${i}`] || '').toString().toLowerCase();
+              let totalCount = 8; // Fixed denominator of 8 for all designations
+              for (let i = 1; i <= 8; i++) {
+                const status = (yearlyRow[`Status_${i}`] || '').toString().trim().toLowerCase();
                 if (status === 'completed' || status === 'completed and updated') {
                   completedCount++;
                 }
@@ -2086,6 +2178,9 @@ function attachExportButtons() {
             const isAssigned = fac[formMapping.formKey] && fac[formMapping.formKey].toString().trim().toLowerCase() === 'yes';
             
             if (isAssigned) {
+              // Initialize to 0% for assigned forms (will be updated if form data exists)
+              let percent = '0%';
+              
               const formData = deptPortfolioResults[i].data || [];
               const formRow = formData.find(r => {
                 const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || r['Portfolio Memeber Name'] || r['faculty_name'] || r['Faculty Name'] || r['Name'] || '';
@@ -2097,22 +2192,23 @@ function attachExportButtons() {
               if (formRow) {
                 let completedCount = 0;
                 const totalCount = 8;
-                for (let i = 1; i <= totalCount; i++) {
+                for (let i = 1; i <= 8; i++) {
                   const val = (formRow[`Status_${i}`] || '').toString().trim().toLowerCase();
                   if (val === 'completed' || val === 'completed and updated') {
                     completedCount++;
                   }
                   // All statuses (including 'Not Applicable') are included in denominator
                 }
-                const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
-                
-                if (deptPortfolioCount === 0) {
-                  deptPortfolio1Percent = percent;
-                } else if (deptPortfolioCount === 1) {
-                  deptPortfolio2Percent = percent;
-                }
-                deptPortfolioCount++;
+                percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
               }
+              
+              // Assign percent (either calculated or 0% if not submitted)
+              if (deptPortfolioCount === 0) {
+                deptPortfolio1Percent = percent;
+              } else if (deptPortfolioCount === 1) {
+                deptPortfolio2Percent = percent;
+              }
+              deptPortfolioCount++;
             }
           }
           
@@ -2125,6 +2221,8 @@ function attachExportButtons() {
             const formMapping = institutionFormTableMap[i];
             const formData = instPortfolioResults[i].data || [];
             const isMonthlyForm = formMapping.table.includes('-monthly');
+            
+            // Search for faculty in this form's data
             const formRow = formData.find(r => {
               const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || '';
               const rowMonth = r['Month:'] || r['Month'] || r['month'] || '';
@@ -2133,7 +2231,9 @@ function attachExportButtons() {
               return nameMatches && monthMatches;
             });
             
+            // If faculty found, calculate percentage
             if (formRow) {
+              let percent = '0%';
               let completedCount = 0;
               // Dynamically count actual Status fields (Institution forms have varying counts)
               const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status_'));
@@ -2145,8 +2245,9 @@ function attachExportButtons() {
                 }
                 // All statuses (including 'Not Applicable', null, empty) are included in denominator
               }
-              const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
+              percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
               
+              // Assign percent
               if (instPortfolioCount === 0) {
                 instPortfolio1Percent = percent;
               } else if (instPortfolioCount === 1) {
@@ -2181,9 +2282,20 @@ function attachExportButtons() {
         html += '<th class="px-3 py-2 bg-blue-700">Department Portfolio Scope-2</th>';
         html += '<th class="px-3 py-2 bg-blue-700">Institution Portfolio-1</th>';
         html += '<th class="px-3 py-2 bg-blue-700">Institution Portfolio-2</th>';
+        html += '<th class="px-3 py-2 bg-blue-700">Overall Rating</th>';
         html += '</tr></thead><tbody>';
         
         for (const row of summaryRows) {
+          // Calculate faculty rating
+          const rating = calculateFacultyRating(
+            row.coreScopePercent,
+            row.yearlyPercent,
+            row.deptPortfolio1Percent,
+            row.deptPortfolio2Percent,
+            row.instPortfolio1Percent,
+            row.instPortfolio2Percent
+          );
+          
           html += '<tr class="hover:bg-gray-50">';
           html += `<td class="px-2 py-2 border sticky left-0 bg-white z-10">${row.dept}</td>`;
           html += `<td class="px-2 py-2 border text-center">${row.designation}</td>`;
@@ -2194,6 +2306,10 @@ function attachExportButtons() {
           html += `<td class="px-2 py-2 border text-center font-semibold">${row.deptPortfolio2Percent}</td>`;
           html += `<td class="px-2 py-2 border text-center font-semibold">${row.instPortfolio1Percent}</td>`;
           html += `<td class="px-2 py-2 border text-center font-semibold">${row.instPortfolio2Percent}</td>`;
+          html += `<td class="px-2 py-2 border text-center">`;
+          html += `<div class="star-rating ${rating.colorClass}">${rating.stars}</div>`;
+          html += `<div class="text-xs mt-1 ${rating.colorClass}">${rating.average}%</div>`;
+          html += `</td>`;
           html += '</tr>';
         }
         
@@ -2282,15 +2398,15 @@ function attachExportButtons() {
               const coreScopeRow = matchingRows[0];
               
               let completedCount = 0;
-              const totalCount = 15;
+              const totalCount = 15; // Fixed denominator for Core Scope
               for (let i = 1; i <= 15; i++) {
-                const status = (coreScopeRow[`Status_${i}`] || '').toString().toLowerCase();
+                const status = (coreScopeRow[`Status_${i}`] || '').toString().trim().toLowerCase();
                 if (status === 'completed' || status === 'completed and updated') {
-                  completedCount++;
+                  completedCount += 1;
                 }
-                // All statuses (including 'Not Applicable') are included in denominator
+                // All statuses (including 'Not Applicable', null, empty) are included in denominator
               }
-              coreScopePercent = Math.round((completedCount / totalCount) * 100) + '%';
+              coreScopePercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
             }
           }
           
@@ -2303,9 +2419,9 @@ function attachExportButtons() {
             );
             if (yearlyRow) {
               let completedCount = 0;
-              let totalCount = desigDisplay === 'AP' ? 7 : 8;
-              for (let i = 1; i <= totalCount; i++) {
-                const status = (yearlyRow[`Status_${i}`] || '').toString().toLowerCase();
+              let totalCount = 8; // Fixed denominator of 8 for all designations
+              for (let i = 1; i <= 8; i++) {
+                const status = (yearlyRow[`Status_${i}`] || '').toString().trim().toLowerCase();
                 if (status === 'completed' || status === 'completed and updated') {
                   completedCount++;
                 }
@@ -2324,6 +2440,9 @@ function attachExportButtons() {
             const isAssigned = fac[formMapping.formKey] && fac[formMapping.formKey].toString().trim().toLowerCase() === 'yes';
             
             if (isAssigned) {
+              // Initialize to 0% for assigned forms (will be updated if form data exists)
+              let percent = '0%';
+              
               const formData = deptPortfolioResults[i].data || [];
               const formRow = formData.find(r => {
                 const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || r['Portfolio Memeber Name'] || r['faculty_name'] || r['Faculty Name'] || r['Name'] || '';
@@ -2335,22 +2454,23 @@ function attachExportButtons() {
               if (formRow) {
                 let completedCount = 0;
                 const totalCount = 8;
-                for (let i = 1; i <= totalCount; i++) {
+                for (let i = 1; i <= 8; i++) {
                   const val = (formRow[`Status_${i}`] || '').toString().trim().toLowerCase();
                   if (val === 'completed' || val === 'completed and updated') {
                     completedCount++;
                   }
                   // All statuses (including 'Not Applicable') are included in denominator
                 }
-                const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
-                
-                if (deptPortfolioCount === 0) {
-                  deptPortfolio1Percent = percent;
-                } else if (deptPortfolioCount === 1) {
-                  deptPortfolio2Percent = percent;
-                }
-                deptPortfolioCount++;
+                percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
               }
+              
+              // Assign percent (either calculated or 0% if not submitted)
+              if (deptPortfolioCount === 0) {
+                deptPortfolio1Percent = percent;
+              } else if (deptPortfolioCount === 1) {
+                deptPortfolio2Percent = percent;
+              }
+              deptPortfolioCount++;
             }
           }
           
@@ -2363,6 +2483,8 @@ function attachExportButtons() {
             const formMapping = institutionFormTableMap[i];
             const formData = instPortfolioResults[i].data || [];
             const isMonthlyForm = formMapping.table.includes('-monthly');
+            
+            // Search for faculty in this form's data
             const formRow = formData.find(r => {
               const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || '';
               const rowMonth = r['Month:'] || r['Month'] || r['month'] || '';
@@ -2371,7 +2493,9 @@ function attachExportButtons() {
               return nameMatches && monthMatches;
             });
             
+            // If faculty found, calculate percentage
             if (formRow) {
+              let percent = '0%';
               let completedCount = 0;
               // Dynamically count actual Status fields (Institution forms have varying counts)
               const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status_'));
@@ -2383,8 +2507,9 @@ function attachExportButtons() {
                 }
                 // All statuses (including 'Not Applicable', null, empty) are included in denominator
               }
-              const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
+              percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
               
+              // Assign percent
               if (instPortfolioCount === 0) {
                 instPortfolio1Percent = percent;
               } else if (instPortfolioCount === 1) {
@@ -2393,6 +2518,16 @@ function attachExportButtons() {
               instPortfolioCount++;
             }
           }
+          
+          // Calculate rating
+          const rating = calculateFacultyRating(
+            coreScopePercent,
+            yearlyPercent,
+            deptPortfolio1Percent,
+            deptPortfolio2Percent,
+            instPortfolio1Percent,
+            instPortfolio2Percent
+          );
           
           excelData.push({
             'Department': dept,
@@ -2403,7 +2538,9 @@ function attachExportButtons() {
             'Department Portfolio Scope-1': deptPortfolio1Percent,
             'Department Portfolio Scope-2': deptPortfolio2Percent,
             'Institution Portfolio-1': instPortfolio1Percent,
-            'Institution Portfolio-2': instPortfolio2Percent
+            'Institution Portfolio-2': instPortfolio2Percent,
+            'Overall Rating (%)': rating.average + '%',
+            'Stars': rating.starCount + ' stars'
           });
         }
         
@@ -2452,3 +2589,7 @@ function attachExportButtons() {
   </footer>
 </body>
 </html>
+
+
+
+
