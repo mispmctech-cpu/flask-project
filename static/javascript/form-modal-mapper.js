@@ -77,9 +77,9 @@ function getFormModalContent(row, details) {
       'Research and Development: Present at conferences.',
       'Research and Development: Guide student research and final-year projects',
       'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
-      'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
       'Institutional Development: Serve on academic and administrative committees.',
-      'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.'
+      'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
+      'Library Utilization'
     ];
 
     html += `<div class="overflow-x-auto">`;
