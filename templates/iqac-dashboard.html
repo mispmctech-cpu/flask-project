@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- No page-break CSS needed for PDF export -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard - Faculty Core Scope Compliance</title>
@@ -8,6 +9,8 @@
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <!-- SheetJS for Excel export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- html2pdf for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
   <style>
     .star-rating {
       font-size: 18px;
@@ -207,6 +210,10 @@
       <button id="exportSummaryTableBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export summary table to Excel">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
         Export Summary Table
+      </button>
+      <button id="exportSummaryTablePdfBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export summary table to PDF">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 15.5h2.5v1H8zm0-2h7v1H8zm0-2h7v1H8z"/></svg>
+        Export Summary PDF
       </button>
     </div>
     <div id="summaryTableContainer" class="overflow-x-auto"></div>
@@ -2053,8 +2060,10 @@ function attachExportButtons() {
         renderConsolidatedSummaryTable();
       });
       
-      // Export button
+      // Export buttons
       document.getElementById('exportSummaryTableBtn').onclick = exportSummaryTableToExcel;
+      const pdfBtn = document.getElementById('exportSummaryTablePdfBtn');
+      if (pdfBtn) pdfBtn.onclick = exportSummaryTableToPDF;
       
       await renderConsolidatedSummaryTable();
     }
@@ -2570,6 +2579,91 @@ function attachExportButtons() {
       } catch (error) {
         console.error('Export error:', error);
         alert('Failed to export data to Excel. Please try again.');
+      }
+    }
+
+    // Export summary table to PDF (landscape, 10 rows per page)
+    async function exportSummaryTableToPDF() {
+      try {
+        const container = document.getElementById('summaryTableContainer');
+        if (!container) { alert('No summary table found to export.'); return; }
+        const table = container.querySelector('table');
+        if (!table) { alert('No summary table found to export.'); return; }
+
+        const title = 'Consolidated Faculty Performance Summary';
+        const deptLabel = selectedSummaryDepartment || 'All';
+        const monthLabel = selectedSummaryMonth || '';
+
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+        const thead = table.querySelector('thead');
+        
+        // Get column count and width
+        const ths = thead ? thead.querySelectorAll('th') : [];
+        const colCount = ths.length;
+        const colWidth = (100 / colCount).toFixed(2) + '%';
+
+        // Build header HTML with explicit widths
+        let theadHTML = '<tr>';
+        ths.forEach(th => {
+          theadHTML += `<th style="border:0.5px solid #888;width:${colWidth};padding:4px;background:#1e40af;color:#fff;text-align:center;vertical-align:middle;font-weight:600;">${th.innerHTML}</th>`;
+        });
+        theadHTML += '</tr>';
+
+        // Create wrapper with single continuous content
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'width:297mm;padding:10mm;background:#fff;font-family:Arial,sans-serif;';
+
+        let html = '';
+        
+        // Add header only once at the top
+        html += `<div style="text-align:center;margin-bottom:10px;">`;
+        html += `<h1 style="margin:0 0 4px 0;color:#7c3aed;font-size:22px;font-weight:700;">Er. Perumal Manimekalai College of Engineering</h1>`;
+        html += `<h2 style="margin:0 0 6px 0;color:#1e40af;font-size:17px;font-weight:600;">${title}</h2>`;
+        html += `<div style="margin-bottom:8px;font-size:12px;color:#374151;">Department: ${deptLabel} | Month: ${monthLabel}</div>`;
+        html += `</div>`;
+
+        // Start table
+        html += `<table style="width:100%;border-collapse:collapse;font-size:10px;table-layout:fixed;border:0.5px solid #888;">`;
+        html += `<thead>${theadHTML}</thead>`;
+        html += '<tbody>';
+
+        // Add all rows with page break after every 8 rows
+        rows.forEach((r, idx) => {
+          const tds = Array.from(r.children).map(td => {
+            return `<td style="border:0.5px solid #888;width:${colWidth};padding:3px;text-align:center;vertical-align:middle;">${td.innerHTML}</td>`;
+          }).join('');
+          
+          html += `<tr>${tds}</tr>`;
+          
+          // Add page break after every 8 rows (except the last row)
+          if ((idx + 1) % 8 === 0 && idx < rows.length - 1) {
+            html += `</tbody></table>`;
+            html += `<div style="page-break-after:always;height:0;margin:0;padding:0;"></div>`;
+            html += `<div style="padding-top:15mm;"></div>`;
+            html += `<table style="width:100%;border-collapse:collapse;font-size:10px;table-layout:fixed;border:0.5px solid #888;margin:0;">`;
+            html += `<thead>${theadHTML}</thead>`;
+            html += '<tbody>';
+          }
+        });
+
+        html += '</tbody></table>';
+        wrapper.innerHTML = html;
+        document.body.appendChild(wrapper);
+
+        const opt = {
+          margin: [10, 5, 5, 5],
+          filename: `Consolidated_Summary_${selectedSummaryDepartment}_${selectedSummaryMonth}_${new Date().toISOString().split('T')[0]}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+
+        await html2pdf().set(opt).from(wrapper).save();
+        wrapper.remove();
+      } catch (err) {
+        console.error('PDF export error:', err);
+        alert('Failed to export PDF.');
       }
     }
 
