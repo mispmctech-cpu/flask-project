@@ -1654,10 +1654,26 @@
             for (let i = 0; i < institutionFormTableMap.length; i++) {
               const formMapping = institutionFormTableMap[i];
               const formData = instPortfolioResults[i].data || [];
-              const formRow = formData.find(r => {
+              const isMonthlyForm = formMapping.table.includes('-monthly');
+              
+              // Search for faculty in this form's data - get all matching rows
+              const matchingRows = formData.filter(r => {
                 const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || '';
-                return rowName.toString().trim().toLowerCase() === nameTrimmed;
+                const rowMonth = r['Month:'] || r['Month'] || r['month'] || '';
+                // Normalize both names by removing extra spaces
+                const normalizedRowName = rowName.toString().trim().replace(/\s+/g, ' ').toLowerCase();
+                const normalizedFacultyName = nameTrimmed.replace(/\s+/g, ' ');
+                const nameMatches = normalizedRowName === normalizedFacultyName;
+                const monthMatches = !isMonthlyForm || rowMonth.toString().trim().toLowerCase() === selectedFacultySummaryMonth.toLowerCase();
+                return nameMatches && monthMatches;
               });
+              
+              // Get the row with the highest input_id (most recent submission)
+              const formRow = matchingRows.length > 0 
+                ? matchingRows.reduce((latest, current) => 
+                    (current.input_id || 0) > (latest.input_id || 0) ? current : latest
+                  )
+                : null;
               
               if (formRow) {
                 let completedCount = 0;
@@ -1674,7 +1690,7 @@
                 }
                 const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
                 
-                if (instPortfolio1Percent === 0) {
+                if (instPortfolioCount === 0) {
                   instPortfolio1Percent = percent;
                 } else if (instPortfolioCount === 1) {
                   instPortfolio2Percent = percent;

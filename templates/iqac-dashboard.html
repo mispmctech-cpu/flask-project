@@ -2234,14 +2234,24 @@ function attachExportButtons() {
             const formData = instPortfolioResults[i].data || [];
             const isMonthlyForm = formMapping.table.includes('-monthly');
             
-            // Search for faculty in this form's data
-            const formRow = formData.find(r => {
+            // Search for faculty in this form's data - get all matching rows
+            const matchingRows = formData.filter(r => {
               const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || '';
               const rowMonth = r['Month:'] || r['Month'] || r['month'] || '';
-              const nameMatches = rowName.toString().trim().toLowerCase() === nameTrimmed;
+              // Normalize both names by removing extra spaces
+              const normalizedRowName = rowName.toString().trim().replace(/\s+/g, ' ').toLowerCase();
+              const normalizedFacultyName = nameTrimmed.replace(/\s+/g, ' ');
+              const nameMatches = normalizedRowName === normalizedFacultyName;
               const monthMatches = !isMonthlyForm || rowMonth.toString().trim().toLowerCase() === selectedSummaryMonth.toLowerCase();
               return nameMatches && monthMatches;
             });
+            
+            // Get the row with the highest input_id (most recent submission)
+            const formRow = matchingRows.length > 0 
+              ? matchingRows.reduce((latest, current) => 
+                  (current.input_id || 0) > (latest.input_id || 0) ? current : latest
+                )
+              : null;
             
             // If faculty found, calculate percentage
             if (formRow) {
@@ -2250,6 +2260,7 @@ function attachExportButtons() {
               // Dynamically count actual Status fields (Institution forms have varying counts)
               const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status_'));
               const totalCount = statusKeys.length;
+              
               for (const key of statusKeys) {
                 const value = (formRow[key] || '').toString().trim().toLowerCase();
                 if (value === 'completed' || value === 'completed and updated') {
@@ -2257,6 +2268,7 @@ function attachExportButtons() {
                 }
                 // All statuses (including 'Not Applicable', null, empty) are included in denominator
               }
+              
               percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
               
               // Assign percent
@@ -2500,14 +2512,24 @@ function attachExportButtons() {
             const formData = instPortfolioResults[i].data || [];
             const isMonthlyForm = formMapping.table.includes('-monthly');
             
-            // Search for faculty in this form's data
-            const formRow = formData.find(r => {
+            // Search for faculty in this form's data - get all matching rows
+            const matchingRows = formData.filter(r => {
               const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || '';
               const rowMonth = r['Month:'] || r['Month'] || r['month'] || '';
-              const nameMatches = rowName.toString().trim().toLowerCase() === nameTrimmed;
+              // Normalize both names by removing extra spaces
+              const normalizedRowName = rowName.toString().trim().replace(/\s+/g, ' ').toLowerCase();
+              const normalizedFacultyName = nameTrimmed.replace(/\s+/g, ' ');
+              const nameMatches = normalizedRowName === normalizedFacultyName;
               const monthMatches = !isMonthlyForm || rowMonth.toString().trim().toLowerCase() === selectedSummaryMonth.toLowerCase();
               return nameMatches && monthMatches;
             });
+            
+            // Get the row with the highest input_id (most recent submission)
+            const formRow = matchingRows.length > 0 
+              ? matchingRows.reduce((latest, current) => 
+                  (current.input_id || 0) > (latest.input_id || 0) ? current : latest
+                )
+              : null;
             
             // If faculty found, calculate percentage
             if (formRow) {
