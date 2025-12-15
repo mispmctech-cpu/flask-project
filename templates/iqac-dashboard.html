@@ -2282,6 +2282,9 @@ function attachExportButtons() {
           });
         }
         
+        // Sort by department alphabetically
+        summaryRows.sort((a, b) => a.dept.localeCompare(b.dept));
+        
         // Render table
         let html = '<div class="overflow-auto border rounded-lg shadow-sm" style="max-height: 600px;">';
         html += '<table class="min-w-full text-sm bg-white"><thead class="bg-blue-700 text-white sticky top-0 z-20"><tr>';
