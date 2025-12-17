@@ -189,7 +189,8 @@
             </div>
         </div>
     </div>
-    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <!-- Supabase JS CDN (load before using it) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <script>
     // Autofetch using localStorage
     document.addEventListener('DOMContentLoaded', function() {
@@ -638,8 +639,6 @@
     </footer>
 
     <!-- Month filter script for admin-controlled month disabling -->
-    <!-- Supabase JS CDN (required for month-filter.js) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <script src="../static/javascript/month-filter.js"></script>
 </body>
 </html>
