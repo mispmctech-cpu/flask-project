@@ -375,7 +375,10 @@
           
         // --- Begin: Consolidated Summary Table ---
         (function() {
-          let selectedFacultySummaryMonth = 'January';
+          // Set default to previous month
+          const currentDate = new Date();
+          const previousMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+          let selectedFacultySummaryMonth = previousMonthDate.toLocaleString('en-US', { month: 'long' });
 
           // Function to calculate faculty rating based on performance
           function calculateFacultyRating(coreScopePercent, yearlyPercent, deptPortfolio1, deptPortfolio2, instPortfolio1, instPortfolio2) {
@@ -391,12 +394,11 @@
               return isNaN(num) ? (isMandatory ? 0 : null) : num;
             };
             
-            // Mandatory scopes - always include (0 if not filled)
+            // Mandatory scope - only Core Scope Monthly (0 if not filled)
             validScores.push(parsePercent(coreScopePercent, true));
-            validScores.push(parsePercent(yearlyPercent, true));
             
-            // Optional portfolios - only include if allocated (0 if allocated but not filled)
-            [deptPortfolio1, deptPortfolio2, instPortfolio1, instPortfolio2].forEach(score => {
+            // Optional scopes - Yearly and portfolios (only include if allocated)
+            [yearlyPercent, deptPortfolio1, deptPortfolio2, instPortfolio1, instPortfolio2].forEach(score => {
               const parsed = parsePercent(score, false);
               if (parsed !== null) validScores.push(parsed);
             });
@@ -478,10 +480,15 @@
             { label: "8. Facilities & Lab", table: 'form8-monthly', formKey: 'form8' }
           ];
           
-          document.getElementById('facultySummaryMonthFilter').addEventListener('change', () => {
-            selectedFacultySummaryMonth = document.getElementById('facultySummaryMonthFilter').value;
-            renderFacultyConsolidatedSummary();
-          });
+          const summaryMonthFilter = document.getElementById('facultySummaryMonthFilter');
+          if (summaryMonthFilter) {
+            // Set default to previous month
+            summaryMonthFilter.value = selectedFacultySummaryMonth;
+            summaryMonthFilter.addEventListener('change', () => {
+              selectedFacultySummaryMonth = summaryMonthFilter.value;
+              renderFacultyConsolidatedSummary();
+            });
+          }
           
           async function renderFacultyConsolidatedSummary() {
             const container = document.getElementById("facultyConsolidatedSummaryContainer");
@@ -626,26 +633,41 @@
               for (let i = 0; i < institutionFormTableMap.length; i++) {
                 const formMapping = institutionFormTableMap[i];
                 const formData = instPortfolioResults[i].data || [];
-                const formRow = formData.find(r => {
+                const isMonthlyForm = formMapping.table.includes('-monthly');
+                
+                // Search for faculty in this form's data - get all matching rows
+                const matchingRows = formData.filter(r => {
                   const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || '';
-                  return rowName.toString().trim().toLowerCase() === nameTrimmed;
+                  const rowMonth = r['Month:'] || r['Month'] || r['month'] || '';
+                  // Normalize both names by removing extra spaces
+                  const normalizedRowName = rowName.toString().trim().replace(/\s+/g, ' ').toLowerCase();
+                  const normalizedFacultyName = nameTrimmed.replace(/\s+/g, ' ');
+                  const nameMatches = normalizedRowName === normalizedFacultyName;
+                  const monthMatches = !isMonthlyForm || rowMonth.toString().trim().toLowerCase() === selectedFacultySummaryMonth.toLowerCase();
+                  return nameMatches && monthMatches;
                 });
+                
+                // Get the row with the highest input_id (most recent submission)
+                const formRow = matchingRows.length > 0 
+                  ? matchingRows.reduce((latest, current) => 
+                      (current.input_id || 0) > (latest.input_id || 0) ? current : latest
+                    )
+                  : null;
                 
                 if (formRow) {
                   let completedCount = 0;
-                  let totalStatusFields = 0;
-                  // Count all Status_ fields for dynamic denominator
-                  for (const key in formRow) {
-                    if (key.startsWith('Status_')) {
-                      totalStatusFields++;
-                      const value = (formRow[key] || '').toString().trim();
-                      if (value === 'Completed' || value === 'Completed and Updated') {
-                        completedCount++;
-                      }
+                  // Dynamically count actual Status fields (Institution forms have varying counts)
+                  const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status_'));
+                  const totalCount = statusKeys.length;
+                  for (const key of statusKeys) {
+                    const value = (formRow[key] || '').toString().trim().toLowerCase();
+                    // Count as completed if status is "completed" or "completed and updated"
+                    if (value === 'completed' || value === 'completed and updated') {
+                      completedCount++;
                     }
+                    // All statuses (including 'Not Applicable', null, empty) are included in denominator
                   }
-                  // Dynamic denominator based on Status_ field count
-                  const percent = totalStatusFields > 0 ? ((completedCount / totalStatusFields) * 100).toFixed(0) + '%' : '0%';
+                  const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
                   
                   if (instPortfolioCount === 0) {
                     instPortfolio1Percent = percent;

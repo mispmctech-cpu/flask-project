@@ -1400,12 +1400,11 @@
             return isNaN(num) ? (isMandatory ? 0 : null) : num;
           };
           
-          // Mandatory scopes - always include (0 if not filled)
+          // Mandatory scope - only Core Scope Monthly (0 if not filled)
           validScores.push(parsePercent(coreScopePercent, true));
-          validScores.push(parsePercent(yearlyPercent, true));
           
-          // Optional portfolios - only include if allocated (0 if allocated but not filled)
-          [deptPortfolio1, deptPortfolio2, instPortfolio1, instPortfolio2].forEach(score => {
+          // Optional scopes - Yearly and portfolios (only include if allocated)
+          [yearlyPercent, deptPortfolio1, deptPortfolio2, instPortfolio1, instPortfolio2].forEach(score => {
             const parsed = parsePercent(score, false);
             if (parsed !== null) validScores.push(parsed);
           });
