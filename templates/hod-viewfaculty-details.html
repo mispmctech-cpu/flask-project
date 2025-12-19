@@ -663,8 +663,8 @@
                 // Count this field as applicable
                 applicableCount++;
                 
-                // Count as completed if status is "completed"
-                if (statusLower === 'completed') {
+                // Count as completed if status is "completed" or "completed and updated"
+                if (statusLower === 'completed' || statusLower === 'completed and updated') {
                   completedCount++;
                 }
               }
@@ -1223,8 +1223,10 @@
                 
                 if (yearlyRow) {
                   let completedCount = 0;
-                  let totalCount = 8; // Fixed denominator of 8 for all designations
-                  for (let i = 1; i <= 8; i++) {
+                  // Professor has 9 particulars, others have 8
+                  let totalCount = desigDisplay === 'Prof' ? 9 : 8;
+                  let maxStatus = desigDisplay === 'Prof' ? 9 : 8;
+                  for (let i = 1; i <= maxStatus; i++) {
                     const status = (yearlyRow[`Status_${i}`] || '').toString().toLowerCase();
                     if (status === 'completed' || status === 'completed and updated') {
                       completedCount++;
