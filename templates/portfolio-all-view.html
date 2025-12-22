@@ -15,8 +15,13 @@
     </div>
     <div class="flex-1 flex flex-col items-center justify-center py-8 px-2">
         <div class="w-full max-w-7xl mx-auto bg-white rounded-2xl card-shadow border border-purple-300 overflow-x-auto p-8 mb-12">
+            <!-- Loading indicator -->
+            <div id="loading-indicator" class="flex flex-col items-center justify-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-800 mb-4"></div>
+                <p class="text-purple-800 font-semibold text-lg">Loading submissions...</p>
+            </div>
             <!-- Month filter dropdown -->
-            <div class="mb-4 flex flex-wrap items-center gap-4">
+            <div id="filter-section" class="mb-4 flex flex-wrap items-center gap-4 hidden">
                 <label for="month-filter" class="font-semibold text-purple-800">Filter by Month:</label>
                 <select id="month-filter" class="border border-purple-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500">
                     <option value="">All Months</option>
@@ -37,7 +42,7 @@
                 </select>
                 <button id="export-excel-btn" class="ml-6 bg-green-500 text-white px-4 py-1 rounded font-semibold hover:bg-green-600 transition">Export to Excel</button>
             </div>
-            <table class="w-full text-sm table-fixed">
+            <table id="data-table" class="w-full text-sm table-fixed hidden">
                 <thead class="bg-orange-400">
                     <tr>
                         <th class="border px-2 py-2 font-bold text-white">Form</th>
@@ -99,18 +104,33 @@
             let rows = [];
             let errorMsg = '';
             try {
-                const { data, error } = await supabaseClient
+                // Try ordering by input_id first, fall back to created_at or no ordering
+                let result = await supabaseClient
                     .from(form.table)
                     .select('*')
                     .order('input_id', { ascending: false });
+                
+                // If input_id ordering fails, try without ordering
+                if (result.error && result.error.message.includes('input_id')) {
+                    result = await supabaseClient
+                        .from(form.table)
+                        .select('*');
+                }
+                
+                const { data, error } = result;
                 if (error) {
                     errorMsg = error.message;
+                    console.error(`Error fetching ${form.table}:`, error.message);
                 }
                 if (data && data.length > 0) {
                     rows = data;
+                    console.log(`Loaded ${data.length} rows from ${form.table}`);
+                } else {
+                    console.log(`No data found in ${form.table}`);
                 }
             } catch (err) {
                 errorMsg = err.message;
+                console.error(`Exception fetching ${form.table}:`, err);
                 rows = [];
             }
             if (rows.length > 0) {
@@ -127,6 +147,11 @@
                 allFormRows.push({ form, row: null, memberName: '', month: '', errorMsg, isLatest: true });
             }
         }
+        // Hide loading indicator and show content
+        document.getElementById('loading-indicator').classList.add('hidden');
+        document.getElementById('filter-section').classList.remove('hidden');
+        document.getElementById('data-table').classList.remove('hidden');
+        
         renderMonthDropdown();
         renderPortfolioTable();
     }
