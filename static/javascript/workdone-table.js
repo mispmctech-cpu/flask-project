@@ -381,7 +381,13 @@ class WorkdoneTable {
           }
           
           // Filter by department
+          // For Institution forms (table name starts with 'Institution-'), include all records regardless of department
+          const isInstitutionForm = entry.table.toLowerCase().startsWith('institution-');
           const filtered = data.filter(row => {
+            if (isInstitutionForm) {
+              // Institution forms don't have department - show them for all users
+              return true;
+            }
             const rowDept = row['Department'] || row['Department:'] || row['department'] || row['department:'] || '';
             return this.eq(rowDept, department);
           });
@@ -389,6 +395,11 @@ class WorkdoneTable {
           // Debug: Log filtered results for form2-daily
           if (entry.table === 'form2-daily') {
             console.log(`🔍 DEBUG: After department filter, form2-daily has ${filtered.length} records for department "${department}"`);
+          }
+          
+          // Debug: Log Institution form results
+          if (isInstitutionForm && filtered.length > 0) {
+            console.log(`📋 Institution form ${entry.table}: Found ${filtered.length} records`);
           }
 
           // Add portfolio info and calculate status, with frequency detection
@@ -451,8 +462,9 @@ class WorkdoneTable {
             row.verificationStatus = verificationStatus;
             
             // Add member name and department for display
-            row.member = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
-            row.department = row['Department'] || row['Department:'] || row['department'] || row['department:'] || department;
+            // For Institution forms, also check for "Portfolio Member Name:" with colon
+            row.member = row['Portfolio Member Name:'] || row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+            row.department = row['Department'] || row['Department:'] || row['department'] || row['department:'] || (entry.table.toLowerCase().startsWith('institution-') ? 'Institution' : department);
           });
 
           // Filter out already verified records based on composite key (input_id + table_name)
@@ -730,7 +742,7 @@ class WorkdoneTable {
     }
 
     if (!rows || rows.length === 0) {
-      tbody.innerHTML = `<tr><td colspan='6' class='text-center text-gray-400 p-4'>No workdone records found for this department.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan='7' class='text-center text-gray-400 p-4'>No workdone records found for this department.</td></tr>`;
       return;
     }
 
@@ -755,6 +767,18 @@ class WorkdoneTable {
         statusTooltip = 'Pending verification by HOD';
       }
 
+      // Format submission date
+      let submissionDate = row.submitted_at || row.created_at || row.updated_at || '';
+      if (submissionDate) {
+        try {
+          submissionDate = new Date(submissionDate).toLocaleString();
+        } catch (e) {
+          submissionDate = submissionDate.toString();
+        }
+      } else {
+        submissionDate = '-';
+      }
+
       // Simple verification check - you can enhance this to check against hod-workdone table
       const verifyButtonHtml = `<button class="bg-green-500 hover:bg-green-700 text-white px-3 py-1 rounded text-sm" onclick="verifyRow(this, ${idx})">Verify</button>`;
       
@@ -762,6 +786,7 @@ class WorkdoneTable {
         <td class='p-3 border-r border-gray-200'>${row.department}</td>
         <td class='p-3 border-r border-gray-200'>${row.portfolio}</td>
         <td class='p-3 border-r border-gray-200'>${row.member}</td>
+        <td class='p-3 border-r border-gray-200'>${submissionDate}</td>
         <td class='p-3 border-r border-gray-200 text-center'><span class='${statusClass}' title='${statusTooltip}'>${statusSymbol}</span></td>
         <td class='p-3 text-center'>${verifyButtonHtml}</td>
         <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewRowDetails(${idx})">View</button></td>
