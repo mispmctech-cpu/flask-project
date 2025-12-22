@@ -62,7 +62,7 @@
     </div>
     <script>
     // Supabase setup
-    const supabase = window.supabase.createClient(
+    const supabaseClient = window.supabase.createClient(
         "https://cbhodgwaazmjszkujrti.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
     );
@@ -99,7 +99,7 @@
             let rows = [];
             let errorMsg = '';
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from(form.table)
                     .select('*')
                     .order('input_id', { ascending: false });
