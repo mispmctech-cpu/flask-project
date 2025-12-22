@@ -165,7 +165,12 @@ document.addEventListener('DOMContentLoaded', function() {
 					</table>
 				</div>
 				<div class="flex justify-center mt-10">
-					<button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
+					<button type="submit" id="submit-btn" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
+				</div>
+				<!-- Loading indicator -->
+				<div id="submit-loading" class="hidden flex flex-col items-center justify-center py-4">
+					<div class="animate-spin rounded-full h-10 w-10 border-4 border-purple-200 border-t-purple-800 mb-2"></div>
+					<p class="text-purple-800 font-semibold">Submitting form, please wait...</p>
 				</div>
 			</form>
 		</div>
@@ -209,20 +214,25 @@ document.addEventListener('DOMContentLoaded', function() {
 		tbody.appendChild(tr);
 	});
 	// Supabase setup
-	const supabase = window.supabase.createClient(
+	const supabaseClient = window.supabase.createClient(
 		"https://cbhodgwaazmjszkujrti.supabase.co",
 		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
 	);
 	async function uploadFileToStorage(file, path) {
 		if (!file) return null;
-		const { data, error } = await supabase.storage.from('institution-files11').upload(path, file, { upsert: true });
+		const { data, error } = await supabaseClient.storage.from('institution-files11').upload(path, file, { upsert: true });
 		if (error) throw error;
-		const { data: urlData } = supabase.storage.from('institution-files11').getPublicUrl(path);
+		const { data: urlData } = supabaseClient.storage.from('institution-files11').getPublicUrl(path);
 		return urlData.publicUrl;
 	}
 	// Form submit
 	document.getElementById('form11').addEventListener('submit', async function(e) {
 		e.preventDefault();
+		
+		// Show loading indicator
+		document.getElementById('submit-btn').classList.add('hidden');
+		document.getElementById('submit-loading').classList.remove('hidden');
+		
 		const form = e.target;
 		const formData = new FormData(form);
 		const row = {
@@ -240,6 +250,8 @@ document.addEventListener('DOMContentLoaded', function() {
 			       try {
 				       row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
 			       } catch (err) {
+				       document.getElementById('submit-btn').classList.remove('hidden');
+				       document.getElementById('submit-loading').classList.add('hidden');
 				       window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
 				       return;
 			       }
@@ -247,11 +259,18 @@ document.addEventListener('DOMContentLoaded', function() {
 			       row[`Upload the scanned file_${i}`] = null;
 		       }
 	       }
+		
+		console.log('Submitting row to Institution-form11:', row);
+		
 		// Submit to Supabase
-		const { data, error } = await supabase.from('Institution-form11').insert([row]);
+		const { data, error } = await supabaseClient.from('Institution-form11').insert([row]);
 		if (error) {
+			console.error('Supabase insert error:', error);
+			document.getElementById('submit-btn').classList.remove('hidden');
+			document.getElementById('submit-loading').classList.add('hidden');
 			window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
 		} else {
+			console.log('Form submitted successfully:', data);
 			window.location.href = 'notification.html?status=success';
 		}
 	});
@@ -278,8 +297,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </p>
   </footer>
 
-<!-- Supabase JS CDN (required for month-filter.js) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+<!-- Month filter script (Supabase already loaded above) -->
 <script src="../static/javascript/month-filter.js"></script>
 </body>
 </html>
