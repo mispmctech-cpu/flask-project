@@ -1579,25 +1579,76 @@
         return;
       }
       
-      // Build faculty list with checkboxes
-      let listHTML = '<div class="space-y-2">';
+      // Group faculty by designation
+      const designationGroups = {};
       rows.forEach((row, idx) => {
         const facultyName = row.dataset.facultyName || '';
         const dept = row.dataset.dept || '';
         const designation = row.dataset.designation || '';
         
-        listHTML += `<div class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded">`;
-        listHTML += `<input type="checkbox" checked class="modal-faculty-checkbox w-5 h-5 cursor-pointer" data-row-index="${idx}" id="faculty-cb-${idx}">`;
-        listHTML += `<label for="faculty-cb-${idx}" class="cursor-pointer flex-1">`;
-        listHTML += `<span class="font-semibold text-gray-800">${facultyName}</span>`;
-        listHTML += `<span class="text-sm text-gray-600 ml-2">(${designation} - ${dept})</span>`;
-        listHTML += `</label>`;
+        if (!designationGroups[designation]) {
+          designationGroups[designation] = [];
+        }
+        designationGroups[designation].push({ facultyName, dept, designation, idx });
+      });
+      
+      // Build expandable list grouped by designation
+      let listHTML = '<div class="space-y-3">';
+      const designationOrder = ['Prof', 'ASP', 'AP'];
+      
+      designationOrder.forEach(desig => {
+        if (!designationGroups[desig]) return;
+        
+        const facultyList = designationGroups[desig];
+        const groupId = `group-${desig}`;
+        
+        listHTML += `<div class="border border-gray-300 rounded-lg overflow-hidden">`;
+        
+        // Designation header with checkbox and expand/collapse
+        listHTML += `<div class="bg-blue-50 p-3 flex items-center gap-3 cursor-pointer hover:bg-blue-100" onclick="toggleDesignationGroup('${groupId}')">`;
+        listHTML += `<input type="checkbox" checked class="designation-checkbox w-5 h-5 cursor-pointer" data-designation="${desig}" onclick="event.stopPropagation(); toggleDesignation(this, '${desig}')">`;
+        listHTML += `<svg class="w-5 h-5 text-gray-600 expand-icon" id="icon-${groupId}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
+        listHTML += `<span class="font-bold text-blue-900">${desig} (${facultyList.length} faculty)</span>`;
+        listHTML += `</div>`;
+        
+        // Faculty list (initially visible)
+        listHTML += `<div id="${groupId}" class="designation-group">`;
+        facultyList.forEach(({ facultyName, dept, designation, idx }) => {
+          listHTML += `<div class="flex items-center gap-3 p-3 hover:bg-gray-50 border-t border-gray-200">`;
+          listHTML += `<div class="w-5"></div>`; // Indent
+          listHTML += `<input type="checkbox" checked class="modal-faculty-checkbox w-5 h-5 cursor-pointer" data-row-index="${idx}" data-designation="${desig}" id="faculty-cb-${idx}">`;
+          listHTML += `<label for="faculty-cb-${idx}" class="cursor-pointer flex-1">`;
+          listHTML += `<span class="font-semibold text-gray-800">${facultyName}</span>`;
+          listHTML += `<span class="text-sm text-gray-600 ml-2">(${designation} - ${dept})</span>`;
+          listHTML += `</label>`;
+          listHTML += `</div>`;
+        });
+        listHTML += `</div>`;
+        
         listHTML += `</div>`;
       });
+      
       listHTML += '</div>';
       
       document.getElementById('facultySelectionList').innerHTML = listHTML;
       document.getElementById('facultySelectionModal').classList.remove('hidden');
+    }
+    
+    function toggleDesignationGroup(groupId) {
+      const group = document.getElementById(groupId);
+      const icon = document.getElementById(`icon-${groupId}`);
+      if (group.style.display === 'none') {
+        group.style.display = 'block';
+        icon.style.transform = 'rotate(0deg)';
+      } else {
+        group.style.display = 'none';
+        icon.style.transform = 'rotate(-90deg)';
+      }
+    }
+    
+    function toggleDesignation(checkbox, designation) {
+      const checkboxes = document.querySelectorAll(`.modal-faculty-checkbox[data-designation="${designation}"]`);
+      checkboxes.forEach(cb => cb.checked = checkbox.checked);
     }
     
     function closeFacultySelectionModal() {
@@ -1607,11 +1658,15 @@
     function selectAllFacultyInModal() {
       const checkboxes = document.querySelectorAll('.modal-faculty-checkbox');
       checkboxes.forEach(cb => cb.checked = true);
+      const designationCheckboxes = document.querySelectorAll('.designation-checkbox');
+      designationCheckboxes.forEach(cb => cb.checked = true);
     }
     
     function deselectAllFacultyInModal() {
       const checkboxes = document.querySelectorAll('.modal-faculty-checkbox');
       checkboxes.forEach(cb => cb.checked = false);
+      const designationCheckboxes = document.querySelectorAll('.designation-checkbox');
+      designationCheckboxes.forEach(cb => cb.checked = false);
     }
     
     function confirmFacultySelectionAndExport() {
