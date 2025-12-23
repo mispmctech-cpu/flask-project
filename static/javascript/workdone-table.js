@@ -332,6 +332,11 @@ class WorkdoneTable {
 
     for (const entry of this.formTables) {
       try {
+        // Skip institution forms for HOD department view
+        if (entry.table.toLowerCase().startsWith('institution-')) {
+          continue;
+        }
+        
         // Fetch all records with pagination (handle >1000 records)
         let allData = [];
         let rangeStart = 0;

@@ -422,6 +422,7 @@
       html += `<th class="px-3 py-2 bg-green-700" style="min-width: 120px;">Designation</th>`;
       html += `<th class="px-3 py-2" style="min-width: 180px;">Faculty Name</th>`;
       html += `<th class="px-3 py-2" style="min-width: 100px;">Percentage</th>`;
+      html += `<th class="px-3 py-2" style="min-width: 120px;">Verification</th>`;
       
       // Add columns for all 15 status fields with full descriptions as tooltips
       for (let i = 0; i < 15; i++) {
@@ -430,15 +431,25 @@
       
       html += `</tr></thead><tbody>`;
       
+      // Fetch both Hod-workdone and hod-workdone_reject data
+      const [verifyRes, rejectRes] = await Promise.all([
+        supabaseClient.from('Hod-workdone').select('*'),
+        supabaseClient.from('hod-workdone_reject').select('*')
+      ]);
+      const verifyDataMap = verifyRes.data || [];
+      const rejectDataMap = rejectRes.data || [];
+      
       // Process each faculty
+      let facultyIndex = 0;
       for (const fac of filteredFacultyList) {
+        facultyIndex++;
         const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
         const dept = fac.department || department;
         const designation = fac.Designation || 'N/A';
         
-        // Normalize designation for display
+        // Normalize designation for display - trim to remove whitespace and special characters
         let desigDisplay = designation;
-        const desigUpper = designation.toUpperCase();
+        const desigUpper = designation.toString().trim().toUpperCase();
         if (desigUpper === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
         else if (desigUpper === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
         else if (desigUpper === 'PROFESSOR') desigDisplay = 'Prof';
@@ -488,6 +499,7 @@
         html += `<td class="px-3 py-2 border font-medium">${desigDisplay}</td>`;
         html += `<td class="px-3 py-2 border font-medium text-green-700">${facultyName}</td>`;
         html += `<td class="px-3 py-2 border ${percentageClass} font-semibold">${percentageDisplay}</td>`;
+        html += `<td class="px-3 py-2 border text-center" id="verify-core-${facultyIndex}"><span class="text-gray-400">-</span></td>`;
         
         // Add status cells for all 15 fields
         for (let i = 1; i <= 15; i++) {
@@ -530,6 +542,71 @@
       html += `</tbody></table></div>`;
       
       document.getElementById('coreScopeTableContainer').innerHTML = html || '<div class="text-gray-500">No faculty data found.</div>';
+      
+      // Async verification checks for each row
+      let rowIndex = 0;
+      for (const fac of filteredFacultyList) {
+        rowIndex++;
+        (async function(index, faculty) {
+          const verifyCell = document.getElementById(`verify-core-${index}`);
+          if (!verifyCell) return;
+          
+          const facultyName = faculty.Name || faculty['Portfolio Member Name'] || faculty.email || 'Unknown';
+          const dept = faculty.department || 'Unknown';
+          
+          // Find matching Core_scope data
+          let facNamesToTry = [];
+          if (faculty['Portfolio Member Name']) facNamesToTry.push(faculty['Portfolio Member Name']);
+          if (faculty.Name) facNamesToTry.push(faculty.Name);
+          if (faculty.email) facNamesToTry.push(faculty.email);
+          facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n || '').toString().trim().toLowerCase()).filter(Boolean)));
+          
+          let matchingRows = [];
+          if (coreScopeData && coreScopeData.length > 0) {
+            matchingRows = coreScopeData.filter(row => {
+              const rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+              return facNamesToTry.includes(rowName);
+            });
+          }
+          
+          if (matchingRows.length === 0) {
+            verifyCell.innerHTML = '<span class="text-gray-400" title="No data submitted">-</span>';
+            return;
+          }
+          
+          matchingRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
+          const row = matchingRows[0];
+          
+          // Check if rejected first
+          const matchingReject = rejectDataMap.find(v => 
+            v.department === dept &&
+            v.portfolio_member_name?.toLowerCase() === facultyName.toLowerCase() &&
+            ((v.table_name && v.table_name.toLowerCase().includes('core')) || 
+             v.input_id === row.input_id)
+          );
+          
+          if (matchingReject) {
+            const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
+            const reason = matchingReject.Commands || 'No reason provided';
+            verifyCell.innerHTML = `<span class="text-red-600 font-bold text-lg" title="Rejected by HOD on ${rejectDate}\nReason: ${reason}">✗</span>`;
+          } else {
+            // Check if verified
+            const matchingVerify = verifyDataMap.find(v => 
+              v.department === dept &&
+              v.portfolio_member_name?.toLowerCase() === facultyName.toLowerCase() &&
+              ((v.table_name && v.table_name.toLowerCase().includes('core')) || 
+               v.input_id === row.input_id)
+            );
+            
+            if (matchingVerify) {
+              const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
+              verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
+            } else {
+              verifyCell.innerHTML = '<span class="text-orange-500 font-bold text-lg" title="Pending verification">⚠</span>';
+            }
+          }
+        })(rowIndex, fac);
+      }
     }
     // --- END NEW: Core Scope Table ---
   </script>
@@ -582,6 +659,7 @@
       html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:180px;">Faculty Name</th>';
       html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:200px;">Portfolio Name</th>';
       html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:150px;">Percentage</th>';
+      html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:120px;">Verification</th>';
       html += '</tr></thead>';
       html += '<tbody>';
       
@@ -626,6 +704,7 @@
         html += `<td class="px-3 py-2 border border-gray-400" style="min-width:180px;">${row.facultyName}</td>`;
         html += `<td class="px-3 py-2 border border-gray-400" style="min-width:200px;">${row.portfolioName}</td>`;
         html += `<td class="px-3 py-2 border border-gray-400" style="min-width:150px;" id="percent-${row.rowId}">Loading...</td>`;
+        html += `<td class="px-3 py-2 border border-gray-400 text-center" id="verify-${row.rowId}" style="min-width:120px;"><span class="text-gray-400">-</span></td>`;
         html += `</tr>`;
       }
       
@@ -692,6 +771,54 @@
               percentCell.innerHTML = `<span class="text-red-600 font-semibold">0% (Not Submitted)</span>`;
             }
           }
+        
+        // Check verification status in both Hod-workdone and hod-workdone_reject tables
+        const verifyCell = document.getElementById(`verify-${row.rowId}`);
+        if (verifyCell && bestRow) {
+          // Extract form number from table name (e.g., "form2-monthly" -> "form2")
+          const formNumber = row.tableName.match(/form\d+/)?.[0] || row.tableName;
+          
+          // Check if rejected first
+          const { data: rejectData } = await supabaseClient
+            .from('hod-workdone_reject')
+            .select('*')
+            .eq('department', row.dept)
+            .ilike('portfolio_member_name', row.facultyName);
+          
+          const matchingReject = rejectData?.find(v => {
+            const tableNameMatch = v.table_name && v.table_name.toLowerCase().includes(formNumber.toLowerCase());
+            const inputIdMatch = v.input_id === bestRow.input_id;
+            return tableNameMatch || inputIdMatch;
+          });
+          
+          if (matchingReject) {
+            const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
+            const reason = matchingReject.Commands || 'No reason provided';
+            verifyCell.innerHTML = `<span class="text-red-600 font-bold text-lg" title="Rejected by HOD on ${rejectDate}\nReason: ${reason}">✗</span>`;
+          } else {
+            // Check if verified
+            const { data: verifyData } = await supabaseClient
+              .from('Hod-workdone')
+              .select('*')
+              .eq('department', row.dept)
+              .ilike('portfolio_member_name', row.facultyName);
+            
+            const matchingVerify = verifyData?.find(v => {
+              const tableNameMatch = v.table_name && v.table_name.toLowerCase().includes(formNumber.toLowerCase());
+              const inputIdMatch = v.input_id === bestRow.input_id;
+              return tableNameMatch || inputIdMatch;
+            });
+            
+            if (matchingVerify) {
+              const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
+              verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
+            } else {
+              verifyCell.innerHTML = '<span class="text-orange-500 font-bold text-lg" title="Pending verification">⚠</span>';
+            }
+          }
+        } else if (verifyCell) {
+          verifyCell.innerHTML = '<span class="text-gray-400" title="No data submitted">-</span>';
+        }
         })();
       }
       
@@ -811,20 +938,23 @@
           if (group.length === 0) continue;
           html += `<h3 class="text-xl font-semibold text-purple-700 mt-8 mb-2">${key === 'AP' ? 'Assistant Professor (AP)' : key === 'ASP' ? 'Associate Professor (ASP)' : 'Professor (Prof)'}</h3>`;
           const particulars = particularsMap[key];
-          html += `<div class="overflow-auto mb-6 border rounded-lg shadow-sm" style="max-height: 600px;"><table class="min-w-full text-sm bg-white"><thead class="bg-purple-700 text-white sticky top-0 z-20"><tr><th class="px-4 py-2 sticky left-0 bg-purple-700 z-30">Department</th><th class="px-4 py-2 bg-purple-700">Designation</th><th class="px-4 py-2 bg-purple-700">Faculty Name</th><th class="px-4 py-2 bg-purple-700">Percentage</th>`;
+          html += `<div class="overflow-auto mb-6 border rounded-lg shadow-sm" style="max-height: 600px;"><table class="min-w-full text-sm bg-white"><thead class="bg-purple-700 text-white sticky top-0 z-20"><tr><th class="px-4 py-2 sticky left-0 bg-purple-700 z-30">Department</th><th class="px-4 py-2 bg-purple-700">Designation</th><th class="px-4 py-2 bg-purple-700">Faculty Name</th><th class="px-4 py-2 bg-purple-700">Percentage</th><th class="px-4 py-2 bg-purple-700">Verification</th>`;
           particulars.forEach(particular => {
             html += `<th class="px-4 py-2 bg-purple-700">${particular}</th>`;
           });
           html += `</tr></thead><tbody>`;
+          let yearlyRowIndex = 0;
           for (const fac of group) {
+            yearlyRowIndex++;
+            const yearlyRowId = `yearly-${key}-${yearlyRowIndex}`;
             const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || '';
             const nameTrimmed = facultyName.toString().trim().toLowerCase();
             const dept = fac.department || department;
             const designation = fac.Designation || key;
             
-            // Normalize designation for display
+            // Normalize designation for display - trim to remove whitespace and special characters
             let desigDisplay = designation;
-            const desigUpper = designation.toUpperCase();
+            const desigUpper = designation.toString().trim().toUpperCase();
             if (desigUpper === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
             else if (desigUpper === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
             else if (desigUpper === 'PROFESSOR') desigDisplay = 'Prof';
@@ -856,6 +986,9 @@
             
             // Percentage column with color coding
             html += `<td class="px-2 py-2 border text-center font-bold ${percentage >= 70 ? 'bg-green-100 text-green-700' : percentage >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}">${percentage}%</td>`;
+            
+            // Verification column (will be populated async)
+            html += `<td class="px-2 py-2 border text-center" id="verify-${yearlyRowId}"><span class="text-gray-400">-</span></td>`;
             
             // Display each particular's value in order, matching the header
             particulars.forEach((particular, idx) => {
@@ -912,6 +1045,78 @@
           html += `</tbody></table></div>`;
         }
         document.getElementById('dashboardTableContainer').innerHTML = html || '<div class="text-gray-500">No compliance data found.</div>';
+        
+        // Async verification checks for yearly tables
+        for (const key of ['AP', 'ASP', 'Prof']) {
+          if (designationFilter !== 'All' && designationFilter !== key) continue;
+          const group = groups[key];
+          if (group.length === 0) continue;
+          
+          let yearlyRowIndex = 0;
+          for (const fac of group) {
+            yearlyRowIndex++;
+            const yearlyRowId = `yearly-${key}-${yearlyRowIndex}`;
+            const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || '';
+            const nameTrimmed = facultyName.toString().trim().toLowerCase();
+            const dept = fac.department || department;
+            const row = formDataMaps[key][nameTrimmed] || null;
+            
+            (async function(rowId, facName, deptName, formRow, designation) {
+              const verifyCell = document.getElementById(`verify-${rowId}`);
+              if (!verifyCell) return;
+              
+              if (!formRow) {
+                verifyCell.innerHTML = '<span class="text-gray-400" title="No data submitted">-</span>';
+                return;
+              }
+              
+              // Determine table name
+              let tableName = '';
+              if (designation === 'AP') tableName = 'ap(yearly)';
+              else if (designation === 'ASP') tableName = 'asp(yearly)';
+              else if (designation === 'Prof') tableName = 'prof(yearly)';
+              
+              // Check if rejected first
+              const { data: rejectData } = await supabaseClient
+                .from('hod-workdone_reject')
+                .select('*')
+                .eq('department', deptName)
+                .ilike('portfolio_member_name', facName);
+              
+              const matchingReject = rejectData?.find(v => {
+                const tableNameMatch = v.table_name && v.table_name.toLowerCase().includes('yearly');
+                const inputIdMatch = v.input_id === formRow.input_id;
+                return tableNameMatch || inputIdMatch;
+              });
+              
+              if (matchingReject) {
+                const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
+                const reason = matchingReject.Commands || 'No reason provided';
+                verifyCell.innerHTML = `<span class="text-red-600 font-bold text-lg" title="Rejected by HOD on ${rejectDate}\\nReason: ${reason}">✗</span>`;
+              } else {
+                // Check if verified
+                const { data: verifyData } = await supabaseClient
+                  .from('Hod-workdone')
+                  .select('*')
+                  .eq('department', deptName)
+                  .ilike('portfolio_member_name', facName);
+                
+                const matchingVerify = verifyData?.find(v => {
+                  const tableNameMatch = v.table_name && v.table_name.toLowerCase().includes('yearly');
+                  const inputIdMatch = v.input_id === formRow.input_id;
+                  return tableNameMatch || inputIdMatch;
+                });
+                
+                if (matchingVerify) {
+                  const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
+                  verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
+                } else {
+                  verifyCell.innerHTML = '<span class="text-orange-500 font-bold text-lg" title="Pending verification">⚠</span>';
+                }
+              }
+            })(yearlyRowId, facultyName, dept, row, key);
+          }
+        }
       })();
     }
     
@@ -1098,8 +1303,8 @@
           const dept = fac.department || 'Unknown';
           const designation = fac.Designation || 'N/A';
           
-          // Normalize designation
-          const desig = designation.toUpperCase();
+          // Normalize designation - trim to remove whitespace and special characters like \r\n
+          const desig = designation.toString().trim().toUpperCase();
           if (desig !== 'AP' && desig !== 'ASSISTANT PROFESSOR' && 
               desig !== 'ASP' && desig !== 'ASSOCIATE PROFESSOR' && 
               desig !== 'PROF' && desig !== 'PROFESSOR') {
@@ -1380,8 +1585,8 @@
           const dept = fac.department || 'Unknown';
           const designation = fac.Designation || 'N/A';
           
-          // Normalize designation
-          const desig = designation.toUpperCase();
+          // Normalize designation - trim to remove whitespace and special characters like \r\n
+          const desig = designation.toString().trim().toUpperCase();
           if (desig !== 'AP' && desig !== 'ASSISTANT PROFESSOR' && 
               desig !== 'ASP' && desig !== 'ASSOCIATE PROFESSOR' && 
               desig !== 'PROF' && desig !== 'PROFESSOR') {
