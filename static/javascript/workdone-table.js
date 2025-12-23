@@ -791,8 +791,8 @@ class WorkdoneTable {
         <td class='p-3 border-r border-gray-200'>${row.department}</td>
         <td class='p-3 border-r border-gray-200'>${row.portfolio}</td>
         <td class='p-3 border-r border-gray-200'>${row.member}</td>
-        <td class='p-3 border-r border-gray-200'>${submissionDate}</td>
         <td class='p-3 border-r border-gray-200 text-center'><span class='${statusClass}' title='${statusTooltip}'>${statusSymbol}</span></td>
+        <td class='p-3 border-r border-gray-200'>${submissionDate}</td>
         <td class='p-3 text-center'>${verifyButtonHtml}</td>
         <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewRowDetails(${idx})">View</button></td>
       </tr>`;
