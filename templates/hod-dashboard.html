@@ -1996,26 +1996,10 @@
 
         html += '</tbody></table>';
         
-        // Add empty rows if less than 10 total rows
-        const totalRows = selectedRows.length;
-        if (totalRows < 10) {
-          html += `<table style="width:100%;border-collapse:collapse;font-size:9px;margin-bottom:10px;">`;
-          html += '<tbody>';
-          for (let i = totalRows; i < 10; i++) {
-            html += '<tr>';
-            html += `<td style="border:1px solid #999;padding:3px;text-align:center;width:${colWidths[0]};">${i + 1}.</td>`;
-            for (let j = 1; j < 12; j++) {
-              html += `<td style="border:1px solid #999;padding:3px;width:${colWidths[j]};height:30px;"></td>`;
-            }
-            html += '</tr>';
-          }
-          html += '</tbody></table>';
-        }
-        
         // Signature section at the bottom
         html += `<div style="margin-top:40px;display:flex;justify-content:space-around;align-items:flex-end;">`;
-        html += `<div style="text-align:center;"><div style="font-size:14px;font-weight:700;padding-top:5px;width:180px;">HOD SIGN</div></div>`;
-        html += `<div style="text-align:center;"><div style="font-size:14px;font-weight:700;padding-top:5px;width:180px;">PRINCIPAL SIGN</div></div>`;
+        html += `<div style="text-align:center;"><div style="font-size:14px;font-weight:700;padding-top:5px;width:180px;">HOD</div></div>`;
+        html += `<div style="text-align:center;"><div style="font-size:14px;font-weight:700;padding-top:5px;width:180px;">PRINCIPAL</div></div>`;
         html += `</div>`;
 
         wrapper.innerHTML = html;
