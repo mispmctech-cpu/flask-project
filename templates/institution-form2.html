@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
@@ -257,7 +257,7 @@
                         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
                         <input type="file" name="Upload the scanned file_${sn}" accept=".pdf,.jpg,.jpeg,.png" class="file-input" data-row="${sn}" />
                     </label>
-                    <span class="file-check hidden text-green-600 font-bold ml-2" data-row="${sn}">✓ Uploaded</span>
+                    <span class="file-check hidden text-green-600 font-bold ml-2" data-row="${sn}">? Uploaded</span>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -361,5 +361,7 @@
     <!-- Supabase JS CDN already loaded at top of file -->
     <script src="../static/javascript/month-filter.js"></script>
 
+    <!-- Form Access Control - checks if form is open/closed -->
+    <script src="../static/javascript/form-access-control.js"></script>
 </body>
 </html>

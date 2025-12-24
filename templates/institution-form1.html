@@ -1,4 +1,4 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
@@ -81,7 +81,7 @@
 			<div class="w-full max-w-6xl mx-auto bg-white rounded-2xl card-shadow border border-purple-300 overflow-x-auto p-0">
 				<div class="bg-purple-800 py-8 px-6 text-white text-center w-full rounded-t-2xl">
 					<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2R7bHsdVlhJda1oUOZ1NPc7lvacTuGPvHgg&s" alt="" class="h-16 mb-2" style="max-height:64px; float: left;" />
-					<h1 class="text-2xl md:text-4xl font-extrabold tracking-wide mb-2 drop-shadow">Director â€“ Students Welfare & Admissions</h1>
+					<h1 class="text-2xl md:text-4xl font-extrabold tracking-wide mb-2 drop-shadow">Director – Students Welfare & Admissions</h1>
 				</div>
 				<form id="instForm1" class="p-6 md:p-10 space-y-10 w-full">
 			<div class="grid grid-cols-1 md:grid-cols-3 gap-8 bg-purple-50 rounded-xl p-8 card-shadow mb-8">
@@ -195,10 +195,10 @@
 		'Ensure adherence to reservation policies and government norms.',
 		// 10. Outreach and Branding
 		'Lead institutional outreach through school visits, education fairs, and digital campaigns.',
-		'Collaborate with marketing teams to develop brochures, videos, and online content that highlight the collegeâ€™s strengths.',
+		'Collaborate with marketing teams to develop brochures, videos, and online content that highlight the college’s strengths.',
 		'Build relationships with feeder institutions and career counsellors.',
 		// 11. Application and Selection Process
-		'Oversee the entire admissions cycleâ€”from application receipt to final enrolment.',
+		'Oversee the entire admissions cycle—from application receipt to final enrolment.',
 		'Coordinate entrance exams, interviews, and counselling sessions.',
 		'Ensure timely communication with applicants and resolution of queries.',
 		// 12. Data Management and Reporting
@@ -206,7 +206,7 @@
 		'Analyse data to refine recruitment strategies and forecast future intake.',
 		'Prepare reports for internal review and regulatory compliance.',
 		// 13. Application and Selection Process (repeat)
-		'Oversee the entire admissions cycleâ€”from application receipt to final enrolment. (Repeat)',
+		'Oversee the entire admissions cycle—from application receipt to final enrolment. (Repeat)',
 		'Coordinate entrance exams, interviews, and counselling sessions. (Repeat)',
 		'Ensure timely communication with applicants and resolution of queries. (Repeat)',
 		// 14. Data Management and Reporting (repeat)
@@ -226,7 +226,7 @@
 			<td class="border px-2 py-1"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
 			<td class="border px-2 py-1">
 				<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
-				<span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">âœ“</span>
+				<span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">?</span>
 				<input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
 			</td>
 		`;
@@ -382,5 +382,7 @@ document.addEventListener('change', async function(e) {
 		<!-- Month filter script for admin-controlled month disabling -->
 		<script src="../static/javascript/month-filter.js"></script>
 
+    <!-- Form Access Control - checks if form is open/closed -->
+    <script src="../static/javascript/form-access-control.js"></script>
 </body>
 </html>

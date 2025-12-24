@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
@@ -193,7 +193,7 @@
 		{ name: 'Students Feedback on Faculty File', tat: 'Once in 2 Months', status: 'Consolidated Feedback report' },
 		{ name: 'Feedback Analysis & Action Taken Report File', tat: 'Once in 2 Months', status: 'Consolidated Action taken report' },
 		{ name: 'Students Grievance Redressal file (Academic & Non Academic)', tat: 'Once in 2 Months', status: 'Consolidated grievances addressed with action taken' },
-		{ name: 'Self-Learning Facilities file', tat: 'Once in a Semester', status: 'Index – List of facilities' }
+		{ name: 'Self-Learning Facilities file', tat: 'Once in a Semester', status: 'Index � List of facilities' }
 	];
 
 	// Render table rows
@@ -217,7 +217,7 @@
 			<td class="border px-2 py-1">
 				<input type="file" class="file-input-row hidden" data-row="${idx}" accept=".pdf,.jpg,.jpeg,.png">
 				<button type="button" class="upload-btn bg-purple-100 text-purple-800 font-semibold px-3 py-1 rounded w-full hover:bg-purple-200 transition" data-row="${idx}">Upload</button>
-				<span class="file-check hidden text-green-600 text-xl ml-2" data-row="${idx}">✓</span>
+				<span class="file-check hidden text-green-600 text-xl ml-2" data-row="${idx}">?</span>
 			</td>
 			<td class="border px-2 py-1">
 				<input type="text" name="Description_${idx}" placeholder="${row.status}" class="w-full px-2 py-1 border border-gray-300 rounded">
@@ -362,5 +362,7 @@
 			<p class="text-xs opacity-80">A Student driven Software!</p>
 		</p>
 	</footer>
+    <!-- Form Access Control - checks if form is open/closed -->
+    <script src="../static/javascript/form-access-control.js"></script>
 </body>
 </html>

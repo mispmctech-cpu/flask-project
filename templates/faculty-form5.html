@@ -1,4 +1,4 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
@@ -181,12 +181,12 @@
 
 	// Table data from image (12 rows)
 	const tableData = [
-		{ name: 'Cocurricular Activities (Including MOU, Professional Body, Association, Club activities) File', tat: 'Weekly', status: 'Index â€“ List of activities completed' },
-		{ name: 'MOU & Professional Body Documents (Including office Bearers)', tat: 'Weekly', status: 'Index â€“ List of activities completed with office bearers list' },
-		{ name: 'Industry Visit file', tat: 'Weekly', status: 'Index â€“ List of Industry Visits completed' },
-		{ name: 'Entrepreneurship Activities File', tat: 'Weekly', status: 'Index â€“ List of EDC activities completed' },
-		{ name: 'Student Internship File', tat: 'Weekly', status: 'Index â€“ List of students internships completed with details' },
-		{ name: 'Student In-plant Training File', tat: 'Weekly', status: 'Index â€“ List of students internships completed with details' },
+		{ name: 'Cocurricular Activities (Including MOU, Professional Body, Association, Club activities) File', tat: 'Weekly', status: 'Index – List of activities completed' },
+		{ name: 'MOU & Professional Body Documents (Including office Bearers)', tat: 'Weekly', status: 'Index – List of activities completed with office bearers list' },
+		{ name: 'Industry Visit file', tat: 'Weekly', status: 'Index – List of Industry Visits completed' },
+		{ name: 'Entrepreneurship Activities File', tat: 'Weekly', status: 'Index – List of EDC activities completed' },
+		{ name: 'Student Internship File', tat: 'Weekly', status: 'Index – List of students internships completed with details' },
+		{ name: 'Student In-plant Training File', tat: 'Weekly', status: 'Index – List of students internships completed with details' },
 		{ name: 'Dept. Technical Magazine', tat: 'Once in 3 Months', status: 'Magazine copy' },
 		{ name: 'Dept. News letter', tat: 'Once in 3 Months', status: 'Newsletter Copy' },
 		{ name: 'Website Updation File', tat: 'Once in 3 Months', status: 'Index - List of things updated in website' },
@@ -215,7 +215,7 @@
 			</td>
 			<td class="border px-2 py-1">
 				<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
-				<span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">âœ“</span>
+				<span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">?</span>
 				<input type="file" name="Upload a Scanned File_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
 			</td>
 			<td class="border px-2 py-1">
@@ -356,5 +356,7 @@
 			<p class="text-xs opacity-80">A Student driven Software!</p>
 		</p>
 	</footer>
+    <!-- Form Access Control - checks if form is open/closed -->
+    <script src="../static/javascript/form-access-control.js"></script>
 </body>
 </html>

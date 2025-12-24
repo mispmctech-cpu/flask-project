@@ -1,4 +1,4 @@
-﻿</script>
+</script>
 <script src="https://unpkg.com/@supabase/supabase-js"></script>
 <script>
 // Auto-fill Portfolio Name, Portfolio Member Name, and Month from localStorage if available (like institution-form4.html)
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
               <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
               <input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="file-input" data-row="${idx}" />
             </label>
-            <span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">✓ Uploaded</span>
+            <span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">? Uploaded</span>
           </td>
         `;
         tbody1.appendChild(tr);
@@ -315,5 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		<!-- Supabase JS CDN (required for month-filter.js) -->
 		<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 		<script src="../static/javascript/month-filter.js"></script>
+    <!-- Form Access Control - checks if form is open/closed -->
+    <script src="../static/javascript/form-access-control.js"></script>
 </body>
 </html>

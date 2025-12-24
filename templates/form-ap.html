@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -290,7 +290,7 @@
             </td>
             <td class="border px-2 py-1">
                 <button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
-                <span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">✓</span>
+                <span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">?</span>
                 <input type="file" name="Upload The Scanned File_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
             </td>
         `;
@@ -635,5 +635,7 @@
             <p class="text-xs opacity-80">A Student driven Software!</p>
         </p>
     </footer>
+    <!-- Form Access Control - checks if form is open/closed -->
+    <script src="../static/javascript/form-access-control.js"></script>
 </body>
 </html>
