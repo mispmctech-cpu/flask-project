@@ -279,15 +279,15 @@
     });
 
     // Supabase integration (update table/bucket names as needed)
-    const supabase = window.supabase.createClient(
+    const supabaseDB = window.supabase.createClient(
         "https://cbhodgwaazmjszkujrti.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
     );
     async function uploadFileToStorage(file, path) {
         if (!file) return null;
-        const { data, error } = await supabase.storage.from('Institution form2').upload(path, file, { upsert: true });
+        const { data, error } = await supabaseDB.storage.from('Institution form2').upload(path, file, { upsert: true });
         if (error) throw error;
-        const { data: urlData } = supabase.storage.from('Institution form2').getPublicUrl(path);
+        const { data: urlData } = supabaseDB.storage.from('Institution form2').getPublicUrl(path);
         return urlData.publicUrl;
     }
     const form = document.getElementById('hrForm');
@@ -335,7 +335,7 @@
                 }
             }
             // Submit to Supabase
-            const { data, error } = await supabase.from('Institution-form2').insert([row]);
+            const { data, error } = await supabaseDB.from('Institution-form2').insert([row]);
             if (error) {
                 window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
             } else {
@@ -358,8 +358,7 @@
   </footer>
 
         <!-- Month filter script for admin-controlled month disabling -->
-    <!-- Supabase JS CDN (required for month-filter.js) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <!-- Supabase JS CDN already loaded at top of file -->
     <script src="../static/javascript/month-filter.js"></script>
 
 </body>
