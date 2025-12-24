@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Faculty Profile</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS library (must be loaded before any Supabase usage) -->
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <script src="../static/javascript/form-modal-mapper.js"></script>
-  <script src="../static/javascript/workdone-table.js"></script>
   <!-- SheetJS for Excel export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- Cropper.js for image cropping -->
@@ -281,7 +282,6 @@
                   <th class="p-3 border-b border-gray-300">Portfolio Name</th>
                   <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
                   <th class="p-3 border-b border-gray-300">Submission Date</th>
-                  <th class="p-3 border-b border-gray-300">Verification</th>
                   <th class="p-3 border-b border-gray-300">View</th>
                   <th class="p-3 border-b border-gray-300">Delete</th>
                 </tr>
@@ -426,7 +426,7 @@
       </div>
     </div>
 
-    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <!-- Removed duplicate Supabase JS script -->
     <script>
       // Hide/unhide salary and sensitive details based on admin setting
       function updateSensitiveDetailsVisibility() {
@@ -944,10 +944,13 @@
         return url.searchParams.get(name);
       }
       const email = getQueryParam("email");
-      const supabaseClient = window.supabase.createClient(
-        "https://cbhodgwaazmjszkujrti.supabase.co",
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
-      );
+      if (!window.supabaseClient) {
+        window.supabaseClient = window.supabase.createClient(
+          "https://cbhodgwaazmjszkujrti.supabase.co",
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+        );
+      }
+      const supabaseClient = window.supabaseClient;
       async function loadFacultyProfile() {
         if (!email) {
           document.body.innerHTML = '<div class="text-center mt-20 text-red-500">No faculty selected.</div>';
@@ -2409,8 +2412,21 @@
     </p>
   </footer>
   </body>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="/static/javascript/supabase-notifications.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!document.getElementById('viewModal')) {
+        const modalHtml = `
+        <div id="viewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+          <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeViewModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+            <div id="viewModalContent"></div>
+          </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+      }
+    });
+  </script>
 </body>
   <!-- Supabase Notification Modal -->
   <div id="messagingModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
@@ -2421,15 +2437,17 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a2.25 2.25 0 01-4.07 0M21 19.5a1.5 1.5 0 01-1.5-1.5V11a7.5 7.5 0 10-15 0v7a1.5 1.5 0 01-1.5 1.5h18z" />
         </svg>
         Notifications
-      </h2>
-      <div id="notificationList" class="h-48 overflow-y-auto border rounded p-2 mb-4 bg-gray-50"></div>
-      <div class="flex gap-2">
-        <input id="messageInput" type="text" class="flex-1 border border-pmcPurple rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pmcPurple text-black" placeholder="Type a notification..." onkeydown="if(event.key==='Enter'){postNotification()}" />
-        <button onclick="postNotification()" class="bg-purple-800 hover:bg-green-900 text-white px-4 py-2 rounded font-semibold">Send</button>
-      </div>
-    </div>
-  </div>
-</body>
-</html>
-        
+        <!-- Move workdone-table.js and supabase-notifications.js to end of body for DOM safety -->
+        <script src="../static/javascript/workdone-table.js"></script>
+        <script src="/static/javascript/supabase-notifications.js"></script>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            if (!document.getElementById('viewModal')) {
+              if (typeof ensureModalExists === 'function') {
+                ensureModalExists();
+              }
+            }
+          });
+        </script>
+
 

@@ -24,7 +24,7 @@ class WorkdoneTable {
         const isEditablePage = window.location.pathname.includes('faculty-profile') || 
                               document.title.includes('Faculty Profile') && 
                               document.querySelector('#editProfileBtn');
-        const colspan = isEditablePage ? '6' : '5';
+        const colspan = isEditablePage ? '5' : '4';
         tbody.innerHTML = `<tr><td colspan='${colspan}' class='text-center text-red-500 p-4'>Error loading workdone data: ${error.message}</td></tr>`;
       }
       return [];
@@ -111,11 +111,7 @@ class WorkdoneTable {
   }
 
   // Calculate status based on verification tables (verified/not verified/rejected)
-  calculateStatus(row) {
-    // Status will be set by checking verification tables
-    // This is a placeholder - actual status is determined during data loading
-    return row.verificationStatus || 'PENDING VERIFICATION';
-  }
+  // REMOVED - Verification column removed from faculty workdone table
 
   // Load workdone data for a faculty by name
   async loadFacultyWorkdone(facultyName, designation = null) {
@@ -130,20 +126,6 @@ class WorkdoneTable {
     // Show loading indicator
     const loadingBox = document.getElementById("workdoneLoadingBox");
     if (loadingBox) loadingBox.style.display = "";
-
-    // Fetch verification data from both tables
-    let verifiedData = [];
-    let rejectedData = [];
-    try {
-      const [verifyRes, rejectRes] = await Promise.all([
-        this.supabaseClient.from('hod-workdone').select('*'),
-        this.supabaseClient.from('hod-workdone_reject').select('*')
-      ]);
-      verifiedData = verifyRes.data || [];
-      rejectedData = rejectRes.data || [];
-    } catch (err) {
-      console.warn('Error fetching verification data:', err);
-    }
 
     for (const entry of this.formTables) {
       try {
@@ -193,48 +175,11 @@ class WorkdoneTable {
             return this.eq(memberName, facultyName);
           });
 
-          // Add portfolio info and calculate verification status
+          // Add portfolio info
           filtered.forEach(row => {
             row._original = { ...row };
             row.portfolio = entry.portfolio;
             row.table = entry.table;
-            
-            // Check verification status
-            let verificationStatus = 'PENDING VERIFICATION';
-            if (row.input_id) {
-              // Check if rejected first (priority)
-              const matchingReject = rejectedData.find(v => 
-                v.portfolio_member_name?.toLowerCase() === facultyName.toLowerCase() &&
-                v.input_id === row.input_id
-              );
-              
-              if (matchingReject) {
-                verificationStatus = 'REJECTED';
-                row.rejectedAt = matchingReject.rejected_at;
-                row.rejectedBy = matchingReject.rejected_by;
-                row.rejectionReason = matchingReject.Commands || 'No reason provided';
-              } else {
-                // Check if verified
-                const matchingVerify = verifiedData.find(v => 
-                  v.portfolio_member_name?.toLowerCase() === facultyName.toLowerCase() &&
-                  v.input_id === row.input_id
-                );
-                
-                if (matchingVerify) {
-                  verificationStatus = 'VERIFIED';
-                  row.verifiedAt = matchingVerify.verified_at;
-                  row.verifiedBy = matchingVerify.verified_by;
-                }
-              }
-            }
-            
-            row.status = verificationStatus;
-            row.verificationStatus = verificationStatus;
-            
-            // Debug: log available fields for the first row
-            if (filtered.indexOf(row) === 0) {
-              console.log(`Available fields in ${entry.table}:`, Object.keys(row));
-            }
           });
 
           allRows.push(...filtered);
@@ -312,8 +257,8 @@ class WorkdoneTable {
     let verifiedCompositeKeys = new Set(); // Use Set for faster lookup
     try {
       const [verifyRes, rejectRes] = await Promise.all([
-        this.supabaseClient.from('hod-workdone').select('*').eq('department', department),
-        this.supabaseClient.from('hod-workdone_reject').select('*').eq('department', department)
+        this.supabaseClient.from('Hod-workdone').select('*').eq('department', department),
+        this.supabaseClient.from('Hod-workdone_reject').select('*').eq('department', department)
       ]);
       
       verifiedData = verifyRes.data || [];
@@ -598,7 +543,7 @@ class WorkdoneTable {
     }
 
     if (!currentPageRows || currentPageRows.length === 0) {
-      const colspan = isEditablePage ? '7' : '6'; // Extra column for delete button
+      const colspan = isEditablePage ? '5' : '4';
       tbody.innerHTML = `<tr><td colspan='${colspan}' class='text-center text-gray-400 p-4'>No workdone records found for this faculty.</td></tr>`;
       
       // Clear pagination if no data
@@ -611,25 +556,6 @@ class WorkdoneTable {
 
     let html = "";
     currentPageRows.forEach((row, idx) => {
-      // Verification status colors
-      let statusClass = '';
-      let statusSymbol = '';
-      let statusTooltip = '';
-      const statusText = row.status || 'PENDING VERIFICATION';
-      
-      if (statusText === 'VERIFIED') {
-        statusClass = 'bg-green-100 text-green-800';
-        statusSymbol = '✓';
-        statusTooltip = row.verifiedAt ? `Verified by ${row.verifiedBy || 'HOD'} on ${new Date(row.verifiedAt).toLocaleDateString()}` : 'Verified by HOD';
-      } else if (statusText === 'REJECTED') {
-        statusClass = 'bg-red-100 text-red-800';
-        statusSymbol = '✗';
-        statusTooltip = `Rejected by ${row.rejectedBy || 'HOD'} on ${new Date(row.rejectedAt).toLocaleDateString()}\nReason: ${row.rejectionReason || 'No reason'}`;
-      } else {
-        statusClass = 'bg-orange-100 text-orange-800';
-        statusSymbol = '⚠';
-        statusTooltip = 'Pending verification by HOD';
-      }
       // For institution forms, hide department cell
       const isInstitutionForm = row.table && row.table.toLowerCase().startsWith('institution-');
       let departmentCell = '';
@@ -658,9 +584,6 @@ class WorkdoneTable {
         <td class="px-4 py-2 border-b">${row.portfolio || '-'}</td>
         <td class="px-4 py-2 border-b">${row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['Faculty Name'] || row['Name'] || '-'}</td>
         <td class="px-4 py-2 border-b">${submittedAt}</td>
-        <td class="px-4 py-2 border-b">
-          <span class="px-3 py-1 rounded text-lg font-medium ${statusClass}" title="${statusTooltip}">${statusSymbol}</span>
-        </td>
         <td class="px-4 py-2 border-b">
           <button onclick="viewRowDetails(${originalIndex})" class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">View</button>
         </td>`;
