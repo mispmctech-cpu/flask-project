@@ -230,39 +230,21 @@
 					<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
 					<input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="file-input" data-row="${idx}" />
 				</label>
-				<span class="file-check hidden" data-row="${idx}">? Uploaded</span>
+				<span class="file-check hidden" data-row="${idx}">✓ Uploaded</span>
 			</td>
 		`;
 		tbodyMonthly.appendChild(tr);
 	}
-	// Once in 6 months file row
-	const tbody6Months = document.getElementById('form13-6months-table-body');
-	const tr6 = document.createElement('tr');
-	tr6.innerHTML = `
-		<td class="border px-4 py-3 text-center">9.</td>
-		<td class="border px-4 py-3">Budget File</td>
-		<td class="border px-4 py-3"><select name="Status_1" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option></select></td>
-		<td class="border px-4 py-3"><input type="text" name="Description_1" maxlength="200" class="w-full border rounded px-2 py-2" placeholder="0-200 chars" /></td>
-		<td class="border px-4 py-3">
-			<label class="custom-upload">
-				Upload
-				<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
-				<input type="file" name="Upload the scanned file_1" accept=".pdf,.jpg,.jpeg,.png" class="file-input" data-row="1" />
-			</label>
-			<span class="file-check hidden" data-row="1">? Uploaded</span>
-		</td>
-	`;
-	tbody6Months.appendChild(tr6);
 	// Supabase setup
-	const supabase = window.supabase.createClient(
+	const supabaseClient = window.supabase.createClient(
 		"https://cbhodgwaazmjszkujrti.supabase.co",
 		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
 	);
 	async function uploadFileToStorage(file, path) {
 		if (!file) return null;
-		const { data, error } = await supabase.storage.from('institution-files3').upload(path, file, { upsert: true });
+		const { data, error } = await supabaseClient.storage.from('institution-files3').upload(path, file, { upsert: true });
 		if (error) throw error;
-		const { data: urlData } = supabase.storage.from('institution-files3').getPublicUrl(path);
+		const { data: urlData } = supabaseClient.storage.from('institution-files3').getPublicUrl(path);
 		return urlData.publicUrl;
 	}
 	// Monthly form submit
@@ -292,45 +274,13 @@
 			}
 		}
 		console.log('Submitting row to Supabase:', row);
-		const { data, error } = await supabase.from('Institution-form13-monthly').insert([row]);
+		const { data, error } = await supabaseClient.from('Institution-form13-monthly').insert([row]);
 		console.log('Supabase response:', { data, error });
 		if (error) {
 			alert('Supabase error: ' + error.message);
 			window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
 		} else {
 			alert('Submission successful!');
-			window.location.href = 'notification.html?status=success';
-		}
-	});
-	// Once in 6 months form submit
-	document.getElementById('form13-6months').addEventListener('submit', async function(e) {
-		e.preventDefault();
-		const form = e.target;
-		const formData = new FormData(form);
-		const row = {
-			"Portfolio Name:": formData.get('Portfolio Name:'),
-			"Portfolio Member Name:": formData.get('Portfolio Member Name:'),
-			"Month:": formData.get('Month:'),
-			"Status_1": formData.get('Status_1'),
-			"Description_1": formData.get('Description_1'),
-		};
-		const file = formData.get('Upload the scanned file_1');
-		if (file && file.size > 0) {
-			const ts = Date.now();
-			const path = `form13once6monthsfile1_${ts}_${file.name}`;
-			try {
-				row['Upload the scanned file_1'] = await uploadFileToStorage(file, path);
-			} catch (err) {
-				window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed: ' + err.message)}`;
-				return;
-			}
-		} else {
-			row['Upload the scanned file_1'] = null;
-		}
-		const { data, error } = await supabase.from('Institution-form13-oncein6months').insert([row]);
-		if (error) {
-			window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
-		} else {
 			window.location.href = 'notification.html?status=success';
 		}
 	});
@@ -357,10 +307,5 @@
     </p>
   </footer>
 
-<!-- Supabase JS CDN (required for month-filter.js) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-<script src="../static/javascript/month-filter.js"></script>
-    <!-- Form Access Control - checks if form is open/closed -->
-    <script src="../static/javascript/form-access-control.js"></script>
 </body>
 </html>
