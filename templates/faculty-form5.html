@@ -9,10 +9,6 @@
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 	<!-- Prevent Double Submit Protection -->
 	<script src="../static/javascript/prevent-double-submit.js"></script>
-		<!-- Supabase JS CDN (required for month-filter.js) -->
-		<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-		<!-- Month Filter System -->
-		<script src="../static/javascript/month-filter.js"></script>
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 	<style>
 		th, td {
@@ -181,12 +177,12 @@
 
 	// Table data from image (12 rows)
 	const tableData = [
-		{ name: 'Cocurricular Activities (Including MOU, Professional Body, Association, Club activities) File', tat: 'Weekly', status: 'Index – List of activities completed' },
-		{ name: 'MOU & Professional Body Documents (Including office Bearers)', tat: 'Weekly', status: 'Index – List of activities completed with office bearers list' },
-		{ name: 'Industry Visit file', tat: 'Weekly', status: 'Index – List of Industry Visits completed' },
-		{ name: 'Entrepreneurship Activities File', tat: 'Weekly', status: 'Index – List of EDC activities completed' },
-		{ name: 'Student Internship File', tat: 'Weekly', status: 'Index – List of students internships completed with details' },
-		{ name: 'Student In-plant Training File', tat: 'Weekly', status: 'Index – List of students internships completed with details' },
+		{ name: 'Cocurricular Activities (Including MOU, Professional Body, Association, Club activities) File', tat: 'Weekly', status: 'Index â€“ List of activities completed' },
+		{ name: 'MOU & Professional Body Documents (Including office Bearers)', tat: 'Weekly', status: 'Index â€“ List of activities completed with office bearers list' },
+		{ name: 'Industry Visit file', tat: 'Weekly', status: 'Index â€“ List of Industry Visits completed' },
+		{ name: 'Entrepreneurship Activities File', tat: 'Weekly', status: 'Index â€“ List of EDC activities completed' },
+		{ name: 'Student Internship File', tat: 'Weekly', status: 'Index â€“ List of students internships completed with details' },
+		{ name: 'Student In-plant Training File', tat: 'Weekly', status: 'Index â€“ List of students internships completed with details' },
 		{ name: 'Dept. Technical Magazine', tat: 'Once in 3 Months', status: 'Magazine copy' },
 		{ name: 'Dept. News letter', tat: 'Once in 3 Months', status: 'Newsletter Copy' },
 		{ name: 'Website Updation File', tat: 'Once in 3 Months', status: 'Index - List of things updated in website' },
@@ -215,7 +211,7 @@
 			</td>
 			<td class="border px-2 py-1">
 				<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
-				<span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">?</span>
+				<span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">âœ“</span>
 				<input type="file" name="Upload a Scanned File_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
 			</td>
 			<td class="border px-2 py-1">
@@ -226,17 +222,17 @@
 	});
 
 	// Supabase setup
-	const supabase = window.supabase.createClient(
+	const supabaseClient = window.supabase.createClient(
 		"https://cbhodgwaazmjszkujrti.supabase.co",
 		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
 	);
 
 	async function uploadFileToStorage(file, path, bucket, uploadBtn) {
 		if (!file) return null;
-		const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+		const { data, error } = await supabaseClient.storage.from(bucket).upload(path, file, { upsert: true });
 		if (error) throw error;
 		// Get public URL
-		const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
+		const { data: urlData } = supabaseClient.storage.from(bucket).getPublicUrl(path);
 		// Change the upload button to 'Uploaded' after successful upload
 		if (uploadBtn) {
 			const row = uploadBtn.getAttribute('data-row');
@@ -334,7 +330,7 @@
 		}
 
 		// Submit to Supabase
-		const { data, error } = await supabase.from('form5-monthly').insert([dataRow]);
+		const { data, error } = await supabaseClient.from('form5-monthly').insert([dataRow]);
 		if (error) {
 			window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
 			return;
@@ -356,7 +352,5 @@
 			<p class="text-xs opacity-80">A Student driven Software!</p>
 		</p>
 	</footer>
-    <!-- Form Access Control - checks if form is open/closed -->
-    <script src="../static/javascript/form-access-control.js"></script>
 </body>
 </html>
