@@ -211,21 +211,21 @@ document.addEventListener('DOMContentLoaded', function() {
 					<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
 					<input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="file-input" data-row="${idx}" />
 				</label>
-				<span class="file-check hidden" data-row="${idx}">? Uploaded</span>
+				<span class="file-check hidden" data-row="${idx}">✓ Uploaded</span>
 			</td>
 		`;
 		tbody.appendChild(tr);
 	});
 	// Supabase setup
-	const supabase = window.supabase.createClient(
+	const supabaseClient = window.supabase.createClient(
 		"https://cbhodgwaazmjszkujrti.supabase.co",
 		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
 	);
 	async function uploadFileToStorage(file, path) {
 		if (!file) return null;
-		const { data, error } = await supabase.storage.from('institution-files12').upload(path, file, { upsert: true });
+		const { data, error } = await supabaseClient.storage.from('institution-files12').upload(path, file, { upsert: true });
 		if (error) throw error;
-		const { data: urlData } = supabase.storage.from('institution-files12').getPublicUrl(path);
+		const { data: urlData } = supabaseClient.storage.from('institution-files12').getPublicUrl(path);
 		return urlData.publicUrl;
 	}
 	// Form submit
@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			"Portfolio Member Name:": formData.get('Portfolio Member Name:'),
 			"Month:": formData.get('Month:'),
 		};
-		for (let i = 1; i <= 17; i++) {
+		for (let i = 1; i <= 19; i++) {
 			row[`Status_${i}`] = formData.get(`Status_${i}`);
 			row[`Description_${i}`] = formData.get(`Description_${i}`);
 			const file = formData.get(`Upload the scanned file_${i}`);
@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 		}
 		// Submit to Supabase
-		const { data, error } = await supabase.from('Institution-form12').insert([row]);
+		const { data, error } = await supabaseClient.from('Institution-form12').insert([row]);
 		if (error) {
 			window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
 		} else {
@@ -286,10 +286,5 @@ document.addEventListener('DOMContentLoaded', function() {
     </p>
   </footer>
 
-<!-- Supabase JS CDN (required for month-filter.js) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-<script src="../static/javascript/month-filter.js"></script>
-    <!-- Form Access Control - checks if form is open/closed -->
-    <script src="../static/javascript/form-access-control.js"></script>
 </body>
 </html>
