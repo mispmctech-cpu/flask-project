@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+
+
+<!DOCTYPE html>
 <html lang="en">
   <head>
   <meta charset="UTF-8" />
@@ -208,9 +210,27 @@
           </div>
         </div>
         <!-- SEM, SUBJECT, CLASS Table -->
-        <div class="mt-8">
+        <div class="mt-8 hidden">
           <label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-1">SUBJECT ALLOTTED</label>
           <div id="facultySemSubjectClassTable" class="mt-1"></div>
+        </div>
+        
+        <!-- Timetable Section -->
+        <div class="mt-8">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-2 rounded-lg shadow-md">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Timetable</h2>
+          </div>
+          
+          <!-- Timetable Display -->
+          <div id="timetableDisplay" class="mb-6"></div>
+          
+          <!-- Timetable Summary -->
+          <div id="timetableSummary"></div>
         </div>
         
         <!-- Faculty Mandatory Scope - Yearly -->
@@ -1534,6 +1554,178 @@
   observer.observe(document.body, { childList: true, subtree: true });
       }
 
+      // ===== TIMETABLE DISPLAY FUNCTIONS =====
+      let currentTimetableData = { periods: [] };
+      
+      function getTimeForPeriod(period) {
+        const existing = currentTimetableData.periods.find(p => p.period === period);
+        if (existing) return existing.time || '';
+        
+        const defaultTimes = {
+          1: '9:00-10:00',
+          2: '10:00-11:00',
+          3: '11:00-12:00',
+          4: '12:00-1:00',
+          5: '2:00-3:00',
+          6: '3:00-4:00',
+          7: '4:00-5:00',
+          8: '5:00-6:00'
+        };
+        return defaultTimes[period] || '';
+      }
+      
+      function getExistingPeriodData(day, period) {
+        const existing = currentTimetableData.periods.find(p => p.day === day && p.period === period);
+        return existing || { day, period, time: '', subjectCode: '', subjectName: '', department: '', year: '', section: '' };
+      }
+      
+      function displayTimetable() {
+        const container = document.getElementById('timetableDisplay');
+        
+        if (!currentTimetableData.periods || currentTimetableData.periods.length === 0) {
+          container.innerHTML = '<div class="text-gray-400 text-center py-4 border rounded">No timetable data available.</div>';
+          return;
+        }
+        
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        let html = '<div class="overflow-x-auto border rounded-lg shadow">';
+        html += '<table class="w-full border-collapse text-sm">';
+        html += '<thead><tr class="bg-purple-600 text-white">';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Day</th>';
+        for (let period = 1; period <= 8; period++) {
+          html += `<th class="border border-gray-300 px-3 py-2 font-bold">${period}<br><span class="text-xs font-normal">${getTimeForPeriod(period)}</span></th>`;
+        }
+        html += '</tr></thead><tbody>';
+        
+        days.forEach(day => {
+          html += '<tr class="hover:bg-gray-50">';
+          html += `<td class="border border-gray-300 px-3 py-2 font-bold text-purple-700">${day}</td>`;
+          
+          for (let period = 1; period <= 8; period++) {
+            const data = getExistingPeriodData(day, period);
+            if (data.subjectCode) {
+              const classInfo = [data.department, data.year, data.section].filter(v => v).join(' - ');
+              html += `<td class="border border-gray-300 px-2 py-2">
+                <div class="text-xs">
+                  <div class="font-bold text-purple-700">${data.subjectCode}</div>
+                  <div class="text-gray-700">${data.subjectName}</div>
+                  <div class="text-gray-600 font-semibold mt-1">${classInfo}</div>
+                </div>
+              </td>`;
+            } else {
+              html += '<td class="border border-gray-300 px-2 py-2 text-center text-gray-300">-</td>';
+            }
+          }
+          
+          html += '</tr>';
+        });
+        
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+      }
+      
+      function displayTimetableSummary() {
+        const container = document.getElementById('timetableSummary');
+        
+        if (!currentTimetableData.periods || currentTimetableData.periods.length === 0) {
+          container.innerHTML = '';
+          return;
+        }
+        
+        const summary = {};
+        currentTimetableData.periods.forEach(p => {
+          const key = `${p.department} ${p.year}${p.section} - ${p.subjectCode} ${p.subjectName}`;
+          if (!summary[key]) {
+            summary[key] = {
+              department: p.department,
+              year: p.year,
+              section: p.section,
+              subjectCode: p.subjectCode,
+              subjectName: p.subjectName,
+              hours: 0
+            };
+          }
+          summary[key].hours++;
+        });
+        
+        const summaryArray = Object.values(summary).sort((a, b) => {
+          return `${a.department}${a.year}${a.section}`.localeCompare(`${b.department}${b.year}${b.section}`);
+        });
+        
+        let html = '<h3 class="text-xl font-bold text-purple-700 mb-3 mt-6">Timetable Summary</h3>';
+        html += '<div class="overflow-x-auto border rounded-lg shadow">';
+        html += '<table class="w-full border-collapse text-sm">';
+        html += '<thead><tr class="bg-blue-600 text-white">';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">S.No</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Department</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Year</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Section</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Subject Code</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Subject Name</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Hours/Week</th>';
+        html += '</tr></thead><tbody>';
+        
+        summaryArray.forEach((item, index) => {
+          html += '<tr class="hover:bg-gray-50">';
+          html += `<td class="border border-gray-300 px-3 py-2 text-center">${index + 1}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 font-semibold">${item.department || '-'}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 text-center font-semibold">${item.year || '-'}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 text-center font-semibold">${item.section || '-'}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 font-bold text-purple-700">${item.subjectCode}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2">${item.subjectName}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 text-center font-bold text-blue-600">${item.hours}</td>`;
+          html += '</tr>';
+        });
+        
+        const totalHours = summaryArray.reduce((sum, item) => sum + item.hours, 0);
+        html += '<tr class="bg-gray-100">';
+        html += `<td colspan="6" class="border border-gray-300 px-3 py-2 text-right font-bold">Total Hours/Week:</td>`;
+        html += `<td class="border border-gray-300 px-3 py-2 text-center font-bold text-blue-700 text-lg">${totalHours}</td>`;
+        html += '</tr>';
+        
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+      }
+      
+      async function loadTimetable() {
+        try {
+          console.log('Loading timetable for email:', email);
+          const { data, error } = await supabaseClient
+            .from('Faculty')
+            .select('timetable')
+            .eq('email', email)
+            .single();
+          
+          if (error) {
+            console.error('Supabase error:', error);
+            throw error;
+          }
+          
+          console.log('Timetable data from DB:', data);
+          
+          if (data && data.timetable) {
+            try {
+              currentTimetableData = JSON.parse(data.timetable);
+              console.log('Parsed timetable data:', currentTimetableData);
+            } catch (e) {
+              console.error('Error parsing timetable JSON:', e);
+              currentTimetableData = { periods: [] };
+            }
+          } else {
+            console.log('No timetable data found in database');
+          }
+          
+          console.log('Calling displayTimetable...');
+          displayTimetable();
+          displayTimetableSummary();
+        } catch (error) {
+          console.error('Error loading timetable:', error);
+        }
+      }
+      
+      loadTimetable();
+      // ===== END TIMETABLE DISPLAY FUNCTIONS =====
+      
       loadFacultyProfile();
     </script>
 
