@@ -2521,8 +2521,9 @@ function attachExportButtons() {
             );
             if (yearlyRow) {
               let completedCount = 0;
-              let totalCount = 8; // Fixed denominator of 8 for all designations
-              for (let i = 1; i <= 8; i++) {
+              // Designation-specific field counts: AP=8, ASP=9, Prof=9
+              let totalCount = desigDisplay === 'AP' ? 8 : 9;
+              for (let i = 1; i <= totalCount; i++) {
                 const status = (yearlyRow[`Status_${i}`] || '').toString().trim().toLowerCase();
                 if (status === 'completed' || status === 'completed and updated') {
                   completedCount++;
@@ -2799,8 +2800,9 @@ function attachExportButtons() {
             );
             if (yearlyRow) {
               let completedCount = 0;
-              let totalCount = 8; // Fixed denominator of 8 for all designations
-              for (let i = 1; i <= 8; i++) {
+              // Designation-specific field counts: AP=8, ASP=9, Prof=9
+              let totalCount = desigDisplay === 'AP' ? 8 : 9;
+              for (let i = 1; i <= totalCount; i++) {
                 const status = (yearlyRow[`Status_${i}`] || '').toString().trim().toLowerCase();
                 if (status === 'completed' || status === 'completed and updated') {
                   completedCount++;
