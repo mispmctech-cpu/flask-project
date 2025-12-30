@@ -181,9 +181,35 @@
           </div>
         </div>
         <!-- SEM, SUBJECT, CLASS Table -->
-        <div class="mt-8">
+        <div class="mt-8 hidden">
           <label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-1">SUBJECT ALLOTTED</label>
           <div id="facultySemSubjectClassTable" class="mt-1"></div>
+        </div>
+
+        <!-- Timetable Section -->
+        <div class="mt-8">
+          <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-3">
+              <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-2 rounded-lg shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">My Timetable</h2>
+            </div>
+            <button id="manageTimetableBtn" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-2.5 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Manage Timetable
+            </button>
+          </div>
+          
+          <!-- Timetable Display -->
+          <div id="timetableDisplay" class="mb-6"></div>
+          
+          <!-- Timetable Summary -->
+          <div id="timetableSummary"></div>
         </div>
 
         <!-- Consolidated Summary Table -->
@@ -423,6 +449,93 @@
           </button>
         </div>
         <button onclick="closeCoreScopeModal()" class="w-full mt-4 bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded font-semibold">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Timetable Management Modal -->
+    <div id="timetableModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden overflow-y-auto">
+      <div class="bg-white rounded-xl shadow-2xl max-w-7xl w-full mx-4 my-8 p-8 relative max-h-[90vh] overflow-y-auto">
+        <button onclick="closeTimetableModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-3xl font-bold transition-colors">&times;</button>
+        
+        <div class="mb-6 flex items-center gap-3">
+          <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-3 rounded-lg shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Manage Your Timetable</h3>
+            <p class="text-sm text-gray-500 mt-1">Configure your weekly class schedule (Monday - Friday)</p>
+          </div>
+        </div>
+        
+        <!-- Timetable Input Form -->
+        <div class="overflow-x-auto shadow-lg rounded-lg border border-gray-200">
+          <table class="w-full border-collapse text-sm bg-white">
+            <thead>
+              <tr class="bg-gradient-to-r from-indigo-50 to-purple-50">
+                <th class="border border-gray-200 px-4 py-3 text-left font-bold text-gray-700 w-32">
+                  <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>DAY</span>
+                  </div>
+                </th>
+                <th class="border border-gray-200 px-3 py-3 text-center font-bold text-gray-700">Period 1</th>
+                <th class="border border-gray-200 px-3 py-3 text-center font-bold text-gray-700">Period 2</th>
+                <th class="border border-gray-200 px-3 py-3 text-center font-bold text-gray-700">Period 3</th>
+                <th class="border border-gray-200 px-3 py-3 text-center font-bold text-gray-700">Period 4</th>
+                <th class="border border-gray-200 px-3 py-3 text-center font-bold text-gray-700">Period 5</th>
+                <th class="border border-gray-200 px-3 py-3 text-center font-bold text-gray-700">Period 6</th>
+                <th class="border border-gray-200 px-3 py-3 text-center font-bold text-gray-700">Period 7</th>
+                <th class="border border-gray-200 px-3 py-3 text-center font-bold text-gray-700">Period 8</th>
+              </tr>
+              <tr class="bg-gray-50">
+                <th class="border border-gray-200 px-4 py-2 text-center text-xs font-semibold text-gray-600">
+                  <div class="flex items-center gap-1 justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>TIME</span>
+                  </div>
+                </th>
+                <th class="border border-gray-200 px-2 py-2" id="time_col_1"></th>
+                <th class="border border-gray-200 px-2 py-2" id="time_col_2"></th>
+                <th class="border border-gray-200 px-2 py-2" id="time_col_3"></th>
+                <th class="border border-gray-200 px-2 py-2" id="time_col_4"></th>
+                <th class="border border-gray-200 px-2 py-2" id="time_col_5"></th>
+                <th class="border border-gray-200 px-2 py-2" id="time_col_6"></th>
+                <th class="border border-gray-200 px-2 py-2" id="time_col_7"></th>
+                <th class="border border-gray-200 px-2 py-2" id="time_col_8"></th>
+              </tr>
+            </thead>
+            <tbody id="timetableInputBody">
+              <!-- Days will be dynamically generated here -->
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="mt-8 flex gap-4 justify-end">
+          <button type="button" onclick="closeTimetableModal()" class="px-6 py-3 rounded-lg font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors shadow-sm">
+            <span class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Cancel
+            </span>
+          </button>
+          <button type="button" onclick="saveTimetable()" class="px-6 py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl">
+            <span class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Save Timetable
+            </span>
+          </button>
+        </div>
+        
+        <div id="timetableStatus" class="mt-4 text-center font-semibold"></div>
       </div>
     </div>
 
@@ -935,6 +1048,388 @@
           }
         }, 1000);
       }
+      
+      // ===== TIMETABLE MANAGEMENT FUNCTIONS =====
+      let currentTimetableData = { periods: [] };
+      
+      // Open timetable modal
+      document.getElementById('manageTimetableBtn').addEventListener('click', async function() {
+        await openTimetableModal();
+      });
+      
+      async function openTimetableModal() {
+        document.getElementById('timetableModal').classList.remove('hidden');
+        await generateTimetableInputs();
+      }
+      
+      function closeTimetableModal() {
+        document.getElementById('timetableModal').classList.add('hidden');
+        document.getElementById('timetableStatus').textContent = '';
+      }
+      
+      // Generate timetable input grid
+      async function generateTimetableInputs() {
+        // First, populate time columns header
+        for (let period = 1; period <= 8; period++) {
+          const timeCell = document.getElementById(`time_col_${period}`);
+          if (timeCell) {
+            timeCell.innerHTML = `<input type="text" id="time_${period}" class="w-full px-2 py-1 text-xs text-center border-0 bg-transparent font-semibold text-gray-600" placeholder="9:00-10:00" value="${getTimeForPeriod(period)}">`;
+          }
+        }
+        
+        // Get unique departments from Faculty table
+        let departments = await fetchDepartments();
+        
+        const tbody = document.getElementById('timetableInputBody');
+        const days = [
+          { name: 'Monday', color: 'bg-white' },
+          { name: 'Tuesday', color: 'bg-gray-50' },
+          { name: 'Wednesday', color: 'bg-white' },
+          { name: 'Thursday', color: 'bg-gray-50' },
+          { name: 'Friday', color: 'bg-white' }
+        ];
+        
+        let html = '';
+        days.forEach(dayObj => {
+          const day = dayObj.name;
+          html += `<tr class="${dayObj.color}">`;
+          html += `<td class="border border-gray-200 px-4 py-3 font-bold text-gray-700 ${dayObj.color}">${day}</td>`;
+          
+          for (let period = 1; period <= 8; period++) {
+            const existingData = getExistingPeriodData(day, period);
+            
+            // Build department dropdown options WITH selected attribute
+            let deptOptions = '<option value="" style="color: #666;">-- Select Dept --</option>';
+            departments.forEach(dept => {
+              const isSelected = (existingData.department && existingData.department.trim() === dept.trim());
+              deptOptions += `<option value="${dept}" ${isSelected ? 'selected="selected"' : ''} style="color: #000; font-weight: bold;">${dept}</option>`;
+            });
+            
+            // Build year dropdown options WITH selected attribute
+            const years = ['I', 'II', 'III', 'IV'];
+            let yearOptions = '<option value="" style="color: #666;">-- Yr --</option>';
+            years.forEach(yr => {
+              const isSelected = (existingData.year && existingData.year.trim() === yr.trim());
+              yearOptions += `<option value="${yr}" ${isSelected ? 'selected="selected"' : ''} style="color: #000; font-weight: bold;">${yr}</option>`;
+            });
+            
+            html += `<td class="border border-gray-200 px-2 py-2 bg-white">
+              <div class="space-y-2">
+                <input type="text" id="subCode_${day}_${period}" class="w-full px-3 py-2 border-2 border-gray-300 rounded text-sm font-bold" 
+                       placeholder="Subject Code" value="${existingData.subjectCode}">
+                <input type="text" id="subName_${day}_${period}" class="w-full px-3 py-2 border-2 border-gray-300 rounded text-sm" 
+                       placeholder="Subject Name" value="${existingData.subjectName}">
+                <div class="flex items-start gap-2">
+                  <div class="flex-1 min-w-0">
+                    <label class="text-xs font-semibold text-gray-600 block mb-1 text-center">Dept</label>
+                    <select id="dept_${day}_${period}" 
+                            onchange="document.getElementById('dept_display_${day}_${period}').textContent = this.value || '--'"
+                            class="w-full px-2 py-2 border-2 border-gray-400 rounded bg-white text-center" 
+                            style="font-size: 14px; font-weight: bold;">
+                      ${deptOptions}
+                    </select>
+                    <div id="dept_display_${day}_${period}" class="mt-1 px-2 py-1 bg-gray-100 border border-gray-300 rounded text-center font-black text-xs" style="color: #000 !important; min-height: 28px; line-height: 1.75;">
+                      ${existingData.department || '--'}
+                    </div>
+                  </div>
+                  <div class="w-16">
+                    <label class="text-xs font-semibold text-gray-600 block mb-1 text-center">Yr</label>
+                    <select id="year_${day}_${period}" 
+                            onchange="document.getElementById('year_display_${day}_${period}').textContent = this.value || '--'"
+                            class="w-full px-1 py-2 border-2 border-gray-400 rounded bg-white text-center" 
+                            style="font-size: 14px; font-weight: bold;">
+                      ${yearOptions}
+                    </select>
+                    <div id="year_display_${day}_${period}" class="mt-1 px-1 py-1 bg-gray-100 border border-gray-300 rounded text-center font-black text-xs" style="color: #000 !important; min-height: 28px; line-height: 1.75;">
+                      ${existingData.year || '--'}
+                    </div>
+                  </div>
+                  <div class="w-16">
+                    <label class="text-xs font-semibold text-gray-600 block mb-1 text-center">Sec</label>
+                    <input type="text" id="sec_${day}_${period}" class="w-full px-1 py-2 border-2 border-gray-400 rounded text-center uppercase font-bold" 
+                           style="font-size: 16px; color: #000 !important;"
+                           placeholder="A" value="${existingData.section}" maxlength="1">
+                  </div>
+                </div>
+              </div>
+            </td>`;
+          }
+          
+          html += `</tr>`;
+        });
+        
+        tbody.innerHTML = html;
+        
+        console.log('Timetable inputs generated. Current data:', currentTimetableData);
+      }
+      
+      // Fetch unique departments from Faculty table
+      async function fetchDepartments() {
+        try {
+          const { data, error } = await supabaseClient
+            .from('Faculty')
+            .select('department');
+          
+          if (error) {
+            console.error('Error fetching departments:', error);
+            return ['CSE', 'ECE', 'EEE', 'MECH', 'CIVIL', 'IT', 'AI&DS']; // Fallback departments
+          }
+          
+          // Get unique departments and sort them
+          const uniqueDepts = [...new Set(data.map(f => f.department).filter(d => d && d.trim() !== ''))];
+          uniqueDepts.sort();
+          return uniqueDepts.length > 0 ? uniqueDepts : ['CSE', 'ECE', 'EEE', 'MECH', 'CIVIL', 'IT', 'AI&DS'];
+        } catch (err) {
+          console.error('Error in fetchDepartments:', err);
+          return ['CSE', 'ECE', 'EEE', 'MECH', 'CIVIL', 'IT', 'AI&DS']; // Fallback departments
+        }
+      }
+      
+      function getTimeForPeriod(period) {
+        const existing = currentTimetableData.periods.find(p => p.period === period);
+        if (existing) return existing.time || '';
+        
+        // Default time slots
+        const defaultTimes = {
+          1: '9:00-10:00',
+          2: '10:00-11:00',
+          3: '11:00-12:00',
+          4: '12:00-1:00',
+          5: '2:00-3:00',
+          6: '3:00-4:00',
+          7: '4:00-5:00',
+          8: '5:00-6:00'
+        };
+        return defaultTimes[period] || '';
+      }
+      
+      function getExistingPeriodData(day, period) {
+        const existing = currentTimetableData.periods.find(p => p.day === day && p.period === period);
+        const result = existing || {
+          subjectCode: '',
+          subjectName: '',
+          department: '',
+          year: '',
+          section: ''
+        };
+        // Debug log to see what data is being retrieved
+        if (existing) {
+          console.log(`Data for ${day} Period ${period}:`, result);
+        }
+        return result;
+      }
+      
+      // Save timetable
+      async function saveTimetable() {
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        const periods = [];
+        
+        for (let period = 1; period <= 8; period++) {
+          const time = document.getElementById(`time_${period}`).value.trim();
+          
+          days.forEach(day => {
+            const subjectCode = document.getElementById(`subCode_${day}_${period}`).value.trim();
+            const subjectName = document.getElementById(`subName_${day}_${period}`).value.trim();
+            const deptElement = document.getElementById(`dept_${day}_${period}`);
+            const yearElement = document.getElementById(`year_${day}_${period}`);
+            const department = deptElement ? deptElement.value.trim() : '';
+            const year = yearElement ? yearElement.value.trim() : '';
+            const section = document.getElementById(`sec_${day}_${period}`).value.trim();
+            
+            // Debug log
+            if (subjectCode) {
+              console.log(`Saving ${day} Period ${period}:`, { subjectCode, department, year, section });
+            }
+            
+            // Only save if at least subject code is filled
+            if (subjectCode) {
+              periods.push({
+                day: day,
+                period: period,
+                time: time,
+                subjectCode: subjectCode,
+                subjectName: subjectName,
+                department: department,
+                year: year,
+                section: section
+              });
+            }
+          });
+        }
+        
+        const timetableData = { periods: periods };
+        const statusDiv = document.getElementById('timetableStatus');
+        statusDiv.textContent = 'Saving timetable...';
+        statusDiv.className = 'mt-4 text-center font-semibold text-blue-600';
+        
+        const email = document.getElementById('facultyEmail').value;
+        
+        try {
+          const { error } = await supabaseClient
+            .from('Faculty')
+            .update({ timetable: JSON.stringify(timetableData) })
+            .eq('email', email);
+          
+          if (error) throw error;
+          
+          currentTimetableData = timetableData;
+          statusDiv.textContent = 'Timetable saved successfully!';
+          statusDiv.className = 'mt-4 text-center font-semibold text-green-600';
+          
+          // Refresh display
+          setTimeout(() => {
+            closeTimetableModal();
+            displayTimetable();
+            displayTimetableSummary();
+          }, 1000);
+          
+        } catch (error) {
+          statusDiv.textContent = 'Error saving timetable: ' + error.message;
+          statusDiv.className = 'mt-4 text-center font-semibold text-red-600';
+        }
+      }
+      
+      // Display timetable
+      function displayTimetable() {
+        const container = document.getElementById('timetableDisplay');
+        
+        if (!currentTimetableData.periods || currentTimetableData.periods.length === 0) {
+          container.innerHTML = '<div class="text-gray-400 text-center py-4 border rounded">No timetable set. Click "Manage Timetable" to add your schedule.</div>';
+          return;
+        }
+        
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        let html = '<div class="overflow-x-auto border rounded-lg shadow">';
+        html += '<table class="w-full border-collapse text-sm">';
+        html += '<thead><tr class="bg-purple-600 text-white">';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Day</th>';
+        for (let period = 1; period <= 8; period++) {
+          html += `<th class="border border-gray-300 px-3 py-2 font-bold">${period}<br><span class="text-xs font-normal">${getTimeForPeriod(period)}</span></th>`;
+        }
+        html += '</tr></thead><tbody>';
+        
+        days.forEach(day => {
+          html += '<tr class="hover:bg-gray-50">';
+          html += `<td class="border border-gray-300 px-3 py-2 font-bold text-purple-700">${day}</td>`;
+          
+          for (let period = 1; period <= 8; period++) {
+            const data = getExistingPeriodData(day, period);
+            if (data.subjectCode) {
+              const classInfo = [data.department, data.year, data.section].filter(v => v).join(' - ');
+              html += `<td class="border border-gray-300 px-2 py-2">
+                <div class="text-xs">
+                  <div class="font-bold text-purple-700">${data.subjectCode}</div>
+                  <div class="text-gray-700">${data.subjectName}</div>
+                  <div class="text-gray-600 font-semibold mt-1">${classInfo}</div>
+                </div>
+              </td>`;
+            } else {
+              html += '<td class="border border-gray-300 px-2 py-2 text-center text-gray-300">-</td>';
+            }
+          }
+          
+          html += '</tr>';
+        });
+        
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+      }
+      
+      // Display timetable summary
+      function displayTimetableSummary() {
+        const container = document.getElementById('timetableSummary');
+        
+        if (!currentTimetableData.periods || currentTimetableData.periods.length === 0) {
+          container.innerHTML = '';
+          return;
+        }
+        
+        // Group by class and subject
+        const summary = {};
+        currentTimetableData.periods.forEach(p => {
+          const key = `${p.department} ${p.year}${p.section} - ${p.subjectCode} ${p.subjectName}`;
+          if (!summary[key]) {
+            summary[key] = {
+              department: p.department,
+              year: p.year,
+              section: p.section,
+              subjectCode: p.subjectCode,
+              subjectName: p.subjectName,
+              hours: 0
+            };
+          }
+          summary[key].hours++;
+        });
+        
+        const summaryArray = Object.values(summary).sort((a, b) => {
+          return `${a.department}${a.year}${a.section}`.localeCompare(`${b.department}${b.year}${b.section}`);
+        });
+        
+        let html = '<h3 class="text-xl font-bold text-purple-700 mb-3 mt-6">Timetable Summary</h3>';
+        html += '<div class="overflow-x-auto border rounded-lg shadow">';
+        html += '<table class="w-full border-collapse text-sm">';
+        html += '<thead><tr class="bg-blue-600 text-white">';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">S.No</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Department</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Year</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Section</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Subject Code</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Subject Name</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Hours/Week</th>';
+        html += '</tr></thead><tbody>';
+        
+        summaryArray.forEach((item, index) => {
+          html += '<tr class="hover:bg-gray-50">';
+          html += `<td class="border border-gray-300 px-3 py-2 text-center">${index + 1}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 font-semibold">${item.department || '-'}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 text-center font-semibold">${item.year || '-'}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 text-center font-semibold">${item.section || '-'}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 font-bold text-purple-700">${item.subjectCode}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2">${item.subjectName}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 text-center font-bold text-blue-600">${item.hours}</td>`;
+          html += '</tr>';
+        });
+        
+        const totalHours = summaryArray.reduce((sum, item) => sum + item.hours, 0);
+        html += '<tr class="bg-gray-100">';
+        html += `<td colspan="6" class="border border-gray-300 px-3 py-2 text-right font-bold">Total Hours/Week:</td>`;
+        html += `<td class="border border-gray-300 px-3 py-2 text-center font-bold text-blue-700 text-lg">${totalHours}</td>`;
+        html += '</tr>';
+        
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+      }
+      
+      // Load timetable on page load
+      async function loadTimetable() {
+        const email = document.getElementById('facultyEmail').value;
+        if (!email) return;
+        
+        try {
+          const { data, error } = await supabaseClient
+            .from('Faculty')
+            .select('timetable')
+            .eq('email', email)
+            .single();
+          
+          if (error) throw error;
+          
+          if (data && data.timetable) {
+            try {
+              currentTimetableData = JSON.parse(data.timetable);
+            } catch (e) {
+              currentTimetableData = { periods: [] };
+            }
+          }
+          
+          displayTimetable();
+          displayTimetableSummary();
+        } catch (error) {
+          console.error('Error loading timetable:', error);
+        }
+      }
+      // ===== END TIMETABLE MANAGEMENT =====
+      
     </script>
     <script>
       // Image edit logic - REMOVED (moved above)
@@ -2225,6 +2720,37 @@
         }
         document.getElementById("facultySemSubjectClassTable").innerHTML =
           semTableHtml;
+        
+        // Function to check if form is already filled for current month
+        async function checkFormSubmissionStatus(tableName, facultyName, department, currentMonth) {
+          try {
+            const nameLower = facultyName.toString().trim().toLowerCase();
+            const { data: formData, error } = await supabaseClient
+              .from(tableName)
+              .select('*')
+              .eq('Month', currentMonth)
+              .eq('Department', department)
+              .order('input_id', { ascending: false })
+              .limit(50);
+            
+            if (error) return false;
+            
+            // Check if any row matches this faculty
+            const matchingRow = (formData || []).find(row => {
+              const rowName = (row['Portfolio Member Name'] || row['Portfolio Member Name:'] || '').toString().trim().toLowerCase();
+              return rowName === nameLower;
+            });
+            
+            return !!matchingRow;
+          } catch (err) {
+            console.error('Error checking form status:', err);
+            return false;
+          }
+        }
+
+        // Get current month
+        const currentMonth = new Date().toLocaleString('en-US', { month: 'long' });
+        
         // Forms assigned: show only 'yes' as table rows with real names and links
         const formNames = [
           "Students Performance in Training & Placement Member",
@@ -2246,10 +2772,23 @@
           "faculty-form7.html",
           "faculty-form8.html",
         ];
+        const formTables = [
+          "form1-monthly",
+          "form2-monthly",
+          "form3-monthly",
+          "form4-monthly",
+          "form5-monthly",
+          "form6_monthly",
+          "form7-monthly",
+          "form8-monthly",
+        ];
+        
+        // Render department portfolio forms with loading placeholders
         let formsHtmlDept = "";
         let formsHtmlCore = "";
         let countDept = 1;
         let countCore = 1;
+        
         for (let i = 1; i <= 8; i++) {
           if (data[`form${i}`] && data[`form${i}`].toLowerCase() === "yes") {
             // Compose portfolio name with frequency for auto-fill
@@ -2264,10 +2803,17 @@
             if (formLinks[i - 1].includes('form7')) frequency = ' (Weekly)';
             if (formLinks[i - 1].includes('form8')) frequency = ' (Weekly)';
             let fullPortfolio = portfolioName + frequency;
-            formsHtmlDept += `<tr><td class="p-4 align-top">${countDept}</td><td class="p-4 align-top">${portfolioName}</td><td class="p-4 align-top"><button onclick="openForm('${formLinks[i - 1]}', '${data['department']}', '${fullPortfolio}', '${data['Name']}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button></td></tr>`;
+            formsHtmlDept += `<tr>
+              <td class="p-4 align-top">${countDept}</td>
+              <td class="p-4 align-top">${portfolioName}</td>
+              <td class="p-4 align-top" id="deptFormBtn${i}">
+                <span class="text-gray-500 text-sm">Checking...</span>
+              </td>
+            </tr>`;
             countDept++;
           }
         }
+        
         // Add the Monthly and Yearly forms based on Designation
         let designation = (data["Designation"] || "")
           .toString()
@@ -2275,30 +2821,123 @@
           .toUpperCase();
         let yearlyFormName = "";
         let yearlyFormLink = "";
+        let yearlyTableName = "";
+        
         if (designation === "AP") {
           yearlyFormName = "Faculty Mandatory Scope Form (AP - Yearly)";
           yearlyFormLink = "form-ap.html";
+          yearlyTableName = "AP(Yearly)";
         } else if (designation === "ASP") {
           yearlyFormName = "Faculty Mandatory Scope Form (ASP - Yearly)";
           yearlyFormLink = "form-asp.html";
+          yearlyTableName = "ASP(Yearly)";
         } else if (designation === "PROF" || designation === "PROFESSOR") {
           yearlyFormName = "Faculty Mandatory Scope Form (Professor - Yearly)";
           yearlyFormLink = "form-prof.html";
+          yearlyTableName = "Prof(Yearly)";
         }
         
         // Add Monthly form (row 1)
-        formsHtmlCore += `<tr><td class="px-4 py-2">1</td><td class="px-4 py-2">Faculty Core Scope (Monthly)</td><td class="px-4 py-2"><button onclick="openForm('faculty-core-scope.html', '${data['department']}', 'Faculty Core Scope (Monthly)', '${data['Name']}', '${designation}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button></td></tr>`;
+        formsHtmlCore += `<tr>
+          <td class="px-4 py-2">1</td>
+          <td class="px-4 py-2">Faculty Core Scope (Monthly)</td>
+          <td class="px-4 py-2" id="coreMonthlyFormBtn">
+            <span class="text-gray-500 text-sm">Checking...</span>
+          </td>
+        </tr>`;
         
         // Add Yearly form (row 2)
         if (yearlyFormName && yearlyFormLink) {
-          formsHtmlCore += `<tr><td class="px-4 py-2">2</td><td class="px-4 py-2">${yearlyFormName}</td><td class="px-4 py-2"><button onclick="openForm('${yearlyFormLink}', '${data['department']}', '${yearlyFormName}', '${data['Name']}', '${designation}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button></td></tr>`;
+          formsHtmlCore += `<tr>
+            <td class="px-4 py-2">2</td>
+            <td class="px-4 py-2">${yearlyFormName}</td>
+            <td class="px-4 py-2" id="coreYearlyFormBtn">
+              <span class="text-gray-500 text-sm">Checking...</span>
+            </td>
+          </tr>`;
         }
+        
         document.getElementById("facultyFormsDept").innerHTML =
           formsHtmlDept ||
           '<tr><td colspan="3" class="text-gray-400 text-center p-4">No roles assigned.</td></tr>';
         document.getElementById("facultyFormsCore").innerHTML =
           formsHtmlCore ||
           '<tr><td colspan="3" class="text-gray-400 text-center p-4">No core scope form assigned.</td></tr>';
+        
+        // Now check submission status asynchronously and update buttons
+        (async function updateFormButtons() {
+          const facultyName = data["Name"] || "";
+          const department = data["department"] || "";
+          
+          // Check department portfolio forms
+          for (let i = 1; i <= 8; i++) {
+            if (data[`form${i}`] && data[`form${i}`].toLowerCase() === "yes") {
+              const btnContainer = document.getElementById(`deptFormBtn${i}`);
+              if (!btnContainer) continue;
+              
+              const portfolioName = formNames[i - 1];
+              let frequency = '';
+              if (formLinks[i - 1].includes('form1')) frequency = ' (Weekly)';
+              if (formLinks[i - 1].includes('form2')) frequency = ' (Daily)';
+              if (formLinks[i - 1].includes('form3')) frequency = ' (Weekly)';
+              if (formLinks[i - 1].includes('form4')) frequency = ' (Weekly)';
+              if (formLinks[i - 1].includes('form5')) frequency = ' (Weekly)';
+              if (formLinks[i - 1].includes('form6')) frequency = ' (Weekly)';
+              if (formLinks[i - 1].includes('form7')) frequency = ' (Weekly)';
+              if (formLinks[i - 1].includes('form8')) frequency = ' (Weekly)';
+              const fullPortfolio = portfolioName + frequency;
+              
+              const isFilled = await checkFormSubmissionStatus(formTables[i - 1], facultyName, department, currentMonth);
+              
+              if (isFilled) {
+                btnContainer.innerHTML = `<span class="inline-flex items-center gap-2 rounded-full bg-green-600 text-white px-4 py-2 text-xs font-medium">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  </svg>
+                  You filled the form
+                </span>`;
+              } else {
+                btnContainer.innerHTML = `<button onclick="openForm('${formLinks[i - 1]}', '${department}', '${fullPortfolio}', '${facultyName}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button>`;
+              }
+            }
+          }
+          
+          // Check Core Scope Monthly
+          const coreMonthlyBtn = document.getElementById('coreMonthlyFormBtn');
+          if (coreMonthlyBtn) {
+            const isFilledMonthly = await checkFormSubmissionStatus('Core_scope', facultyName, department, currentMonth);
+            
+            if (isFilledMonthly) {
+              coreMonthlyBtn.innerHTML = `<span class="inline-flex items-center gap-2 rounded-full bg-green-600 text-white px-4 py-2 text-xs font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                You filled the form
+              </span>`;
+            } else {
+              coreMonthlyBtn.innerHTML = `<button onclick="openForm('faculty-core-scope.html', '${department}', 'Faculty Core Scope (Monthly)', '${facultyName}', '${designation}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button>`;
+            }
+          }
+          
+          // Check Yearly form
+          if (yearlyTableName && yearlyFormLink) {
+            const coreYearlyBtn = document.getElementById('coreYearlyFormBtn');
+            if (coreYearlyBtn) {
+              const isFilledYearly = await checkFormSubmissionStatus(yearlyTableName, facultyName, department, currentMonth);
+              
+              if (isFilledYearly) {
+                coreYearlyBtn.innerHTML = `<span class="inline-flex items-center gap-2 rounded-full bg-green-600 text-white px-4 py-2 text-xs font-medium">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  </svg>
+                  You filled the form
+                </span>`;
+              } else {
+                coreYearlyBtn.innerHTML = `<button onclick="openForm('${yearlyFormLink}', '${department}', '${yearlyFormName}', '${facultyName}', '${designation}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button>`;
+              }
+            }
+          }
+        })();
       
       // Auto-fetch Open Form logic with form status check
       window.openForm = async function(formUrl, department, portfolio, memberName, designation) {
@@ -2380,6 +3019,11 @@
         
         // Initialize previous month rating display
         initializePreviousMonthRating();
+        
+        // Load timetable
+        setTimeout(() => {
+          loadTimetable();
+        }, 500);
       }
 
       loadFacultyProfile();
