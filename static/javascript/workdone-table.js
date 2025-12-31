@@ -512,7 +512,7 @@ class WorkdoneTable {
     this.renderWorkdoneTableWithPagination(1);
   }
 
-  renderWorkdoneTableWithPagination(page = 1) {
+  async renderWorkdoneTableWithPagination(page = 1) {
     const itemsPerPage = 10;
     const rows = window._sortedWorkdoneRows || [];
     const totalItems = rows.length;
@@ -554,6 +554,65 @@ class WorkdoneTable {
       return;
     }
 
+    // Fetch edit request statuses if on editable page
+    let editRequestMap = {};
+    let allEditRequests = []; // Store all requests for fallback matching
+    if (isEditablePage && window.editRequestSystem) {
+      const facultyEmail = document.getElementById('facultyEmail')?.value || window.facultyEmail;
+      console.log('🔍 Checking edit requests for faculty:', facultyEmail);
+      
+      if (facultyEmail) {
+        // Get input_ids, handling both numeric and string types
+        const inputIds = currentPageRows
+          .map(r => r.input_id)
+          .filter(id => id !== null && id !== undefined);
+        
+        console.log('📋 Input IDs on current page:', inputIds);
+        console.log('📋 Input ID types:', inputIds.map(id => typeof id));
+        
+        try {
+          // Fetch ALL edit requests for this faculty (not filtering by input_id in query)
+          // to handle type mismatches and null input_ids
+          const { data, error } = await this.supabaseClient
+            .from('workdone_edit_requests')
+            .select('*')
+            .eq('faculty_email', facultyEmail)
+            .order('requested_at', { ascending: false });
+          
+          console.log('📊 All edit requests for faculty:', data?.length || 0, data);
+          if (error) console.error('Edit request fetch error:', error);
+          
+          if (data) {
+            allEditRequests = data; // Store for fallback matching
+            
+            // Match requests to rows, handling type differences
+            data.forEach(req => {
+              const reqInputId = req.input_id;
+              
+              // Only match by input_id if it's not null
+              if (reqInputId !== null && reqInputId !== undefined) {
+                // Try to find matching input_id (handle string/number mismatch)
+                const matchingRowInputId = inputIds.find(rowId => 
+                  rowId == reqInputId || // Loose equality for type coercion
+                  String(rowId) === String(reqInputId)
+                );
+                
+                if (matchingRowInputId !== undefined && !editRequestMap[matchingRowInputId]) {
+                  editRequestMap[matchingRowInputId] = req;
+                  console.log(`  ✅ Matched by input_id: ${matchingRowInputId}, status="${req.status}"`);
+                }
+              }
+            });
+            
+            console.log('📋 Edit request map (by input_id):', editRequestMap);
+            console.log('📋 Requests with null input_id:', data.filter(r => r.input_id === null).map(r => ({ portfolio: r.portfolio, status: r.status })));
+          }
+        } catch (err) {
+          console.warn('Could not fetch edit request statuses:', err);
+        }
+      }
+    }
+
     let html = "";
     currentPageRows.forEach((row, idx) => {
       // For institution forms, hide department cell
@@ -587,11 +646,50 @@ class WorkdoneTable {
         <td class="px-4 py-2 border-b">
           <button onclick="viewRowDetails(${originalIndex})" class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">View</button>
         </td>`;
-      // Add delete button only for faculty-profile.html
+      // Add edit request button only for faculty-profile.html
       if (isEditablePage) {
-        html += `<td class="px-4 py-2 border-b">
-          <button onclick="deleteWorkdoneRow(${originalIndex})" class="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Delete</button>
-        </td>`;
+        const rowInputId = row.input_id;
+        const rowPortfolio = row.portfolio || row['Portfolio Name'] || row.table;
+        const rowMemberName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['Faculty Name'] || row['Name'];
+        
+        // Try to find edit request by input_id first, then by portfolio + member name
+        let editRequest = editRequestMap[rowInputId];
+        
+        // If not found by input_id, try to find by portfolio name (for rows without input_id)
+        if (!editRequest && allEditRequests && allEditRequests.length > 0) {
+          editRequest = allEditRequests.find(req => {
+            const portfolioMatch = req.portfolio && rowPortfolio && 
+              (req.portfolio.toLowerCase().includes(rowPortfolio.toLowerCase()) ||
+               rowPortfolio.toLowerCase().includes(req.portfolio.toLowerCase()));
+            const nameMatch = req.faculty_name && rowMemberName &&
+              req.faculty_name.toLowerCase() === rowMemberName.toLowerCase();
+            return portfolioMatch && nameMatch && !req.is_edit_completed;
+          });
+          if (editRequest) {
+            console.log(`  ✅ Found request by portfolio+name match: portfolio="${editRequest.portfolio}", faculty="${editRequest.faculty_name}", status="${editRequest.status}"`);
+          }
+        }
+        
+        let editButtonHtml = '';
+        
+        // Debug: Log matching for each row
+        console.log(`Row ${idx}: input_id=${rowInputId}, portfolio="${rowPortfolio}", member="${rowMemberName}", editRequest found=${!!editRequest}`, editRequest ? `status=${editRequest.status}` : '');
+        
+        if (editRequest) {
+          if (editRequest.status === 'pending') {
+            editButtonHtml = `<button disabled class="bg-yellow-500 text-white px-3 py-1 rounded text-sm cursor-not-allowed opacity-75">Request Pending</button>`;
+          } else if (editRequest.status === 'approved' && !editRequest.is_edit_completed) {
+            editButtonHtml = `<button onclick="requestEditWorkdone(${originalIndex})" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-semibold animate-pulse">✓ Edit Now</button>`;
+          } else if (editRequest.status === 'rejected') {
+            editButtonHtml = `<button onclick="requestEditWorkdone(${originalIndex})" class="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Rejected - Retry</button>`;
+          } else {
+            editButtonHtml = `<button onclick="requestEditWorkdone(${originalIndex})" class="bg-orange-500 hover:bg-orange-700 text-white px-3 py-1 rounded text-sm">Request Edit</button>`;
+          }
+        } else {
+          editButtonHtml = `<button onclick="requestEditWorkdone(${originalIndex})" class="bg-orange-500 hover:bg-orange-700 text-white px-3 py-1 rounded text-sm">Request Edit</button>`;
+        }
+        
+        html += `<td class="px-4 py-2 border-b">${editButtonHtml}</td>`;
       }
       html += `</tr>`;
     });
@@ -850,6 +948,131 @@ window.viewRowDetails = function(idx) {
   }
 };
 
+// Request edit for a workdone row
+window.requestEditWorkdone = async function(idx) {
+  // Use sorted data if available, fallback to original
+  const rows = window._sortedWorkdoneRows || window._workdoneRows;
+  const row = rows && rows[idx];
+  if (!row) {
+    console.error('Row not found for index:', idx);
+    return;
+  }
+  
+  // Check if edit request system is initialized
+  if (!window.editRequestSystem) {
+    alert('Edit request system not initialized. Please refresh the page.');
+    return;
+  }
+  
+  // Check if there's already a pending request
+  const facultyEmail = document.getElementById('facultyEmail')?.value || window.facultyEmail;
+  const facultyName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['Faculty Name'] || row['Name'];
+  const portfolioName = row.portfolio || row['Portfolio Name'] || row.table;
+  
+  // First try by input_id
+  let existingRequest = null;
+  if (row.input_id) {
+    existingRequest = await window.editRequestSystem.checkEditRequestStatus(row.input_id, facultyEmail);
+    console.log('Checked by input_id:', row.input_id, 'Result:', existingRequest);
+  }
+  
+  // If not found by input_id, search by portfolio + faculty name
+  if (!existingRequest && facultyEmail) {
+    try {
+      const { data, error } = await window.editRequestSystem.supabase
+        .from('workdone_edit_requests')
+        .select('*')
+        .eq('faculty_email', facultyEmail)
+        .order('requested_at', { ascending: false });
+      
+      if (data && data.length > 0) {
+        // Find matching request by portfolio + name
+        existingRequest = data.find(req => {
+          const portfolioMatch = req.portfolio && portfolioName && 
+            (req.portfolio.toLowerCase().includes(portfolioName.toLowerCase()) ||
+             portfolioName.toLowerCase().includes(req.portfolio.toLowerCase()));
+          const nameMatch = req.faculty_name && facultyName &&
+            req.faculty_name.toLowerCase() === facultyName.toLowerCase();
+          return portfolioMatch && nameMatch && !req.is_edit_completed;
+        });
+        
+        if (existingRequest) {
+          console.log('Found existing request by portfolio+name match:', existingRequest);
+        }
+      }
+    } catch (err) {
+      console.error('Error searching by portfolio+name:', err);
+    }
+  }
+  
+  if (existingRequest) {
+    if (existingRequest.status === 'pending') {
+      alert('You already have a pending edit request for this record. Please wait for approval.');
+      return;
+    } else if (existingRequest.status === 'approved' && !existingRequest.is_edit_completed) {
+      // Open edit modal directly
+      await window.editRequestSystem.openEditModal(existingRequest.request_id, row);
+      return;
+    } else if (existingRequest.status === 'rejected') {
+      const retryConfirm = confirm(`Your previous edit request was rejected.\nReason: ${existingRequest.rejection_reason || 'No reason provided'}\n\nDo you want to submit a new request?`);
+      if (!retryConfirm) return;
+    }
+  }
+  
+  // Prompt for reason
+  const reason = prompt('Please provide a reason for editing this record:');
+  if (!reason || reason.trim() === '') {
+    alert('Edit request cancelled. A reason is required.');
+    return;
+  }
+  
+  // Show loading state
+  const requestBtn = document.querySelector(`button[onclick="requestEditWorkdone(${idx})"]`);
+  if (requestBtn) {
+    requestBtn.disabled = true;
+    requestBtn.textContent = 'Submitting...';
+    requestBtn.classList.remove('bg-orange-500', 'hover:bg-orange-700');
+    requestBtn.classList.add('bg-gray-400');
+  }
+  
+  // Add table name and faculty info to row data
+  const workdoneData = {
+    ...row,
+    table_name: row.table,
+    faculty_email: facultyEmail,
+    faculty_name: document.getElementById('facultyName')?.value || window.facultyName,
+    department: row.Department || document.getElementById('facultyDepartment')?.value || window.facultyDepartment,
+    designation: document.getElementById('facultyDesignation')?.value || window.facultyDesignation
+  };
+  
+  // Submit edit request
+  const result = await window.editRequestSystem.submitEditRequest(workdoneData, reason);
+  
+  if (result.success) {
+    alert('Edit request submitted successfully! You will be notified once it is approved by HOD/IQAC/Principal.');
+    
+    // Reset button
+    if (requestBtn) {
+      requestBtn.disabled = false;
+      requestBtn.textContent = 'Request Pending';
+      requestBtn.classList.remove('bg-gray-400');
+      requestBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+    }
+  } else {
+    alert('Failed to submit edit request: ' + result.error);
+    
+    // Reset button
+    if (requestBtn) {
+      requestBtn.disabled = false;
+      requestBtn.textContent = 'Request Edit';
+      requestBtn.classList.remove('bg-gray-400');
+      requestBtn.classList.add('bg-orange-500', 'hover:bg-orange-700');
+    }
+  }
+};
+
+// Keep the old delete function commented out for reference
+/*
 window.deleteWorkdoneRow = function(idx) {
   // Use sorted data if available, fallback to original
   const rows = window._sortedWorkdoneRows || window._workdoneRows;
@@ -990,6 +1213,8 @@ async function deleteFromSupabase(tableName, rowId, rowIndex, idFieldName) {
     }
   }
 }
+*/
+
 
 window.closeViewModal = function() {
   const modal = document.getElementById('viewModal');
