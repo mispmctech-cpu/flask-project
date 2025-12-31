@@ -8,6 +8,7 @@
   <!-- Supabase JS library (must be loaded before any Supabase usage) -->
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <script src="../static/javascript/form-modal-mapper.js"></script>
+  <script src="../static/javascript/workdone-edit-requests.js"></script>
   <!-- SheetJS for Excel export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- Cropper.js for image cropping -->
@@ -309,7 +310,7 @@
                   <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
                   <th class="p-3 border-b border-gray-300">Submission Date</th>
                   <th class="p-3 border-b border-gray-300">View</th>
-                  <th class="p-3 border-b border-gray-300">Delete</th>
+                  <th class="p-3 border-b border-gray-300">Edit</th>
                 </tr>
               </thead>
               <tbody
@@ -1446,6 +1447,12 @@
         );
       }
       const supabaseClient = window.supabaseClient;
+      
+      // Initialize Edit Request System
+      if (!window.editRequestSystem) {
+        window.editRequestSystem = initEditRequestSystem(supabaseClient);
+      }
+      
       async function loadFacultyProfile() {
         if (!email) {
           document.body.innerHTML = '<div class="text-center mt-20 text-red-500">No faculty selected.</div>';
