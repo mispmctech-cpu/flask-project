@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workdone Edit Requests</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script src="{{ url_for('static', filename='javascript/form-modal-mapper.js') }}"></script>
+  <style>
+    .status-pending { background-color: #FEF3C7; color: #92400E; }
+    .status-approved { background-color: #D1FAE5; color: #065F46; }
+    .status-rejected { background-color: #FEE2E2; color: #991B1B; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <header class="bg-purple-800 text-white py-4 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold">Workdone Edit Requests</h1>
+        <p class="text-sm opacity-90">Manage edit requests for workdone records</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <span id="userRoleDisplay" class="text-sm bg-purple-600 px-3 py-1 rounded-full"></span>
+        <button onclick="history.back()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded font-semibold">
+          ← Back
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Filter Section -->
+    <section class="bg-white rounded-lg shadow-md p-4 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Status Filter</label>
+          <select id="statusFilter" class="w-full border border-gray-300 rounded px-3 py-2">
+            <option value="all">All Requests</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Department</label>
+          <select id="departmentFilter" class="w-full border border-gray-300 rounded px-3 py-2">
+            <option value="all">All Departments</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Search</label>
+          <input type="text" id="searchInput" placeholder="Faculty name..." class="w-full border border-gray-300 rounded px-3 py-2">
+        </div>
+        <div class="flex items-end">
+          <button onclick="loadEditRequests()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold">
+            Refresh
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Requests Table -->
+    <section class="bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-purple-700 text-white">
+            <tr>
+              <th class="px-3 py-3 text-left">Request ID</th>
+              <th class="px-3 py-3 text-left">Faculty Name</th>
+              <th class="px-3 py-3 text-left">Department</th>
+              <th class="px-3 py-3 text-left">Portfolio</th>
+              <th class="px-3 py-3 text-left">Reason</th>
+              <th class="px-3 py-3 text-left">Requested At</th>
+              <th class="px-3 py-3 text-left">Status</th>
+              <th class="px-3 py-3 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="requestsTableBody">
+            <tr>
+              <td colspan="8" class="text-center py-8 text-gray-500">Loading requests...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Edit Logs Section -->
+    <section class="bg-white rounded-lg shadow-md mt-8 p-4 hidden">
+      <h2 class="text-xl font-bold text-purple-700 mb-4">Edit History Logs</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="px-3 py-2 text-left">Log ID</th>
+              <th class="px-3 py-2 text-left">Faculty</th>
+              <th class="px-3 py-2 text-left">Department</th>
+              <th class="px-3 py-2 text-left">Field Changed</th>
+              <th class="px-3 py-2 text-left">Old Value</th>
+              <th class="px-3 py-2 text-left">New Value</th>
+              <th class="px-3 py-2 text-left">Approved By</th>
+              <th class="px-3 py-2 text-left">Edited At</th>
+            </tr>
+          </thead>
+          <tbody id="logsTableBody">
+            <tr>
+              <td colspan="8" class="text-center py-8 text-gray-500">Loading logs...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Approval Modal -->
+  <div id="approvalModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+    <div class="bg-white rounded-lg shadow-lg max-w-5xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeApprovalModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+      <h3 class="text-xl font-bold text-purple-700 mb-4">Review Edit Request</h3>
+      <div id="approvalModalContent"></div>
+      <div class="mt-6 flex gap-4 sticky bottom-0 bg-white pt-4 border-t">
+        <button onclick="approveRequest()" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold">
+          ✓ Approve
+        </button>
+        <button onclick="rejectRequest()" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold">
+          ✗ Reject
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const supabaseClient = window.supabase.createClient(
+      "https://cbhodgwaazmjszkujrti.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+
+    let currentRequest = null;
+    let userRole = 'faculty'; // Will be set based on login
+    let userDepartment = '';
+    let userName = '';
+
+    // Auto-detect user role and department from URL or localStorage
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Try to detect role from URL first
+      const urlParams = new URLSearchParams(window.location.search);
+      const roleParam = urlParams.get('role');
+      const deptParam = urlParams.get('department');
+      
+      // Check localStorage for stored credentials
+      const storedRole = localStorage.getItem('userRole') || sessionStorage.getItem('userRole');
+      const storedDept = localStorage.getItem('userDepartment') || sessionStorage.getItem('userDepartment');
+      const storedUser = localStorage.getItem('hodUsername') || sessionStorage.getItem('hodUsername') || 
+                        localStorage.getItem('iqacUsername') || sessionStorage.getItem('iqacUsername') ||
+                        localStorage.getItem('principalUsername') || sessionStorage.getItem('principalUsername');
+      
+      // Set user details
+      userRole = roleParam || storedRole || 'iqac'; // Default to iqac to see all departments
+      userDepartment = deptParam || storedDept || '';
+      userName = storedUser || 'Admin';
+      
+      console.log('User Role:', userRole);
+      console.log('User Department:', userDepartment);
+      console.log('User Name:', userName);
+      
+      // Update page title based on role
+      const pageTitle = document.querySelector('h1');
+      if (pageTitle) {
+        pageTitle.textContent = `Workdone Edit Requests - ${userRole.toUpperCase()}`;
+      }
+      
+      // Display user role badge
+      const roleDisplay = document.getElementById('userRoleDisplay');
+      if (roleDisplay) {
+        roleDisplay.textContent = `${userRole.toUpperCase()}${userDepartment ? ' - ' + userDepartment : ''}`;
+      }
+      
+      // Load departments for filter
+      await loadDepartments();
+      
+      // Initial load
+      loadEditRequests();
+      loadEditLogs();
+    });
+
+    async function loadDepartments() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('Faculty')
+          .select('department');
+        
+        if (error) throw error;
+        
+        const uniqueDepts = [...new Set(data.map(f => f.department).filter(d => d && d.trim() !== ''))];
+        uniqueDepts.sort();
+        
+        const deptFilter = document.getElementById('departmentFilter');
+        uniqueDepts.forEach(dept => {
+          const option = document.createElement('option');
+          option.value = dept;
+          option.textContent = dept;
+          deptFilter.appendChild(option);
+        });
+        
+        // If HOD, auto-select their department
+        if (userRole === 'hod' && userDepartment) {
+          deptFilter.value = userDepartment;
+          deptFilter.disabled = true; // HOD can only see their department
+          console.log('HOD department auto-selected:', userDepartment);
+        } else {
+          console.log('Not HOD or no department, showing all');
+        }
+      } catch (err) {
+        console.error('Error loading departments:', err);
+      }
+    }
+
+    async function loadEditRequests() {
+      try {
+        const statusFilter = document.getElementById('statusFilter').value;
+        const deptFilter = document.getElementById('departmentFilter').value;
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+        let query = supabaseClient.from('workdone_edit_requests').select('*').order('requested_at', { ascending: false });
+
+        // Apply role-based filtering
+        if (userRole === 'hod' && userDepartment) {
+          // HOD sees only their department (only if department is set)
+          console.log('Filtering by HOD department:', userDepartment);
+          query = query.eq('department', userDepartment);
+        }
+        // IQAC and Principal see all departments by default
+
+        if (statusFilter !== 'all') {
+          console.log('Filtering by status:', statusFilter);
+          query = query.eq('status', statusFilter);
+        }
+
+        if (deptFilter !== 'all') {
+          console.log('Filtering by department filter:', deptFilter);
+          query = query.eq('department', deptFilter);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+        console.log('Raw data from query:', data);
+        console.log('Number of records:', data ? data.length : 0);
+
+        let filteredData = data || [];
+        if (searchTerm) {
+          filteredData = filteredData.filter(r => r.faculty_name.toLowerCase().includes(searchTerm));
+          console.log('Filtered by search term:', filteredData.length);
+        }
+
+        renderRequestsTable(filteredData);
+      } catch (err) {
+        console.error('Error loading requests:', err);
+        alert('Error loading edit requests: ' + err.message);
+      }
+    }
+
+    function renderRequestsTable(requests) {
+      const tbody = document.getElementById('requestsTableBody');
+      
+      if (!requests || requests.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">No edit requests found</td></tr>';
+        return;
+      }
+
+      let html = '';
+      requests.forEach(req => {
+        const statusClass = `status-${req.status}`;
+        const requestDate = new Date(req.requested_at).toLocaleString();
+        
+        html += `
+          <tr class="border-b hover:bg-gray-50">
+            <td class="px-3 py-2 font-mono text-xs">${req.request_id.substring(0, 8)}...</td>
+            <td class="px-3 py-2 font-semibold">${req.faculty_name}</td>
+            <td class="px-3 py-2">${req.department}</td>
+            <td class="px-3 py-2">${req.portfolio || '-'}</td>
+            <td class="px-3 py-2">${req.request_reason || '-'}</td>
+            <td class="px-3 py-2 text-xs">${requestDate}</td>
+            <td class="px-3 py-2">
+              <span class="${statusClass} px-2 py-1 rounded text-xs font-semibold uppercase">${req.status}</span>
+            </td>
+            <td class="px-3 py-2">
+              ${req.status === 'pending' ? 
+                `<button onclick='reviewRequest(${JSON.stringify(req).replace(/'/g, "&apos;")})' class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs">Review</button>` 
+                : 
+                `<button onclick='viewRequest(${JSON.stringify(req).replace(/'/g, "&apos;")})' class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs">View</button>`
+              }
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    async function loadEditLogs() {
+      try {
+        let query = supabaseClient.from('workdone_edit_logs').select('*').order('edited_at', { ascending: false }).limit(100);
+
+        // Apply role-based filtering
+        if (userRole === 'hod') {
+          query = query.eq('department', userDepartment);
+        }
+        // IQAC and Principal see all logs
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+        renderLogsTable(data || []);
+      } catch (err) {
+        console.error('Error loading logs:', err);
+      }
+    }
+
+    function renderLogsTable(logs) {
+      const tbody = document.getElementById('logsTableBody');
+      
+      if (!logs || logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">No edit logs found</td></tr>';
+        return;
+      }
+
+      let html = '';
+      logs.forEach(log => {
+        const editDate = new Date(log.edited_at).toLocaleString();
+        
+        html += `
+          <tr class="border-b hover:bg-gray-50">
+            <td class="px-3 py-2 font-mono text-xs">${log.log_id.substring(0, 8)}...</td>
+            <td class="px-3 py-2">${log.faculty_name}</td>
+            <td class="px-3 py-2">${log.department}</td>
+            <td class="px-3 py-2 font-semibold text-purple-700">${log.field_changed}</td>
+            <td class="px-3 py-2 text-xs text-red-600">${log.old_value || '-'}</td>
+            <td class="px-3 py-2 text-xs text-green-600">${log.new_value || '-'}</td>
+            <td class="px-3 py-2">${log.approved_by} <span class="text-xs">(${log.approved_by_role})</span></td>
+            <td class="px-3 py-2 text-xs">${editDate}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    function reviewRequest(request) {
+      currentRequest = request;
+      const modal = document.getElementById('approvalModal');
+      const content = document.getElementById('approvalModalContent');
+
+      console.log('Review request called with:', request);
+      console.log('getFormModalContent available?', typeof getFormModalContent);
+
+      // Use getFormModalContent if available to show formatted data
+      let dataHtml = '';
+      if (typeof getFormModalContent === 'function' && request.original_data) {
+        try {
+          // Prepare the row object for getFormModalContent
+          const rowData = {
+            table: request.workdone_table_name,
+            portfolio: request.portfolio,
+            ...request.original_data
+          };
+          
+          console.log('Calling getFormModalContent with rowData:', rowData);
+          dataHtml = getFormModalContent(rowData, request.original_data);
+          console.log('getFormModalContent returned HTML, length:', dataHtml.length);
+        } catch (err) {
+          console.error('Error rendering modal content:', err);
+          // Fallback to JSON display
+          dataHtml = `<div class="bg-gray-100 p-3 rounded">
+            <strong>Original Data:</strong>
+            <pre class="text-xs mt-2 overflow-auto max-h-60">${JSON.stringify(request.original_data, null, 2)}</pre>
+          </div>`;
+        }
+      } else {
+        console.warn('getFormModalContent not available, using fallback');
+        // Fallback if getFormModalContent not available
+        dataHtml = `<div class="bg-gray-100 p-3 rounded">
+          <strong>Original Data:</strong>
+          <pre class="text-xs mt-2 overflow-auto max-h-60">${JSON.stringify(request.original_data, null, 2)}</pre>
+        </div>`;
+      }
+
+      let html = `
+        <div class="space-y-3">
+          <div><strong>Faculty:</strong> ${request.faculty_name}</div>
+          <div><strong>Department:</strong> ${request.department}</div>
+          <div><strong>Portfolio:</strong> ${request.portfolio || '-'}</div>
+          <div><strong>Designation:</strong> ${request.designation || '-'}</div>
+          <div><strong>Reason:</strong> <span class="text-red-600 font-semibold">${request.request_reason || 'No reason provided'}</span></div>
+          <div><strong>Requested At:</strong> ${new Date(request.requested_at).toLocaleString()}</div>
+          <div class="border-t pt-3 mt-3">
+            <strong class="text-lg text-purple-700">Record to be Edited:</strong>
+            <div class="mt-2 max-h-96 overflow-y-auto border rounded p-3 bg-white">
+              ${dataHtml}
+            </div>
+          </div>
+        </div>
+      `;
+
+      content.innerHTML = html;
+      modal.classList.remove('hidden');
+    }
+
+    function viewRequest(request) {
+      reviewRequest(request);
+    }
+
+    function closeApprovalModal() {
+      document.getElementById('approvalModal').classList.add('hidden');
+      currentRequest = null;
+    }
+
+    async function approveRequest() {
+      if (!currentRequest) return;
+
+      try {
+        const { error } = await supabaseClient
+          .from('workdone_edit_requests')
+          .update({
+            status: 'approved',
+            approved_by: userName,
+            approved_by_role: userRole,
+            approved_at: new Date().toISOString()
+          })
+          .eq('request_id', currentRequest.request_id);
+
+        if (error) throw error;
+
+        alert('Edit request approved! Faculty can now edit the record.');
+        closeApprovalModal();
+        loadEditRequests();
+      } catch (err) {
+        alert('Error approving request: ' + err.message);
+      }
+    }
+
+    async function rejectRequest() {
+      if (!currentRequest) return;
+
+      const reason = prompt('Enter rejection reason (optional):');
+
+      try {
+        const { error } = await supabaseClient
+          .from('workdone_edit_requests')
+          .update({
+            status: 'rejected',
+            approved_by: userName,
+            approved_by_role: userRole,
+            approved_at: new Date().toISOString(),
+            rejection_reason: reason || null
+          })
+          .eq('request_id', currentRequest.request_id);
+
+        if (error) throw error;
+
+        alert('Edit request rejected.');
+        closeApprovalModal();
+        loadEditRequests();
+      } catch (err) {
+        alert('Error rejecting request: ' + err.message);
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadEditRequests();
+      loadEditLogs();
+    });
+
+    document.getElementById('statusFilter').addEventListener('change', loadEditRequests);
+    document.getElementById('departmentFilter').addEventListener('change', loadEditRequests);
+    document.getElementById('searchInput').addEventListener('input', loadEditRequests);
+  </script>
+</body>
+</html>
