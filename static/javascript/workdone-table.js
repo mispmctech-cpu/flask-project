@@ -66,23 +66,18 @@ class WorkdoneTable {
       { table: "Institution-form9", portfolio: "Placement officer" },
       // Department Portfolio Forms (existing)
       { table: "form1-monthly", portfolio: "Students Performance in Training & Placement Member (Monthly)" },
-      { table: "form1-monthly", portfolio: "Students Performance in Training & Placement Member (Monthly)" },
       { table: "form1-once in a year", portfolio: "Students Performance in Training & Placement Member (Yearly)" },
       { table: "form1-Weekly", portfolio: "Students Performance in Training & Placement Member (Weekly)" },
       { table: "form1-once in 15 days", portfolio: "Students Performance in Training & Placement Member (Bi-weekly)" },
       // NEW: Add support for new Form2-daily table (Postgres: "Form2-daily")
       { table: "Form2-daily", portfolio: "Class Advisor (Daily)" },
-      // Keep old form2-daily for backward compatibility
-      { table: "form2-daily", portfolio: "Class Advisor (Daily)" },
       { table: "form2-monthly", portfolio: "Class Advisor (Monthly)" },
       { table: "form2-weekly", portfolio: "Class Advisor (Weekly)" },
       { table: "form2-once in a month", portfolio: "Class Advisor (Monthly)" },
       { table: "form2-once in a semester", portfolio: "Class Advisor (Semester)" },
       { table: "form3-monthly", portfolio: "Faculty Information & Contribution Member (Monthly)" },
-      { table: "form3-monthly", portfolio: "Faculty Information & Contribution Member (Monthly)" },
       { table: "form3-Weekly", portfolio: "Faculty Information & Contribution Member (Weekly)" },
       { table: "form3-once in a semester", portfolio: "Faculty Information & Contribution Member (Semester)" },
-      { table: "form4-monthly", portfolio: "Course Outcome & Program Outcome Member (Exam Cell) (Monthly)" },
       { table: "form4-monthly", portfolio: "Course Outcome & Program Outcome Member (Exam Cell) (Monthly)" },
       { table: "form4-Weekly", portfolio: "Course Outcome & Program Outcome Member (Exam Cell) (Weekly)" },
       { table: "form4-once in a semester", portfolio: "Course Outcome & Program Outcome Member (Exam Cell) (Semester)" },
