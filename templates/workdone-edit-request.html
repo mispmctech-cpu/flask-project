@@ -147,15 +147,15 @@
       const roleParam = urlParams.get('role');
       const deptParam = urlParams.get('department');
       
-      // Check localStorage for stored credentials
-      const storedRole = localStorage.getItem('userRole') || sessionStorage.getItem('userRole');
-      const storedDept = localStorage.getItem('userDepartment') || sessionStorage.getItem('userDepartment');
+      // Check localStorage for stored credentials (check both possible key names)
+      const storedRole = localStorage.getItem('role') || localStorage.getItem('userRole') || sessionStorage.getItem('userRole');
+      const storedDept = localStorage.getItem('department') || localStorage.getItem('Department') || localStorage.getItem('userDepartment') || sessionStorage.getItem('userDepartment');
       const storedUser = localStorage.getItem('hodUsername') || sessionStorage.getItem('hodUsername') || 
                         localStorage.getItem('iqacUsername') || sessionStorage.getItem('iqacUsername') ||
                         localStorage.getItem('principalUsername') || sessionStorage.getItem('principalUsername');
       
-      // Set user details
-      userRole = roleParam || storedRole || 'iqac'; // Default to iqac to see all departments
+      // Set user details - prioritize URL params, then localStorage
+      userRole = (roleParam || storedRole || 'faculty').toLowerCase();
       userDepartment = deptParam || storedDept || '';
       userName = storedUser || 'Admin';
       

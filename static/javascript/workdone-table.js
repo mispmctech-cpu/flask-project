@@ -30,12 +30,30 @@ class WorkdoneTable {
       return [];
     }
   }
-  constructor(supabaseClient) {
+  constructor(supabaseClient, onlyFacultyForms = false) {
     this.supabaseClient = supabaseClient;
     this.workdoneRows = [];
+    this.onlyFacultyForms = onlyFacultyForms;
     
-    // Institution Level Forms (using exact table names provided)
-    this.formTables = [
+    // Faculty-only tables for HOD page
+    const facultyOnlyTables = [
+      "form1-monthly",
+      "form2-monthly",
+      "Form2-daily",
+      "form3-monthly",
+      "form4-monthly",
+      "form5-monthly",
+      "form6_monthly",
+      "form7-monthly",
+      "form8-monthly",
+      "AP(Yearly)",
+      "ASP(Yearly)",
+      "Prof(Yearly)",
+      "Core_scope"
+    ];
+    
+    // All forms (Institution Level Forms + Faculty Forms)
+    const allFormTables = [
       // Add Form 6 Once in 2 Months for IQAC workdone
       { table: "form6_once_in_2_month", portfolio: "Teaching & Learning Process Member (IQAC) (Once in 2 Months)" },
       // Add Form 6 Weekly for IQAC workdone
@@ -97,6 +115,15 @@ class WorkdoneTable {
       { table: "Prof(Yearly)", portfolio: "Prof Yearly Form" },
       { table: "Core_scope", portfolio: "Faculty Core Scope (Monthly)" },
     ];
+    
+    // Filter to only faculty forms if requested
+    if (this.onlyFacultyForms) {
+      this.formTables = allFormTables.filter(entry => facultyOnlyTables.includes(entry.table));
+      console.log('WorkdoneTable: Loading ONLY faculty forms for HOD department view');
+    } else {
+      this.formTables = allFormTables;
+      console.log('WorkdoneTable: Loading ALL forms (faculty + institutional)');
+    }
   }
 
   // Helper function to compare strings (case-insensitive, trimmed)

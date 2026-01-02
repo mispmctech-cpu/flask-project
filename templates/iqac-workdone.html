@@ -3,20 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IQAC Workdone Overview</title>
+  <title>IQAC - Validated Workdone</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
-  <!-- SheetJS (xlsx) for Excel export -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="../static/javascript/form-modal-mapper.js"></script>
 </head>
-<body class="bg-pmcBg min-h-screen">
+<body class="bg-gray-50 min-h-screen">
   <header class="bg-purple-700 text-white shadow-md">
     <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
       <a href="iqac.html" class="flex items-center">
         <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 mr-4 rounded shadow" />
       </a>
-      <h1 class="text-2xl font-bold">IQAC Workdone Overview</h1>
+      <h1 class="text-2xl font-bold">IQAC - Validated Workdone</h1>
       <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
@@ -24,1341 +22,342 @@
       </button>
     </div>
   </header>
+
   <main class="max-w-7xl mx-auto px-4 py-8">
-    <!-- Modal for reject commands -->
-    <div id="rejectModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
-      <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
-        <button onclick="closeRejectModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
-        <h3 class="text-xl font-bold mb-4 text-red-700">Reject IQAC Workdone</h3>
-        <form id="rejectForm" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Reason / Commands</label>
-            <textarea id="rejectCommands" name="rejectCommands" rows="3" class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2" required></textarea>
-          </div>
-          <div id="rejectStatus" class="text-sm mt-2"></div>
-          <div class="flex gap-4 mt-2">
-            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded font-semibold">Reject</button>
-            <button type="button" onclick="closeRejectModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded font-semibold">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </div>
-    <!-- ...existing code... -->
-  <!-- Removed department display/filter section -->
+    <!-- Error and Loading Messages -->
     <div id="errorBox" class="hidden mb-4 p-3 rounded bg-red-100 text-red-700 font-semibold"></div>
-    <div id="loadingBox" class="mb-4 p-3 rounded bg-blue-100 text-blue-800 font-semibold">Loading data, please wait...</div>
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
-      <script>
-    // Pagination for Rejected IQAC Workdone table
-    let rejectedIQACCurrentPage = 1;
-    let rejectedIQACRowsPerPage = 10;
-    let _rejectedIQACRowsAll = [];
-    async function loadRejectedIQACWorkdone() {
-      // First, fetch accepted workdone to exclude any rejected rows that were later accepted
-      let acceptedRows = [];
-      try {
-        const { data: acceptedData, error: acceptedError } = await supabaseClient
-          .from('iqac-workdone')
-          .select('input_id, table_name, department, portfolio_name, portfolio_member_name, verified_at, accepted_at');
-        if (!acceptedError && acceptedData) acceptedRows = acceptedData;
-      } catch (e) {
-        acceptedRows = [];
-      }
+    <div id="loadingBox" class="mb-4 p-3 rounded bg-blue-100 text-blue-800 font-semibold" style="display: none;">Loading data, please wait...</div>
 
-      // Build accepted key sets (preferred: input_id__table_name, fallback: department|portfolio|member|verified_at)
-      const acceptedCompositeKeys = new Set();
-      const acceptedFallbackKeys = new Set();
-      for (const v of acceptedRows) {
-        if (v.input_id && v.table_name) acceptedCompositeKeys.add(`${v.input_id}__${v.table_name}`);
-        acceptedFallbackKeys.add(`${v.department}|${v.portfolio_name}|${v.portfolio_member_name}|${v.verified_at || ''}`);
-      }
-
-      // Fetch rejected IQAC workdone from iqac_workdone_reject table
-      let { data, error } = await supabaseClient
-        .from('iqac_workdone_reject')
-        .select('*')
-        .order('rejected_at', { ascending: false });
-      if (error) {
-        document.getElementById('rejectedIQACWorkdoneTable').innerHTML = `<tr><td colspan='8' class='text-center text-red-500 p-4'>Failed to load rejected workdone: ${error.message}</td></tr>`;
-        return;
-      }
-
-      // Filter out rejected rows that are already accepted (use composite key if available, else fallback)
-      const rawRejected = data || [];
-      const filteredRejected = rawRejected.filter(r => {
-        const composite = (r.input_id && r.table_name) ? `${r.input_id}__${r.table_name}` : null;
-        if (composite) {
-          if (acceptedCompositeKeys.has(composite)) {
-            console.log('Excluding rejected row because accepted (by input_id__table_name):', r);
-            return false;
-          }
-        }
-        const fallback = `${r.department}|${r.portfolio_name}|${r.portfolio_member_name}|${r.submitted_at || r.rejected_at || ''}`;
-        if (acceptedFallbackKeys.has(fallback)) {
-          console.log('Excluding rejected row because accepted (by fallback key):', r);
-          return false;
-        }
-        return true;
-      });
-
-      renderRejectedIQACWorkdoneTable(filteredRejected);
-    }
-    function renderRejectedIQACWorkdoneTable(rows) {
-      _rejectedIQACRowsAll = rows;
-      window._rejectedIQACRows = rows;
-      window._rejectedIQACRowsAll = rows; // <-- Ensure global for export
-      renderRejectedIQACWorkdoneTablePage(rejectedIQACCurrentPage);
-      renderRejectedIQACWorkdonePagination();
-    }
-    function renderRejectedIQACWorkdoneTablePage(page) {
-      const tbody = document.getElementById('rejectedIQACWorkdoneTable');
-      let start = (page - 1) * rejectedIQACRowsPerPage;
-      let end = start + rejectedIQACRowsPerPage;
-      let pageRows = _rejectedIQACRowsAll.slice(start, end);
-      tbody.innerHTML = pageRows.length > 0 ? pageRows.map((r, idx) => {
-        let globalIdx = start + idx;
-        let statusText = (r.status || '').toString().toUpperCase();
-        let statusClass = '';
-        if (statusText === 'COMPLETED') {
-          statusClass = 'text-green-600 font-bold uppercase';
-        } else if (statusText === 'PENDING') {
-          statusClass = 'text-red-600 font-bold uppercase';
-        } else {
-          statusClass = 'font-bold uppercase';
-        }
-         return `
-         <tr class="hover:bg-red-50 transition border-b border-gray-200" data-rejected-iqac-idx="${globalIdx}">
-           <td class='p-3 border-r border-gray-200'>${r.department}</td>
-           <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
-           <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
-           <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
-           <td class='p-3 border-r border-gray-200'>${r.rejected_by}</td>
-           <td class='p-3 border-r border-gray-200'>${r.rejected_at ? new Date(r.rejected_at).toLocaleString() : ''}</td>
-           <td class='p-3 border-r border-gray-200'>${r.commands || '-'}</td>
-           <td class='p-3 border-r border-gray-200'>${r.documents ? `<a href='${r.documents}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow'>View</a>` : '-'}</td>
-           <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewRejectedIQACRowDetails(${globalIdx})">View</button></td>
-         </tr>
-       `;
-      }).join('') : `<tr><td colspan='8' class='text-center text-gray-400 p-4'>No rejected records found.</td></tr>`;
-    }
-    function renderRejectedIQACWorkdonePagination() {
-      const totalRows = _rejectedIQACRowsAll.length;
-      const totalPages = Math.ceil(totalRows / rejectedIQACRowsPerPage);
-      const container = document.getElementById('rejectedIQACWorkdonePagination');
-      if (totalPages <= 1) {
-        container.innerHTML = '';
-        return;
-      }
-      let html = `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${rejectedIQACCurrentPage === 1 ? 'disabled' : ''} onclick='changeRejectedIQACPage(${rejectedIQACCurrentPage - 1})'>Prev</button>`;
-      for (let i = 1; i <= totalPages; i++) {
-        html += `<button class='px-3 py-1 mx-1 rounded ${i === rejectedIQACCurrentPage ? 'bg-red-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}' onclick='changeRejectedIQACPage(${i})'>${i}</button>`;
-      }
-      html += `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${rejectedIQACCurrentPage === totalPages ? 'disabled' : ''} onclick='changeRejectedIQACPage(${rejectedIQACCurrentPage + 1})'>Next</button>`;
-      container.innerHTML = html;
-    }
-    function changeRejectedIQACPage(page) {
-      const totalRows = _rejectedIQACRowsAll.length;
-      const totalPages = Math.ceil(totalRows / rejectedIQACRowsPerPage);
-      if (page < 1 || page > totalPages) return;
-      rejectedIQACCurrentPage = page;
-      renderRejectedIQACWorkdoneTablePage(page);
-      renderRejectedIQACWorkdonePagination();
-    }
-    // Modal logic for viewing rejected IQAC row details
-    function viewRejectedIQACRowDetails(idx) {
-      const row = window._rejectedIQACRows && window._rejectedIQACRows[idx];
-      if (!row) return;
-      let html = '<div class="mb-4 p-3 bg-red-100 text-red-800 rounded">Rejected IQAC Workdone Details:</div>';
-      html += '<table class="min-w-full text-left">';
-      for (const [key, value] of Object.entries(row)) {
-        if (key === 'id') continue;
-        let cellContent = '';
-        if (typeof value === 'string' && value.startsWith('http')) {
-          cellContent = `<a href='${value}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow' style='text-decoration:none;'>View File</a>`;
-        } else if (value === '' || value === null || value === undefined) {
-          cellContent = "<span class='text-gray-400'>Not provided</span>";
-        } else {
-          cellContent = value;
-        }
-        html += `<tr><th class="pr-4 py-2 text-gray-700 font-semibold align-top">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</th><td class="py-2">${cellContent}</td></tr>`;
-      }
-      html += '</table>';
-      showModal(html);
-    }
-        // Generic table filter function for search bars
-    function filterTable(tbodyId, searchInputId) {
-      const search = document.getElementById(searchInputId).value.toLowerCase();
-      const rows = Array.from(document.getElementById(tbodyId).querySelectorAll('tr'));
-      rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(search) ? '' : 'none';
-      });
-    }
-    </script>
-      <!-- NOTE: Removed duplicate global search/export controls to avoid two search boxes for the Pending table.
-           Use the department filter + `pendingWorkdoneSearch` and the export button below (single set of controls). -->
-    </div>
-    <div class="overflow-x-auto">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
-        <div class="flex gap-2 items-center">
-          <label for="pendingDeptFilter" class="font-medium text-green-700">Department:</label>
-          <select id="pendingDeptFilter" class="p-2 border rounded"></select>
-        </div>
-        <input id="pendingWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-green-700" placeholder="Search by Portfolio or Member" />
-        <button onclick="exportTableToExcel('iqacWorkdoneTable', 'IQAC_Workdone')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-          Export to Excel
-        </button>
+    <!-- Validated Workdone Section -->
+    <div class="bg-white rounded-lg shadow-lg">
+      <div class="bg-gradient-to-r from-green-600 to-green-800 text-white px-6 py-4 rounded-t-lg">
+        <h2 class="text-xl font-bold">Validated Workdone - All Departments</h2>
+        <p class="text-sm opacity-90">Completed validations with scores across all departments</p>
       </div>
-      <table class="min-w-full bg-white shadow-lg text-sm border border-gray-300">
-        <thead class="bg-gradient-to-r from-green-700 to-green-500 text-white">
-          <tr>
-            <th class="p-3 border-b border-gray-300">Department</th>
-            <th class="p-3 border-b border-gray-300">Portfolio Name</th>
-            <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
-            <th class="p-3 border-b border-gray-300">Status</th>
-            <th class="p-3 border-b border-gray-300">Verified By</th>
-            <th class="p-3 border-b border-gray-300">Verified At</th>
-            <th class="p-3 border-b border-gray-300">Acceptance</th>
-            <th class="p-3 border-b border-gray-300">Reject</th>
-            <th class="p-3 border-b border-gray-300">View</th>
-          </tr>
-        </thead>
-        <tbody id="iqacWorkdoneTable" class="divide-y divide-gray-200"></tbody>
-      </table>
-      <div class="flex justify-center items-center mt-4" id="iqacWorkdonePagination"></div>
-    </div>
-    <div class="mt-10">
-      <h2 class="text-lg font-bold mb-2 text-green-700">Accepted Workdone</h2>
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
-        <div class="flex gap-2 items-center">
-          <label for="acceptedDeptFilter" class="font-medium text-blue-700">Department:</label>
-          <select id="acceptedDeptFilter" class="p-2 border rounded"></select>
+      <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <input id="validatedWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-green-600" placeholder="Search by Department, Portfolio or Member" oninput="filterValidatedWorkdoneTable()" />
+          <div class="flex items-center gap-2">
+            <label class="font-semibold text-gray-800">Validated:</label>
+            <input id="validatedStartDate" type="date" class="p-2 border border-gray-300 rounded-md" onchange="filterValidatedWorkdoneTable()" />
+            <span class="mx-1">to</span>
+            <input id="validatedEndDate" type="date" class="p-2 border border-gray-300 rounded-md" onchange="filterValidatedWorkdoneTable()" />
+            <button onclick="exportTableToExcel('validatedWorkdoneTable', 'IQAC_Validated_Workdone')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              Export
+            </button>
+          </div>
         </div>
-        <input id="acceptedWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-blue-700" placeholder="Search by Portfolio or Member" />
-        <button onclick="exportTableToExcel('acceptedWorkdoneTable', 'Accepted_Workdone')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-          Export to Excel
-        </button>
       </div>
       <div class="overflow-x-auto">
-        <table class="min-w-full bg-white shadow-lg text-sm border border-gray-300">
-          <thead class="bg-gradient-to-r from-blue-700 to-blue-500 text-white">
+        <table class="min-w-full text-sm">
+          <thead class="bg-green-100">
             <tr>
-              <th class="p-3 border-b border-gray-300">Department</th>
-              <th class="p-3 border-b border-gray-300">Portfolio Name</th>
-              <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
-              <th class="p-3 border-b border-gray-300">Status</th>
-              <th class="p-3 border-b border-gray-300">Verified By</th>
-              <th class="p-3 border-b border-gray-300">Verified At</th>
-              <th class="p-3 border-b border-gray-300">Accepted By</th>
-              <th class="p-3 border-b border-gray-300">Accepted At</th>
-              <th class="p-3 border-b border-gray-300">View</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-left">Department</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-left">Portfolio Name</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-left">Member Name</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-center">Validation Score</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-center">Submission Date</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-center">Validated By</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-center">Validated At</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-center">View</th>
             </tr>
           </thead>
-          <tbody id="acceptedWorkdoneTable" class="divide-y divide-gray-200"></tbody>
+          <tbody id="validatedWorkdoneTable" class="divide-y divide-gray-200"></tbody>
         </table>
-        <div class="flex justify-center items-center mt-4" id="acceptedWorkdonePagination"></div>
+        <div class="flex justify-center items-center py-4" id="validatedWorkdonePagination"></div>
+      </div>
+    </div>
+
+    <!-- View Details Modal -->
+    <div id="viewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-2xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white px-6 py-4 flex justify-between items-center">
+          <h3 class="text-xl font-bold">Workdone Details</h3>
+          <button onclick="closeViewModal()" class="text-white hover:text-red-300 text-2xl font-bold">&times;</button>
+        </div>
+        <div id="viewModalContent" class="px-6 py-4 overflow-y-auto flex-1 text-sm"></div>
+        <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex justify-end">
+          <button onclick="closeViewModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded font-semibold">Close</button>
+        </div>
       </div>
     </div>
   </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>
-    // Supabase client
+    // Supabase client initialization
     const supabaseClient = window.supabase.createClient(
       "https://cbhodgwaazmjszkujrti.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
     );
 
-  // Removed department-specific logic and display
+    let validatedCurrentPage = 1;
+    window._allValidatedRows = [];
+    window._filteredValidatedRows = [];
+    window._workingValidatedRows = [];
 
-    // Fetch all workdone from hod-workdone table, cross-check with accepted table, and handle daily form 12hr logic
-    async function loadIQACWorkdone() {
-      document.getElementById('loadingBox').style.display = '';
-      // Fetch accepted workdone first
-      let acceptedRows = [];
+    // Load validated workdone from all departments
+    async function loadValidatedWorkdone() {
+      const loadingBox = document.getElementById('loadingBox');
+      if (loadingBox) loadingBox.style.display = 'block';
+
       try {
-        const { data: acceptedData, error: acceptedError } = await supabaseClient
-          .from('iqac-workdone')
-          .select('*');
-        if (acceptedError) {
-          acceptedRows = [];
-        } else {
-          acceptedRows = acceptedData || [];
-        }
-      } catch (e) {
-        acceptedRows = [];
-      }
-
-      // Fetch all rejected IQAC workdone records
-      let rejectedRows = [];
-      try {
-        const { data: rejectedData, error: rejectedError } = await supabaseClient
-          .from('iqac_workdone_reject')
-          .select('input_id, department, portfolio_name, portfolio_member_name, rejected_at, table_name, submitted_at');
-        if (rejectedError) {
-          rejectedRows = [];
-        } else {
-          rejectedRows = rejectedData || [];
-        }
-      } catch (err) {
-        rejectedRows = [];
-      }
-
-      // Build sets of accepted and rejected composite keys.
-      // Primary matching using input_id, secondary using composite keys when available.
-      const acceptedCompositeKeys = new Set();
-      const acceptedInputIds = new Set(); // Primary matching method
-      const acceptedFallbackKeys = new Set();
-      for (const v of acceptedRows) {
-        // Primary: Store input_id for direct matching
-        if (v.input_id) {
-          acceptedInputIds.add(v.input_id.toString());
-        }
-        // Secondary: Store composite key if both input_id and table_name exist
-        if (v.input_id && v.table_name) {
-          acceptedCompositeKeys.add(`${v.input_id}__${v.table_name}`);
-        }
-        // Fallback: Legacy matching method
-        const key = `${v.department}|${v.portfolio_name}|${v.portfolio_member_name}|${v.verified_at || ''}`;
-        acceptedFallbackKeys.add(key);
-      }
-      const rejectedCompositeKeys = new Set();
-      const rejectedInputIds = new Set(); // Primary matching method
-      const rejectedFallbackKeys = new Set();
-      for (const r of rejectedRows) {
-        // Primary: Store input_id for direct matching
-        if (r.input_id) {
-          rejectedInputIds.add(r.input_id.toString());
-        }
-        // Secondary: Store composite key if both input_id and table_name exist
-        if (r.input_id && r.table_name) {
-          rejectedCompositeKeys.add(`${r.input_id}__${r.table_name}`);
-        }
-        // Fallback: Legacy matching method
-        const key = `${r.department}|${r.portfolio_name}|${r.portfolio_member_name}|${r.submitted_at || r.rejected_at || ''}`;
-        rejectedFallbackKeys.add(key);
-      }
-
-      // Fetch from both Hod-workdone and hod-workdone tables
-      const [res1, res2] = await Promise.all([
-        supabaseClient
+        // Fetch all validated workdone records from all departments
+        const { data, error } = await supabaseClient
           .from('Hod-workdone')
           .select('*')
-          .order('verified_at', { ascending: false }),
-        supabaseClient
-          .from('hod-workdone')
-          .select('*')
-          .order('verified_at', { ascending: false })
-      ]);
+          .order('verified_at', { ascending: false });
 
-      let data = [];
-      let error = null;
-      if (res1.error && res2.error) {
-        error = res1.error;
-      } else {
-        if (res1.data) data = data.concat(res1.data);
-        if (res2.data) data = data.concat(res2.data);
-      }
-      document.getElementById('loadingBox').style.display = 'none';
-      if (error) {
+        if (error) throw error;
+
+        window._allValidatedRows = data || [];
+        window._filteredValidatedRows = window._allValidatedRows;
+        window._workingValidatedRows = window._allValidatedRows;
+        renderFilteredValidatedWorkdoneTable(1);
+      } catch (error) {
+        console.error('Error loading validated workdone:', error);
         const errorBox = document.getElementById('errorBox');
-        errorBox.textContent = error.message || error;
-        errorBox.classList.remove('hidden');
-        return;
-      } else {
-        document.getElementById('errorBox').classList.add('hidden');
+        if (errorBox) {
+          errorBox.textContent = 'Error loading validated workdone: ' + error.message;
+          errorBox.classList.remove('hidden');
+        }
+      } finally {
+        if (loadingBox) loadingBox.style.display = 'none';
       }
-
-      // Debug: log all loaded records from both tables
-      console.log('Loaded records from Hod-workdone and hod-workdone:', data);
-
-      // Filter out rows that are already accepted or rejected
-      const filtered = (data || []).filter(row => {
-        // Primary check: If input_id exists, check if it's already accepted/rejected
-        if (row.input_id) {
-          const inputIdStr = row.input_id.toString();
-          if (acceptedInputIds.has(inputIdStr)) {
-            console.log('Filtered out (already accepted by input_id):', row);
-            return false;
-          }
-          if (rejectedInputIds.has(inputIdStr)) {
-            console.log('Filtered out (rejected by input_id):', row);
-            return false;
-          }
-        }
-
-        // Secondary check: If both input_id and table_name exist, check composite key
-        const rowCompositeKey = (row.input_id && row.table_name) ? `${row.input_id}__${row.table_name}` : null;
-        if (rowCompositeKey) {
-          if (acceptedCompositeKeys.has(rowCompositeKey)) {
-            console.log('Filtered out (already accepted by input_id__table_name):', row);
-            return false;
-          }
-          if (rejectedCompositeKeys.has(rowCompositeKey)) {
-            console.log('Filtered out (rejected by input_id__table_name):', row);
-            return false;
-          }
-        }
-
-        // Fallback check: Use department|portfolio|member|timestamp composite key (legacy behavior)
-        const key = `${row.department}|${row.portfolio_name}|${row.portfolio_member_name}|${row.verified_at || ''}`;
-        if (acceptedFallbackKeys.has(key)) {
-          console.log('Filtered out (already accepted by fallback key):', row);
-          return false;
-        }
-        if (rejectedFallbackKeys.has(key)) {
-          console.log('Filtered out (rejected by fallback key):', row);
-          return false;
-        }
-        return true;
-      });
-      // Debug: log all records that will be rendered
-      console.log('Records to render in IQAC Workdone table:', filtered);
-      renderIQACWorkdoneTable(filtered);
-
-      // Render the verified workdone table with color-coded status
-      renderVerifiedWorkdoneTable(data || []);
     }
 
-    // Pagination for IQAC Workdone table
-    let iqacCurrentPage = 1;
-    let iqacRowsPerPage = 10;
-    let _iqacRowsAll = [];
-    function renderIQACWorkdoneTable(rows) {
-      // Exclude 'Class Advisor (Daily) (Daily)' from the table
-      const filteredRows = rows.filter(r => (r.portfolio_name || '').trim().toLowerCase() !== 'class advisor (daily) (daily)');
-      // Populate department filter
-      const deptFilter = document.getElementById('pendingDeptFilter');
-      const departments = Array.from(new Set(filteredRows.map(r => r.department).filter(Boolean)));
-      deptFilter.innerHTML = '<option value="All">All Departments</option>' + departments.map(d => `<option value="${d}">${d}</option>`).join('');
-      deptFilter.value = 'All';
-      // Set up global search
-      if (typeof window.pendingCurrentPage === 'undefined') window.pendingCurrentPage = 1;
-      if (typeof window.pendingRowsPerPage === 'undefined') window.pendingRowsPerPage = 10;
-      window._iqacRowsAll = filteredRows;
-      window._iqacRows = filteredRows;
-      function getFilteredRows() {
-        const selectedDept = deptFilter.value;
-        const search = document.getElementById('pendingWorkdoneSearch').value.toLowerCase();
-        return filteredRows.filter(r => {
-          let deptMatch = selectedDept === 'All' || r.department === selectedDept;
-          let searchMatch = !search || (
-            (r.portfolio_name && r.portfolio_name.toLowerCase().includes(search)) ||
-            (r.portfolio_member_name && r.portfolio_member_name.toLowerCase().includes(search))
-          );
-          return deptMatch && searchMatch;
-        });
+    // Render validated workdone table
+    function renderFilteredValidatedWorkdoneTable(page = 1) {
+      validatedCurrentPage = page;
+      const itemsPerPage = 10;
+      const rows = window._workingValidatedRows || [];
+      const totalItems = rows.length;
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      const startIndex = (page - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const currentPageRows = rows.slice(startIndex, endIndex);
+
+      const tbody = document.getElementById('validatedWorkdoneTable');
+      if (!tbody) return;
+
+      if (!currentPageRows || currentPageRows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">No validated workdone found</td></tr>';
+        document.getElementById('validatedWorkdonePagination').innerHTML = '';
+        return;
       }
-      function renderIQACWorkdoneTablePage(page) {
-        const tbody = document.getElementById('iqacWorkdoneTable');
-        const filtered = getFilteredRows();
-        let start = (page - 1) * window.pendingRowsPerPage;
-        let end = start + window.pendingRowsPerPage;
-        let pageRows = filtered.slice(start, end);
-        tbody.innerHTML = pageRows.length > 0 ? pageRows.map((r, idx) => {
-          let globalIdx = start + idx;
-          let statusText = (r.status || '').toString().toUpperCase();
-          let statusClass = '';
-          if (statusText === 'COMPLETED') {
-            statusClass = 'text-green-600 font-bold uppercase';
-          } else if (statusText === 'PENDING') {
-            statusClass = 'text-red-600 font-bold uppercase';
-          } else {
-            statusClass = 'font-bold uppercase';
-          }
-          return `
-          <tr class="hover:bg-green-50 transition border-b border-gray-200" data-iqac-idx="${globalIdx}">
-            <td class='p-3 border-r border-gray-200'>${r.department}</td>
-            <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
-            <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
-            <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
-            <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
-            <td class='p-3 border-r border-gray-200'>${r.verified_at ? new Date(r.verified_at).toLocaleString() : ''}</td>
-            <td class='p-3 text-center'><button class="accept-btn bg-blue-600 hover:bg-blue-800 text-white px-3 py-1 rounded" data-row='${JSON.stringify(r).replace(/'/g, "&#39;")}' onclick="acceptRow(this)">Accept</button></td>
-            <td class='p-3 text-center'><button class="reject-btn bg-red-600 hover:bg-red-800 text-white px-3 py-1 rounded" data-row='${JSON.stringify(r).replace(/'/g, "&#39;")}' onclick="rejectIQACRow(this)">Reject</button></td>
-            <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewIQACRowDetails(${globalIdx})">View</button></td>
+
+      let html = '';
+      currentPageRows.forEach((row, idx) => {
+        const globalIdx = startIndex + idx;
+        const score = `${row.validated_fields || 0}/${row.total_fields || 0}`;
+        const percentage = row.validation_score ? `${row.validation_score}%` : '0%';
+        const submittedDate = row.submitted_at ? new Date(row.submitted_at).toLocaleDateString() : 'N/A';
+        const validatedDate = row.verified_at ? new Date(row.verified_at).toLocaleString() : 'N/A';
+
+        html += `
+          <tr class="hover:bg-green-50 transition-colors">
+            <td class="px-4 py-3 border-b">${row.department || '-'}</td>
+            <td class="px-4 py-3 border-b">${row.portfolio_name || '-'}</td>
+            <td class="px-4 py-3 border-b">${row.portfolio_member_name || '-'}</td>
+            <td class="px-4 py-3 border-b text-center">
+              <span class="font-bold text-xl text-green-700">${percentage}</span>
+            </td>
+            <td class="px-4 py-3 border-b text-center text-sm">${submittedDate}</td>
+            <td class="px-4 py-3 border-b text-center">${row.verified_by || '-'}</td>
+            <td class="px-4 py-3 border-b text-center text-sm">${validatedDate}</td>
+            <td class="px-4 py-3 border-b text-center">
+              <button onclick="viewValidatedDetails(${globalIdx})" class="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-all shadow-md hover:shadow-lg flex items-center gap-2 mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                View
+              </button>
+            </td>
           </tr>
         `;
-        }).join('') : `<tr><td colspan='9' class='text-center text-gray-400 p-4'>No records found.</td></tr>`;
-      }
-      function renderIQACWorkdonePagination() {
-        const filtered = getFilteredRows();
-        const totalRows = filtered.length;
-        const totalPages = Math.ceil(totalRows / window.pendingRowsPerPage);
-        const container = document.getElementById('iqacWorkdonePagination');
-        if (totalPages <= 1) {
-          container.innerHTML = '';
-          return;
-        }
-        let html = `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${window.pendingCurrentPage === 1 ? 'disabled' : ''} onclick='changePendingPage(${window.pendingCurrentPage - 1})'>Prev</button>`;
-        for (let i = 1; i <= totalPages; i++) {
-          html += `<button class='px-3 py-1 mx-1 rounded ${i === window.pendingCurrentPage ? 'bg-green-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}' onclick='changePendingPage(${i})'>${i}</button>`;
-        }
-        html += `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${window.pendingCurrentPage === totalPages ? 'disabled' : ''} onclick='changePendingPage(${window.pendingCurrentPage + 1})'>Next</button>`;
-        container.innerHTML = html;
-        container.style.overflowX = 'auto';
-        container.style.whiteSpace = 'nowrap';
-        setTimeout(() => { container.scrollLeft = 0; }, 0);
-      }
-      // Always reset to first page when rendering new data
-      window.pendingCurrentPage = 1;
-      renderIQACWorkdoneTablePage(window.pendingCurrentPage);
-      renderIQACWorkdonePagination();
-      window.changePendingPage = function(page) {
-        const filtered = getFilteredRows();
-        const totalRows = filtered.length;
-        const totalPages = Math.ceil(totalRows / window.pendingRowsPerPage);
-        if (page < 1 || page > totalPages) return;
-        window.pendingCurrentPage = page;
-        renderIQACWorkdoneTablePage(page);
-        renderIQACWorkdonePagination();
-      }
-      // Add event listeners for filter and search
-      deptFilter.onchange = () => {
-        window.pendingCurrentPage = 1;
-        renderIQACWorkdoneTablePage(window.pendingCurrentPage);
-        renderIQACWorkdonePagination();
-      };
-      document.getElementById('pendingWorkdoneSearch').oninput = () => {
-        window.pendingCurrentPage = 1;
-        renderIQACWorkdoneTablePage(window.pendingCurrentPage);
-        renderIQACWorkdonePagination();
-      };
-    }
-    function renderIQACWorkdoneTablePage(page) {
-      const tbody = document.getElementById('iqacWorkdoneTable');
-      let start = (page - 1) * iqacRowsPerPage;
-      let end = start + iqacRowsPerPage;
-      let pageRows = _iqacRowsAll.slice(start, end);
-      tbody.innerHTML = pageRows.length > 0 ? pageRows.map((r, idx) => {
-        let globalIdx = start + idx;
-        let statusText = (r.status || '').toString().toUpperCase();
-        let statusClass = '';
-        if (statusText === 'COMPLETED') {
-          statusClass = 'text-green-600 font-bold uppercase';
-        } else if (statusText === 'PENDING') {
-          statusClass = 'text-red-600 font-bold uppercase';
-        } else {
-          statusClass = 'font-bold uppercase';
-        }
-        return `
-        <tr class="hover:bg-green-50 transition border-b border-gray-200" data-iqac-idx="${globalIdx}">
-          <td class='p-3 border-r border-gray-200'>${r.department}</td>
-          <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
-          <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
-          <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
-          <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
-          <td class='p-3 border-r border-gray-200'>${r.verified_at ? new Date(r.verified_at).toLocaleString() : ''}</td>
-          <td class='p-3 text-center'><button class="accept-btn bg-blue-600 hover:bg-blue-800 text-white px-3 py-1 rounded" data-row='${JSON.stringify(r).replace(/'/g, "&#39;")}' onclick="acceptRow(this)">Accept</button></td>
-          <td class='p-3 text-center'><button class="reject-btn bg-red-600 hover:bg-red-800 text-white px-3 py-1 rounded" data-row='${JSON.stringify(r).replace(/'/g, "&#39;")}' onclick="rejectIQACRow(this)">Reject</button></td>
-          <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewIQACRowDetails(${globalIdx})">View</button></td>
-        </tr>
-      `;
-      }).join('') : `<tr><td colspan='9' class='text-center text-gray-400 p-4'>No records found.</td></tr>`;
+      });
+
+      tbody.innerHTML = html;
+      generateValidatedPagination(page, totalPages);
     }
 
-    // Add reject logic for IQAC Workdone table (global scope)
-    // Modal logic for IQAC reject
-    let _iqacRejectRow = null;
-    function rejectIQACRow(btn) {
-      try {
-        _iqacRejectRow = JSON.parse(btn.getAttribute('data-row').replace(/&#39;/g, "'"));
-      } catch (e) {
-        alert('Failed to parse row data.');
+    // Pagination for validated workdone
+    function generateValidatedPagination(currentPage, totalPages) {
+      const container = document.getElementById('validatedWorkdonePagination');
+      if (!container || totalPages <= 1) {
+        if (container) container.innerHTML = '';
         return;
       }
-      document.getElementById('rejectModal').classList.remove('hidden');
-    }
 
-    function closeRejectModal() {
-      document.getElementById('rejectModal').classList.add('hidden');
-      document.getElementById('rejectForm').reset();
-      document.getElementById('rejectStatus').textContent = '';
-      _iqacRejectRow = null;
-    }
+      let html = '';
+      if (currentPage > 1) {
+        html += `<button onclick="renderFilteredValidatedWorkdoneTable(${currentPage - 1})" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 mr-2">Prev</button>`;
+      }
 
-    document.getElementById('rejectForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const commands = document.getElementById('rejectCommands').value.trim();
-      const statusBox = document.getElementById('rejectStatus');
-      statusBox.textContent = '';
-      
-      if (!commands) {
-        statusBox.textContent = 'Please enter a reason or commands.';
-        statusBox.style.color = 'red';
-        return;
+      const maxVisible = 5;
+      let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let end = Math.min(totalPages, start + maxVisible - 1);
+      if (end - start < maxVisible - 1) start = Math.max(1, end - maxVisible + 1);
+
+      for (let i = start; i <= end; i++) {
+        const active = i === currentPage ? 'bg-green-700 text-white' : 'bg-white text-green-700 hover:bg-green-100';
+        html += `<button onclick="renderFilteredValidatedWorkdoneTable(${i})" class="px-3 py-1 ${active} border border-green-700 rounded mx-1">${i}</button>`;
       }
-      
-      if (!_iqacRejectRow) {
-        statusBox.textContent = 'Error: Workdone record not found.';
-        statusBox.style.color = 'red';
-        return;
+
+      if (currentPage < totalPages) {
+        html += `<button onclick="renderFilteredValidatedWorkdoneTable(${currentPage + 1})" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 ml-2">Next</button>`;
       }
-      
-      statusBox.textContent = 'Rejecting...';
-      statusBox.style.color = 'blue';
-      
-      try {
-        const btns = document.querySelectorAll('.reject-btn');
-        btns.forEach(b => b.disabled = true);
-        
-        const row = _iqacRejectRow;
-        console.log('Rejecting row:', row); // Debug log
-        
-        const rejectData = {
-          department: row.department,
-          portfolio_name: row.portfolio_name,
-          portfolio_member_name: row.portfolio_member_name,
-          status: row.status,
-          rejected_by: localStorage.getItem('Name') || localStorage.getItem('name') || 'IQAC',
-          documents: row.documents || null,
-          view_link: row.view_link || null,
-          input_id: row.input_id || null,
-          table_name: row.table_name || null,
-          submitted_at: row.submitted_at || row.verified_at || null,
-          commands: commands
-        };
-        
-        console.log('Reject data to insert:', rejectData); // Debug log
-        
-        // Insert or update logic for unique input_id
-        let result;
-        if (rejectData.input_id) {
-          const { data: existing } = await supabaseClient
-            .from('iqac_workdone_reject')
-            .select('id')
-            .eq('input_id', rejectData.input_id)
-            .single();
-          if (existing) {
-            result = await supabaseClient
-              .from('iqac_workdone_reject')
-              .update(rejectData)
-              .eq('input_id', rejectData.input_id);
-          } else {
-            result = await supabaseClient
-              .from('iqac_workdone_reject')
-              .insert([rejectData]);
-          }
-        } else {
-          result = await supabaseClient
-            .from('iqac_workdone_reject')
-            .insert([rejectData]);
-        }
-        
-        console.log('Database result:', result); // Debug log
-        
-        if (result.error) {
-          statusBox.textContent = 'Failed to reject record: ' + result.error.message;
-          statusBox.style.color = 'red';
-          btns.forEach(b => b.disabled = false);
-          return;
-        }
-        
-        statusBox.textContent = 'Record rejected successfully!';
-        statusBox.style.color = 'green';
-        
-        // Remove the row from the main table
-        const rejectBtn = document.querySelector(`button[data-row*='"input_id":"${row.input_id}"']`);
-        if (rejectBtn) {
-          rejectBtn.closest('tr').remove();
-        }
-        
-        // Re-enable buttons and close modal
-        btns.forEach(b => b.disabled = false);
-        
-        // Close modal after a short delay to show success message
-        setTimeout(() => {
-          closeRejectModal();
-        }, 1000);
-        
-        // Reload both rejected table and main table to ensure proper filtering
-        loadRejectedIQACWorkdone();
-        loadIQACWorkdone();
-        
-      } catch (err) {
-        console.error('Error rejecting record:', err); // Debug log
-        statusBox.textContent = 'Error rejecting record: ' + err.message;
-        statusBox.style.color = 'red';
-        const btns = document.querySelectorAll('.reject-btn');
-        btns.forEach(b => b.disabled = false);
-      }
-    });
-    function renderIQACWorkdonePagination() {
-      const totalRows = _iqacRowsAll.length;
-      const totalPages = Math.ceil(totalRows / iqacRowsPerPage);
-      const container = document.getElementById('iqacWorkdonePagination');
-      if (totalPages <= 1) {
-        container.innerHTML = '';
-        return;
-      }
-      let html = `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${iqacCurrentPage === 1 ? 'disabled' : ''} onclick='changeIQACPage(${iqacCurrentPage - 1})'>Prev</button>`;
-      for (let i = 1; i <= totalPages; i++) {
-        html += `<button class='px-3 py-1 mx-1 rounded ${i === iqacCurrentPage ? 'bg-green-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}' onclick='changeIQACPage(${i})'>${i}</button>`;
-      }
-      html += `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${iqacCurrentPage === totalPages ? 'disabled' : ''} onclick='changeIQACPage(${iqacCurrentPage + 1})'>Next</button>`;
+
       container.innerHTML = html;
     }
-    function changeIQACPage(page) {
-      const totalRows = _iqacRowsAll.length;
-      const totalPages = Math.ceil(totalRows / iqacRowsPerPage);
-      if (page < 1 || page > totalPages) return;
-      iqacCurrentPage = page;
-      renderIQACWorkdoneTablePage(page);
-      renderIQACWorkdonePagination();
+
+    // Filter validated workdone
+    function filterValidatedWorkdoneTable() {
+      const search = document.getElementById('validatedWorkdoneSearch').value.toLowerCase();
+      const startDateInput = document.getElementById('validatedStartDate');
+      const endDateInput = document.getElementById('validatedEndDate');
+      let startDate = startDateInput && startDateInput.value ? new Date(startDateInput.value) : null;
+      let endDate = endDateInput && endDateInput.value ? new Date(endDateInput.value) : null;
+      if (endDate) endDate.setHours(23, 59, 59, 999);
+
+      window._filteredValidatedRows = window._allValidatedRows.filter(row => {
+        const portfolio = (row.portfolio_name || '').toLowerCase();
+        const member = (row.portfolio_member_name || '').toLowerCase();
+        const department = (row.department || '').toLowerCase();
+        const verifiedAt = row.verified_at ? new Date(row.verified_at) : null;
+
+        let dateMatch = true;
+        if (startDate && verifiedAt) dateMatch = verifiedAt >= startDate;
+        if (endDate && verifiedAt) dateMatch = dateMatch && (verifiedAt <= endDate);
+        if ((startDate || endDate) && !verifiedAt) dateMatch = false;
+
+        return (portfolio.includes(search) || member.includes(search) || department.includes(search)) && dateMatch;
+      });
+
+      window._workingValidatedRows = window._filteredValidatedRows;
+      renderFilteredValidatedWorkdoneTable(1);
     }
 
-    // Render accepted workdone table
-    function renderAcceptedWorkdoneTable(rows) {
-      // Pagination for Accepted Workdone table
-      let acceptedCurrentPage = 1;
-      let acceptedRowsPerPage = 10;
-      let _acceptedRowsAll = [];
-  // Use only one set of variable declarations
-  if (typeof window.acceptedCurrentPage === 'undefined') window.acceptedCurrentPage = 1;
-  if (typeof window.acceptedRowsPerPage === 'undefined') window.acceptedRowsPerPage = 10;
-  window._acceptedRowsAll = rows;
-  window._acceptedRows = rows;
-  // Populate department filter
-  const deptFilter = document.getElementById('acceptedDeptFilter');
-  const departments = Array.from(new Set(rows.map(r => r.department).filter(Boolean)));
-  deptFilter.innerHTML = '<option value="All">All Departments</option>' + departments.map(d => `<option value="${d}">${d}</option>`).join('');
-  deptFilter.value = 'All';
-      // Search and filter logic
-      function getFilteredRows() {
-        const selectedDept = deptFilter.value;
-        const search = document.getElementById('acceptedWorkdoneSearch').value.toLowerCase();
-        return rows.filter(r => {
-          let deptMatch = selectedDept === 'All' || r.department === selectedDept;
-          let searchMatch = !search || (
-            (r.portfolio_name && r.portfolio_name.toLowerCase().includes(search)) ||
-            (r.portfolio_member_name && r.portfolio_member_name.toLowerCase().includes(search))
-          );
-          return deptMatch && searchMatch;
-        });
-      }
-      function renderAcceptedWorkdoneTablePage(page) {
-        const tbody = document.getElementById('acceptedWorkdoneTable');
-        const filteredRows = getFilteredRows();
-        let start = (page - 1) * window.acceptedRowsPerPage;
-        let end = start + window.acceptedRowsPerPage;
-        let pageRows = filteredRows.slice(start, end);
-        tbody.innerHTML = pageRows.length > 0 ? pageRows.map((r, idx) => {
-          let globalIdx = start + idx;
-          let statusText = (r.status || '').toString().toUpperCase();
-          let statusClass = '';
-          if (statusText === 'COMPLETED') {
-            statusClass = 'text-green-600 font-bold uppercase';
-          } else if (statusText === 'PENDING') {
-            statusClass = 'text-red-600 font-bold uppercase';
-          } else {
-            statusClass = 'font-bold uppercase';
-          }
-          return `
-          <tr class="hover:bg-blue-50 transition border-b border-gray-200" data-accepted-idx="${globalIdx}">
-            <td class='p-3 border-r border-gray-200'>${r.department}</td>
-            <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
-            <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
-            <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
-            <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
-            <td class='p-3 border-r border-gray-200'>${r.verified_at ? new Date(r.verified_at).toLocaleString() : ''}</td>
-            <td class='p-3 border-r border-gray-200'>${r.accepted_by}</td>
-            <td class='p-3 border-r border-gray-200'>${r.accepted_at ? new Date(r.accepted_at).toLocaleString() : ''}</td>
-            <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewAcceptedRowDetails(${globalIdx})">View</button></td>
-          </tr>
-          `;
-        }).join('') : `<tr><td colspan='9' class='text-center text-gray-400 p-4'>No accepted records found.</td></tr>`;
-      }
-      function renderAcceptedWorkdonePagination() {
-        const filteredRows = getFilteredRows();
-        const totalRows = filteredRows.length;
-        const totalPages = Math.ceil(totalRows / window.acceptedRowsPerPage);
-        const container = document.getElementById('acceptedWorkdonePagination');
-        if (totalPages <= 1) {
-          container.innerHTML = '';
-          return;
-        }
-        // Windowed pagination: show pages around the current page to avoid very long lists
-        const current = window.acceptedCurrentPage || 1;
-        const maxButtons = 11; // show up to 11 page buttons (centered)
-        let startPage = Math.max(1, current - Math.floor(maxButtons / 2));
-        let endPage = startPage + maxButtons - 1;
-        if (endPage > totalPages) {
-          endPage = totalPages;
-          startPage = Math.max(1, endPage - maxButtons + 1);
-        }
-
-        let html = `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${current === 1 ? 'disabled' : ''} onclick='changeAcceptedPage(${current - 1})'>Prev</button>`;
-
-        if (startPage > 1) {
-          html += `<button class='px-3 py-1 mx-1 rounded ${1 === current ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}' onclick='changeAcceptedPage(1)'>1</button>`;
-          if (startPage > 2) html += `<span class='px-2'>...</span>`;
-        }
-
-        for (let i = startPage; i <= endPage; i++) {
-          html += `<button class='px-3 py-1 mx-1 rounded ${i === current ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}' onclick='changeAcceptedPage(${i})'>${i}</button>`;
-        }
-
-        if (endPage < totalPages) {
-          if (endPage < totalPages - 1) html += `<span class='px-2'>...</span>`;
-          html += `<button class='px-3 py-1 mx-1 rounded ${totalPages === current ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}' onclick='changeAcceptedPage(${totalPages})'>${totalPages}</button>`;
-        }
-
-        html += `<button class='px-3 py-1 mx-1 rounded bg-gray-200 hover:bg-gray-300' ${current === totalPages ? 'disabled' : ''} onclick='changeAcceptedPage(${current + 1})'>Next</button>`;
-        container.innerHTML = html;
-        container.style.overflowX = 'auto';
-        container.style.whiteSpace = 'nowrap';
-        // Ensure scroll position resets after layout; a small delay helps across browsers
-        setTimeout(() => { try { container.scrollLeft = 0; } catch(e) {} }, 50);
-      }
-      // Always reset to first page when rendering new data
-      window.acceptedCurrentPage = 1;
-      renderAcceptedWorkdoneTablePage(window.acceptedCurrentPage);
-      renderAcceptedWorkdonePagination();
-      window.changeAcceptedPage = function(page) {
-        const filteredRows = getFilteredRows();
-        const totalRows = filteredRows.length;
-        const totalPages = Math.max(1, Math.ceil(totalRows / window.acceptedRowsPerPage));
-        if (page < 1 || page > totalPages) return;
-        window.acceptedCurrentPage = page;
-        renderAcceptedWorkdoneTablePage(page);
-        renderAcceptedWorkdonePagination();
-      }
-      // Add event listeners for filter and search
-      deptFilter.onchange = () => {
-        window.acceptedCurrentPage = 1;
-        renderAcceptedWorkdoneTablePage(window.acceptedCurrentPage);
-        renderAcceptedWorkdonePagination();
-      };
-      document.getElementById('acceptedWorkdoneSearch').oninput = () => {
-        window.acceptedCurrentPage = 1;
-        renderAcceptedWorkdoneTablePage(window.acceptedCurrentPage);
-        renderAcceptedWorkdonePagination();
-      };
-      let html = '<div class="mb-4 p-3 bg-yellow-100 text-yellow-800 rounded">⚠️ Could not find original form data. Showing verification record data:</div>';
-      html += '<table class="min-w-full text-left">';
-      for (const [key, value] of Object.entries(row)) {
-        if (key === 'id') continue; // Skip internal ID
-        let cellContent = '';
-        if (typeof value === 'string' && value.startsWith('http')) {
-          cellContent = `<a href='${value}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow' style='text-decoration:none;'>View File</a>`;
-        } else if (value === '' || value === null || value === undefined) {
-          cellContent = "<span class='text-gray-400'>Not provided</span>";
-        } else {
-          cellContent = value;
-        }
-        html += `<tr><th class="pr-4 py-2 text-gray-700 font-semibold align-top">${key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</th><td class="py-2">${cellContent}</td></tr>`;
-      }
-      html += '</table>';
-      showModal(html);
-    }
-
-    // Modal logic for viewing IQAC Workdone row details
-    function viewIQACRowDetails(idx) {
-      const row = window._iqacRows && window._iqacRows[idx];
+    // View validated details
+    async function viewValidatedDetails(idx) {
+      const row = window._workingValidatedRows[idx];
       if (!row) return;
-      let originalData = null;
-      let tableName = row.table_name || null;
-      let inputId = row.input_id || null;
-      let portfolioLabel = row.portfolio_name || '';
-      // Try direct fetch by input_id and table_name
-      if (tableName && inputId) {
-        supabaseClient
-          .from(tableName)
-          .select('*')
-          .eq('input_id', inputId)
-          .single()
-          .then(({ data, error }) => {
-            if (!error && data) {
-              originalData = data;
-              const modalContext = {
-                portfolio: portfolioLabel,
-                table: tableName,
-                department: row.department,
-                member: row.portfolio_member_name,
-                status: row.status,
-                _original: originalData
-              };
-              let html = getFormModalContent(modalContext, originalData);
-              showModal(html);
-            } else {
-              // Fallback to flexible matching
-              fetchIQACOriginalFallback(row, portfolioLabel, tableName);
-            }
-          });
-      } else if (tableName) {
-        // Fallback to flexible matching
-        fetchIQACOriginalFallback(row, portfolioLabel, tableName);
-      } else {
-        showFallbackModal(row);
-      }
-    }
 
-    // Helper for fallback matching
-    function fetchIQACOriginalFallback(row, portfolioLabel, tableName) {
-      supabaseClient
-        .from(tableName)
-        .select('*')
-        .then(({ data: origRows, error }) => {
-          if (error || !origRows || origRows.length === 0) {
-            showFallbackModal(row);
-            return;
-          }
-          let orig = null;
-          const memberName = (row.portfolio_member_name || '').toLowerCase().trim();
-          const department = (row.department || '').toLowerCase().trim();
-          const memberFields = ['Portfolio Member Name', 'Portfolio Memeber Name', 'faculty_name', 'Faculty Name', 'Name'];
-          const deptFields = ['Department', 'department', 'Department:', 'department:'];
-          if (memberName) {
-            orig = origRows.find(r => {
-              const memberMatch = memberFields.some(field => {
-                const val = r[field];
-                return val && val.toString().toLowerCase().trim() === memberName;
-              });
-              let deptMatch = !department;
-              if (department) {
-                deptMatch = deptFields.some(field => {
-                  const val = r[field];
-                  return val && val.toString().toLowerCase().trim() === department;
-                });
-              }
-              return memberMatch && deptMatch;
-            });
-          }
-          if (!orig && department) {
-            orig = origRows.find(r => {
-              return deptFields.some(field => {
-                const val = r[field];
-                return val && val.toString().toLowerCase().trim() === department;
-              });
-            });
-          }
-          if (!orig) orig = origRows[0];
-          if (!orig) {
-            showFallbackModal(row);
-            return;
-          }
-          const modalContext = {
-            portfolio: portfolioLabel,
-            table: tableName,
-            department: row.department,
-            member: row.portfolio_member_name,
-            status: row.status,
-            _original: orig
+      // Fetch the original data from the table
+      try {
+        const { data, error } = await supabaseClient
+          .from(row.table_name)
+          .select('*')
+          .eq('input_id', row.input_id)
+          .single();
+
+        if (error) throw error;
+
+        // Use form-modal-mapper.js to get the faculty form content
+        let facultyContent = '';
+        if (typeof getFormModalContent === 'function') {
+          const formRow = {
+            table: row.table_name,
+            portfolio: row.portfolio_name
           };
-          let html = getFormModalContent(modalContext, orig);
-          showModal(html);
-        });
-    }
-
-    // Modal logic for viewing Accepted Workdone row details
-    function viewAcceptedRowDetails(idx) {
-      const row = window._acceptedRows && window._acceptedRows[idx];
-      if (!row) return;
-      // Lookup form table for portfolio
-      const formTables = [
-        {table: 'form1-once in a year', portfolio: 'Students Performance in Training & Placement Member (Yearly)'},
-        {table: 'form1-Weekly', portfolio: 'Students Performance in Training & Placement Member (Weekly)'},
-        {table: 'form1-once in 15 days', portfolio: 'Students Performance in Training & Placement Member (Bi-weekly)'},
-        {table: 'form1-once in a semester', portfolio: 'Students Performance in Training & Placement Member (Semester)'},
-        {table: 'form2-daily', portfolio: 'Class Advisor (Daily)'},
-        {table: 'form2-weekly', portfolio: 'Class Advisor (Weekly)'},
-        {table: 'form2-once in a month', portfolio: 'Class Advisor (Monthly)'},
-        {table: 'form2-once in a semester', portfolio: 'Class Advisor (Semester)'},
-        {table: 'form3-Weekly', portfolio: 'Faculty Information & Contribution Member (Weekly)'},
-        {table: 'form3- once in 15 days', portfolio: 'Faculty Information & Contribution Member (Bi-weekly)'},
-        {table: 'form3-once in a semester', portfolio: 'Faculty Information & Contribution Member (Semester)'},
-        {table: 'form4-Weekly', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell) (Weekly)'},
-        {table: 'form4-once in a month', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell) (Monthly)'},
-        {table: 'form4-once in a semester', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell) (Semester)'},
-        {table: 'form5-weekly', portfolio: 'Continuous Improvement Member (Program Member) (Weekly)'},
-        {table: 'form5-Once in a 3 Months', portfolio: 'Continuous Improvement Member (Program Member) (Quarterly)'},
-        {table: 'form5-once in a semester', portfolio: 'Continuous Improvement Member (Program Member) (Semester)'},
-        {table: 'form6-once in a semester', portfolio: 'Teaching & Learning Process Member (IQAC) (Semester)'},
-        {table: 'form7-Once in a Semester', portfolio: 'Student Support System Member (Discipline & Extra Curricular) (Semester)'},
-        {table: 'form7-Once in 2 Months', portfolio: 'Student Support System Member (Discipline & Extra Curricular) (Bi-monthly)'},
-        {table: 'form7-Weekly', portfolio: 'Student Support System Member (Discipline & Extra Curricular) (Weekly)'},
-        {table: 'form8-weekly', portfolio: 'Facilities & Technical Support Member (Lab Member) (Weekly)'},
-        {table: 'form8-once in 3 Months', portfolio: 'Facilities & Technical Support Member (Lab Member) (Quarterly)'},
-        {table: 'form8-Once in Semester', portfolio: 'Facilities & Technical Support Member (Lab Member) (Semester)'},
-        {table: 'ASP', portfolio: 'ASP Core Scope Form'},
-        {table: 'AP', portfolio: 'AP Core Scope Form'},
-        {table: 'Prof', portfolio: 'Professor Core Scope Form'}
-      ];
-      let matchTable = null;
-      let matchPortfolio = (row.portfolio_name || '').toLowerCase();
-      let portfolioLabel = row.portfolio_name || '';
-      for (const ft of formTables) {
-        if ((ft.portfolio || '').toLowerCase() === matchPortfolio) {
-          matchTable = ft.table;
-          portfolioLabel = ft.portfolio;
-          break;
+          facultyContent = getFormModalContent(formRow, data);
+        } else {
+          facultyContent = '<p class="text-red-500">Form modal mapper not loaded</p>';
         }
-      }
-      if (!matchTable) {
-        for (const ft of formTables) {
-          if (matchPortfolio.includes((ft.portfolio || '').toLowerCase().split('(')[0].trim())) {
-            matchTable = ft.table;
-            portfolioLabel = ft.portfolio;
-            break;
-          }
-        }
-      }
-      if (matchTable) {
-        // Get all records and find matches with flexible field matching
-        supabaseClient
-          .from(matchTable)
-          .select('*')
-          .then(({ data: origRows, error }) => {
-            if (error) {
-              console.warn(`Error querying ${matchTable}:`, error);
-              showFallbackModal(row);
-              return;
-            }
-            
-            let orig = null;
-            if (origRows && origRows.length > 0) {
-              // Try flexible field matching
-              const memberName = (row.portfolio_member_name || '').toLowerCase().trim();
-              const department = (row.department || '').toLowerCase().trim();
-              
-              const memberFields = ['Portfolio Member Name', 'Portfolio Memeber Name', 'faculty_name', 'Faculty Name', 'Name'];
-              const deptFields = ['Department', 'department', 'Department:', 'department:'];
-              
-              if (memberName) {
-                orig = origRows.find(r => {
-                  const memberMatch = memberFields.some(field => {
-                    const val = r[field];
-                    return val && val.toString().toLowerCase().trim() === memberName;
-                  });
-                  
-                  let deptMatch = !department;
-                  if (department) {
-                    deptMatch = deptFields.some(field => {
-                      const val = r[field];
-                      return val && val.toString().toLowerCase().trim() === department;
-                    });
-                  }
-                  
-                  return memberMatch && deptMatch;
-                });
-              }
-              
-              if (!orig && department) {
-                orig = origRows.find(r => {
-                  return deptFields.some(field => {
-                    const val = r[field];
-                    return val && val.toString().toLowerCase().trim() === department;
-                  });
-                });
-              }
-              
-              if (!orig) orig = origRows[0];
-            }
-            
-            if (!orig) {
-              showFallbackModal(row);
-              return;
-            }
-            
-            const modalContext = {
-              portfolio: portfolioLabel,
-              table: matchTable,
-              department: row.department,
-              member: row.portfolio_member_name
-            };
-            let html = getFormModalContent(modalContext, orig);
-            showModal(html);
-          });
-      } else {
-        showFallbackModal(row);
-      }
-    }
 
-    // Modal display logic (shared)
-    function showModal(html) {
-      let modal = document.getElementById('viewModal');
-      if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'viewModal';
-        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40';
-        modal.innerHTML = `
-          <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
-            <button onclick="closeViewModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
-            <h3 class="text-xl font-bold mb-4 text-blue-700">Workdone Details</h3>
-            <div id="viewModalContent" class="overflow-y-auto max-h-[60vh] text-sm"></div>
+        // Add validation score section
+        const score = `${row.validated_fields || 0}/${row.total_fields || 0}`;
+        const percentage = row.validation_score ? `${row.validation_score.toFixed(1)}%` : '0%';
+        
+        let html = `
+          <div class="space-y-4">
+            <div class="bg-purple-50 p-4 rounded-lg">
+              <h4 class="font-bold text-purple-800 mb-3">Validation Score</h4>
+              <div class="grid grid-cols-4 gap-4 text-center">
+                <div>
+                  <div class="text-3xl font-bold text-purple-700">${row.validated_fields || 0}</div>
+                  <div class="text-sm text-gray-600">Validated</div>
+                </div>
+                <div>
+                  <div class="text-3xl font-bold text-gray-700">${row.total_fields || 0}</div>
+                  <div class="text-sm text-gray-600">Total</div>
+                </div>
+                <div>
+                  <div class="text-3xl font-bold text-green-700">${percentage}</div>
+                  <div class="text-sm text-gray-600">Score</div>
+                </div>
+                <div>
+                  <div class="text-lg font-semibold text-gray-800">${row.verified_by || 'N/A'}</div>
+                  <div class="text-sm text-gray-600">Validated By</div>
+                </div>
+              </div>
+            </div>
+            <div class="border-t border-gray-200 pt-4">
+              ${facultyContent}
+            </div>
           </div>
         `;
-        document.body.appendChild(modal);
+
+        document.getElementById('viewModalContent').innerHTML = html;
+        document.getElementById('viewModal').classList.remove('hidden');
+      } catch (error) {
+        console.error('Error loading validated details:', error);
+        alert('Failed to load validated details');
       }
-      document.getElementById('viewModalContent').innerHTML = html;
-      modal.classList.remove('hidden');
     }
+
+    // Close view modal
     function closeViewModal() {
-      const modal = document.getElementById('viewModal');
-      if (modal) {
-        modal.classList.add('hidden');
-        document.getElementById('viewModalContent').innerHTML = '';
-      }
+      document.getElementById('viewModal').classList.add('hidden');
+      document.getElementById('viewModalContent').innerHTML = '';
     }
 
-    // Render verified workdone table (with status color)
-    function renderVerifiedWorkdoneTable(rows) {
-      const tbody = document.getElementById('verifiedWorkdoneTable');
-      tbody.innerHTML = rows.length > 0 ? rows.map((r) => {
-        let statusText = (r.status || '').toString().toUpperCase();
-        let statusClass = '';
-        if (statusText === 'COMPLETED') {
-          statusClass = 'text-green-600 font-bold uppercase';
-        } else if (statusText === 'PENDING') {
-          statusClass = 'text-red-600 font-bold uppercase';
-        } else {
-          statusClass = 'font-bold uppercase';
-        }
-        return `
-        <tr class="hover:bg-green-50 transition border-b border-gray-200">
-          <td class='p-3 border-r border-gray-200'>${r.department}</td>
-          <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
-          <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
-          <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
-          <td class='p-3 border-r border-gray-200'>${r.documents ? r.documents : '<span class="text-gray-400">No documents</span>'}</td>
-          <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
-          <td class='p-3 border-r border-gray-200'>${r.verified_at ? new Date(r.verified_at).toLocaleString() : ''}</td>
-          <td class='p-3 border-r border-gray-200'></td>
-        </tr>
-      `;
-      }).join('') : `<tr><td colspan='8' class='text-center text-gray-400 p-4'>No verified records found.</td></tr>`;
-    }
-
-    // Fetch accepted workdone from iqac-workdone table
-    async function loadAcceptedWorkdone() {
-      const { data, error } = await supabaseClient
-        .from('iqac-workdone')
-        .select('*')
-        .order('accepted_at', { ascending: false });
-      if (error) {
-        document.getElementById('acceptedWorkdoneTable').innerHTML = `<tr><td colspan='8' class='text-center text-red-500 p-4'>Failed to load accepted workdone: ${error.message}</td></tr>`;
+    // Export to Excel
+    function exportTableToExcel(tableId, filename) {
+      const rows = window._workingValidatedRows || [];
+      if (rows.length === 0) {
+        alert('No data to export');
         return;
       }
-      renderAcceptedWorkdoneTable(data || []);
+
+      const data = rows.map(row => ({
+        'Department': row.department || '',
+        'Portfolio': row.portfolio_name || '',
+        'Member': row.portfolio_member_name || '',
+        'Validated Fields': row.validated_fields || 0,
+        'Total Fields': row.total_fields || 0,
+        'Score': row.validation_score ? `${row.validation_score}%` : '0%',
+        'Submission Date': row.submitted_at ? new Date(row.submitted_at).toLocaleDateString() : '',
+        'Validated By': row.verified_by || '',
+        'Validated At': row.verified_at ? new Date(row.verified_at).toLocaleString() : ''
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Validated Workdone');
+      XLSX.writeFile(workbook, `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`);
     }
 
-    // Accept button logic (restored)
-    async function acceptRow(btn) {
-      btn.disabled = true;
-      btn.textContent = 'Accepted...';
-      let row;
-      try {
-        row = JSON.parse(btn.getAttribute('data-row').replace(/&#39;/g, "'"));
-      } catch (e) {
-        alert('Failed to parse row data.');
-        btn.disabled = false;
-        btn.textContent = 'Accept';
-        return;
-      }
-      // Get accepted_by (from localStorage or fallback)
-      const accepted_by = localStorage.getItem('Name') || localStorage.getItem('name') || 'IQAC';
-      // Insert into iqac-workdone table
-      const { error } = await supabaseClient
-        .from('iqac-workdone')
-        .insert([{
-          input_id: row.input_id,
-          department: row.department,
-          portfolio_name: row.portfolio_name,
-          portfolio_member_name: row.portfolio_member_name,
-          status: row.status,
-          verified_by: row.verified_by,
-          verified_at: row.verified_at, // Include exact timestamp for unique identification
-          accepted_by: accepted_by
-          // Note: accepted_at will be automatically set by database default
-        }]);
-      if (error) {
-        alert('Failed to record acceptance: ' + (error.message || error));
-        btn.disabled = false;
-        btn.textContent = 'Accept';
-      } else {
-        // Remove the row from the table
-        btn.closest('tr').remove();
-        // Reload accepted workdone table
-        loadAcceptedWorkdone();
-      }
-    }
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadValidatedWorkdone();
+    });
+  </script>
 
-    // Export to Excel for any table by id
-    function exportTableToExcel(tbodyId, filenamePrefix) {
-      // Export all entries, not just current page
-      let allRows = [];
-      let headers = [];
-      if (tbodyId === 'iqacWorkdoneTable' && window._iqacRowsAll) {
-        allRows = window._iqacRowsAll;
-        headers = [
-          'Department', 'Portfolio Name', 'Portfolio Member Name', 'Status', 'Verified By', 'Verified At', 'Acceptance', 'Reject', 'View'
-        ];
-        // Build data for allRows
-        const data = [headers];
-        allRows.forEach(r => {
-          data.push([
-            r.department,
-            r.portfolio_name,
-            r.portfolio_member_name,
-            r.status,
-            r.verified_by,
-            r.verified_at ? new Date(r.verified_at).toLocaleString() : '',
-            'Accept',
-            'Reject',
-            'View'
-          ]);
-        });
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
-        XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
-        return;
-      } else if (tbodyId === 'acceptedWorkdoneTable' && window._acceptedRowsAll) {
-        allRows = window._acceptedRowsAll;
-        headers = [
-          'Department', 'Portfolio Name', 'Portfolio Member Name', 'Status', 'Verified By', 'Verified At', 'Accepted By', 'Accepted At', 'View'
-        ];
-        // Build data for allRows
-        const data = [headers];
-        allRows.forEach(r => {
-          data.push([
-            r.department,
-            r.portfolio_name,
-            r.portfolio_member_name,
-            r.status,
-            r.verified_by,
-            r.verified_at ? new Date(r.verified_at).toLocaleString() : '',
-            r.accepted_by,
-            r.accepted_at ? new Date(r.accepted_at).toLocaleString() : '',
-            'View'
-          ]);
-        });
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
-        XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
-        return;
-      } else if (tbodyId === 'rejectedIQACWorkdoneTable' && window._rejectedIQACRowsAll) {
-        allRows = window._rejectedIQACRowsAll;
-        headers = [
-          'Department', 'Portfolio Name', 'Portfolio Member Name', 'Status', 'Rejected By', 'Rejected At', 'Commands', 'Documents', 'View'
-        ];
-        // Build data for allRows
-        const data = [headers];
-        allRows.forEach(r => {
-          data.push([
-            r.department,
-            r.portfolio_name,
-            r.portfolio_member_name,
-            r.status,
-            r.rejected_by,
-            r.rejected_at ? new Date(r.rejected_at).toLocaleString() : '',
-            r.commands || '-',
-            r.documents || '-',
-            'View'
-          ]);
-        });
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
-        XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
-        return;
-      } else {
-        // Fallback: export only visible rows
-        const tbody = document.getElementById(tbodyId);
-        if (!tbody) return;
-        const table = tbody.closest('table');
-        const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => row.style.display !== 'none');
-        if (rows.length === 0) {
-          alert('No data to export!');
-          return;
-        }
-        headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
-        if (headers.length > 2) {
-          headers = headers.slice(0, -2);
-        }
-        const data = [headers];
-        rows.forEach(row => {
-          const tds = Array.from(row.querySelectorAll('td'));
-          let cells = tds.slice(0, tds.length - 2).map(td => {
-            if (td.querySelectorAll && td.querySelectorAll('a').length > 0) {
-              return Array.from(td.querySelectorAll('a')).map(a => a.href).join(', ');
-            } else {
-              return td.innerText.trim();
-            }
-          });
-          data.push(cells);
-        });
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
-        XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
-        return;
-      }
-      // Build data for allRows
-      const data = [headers];
-      allRows.forEach(r => {
-        let cells = [];
-        if (tbodyId === 'iqacWorkdoneTable') {
-          cells = [
-            r.department,
-            r.portfolio_name,
-            r.portfolio_member_name,
-            r.status,
-            r.verified_by,
-            r.verified_at ? new Date(r.verified_at).toLocaleString() : '',
-            'Accept',
-            'Reject',
-            'View'
-          ];
-        } else if (tbodyId === 'acceptedWorkdoneTable') {
-          cells = [
-            r.department,
-            r.portfolio_name,
-            r.portfolio_member_name,
-            r.status,
-            r.verified_by,
-            r.verified_at ? new Date(r.verified_at).toLocaleString() : '',
-            r.accepted_by,
-            r.accepted_at ? new Date(r.accepted_at).toLocaleString() : '',
-            'View'
-          ];
-        } else if (tbodyId === 'rejectedIQACWorkdoneTable') {
-          cells = [
-            r.department,
-            r.portfolio_name,
-            r.portfolio_member_name,
-            r.status,
-            r.rejected_by,
-            r.rejected_at ? new Date(r.rejected_at).toLocaleString() : '',
-            r.commands || '-',
-            r.documents || '-',
-            'View'
-          ];
-        }
-        data.push(cells);
-      });
-      const ws = XLSX.utils.aoa_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
-      XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
-    }
-
-  // Initial load
-  loadIQACWorkdone();
-  loadAcceptedWorkdone();
-  loadRejectedIQACWorkdone();
-  </script>  <!-- Footer -->
-  <footer class="text-center py-4 mt-8">
-    <div class="flex flex-col items-center gap-1">
-      <span class="text-gray-400 text-sm">&copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline">PMC TECH</a><br></span>
-      <span class="text-gray-400 text-xs">Powered by 
-        <a href="https://zeonytechnologies.com" target="_blank" rel="noopener noreferrer" class="inline-block hover:opacity-100 transition-all duration-300 hover:scale-105">
-          <img src="../static/img/zeony logo.png" alt="Zeony Technologies" class="h-12 w-22 py-2 object-contain"/>
+  <!-- Footer -->
+  <footer class="text-center py-6 mt-12 bg-gray-100">
+    <div class="flex flex-col items-center gap-2">
+      <span class="text-gray-600 text-sm">&copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline hover:text-purple-700">PMC TECH</a></span>
+      <div class="flex items-center gap-2">
+        <span class="text-gray-500 text-xs">Powered by</span>
+        <a href="https://zeonytechnologies.com" target="_blank" rel="noopener noreferrer" class="inline-block hover:opacity-80 transition-all">
+          <img src="../static/img/zeony logo.png" alt="Zeony Technologies" class="h-10 object-contain"/>
         </a>
-      </span>
+      </div>
+      <span class="text-gray-500 text-xs">A Student driven Software!</span>
     </div>
   </footer>
-
 </body>
 </html>
