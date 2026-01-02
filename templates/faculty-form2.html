@@ -78,115 +78,6 @@
 	</style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
-	<!-- DAILY SECTION -->
-	<section style="margin: 2rem 0;">
-		<h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">2. Class Advisor Form: DAILY</h2>
-		<form id="directDbForm" class="bg-white shadow-lg rounded-xl max-w-5xl mx-auto px-6 py-8 mb-10 border border-purple-200">
-			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-				<div class="flex flex-col">
-					<label for="db-dept" class="font-semibold text-gray-700 mb-1">Department:</label>
-					<select id="db-dept" name="Department:" required class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2">
-						<option value="" disabled selected>Select Department</option>
-						<option value="AERO">AERO</option>
-						<option value="AIDS">AIDS</option>
-						<option value="AIML">AIML</option>
-						<option value="CHEM">CHEM</option>
-						<option value="CIVIL">CIVIL</option>
-						<option value="CSBS">CSBS</option>
-						<option value="CSE">CSE</option>
-						<option value="ECE">ECE</option>
-						<option value="EEE">EEE</option>
-						<option value="IT">IT</option>
-						<option value="MBA">MBA</option>
-						<option value="MCA">MCA</option>
-						<option value="MCO">MCO</option>
-						<option value="MECH">MECH</option>
-						<option value="S&H V1">S&H V1</option>
-						<option value="S&H V2">S&H V2</option>
-						<option value="S&H V3">S&H V3</option>
-						<option value="S&H V4">S&H V4</option>
-						<option value="S&H V5">S&H V5</option>
-						<option value="S&H V6">S&H V6</option>
-					</select>
-				</div>
-				<div class="flex flex-col">
-					<label for="db-portfolio" class="font-semibold text-gray-700 mb-1">Portfolio Name:</label>
-					<input id="db-portfolio" name="Portfolio Name:" required class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2" />
-				</div>
-				<div class="flex flex-col">
-					<label for="db-member" class="font-semibold text-gray-700 mb-1">Portfolio Member Name:</label>
-					<input id="db-member" name="Portfolio Member Name" class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2" />
-				</div>
-				<div class="flex flex-col">
-					<label for="db-month" class="font-semibold text-gray-700 mb-1">Month:</label>
-					<select id="db-month" name="Month:" required class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2">
-						<option value="" disabled selected>Select</option>
-						<option value="January">January</option>
-						<option value="February">February</option>
-						<option value="March">March</option>
-						<option value="April">April</option>
-						<option value="May">May</option>
-						<option value="June">June</option>
-						<option value="July">July</option>
-						<option value="August">August</option>
-						<option value="September">September</option>
-						<option value="October">October</option>
-						<option value="November">November</option>
-						<option value="December">December</option>
-					</select>
-				</div>
-				
-			</div> 
-			<div class="w-full border-t border-gray-200 my-6"></div>
-			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-				<div class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
-					1. Action Taken report for Absentees</div>
-				<div class="flex flex-col">
-					<label for="db-status1" class="font-semibold text-gray-700 mb-1">Status_1:</label>
-					<select id="db-status1" name="Status_1" class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
-						<option value="" disabled selected>Select</option>
-						<option>Completed and Updated</option>
-						<option>Yet to be Completed</option>
-						<option>Under Process</option>
-						<option>Not Applicable</option>
-					</select>
-				</div>
-				<div class="flex flex-col">
-					<label for="db-desc1" class="font-semibold text-gray-700 mb-1">Description_1:</label>
-					<input id="db-desc1" name="Description_1" class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
-				</div>
-				<div class="flex flex-col">
-					<label for="db-upload1" class="font-semibold text-gray-700 mb-1">Upload the scanned file:</label>
-					<input id="db-upload1" name="Upload the scanned file" type="file" class="rounded-lg border border-gray-300 px-3 py-2" />
-				</div>
-			</div>
-			<div class="w-full border-t border-gray-200 my-6"></div>
-			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-				<div class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
-					2. Master Logbook</div>
-				<div class="flex flex-col">
-					<label for="db-status2" class="font-semibold text-gray-700 mb-1">Status_2:</label>
-					<select id="db-status2" name="Status_2" class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
-						<option value="" disabled selected>Select</option>
-						<option>Completed and Updated</option>
-						<option>Yet to be Completed</option>
-						<option>Under Process</option>
-						<option>Not Applicable</option>
-					</select>
-				</div>
-				<div class="flex flex-col">
-					<label for="db-desc2" class="font-semibold text-gray-700 mb-1">Description_2:</label>
-					<input id="db-desc2" name="Description_2" placeholder="0-200" class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
-				</div>
-				<div class="flex flex-col">
-					<label for="db-upload2" class="font-semibold text-gray-700 mb-1">Upload the scanned file_2:</label>
-					<input id="db-upload2" name="Upload the scanned file_2" type="file" class="rounded-lg border border-gray-300 px-3 py-2" />
-				</div>
-			</div>
-			<button type="submit" class="mt-8 bg-purple-800 hover:from-purple-400 hover:to-orange-500 text-white font-bold py-3 px-10 rounded-xl shadow-lg text-lg tracking-wide transition-all duration-200 mx-auto block">Submit</button>
-		</form>
-	</section>
-	
 	<!-- MONTHLY SECTION -->
 	<div class="flex-1 flex items-center justify-center py-8 px-2">
 		<div class="w-full max-w-6xl mx-auto bg-white rounded-2xl card-shadow border border-purple-300 overflow-x-auto p-0">
@@ -265,45 +156,15 @@
 		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
 	);
 
-	// Autofetch using localStorage for both forms
+	// Autofetch using localStorage for monthly form
 	document.addEventListener('DOMContentLoaded', function() {
-		var dept = localStorage.getItem('department') || '';
+		var dept = localStorage.getItem('selectedDepartment') || '';
 		var portfolio = localStorage.getItem('selectedPortfolio') || '';
 		var member = localStorage.getItem('selectedMemberName') || '';
-		var month = localStorage.getItem('selectedMonth') || '';
 		
-		// Autofetch for DAILY form
-		const dailyForm = document.getElementById('directDbForm');
-		if (dailyForm) {
-			const deptSelect = dailyForm.querySelector('select[name="Department:"]');
-			if (deptSelect && dept) {
-				for (let i = 0; i < deptSelect.options.length; i++) {
-					if (deptSelect.options[i].value === dept) {
-						deptSelect.selectedIndex = i;
-						break;
-					}
-				}
-			}
-			const portfolioField = dailyForm.querySelector('input[name="Portfolio Name:"]');
-			if (portfolioField && portfolio) {
-				portfolioField.value = portfolio;
-			}
-			const memberField = dailyForm.querySelector('input[name="Portfolio Member Name"]');
-			if (memberField && member) {
-				memberField.value = member;
-			}
-			const monthSelect = dailyForm.querySelector('select[name="Month:"]');
-			if (monthSelect && month) {
-				for (let i = 0; i < monthSelect.options.length; i++) {
-					if (monthSelect.options[i].value === month) {
-						monthSelect.selectedIndex = i;
-						break;
-					}
-				}
-			}
-		}
+		// Get current month by default
+		const currentMonth = new Date().toLocaleString('en-US', { month: 'long' });
 		
-		// Autofetch for MONTHLY form
 		const form = document.getElementById('facultyForm2');
 		if (form) {
 			const deptField = form.querySelector('input[name="Department"]');
@@ -319,9 +180,10 @@
 				memberField.value = member;
 			}
 			const monthField = form.querySelector('select[name="Month"]');
-			if (monthField && month) {
+			if (monthField) {
+				// Set to current month
 				for (let i = 0; i < monthField.options.length; i++) {
-					if (monthField.options[i].value === month) {
+					if (monthField.options[i].value === currentMonth) {
 						monthField.selectedIndex = i;
 						break;
 					}
@@ -329,135 +191,6 @@
 			}
 		}
 	});
-
-	// DAILY FORM SUBMISSION
-	const directDbForm = document.getElementById('directDbForm');
-	if (directDbForm) {
-		directDbForm.addEventListener('submit', async function (e) {
-			e.preventDefault();
-			const form = e.target;
-			
-			// Upload files to Supabase Storage
-			async function uploadFileToStorage(file, path) {
-				if (!file) return null;
-				const bucket = 'form2-files';
-				
-				try {
-					// Try to upload with upsert
-					const { data, error } = await supabase.storage
-						.from(bucket)
-						.upload(path, file, { 
-							cacheControl: '3600',
-							upsert: true 
-						});
-					
-					if (error) {
-						console.error('Upload error:', error);
-						// If bucket doesn't exist, show helpful message
-						if (error.message.includes('not found') || error.message.includes('does not exist')) {
-							alert('Storage bucket "form2-files" does not exist. Please create it in Supabase Dashboard.');
-						} else {
-							alert('File upload failed: ' + error.message);
-						}
-						throw error;
-					}
-					
-					// Get public URL
-					const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(path);
-					return publicUrlData.publicUrl;
-				} catch (err) {
-					console.error('File upload exception:', err);
-					throw err;
-				}
-			}
-
-			try {
-				// Show uploading indicator
-				const submitBtn = form.querySelector('button[type="submit"]');
-				const originalBtnText = submitBtn.textContent;
-				submitBtn.disabled = true;
-				submitBtn.textContent = 'Uploading files...';
-				
-				// Get files from form
-				const file1Input = form.querySelector('input[name="Upload the scanned file"]');
-				const file2Input = form.querySelector('input[name="Upload the scanned file_2"]');
-				const file1 = file1Input ? file1Input.files[0] : null;
-				const file2 = file2Input ? file2Input.files[0] : null;
-				const ts = Date.now();
-				const file1Path = file1 ? `file1/${ts}_${file1.name}` : null;
-				const file2Path = file2 ? `file2/${ts}_${file2.name}` : null;
-
-				let file1Url = null;
-				let file2Url = null;
-				
-				// Upload files if present
-				if (file1) {
-					console.log('Uploading file 1:', file1.name);
-					file1Url = await uploadFileToStorage(file1, file1Path);
-				}
-				if (file2) {
-					console.log('Uploading file 2:', file2.name);
-					file2Url = await uploadFileToStorage(file2, file2Path);
-				}
-				
-				submitBtn.textContent = 'Submitting form...';
-
-				// Prepare row object - only include fields that exist in the form
-				const row = {
-					"Department:": form.querySelector('[name="Department:"]').value,
-					"Portfolio Name:": form.querySelector('[name="Portfolio Name:"]').value,
-					"Portfolio Member Name": form.querySelector('[name="Portfolio Member Name"]').value,
-					"Month:": form.querySelector('[name="Month:"]').value || null,
-					"Status_1": form.querySelector('[name="Status_1"]').value,
-					"Description_1": form.querySelector('[name="Description_1"]').value,
-					"Upload the scanned file": file1Url,
-					"Status_2": form.querySelector('[name="Status_2"]').value,
-					"Description_2": form.querySelector('[name="Description_2"]').value,
-					"Upload the scanned file_2": file2Url
-				};
-
-				// Ensure month is not empty
-				if (!row["Month:"] || row["Month:"] === "") {
-					alert('Please select a month before submitting the form.');
-					return;
-				}
-
-				// Save to localStorage for next time
-				try {
-					localStorage.setItem('department', row["Department:"]);
-					localStorage.setItem('selectedPortfolio', row["Portfolio Name:"]);
-					localStorage.setItem('selectedMemberName', row["Portfolio Member Name"]);
-					localStorage.setItem('selectedMonth', row["Month:"]);
-				} catch (err) { /* ignore */ }
-
-				// Insert into Supabase
-				const { data, error } = await supabase.from('Form2-daily').insert([row]);
-				if (error) {
-					alert('Submission failed: ' + error.message);
-					console.error(error);
-					return;
-				}
-
-				window.location.href = 'notification.html?status=success';
-			} catch (error) {
-				console.error('Form submission error:', error);
-				
-				// Re-enable submit button
-				const submitBtn = form.querySelector('button[type="submit"]');
-				if (submitBtn) {
-					submitBtn.disabled = false;
-					submitBtn.textContent = 'Submit';
-				}
-				
-				// Show specific error message
-				if (error.message && error.message.includes('Failed to fetch')) {
-					alert('Network error: Please check your internet connection and try again.\n\nIf the problem persists, ensure the "form2-files" bucket exists in Supabase Storage and has proper permissions.');
-				} else {
-					alert('An error occurred while submitting the form: ' + (error.message || 'Please try again.'));
-				}
-			}
-		});
-	}
 
 	// MONTHLY FORM - Table data (11 rows - removed first 2 daily rows)
 	const tableData = [
@@ -557,18 +290,6 @@
 	// Form submission
 	document.getElementById('facultyForm2').addEventListener('submit', async function(e) {
 		e.preventDefault();
-		
-		// Save autofetch values to localStorage for next time
-		try {
-			const dept = document.querySelector('input[name="Department"]').value;
-			const portfolio = document.querySelector('input[name="Portfolio Name"]').value;
-			const member = document.querySelector('input[name="Portfolio Member Name"]').value;
-			const month = document.querySelector('select[name="Month"]').value;
-			localStorage.setItem('department', dept);
-			localStorage.setItem('selectedPortfolio', portfolio);
-			localStorage.setItem('selectedMemberName', member);
-			localStorage.setItem('selectedMonth', month);
-		} catch (err) { /* ignore */ }
 
 		const form = e.target;
 		const formData = new FormData(form);
