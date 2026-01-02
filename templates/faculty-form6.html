@@ -75,6 +75,61 @@
 		@media (max-width: 600px) {
 			th, td { font-size: 0.9rem; }
 		}
+		/* File upload preview styles */
+		.file-upload-container {
+			position: relative;
+		}
+		.file-preview {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			margin-top: 8px;
+			padding: 8px 12px;
+			background: #f0fdf4;
+			border: 1px solid #86efac;
+			border-radius: 8px;
+			font-size: 0.9rem;
+		}
+		.file-preview a {
+			color: #15803d;
+			text-decoration: underline;
+			word-break: break-all;
+		}
+		.file-preview .file-actions {
+			display: flex;
+			gap: 8px;
+			margin-left: auto;
+		}
+		.file-preview .btn-view, .file-preview .btn-replace {
+			padding: 4px 10px;
+			border-radius: 6px;
+			font-size: 0.8rem;
+			cursor: pointer;
+			border: none;
+			transition: all 0.2s;
+		}
+		.file-preview .btn-view {
+			background: #3b82f6;
+			color: white;
+		}
+		.file-preview .btn-view:hover {
+			background: #2563eb;
+		}
+		.file-preview .btn-replace {
+			background: #f59e0b;
+			color: white;
+		}
+		.file-preview .btn-replace:hover {
+			background: #d97706;
+		}
+		.validation-error {
+			color: #dc2626;
+			font-size: 0.85rem;
+			margin-top: 4px;
+		}
+		.field-error {
+			border-color: #dc2626 !important;
+		}
 	</style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
@@ -209,25 +264,115 @@
 			<td class="border px-2 py-1">${row.name}</td>
 			<td class="border px-2 py-1">${row.tat}</td>
 			<td class="border px-2 py-1">
-				<select name="Status_${idx}" class="w-full border rounded px-1 py-1">
-					<option value="">Select</option>
-					<option>Completed</option>
-					<option>Under Process</option>
-					<option>Yet to be Completed</option>
-					<option>Not Applicable</option>
+				<select name="Status_${idx}" required class="w-full border rounded px-1 py-1">
+					<option value="">Select Status *</option>
+					<option value="Completed">Completed</option>
+					<option value="Under Process">Under Process</option>
+					<option value="Yet to be Completed">Yet to be Completed</option>
+					<option value="Not Applicable">Not Applicable</option>
 				</select>
 			</td>
-			<td class="border px-2 py-1">
+			<td class="border px-2 py-1 file-upload-container">
 				<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
 				<span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">✓</span>
 				<input type="file" name="Upload The Scanned File_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
+				<div id="file-preview-${idx}" class="file-preview" style="display: none;">
+					<span class="file-name">No file</span>
+					<div class="file-actions">
+						<button type="button" class="btn-view" onclick="viewFile(${idx})">View</button>
+						<button type="button" class="btn-replace" onclick="replaceFile(${idx})">Replace</button>
+					</div>
+				</div>
 			</td>
 			<td class="border px-2 py-1">
 				<input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="${row.status}" />
+				<div id="validation-error-${idx}" class="validation-error" style="display: none;"></div>
 			</td>
 		`;
 		tbody.appendChild(tr);
 	});
+
+	// Store uploaded file URLs for preview
+	const uploadedFiles = {};
+
+	// File preview and replace functions
+	function viewFile(taskNum) {
+		const fileUrl = uploadedFiles[taskNum];
+		if (fileUrl) {
+			window.open(fileUrl, '_blank');
+		} else {
+			alert('No file uploaded yet.');
+		}
+	}
+
+	function replaceFile(taskNum) {
+		const fileInput = document.querySelector(`.file-input-row[data-row="${taskNum}"]`);
+		if (fileInput) {
+			fileInput.value = '';
+			fileInput.click();
+			const preview = document.getElementById(`file-preview-${taskNum}`);
+			if (preview) {
+				preview.style.display = 'none';
+			}
+			uploadedFiles[taskNum] = null;
+		}
+	}
+
+	function updateFilePreview(taskNum, fileName, fileUrl) {
+		const preview = document.getElementById(`file-preview-${taskNum}`);
+		if (preview) {
+			const nameSpan = preview.querySelector('.file-name');
+			if (nameSpan) {
+				nameSpan.textContent = fileName;
+			}
+			preview.style.display = 'flex';
+			uploadedFiles[taskNum] = fileUrl;
+		}
+	}
+
+	function clearValidationError(taskNum) {
+		const errorDiv = document.getElementById(`validation-error-${taskNum}`);
+		if (errorDiv) {
+			errorDiv.style.display = 'none';
+			errorDiv.textContent = '';
+		}
+		const statusSelect = document.querySelector(`select[name="Status_${taskNum}"]`);
+		const descInput = document.querySelector(`input[name="Description_${taskNum}"]`);
+		const fileInput = document.querySelector(`.file-input-row[data-row="${taskNum}"]`);
+		[statusSelect, descInput, fileInput].forEach(el => {
+			if (el) el.classList.remove('field-error');
+		});
+	}
+
+	function validateCompletedStatus() {
+		let isValid = true;
+		const numRows = tableData.length;
+		
+		for (let i = 1; i <= numRows; i++) {
+			const statusSelect = document.querySelector(`select[name="Status_${i}"]`);
+			const descInput = document.querySelector(`input[name="Description_${i}"]`);
+			const fileInput = document.querySelector(`.file-input-row[data-row="${i}"]`);
+			const errorDiv = document.getElementById(`validation-error-${i}`);
+			
+			const status = statusSelect ? statusSelect.value : '';
+			const description = descInput ? descInput.value.trim() : '';
+			const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+			
+			clearValidationError(i);
+			
+			if (status === 'Completed' && !description && !hasFile) {
+				isValid = false;
+				if (errorDiv) {
+					errorDiv.textContent = 'When status is "Completed", you must provide either a Description or upload a File.';
+					errorDiv.style.display = 'block';
+				}
+				if (descInput) descInput.classList.add('field-error');
+				if (fileInput) fileInput.classList.add('field-error');
+			}
+		}
+		
+		return isValid;
+	}
 
 	// Supabase setup
 	const supabase = window.supabase.createClient(
@@ -273,20 +418,51 @@
 			const row = e.target.getAttribute('data-row');
 			const file = e.target.files[0];
 			if (!file) return;
+			
+			// Show preview immediately with temp URL
+			const tempUrl = URL.createObjectURL(file);
+			updateFilePreview(row, file.name, tempUrl);
+			clearValidationError(row);
+			
 			const uploadBtn = document.querySelector(`button.upload-btn[data-row='${row}']`);
 			const bucket = 'form6-files';
 			const path = `facultyfile${row}_${Date.now()}_${file.name}`;
 			try {
-				await uploadFileToStorage(file, path, bucket, uploadBtn);
+				const actualUrl = await uploadFileToStorage(file, path, bucket, uploadBtn);
+				// Update with actual URL after successful upload
+				if (actualUrl) {
+					uploadedFiles[row] = actualUrl;
+				}
 			} catch (err) {
 				alert('File upload failed for row ' + row + ': ' + err.message);
 			}
 		}
 	});
 
+	// Add event listeners for status and description changes to clear errors
+	document.addEventListener('change', function(e) {
+		if (e.target && e.target.name && e.target.name.startsWith('Status_')) {
+			const row = e.target.name.split('_')[1];
+			clearValidationError(row);
+		}
+	});
+
+	document.addEventListener('input', function(e) {
+		if (e.target && e.target.name && e.target.name.startsWith('Description_')) {
+			const row = e.target.name.split('_')[1];
+			clearValidationError(row);
+		}
+	});
+
 	// Form submission
 	document.getElementById('facultyForm6').addEventListener('submit', async function(e) {
 		e.preventDefault();
+		
+		// Validate completed status requirement
+		if (!validateCompletedStatus()) {
+			alert('Please fill in the required fields. When status is "Completed", you must provide either a Description or upload a File.');
+			return;
+		}
 		
 		// Save autofetch values to localStorage for next time
 		try {
