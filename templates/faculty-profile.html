@@ -2767,7 +2767,7 @@
         // Forms assigned: show only 'yes' as table rows with real names and links
         const formNames = [
           "Students Performance in Training & Placement Member",
-          "Class Advisor",
+          "Class Advisor",  // Form 2 - will be split into monthly/daily
           "Faculty Information & Contribution Member",
           "Course Outcome & Program Outcome Member (Exam Cell)",
           "Continuous Improvement Member (Program Member)",
@@ -2777,7 +2777,7 @@
         ];
         const formLinks = [
           "faculty-form1.html",
-          "faculty-form2.html",
+          "faculty-form2.html",  // Monthly
           "faculty-form3.html",
           "faculty-form4.html",
           "faculty-form5.html",
@@ -2787,7 +2787,7 @@
         ];
         const formTables = [
           "form1-monthly",
-          "form2-monthly",
+          "form2-monthly",  // Monthly
           "form3-monthly",
           "form4-monthly",
           "form5-monthly",
@@ -2804,26 +2804,55 @@
         
         for (let i = 1; i <= 8; i++) {
           if (data[`form${i}`] && data[`form${i}`].toLowerCase() === "yes") {
-            // Compose portfolio name with frequency for auto-fill
-            let portfolioName = formNames[i - 1];
-            let frequency = '';
-            if (formLinks[i - 1].includes('form1')) frequency = ' (Weekly)';
-            if (formLinks[i - 1].includes('form2')) frequency = ' (Daily)';
-            if (formLinks[i - 1].includes('form3')) frequency = ' (Weekly)';
-            if (formLinks[i - 1].includes('form4')) frequency = ' (Weekly)';
-            if (formLinks[i - 1].includes('form5')) frequency = ' (Weekly)';
-            if (formLinks[i - 1].includes('form6')) frequency = ' (Weekly)';
-            if (formLinks[i - 1].includes('form7')) frequency = ' (Weekly)';
-            if (formLinks[i - 1].includes('form8')) frequency = ' (Weekly)';
-            let fullPortfolio = portfolioName + frequency;
-            formsHtmlDept += `<tr>
-              <td class="p-4 align-top">${countDept}</td>
-              <td class="p-4 align-top">${portfolioName}</td>
-              <td class="p-4 align-top" id="deptFormBtn${i}">
-                <span class="text-gray-500 text-sm">Checking...</span>
-              </td>
-            </tr>`;
-            countDept++;
+            // For form2 (Class Advisor), show both monthly and daily
+            if (i === 2) {
+              // Monthly version
+              let portfolioNameMonthly = "Class Advisor (Monthly)";
+              let frequencyMonthly = ' (Monthly)';
+              let fullPortfolioMonthly = portfolioNameMonthly;
+              formsHtmlDept += `<tr>
+                <td class="p-4 align-top">${countDept}</td>
+                <td class="p-4 align-top">${portfolioNameMonthly}</td>
+                <td class="p-4 align-top" id="deptFormBtn${i}_monthly">
+                  <span class="text-gray-500 text-sm">Checking...</span>
+                </td>
+              </tr>`;
+              countDept++;
+              
+              // Daily version
+              let portfolioNameDaily = "Class Advisor (Daily)";
+              let frequencyDaily = ' (Daily)';
+              let fullPortfolioDaily = portfolioNameDaily;
+              formsHtmlDept += `<tr>
+                <td class="p-4 align-top">${countDept}</td>
+                <td class="p-4 align-top">${portfolioNameDaily}</td>
+                <td class="p-4 align-top" id="deptFormBtn${i}_daily">
+                  <span class="text-gray-500 text-sm">Checking...</span>
+                </td>
+              </tr>`;
+              countDept++;
+            } else {
+              // Regular forms
+              const formIndex = i - 1;
+              let portfolioName = formNames[formIndex];
+              let frequency = '';
+              if (formLinks[formIndex].includes('form1')) frequency = ' (Weekly)';
+              if (formLinks[formIndex].includes('form3')) frequency = ' (Weekly)';
+              if (formLinks[formIndex].includes('form4')) frequency = ' (Weekly)';
+              if (formLinks[formIndex].includes('form5')) frequency = ' (Weekly)';
+              if (formLinks[formIndex].includes('form6')) frequency = ' (Weekly)';
+              if (formLinks[formIndex].includes('form7')) frequency = ' (Weekly)';
+              if (formLinks[formIndex].includes('form8')) frequency = ' (Weekly)';
+              let fullPortfolio = portfolioName + frequency;
+              formsHtmlDept += `<tr>
+                <td class="p-4 align-top">${countDept}</td>
+                <td class="p-4 align-top">${portfolioName}</td>
+                <td class="p-4 align-top" id="deptFormBtn${i}">
+                  <span class="text-gray-500 text-sm">Checking...</span>
+                </td>
+              </tr>`;
+              countDept++;
+            }
           }
         }
         
@@ -2885,32 +2914,72 @@
           // Check department portfolio forms
           for (let i = 1; i <= 8; i++) {
             if (data[`form${i}`] && data[`form${i}`].toLowerCase() === "yes") {
-              const btnContainer = document.getElementById(`deptFormBtn${i}`);
-              if (!btnContainer) continue;
-              
-              const portfolioName = formNames[i - 1];
-              let frequency = '';
-              if (formLinks[i - 1].includes('form1')) frequency = ' (Weekly)';
-              if (formLinks[i - 1].includes('form2')) frequency = ' (Daily)';
-              if (formLinks[i - 1].includes('form3')) frequency = ' (Weekly)';
-              if (formLinks[i - 1].includes('form4')) frequency = ' (Weekly)';
-              if (formLinks[i - 1].includes('form5')) frequency = ' (Weekly)';
-              if (formLinks[i - 1].includes('form6')) frequency = ' (Weekly)';
-              if (formLinks[i - 1].includes('form7')) frequency = ' (Weekly)';
-              if (formLinks[i - 1].includes('form8')) frequency = ' (Weekly)';
-              const fullPortfolio = portfolioName + frequency;
-              
-              const isFilled = await checkFormSubmissionStatus(formTables[i - 1], facultyName, department, currentMonth);
-              
-              if (isFilled) {
-                btnContainer.innerHTML = `<span class="inline-flex items-center gap-2 rounded-full bg-green-600 text-white px-4 py-2 text-xs font-medium">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                  </svg>
-                  You filled the form
-                </span>`;
+              // Handle form2 (Class Advisor) - check both monthly and daily
+              if (i === 2) {
+                // Check monthly version
+                const btnContainerMonthly = document.getElementById(`deptFormBtn${i}_monthly`);
+                if (btnContainerMonthly) {
+                  const portfolioNameMonthly = "Class Advisor (Monthly)";
+                  const isFilledMonthly = await checkFormSubmissionStatus('form2-monthly', facultyName, department, currentMonth);
+                  
+                  if (isFilledMonthly) {
+                    btnContainerMonthly.innerHTML = `<span class="inline-flex items-center gap-2 rounded-full bg-green-600 text-white px-4 py-2 text-xs font-medium">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                      </svg>
+                      You filled the form
+                    </span>`;
+                  } else {
+                    btnContainerMonthly.innerHTML = `<button onclick="openForm('faculty-form2.html', '${department}', '${portfolioNameMonthly}', '${facultyName}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button>`;
+                  }
+                }
+                
+                // Check daily version
+                const btnContainerDaily = document.getElementById(`deptFormBtn${i}_daily`);
+                if (btnContainerDaily) {
+                  const portfolioNameDaily = "Class Advisor (Daily)";
+                  const isFilledDaily = await checkFormSubmissionStatus('Form2-daily', facultyName, department, currentMonth);
+                  
+                  if (isFilledDaily) {
+                    btnContainerDaily.innerHTML = `<span class="inline-flex items-center gap-2 rounded-full bg-green-600 text-white px-4 py-2 text-xs font-medium">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                      </svg>
+                      You filled the form
+                    </span>`;
+                  } else {
+                    btnContainerDaily.innerHTML = `<button onclick="openForm('faculty-form2-daily.html', '${department}', '${portfolioNameDaily}', '${facultyName}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button>`;
+                  }
+                }
               } else {
-                btnContainer.innerHTML = `<button onclick="openForm('${formLinks[i - 1]}', '${department}', '${fullPortfolio}', '${facultyName}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button>`;
+                // Regular forms (not form2)
+                const btnContainer = document.getElementById(`deptFormBtn${i}`);
+                if (!btnContainer) continue;
+                
+                const formIndex = i - 1;
+                const portfolioName = formNames[formIndex];
+                let frequency = '';
+                if (formLinks[formIndex].includes('form1')) frequency = ' (Weekly)';
+                if (formLinks[formIndex].includes('form3')) frequency = ' (Weekly)';
+                if (formLinks[formIndex].includes('form4')) frequency = ' (Weekly)';
+                if (formLinks[formIndex].includes('form5')) frequency = ' (Weekly)';
+                if (formLinks[formIndex].includes('form6')) frequency = ' (Weekly)';
+                if (formLinks[formIndex].includes('form7')) frequency = ' (Weekly)';
+                if (formLinks[formIndex].includes('form8')) frequency = ' (Weekly)';
+                const fullPortfolio = portfolioName + frequency;
+                
+                const isFilled = await checkFormSubmissionStatus(formTables[formIndex], facultyName, department, currentMonth);
+                
+                if (isFilled) {
+                  btnContainer.innerHTML = `<span class="inline-flex items-center gap-2 rounded-full bg-green-600 text-white px-4 py-2 text-xs font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    You filled the form
+                  </span>`;
+                } else {
+                  btnContainer.innerHTML = `<button onclick="openForm('${formLinks[formIndex]}', '${department}', '${fullPortfolio}', '${facultyName}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button>`;
+                }
               }
             }
           }
