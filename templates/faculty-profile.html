@@ -1440,6 +1440,11 @@
         return url.searchParams.get(name);
       }
       const email = getQueryParam("email");
+      
+      // Store email in localStorage for notifications
+      if (email) {
+        localStorage.setItem('facultyEmail', email);
+      }
       if (!window.supabaseClient) {
         window.supabaseClient = window.supabase.createClient(
           "https://cbhodgwaazmjszkujrti.supabase.co",
@@ -2744,7 +2749,8 @@
             
             // Check if any row matches this faculty
             const matchingRow = (formData || []).find(row => {
-              const rowName = (row['Portfolio Member Name'] || row['Portfolio Member Name:'] || '').toString().trim().toLowerCase();
+              // Handle both correct spelling and typo in form4-monthly table
+              const rowName = (row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['Portfolio Member Name:'] || '').toString().trim().toLowerCase();
               return rowName === nameLower;
             });
             
