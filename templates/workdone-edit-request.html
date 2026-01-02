@@ -207,6 +207,10 @@
           deptFilter.value = userDepartment;
           deptFilter.disabled = true; // HOD can only see their department
           console.log('HOD department auto-selected:', userDepartment);
+        } else if (userDepartment) {
+          // Auto-select department from URL if present
+          deptFilter.value = userDepartment;
+          console.log('Department auto-selected from URL:', userDepartment);
         } else {
           console.log('Not HOD or no department, showing all');
         }
@@ -395,6 +399,14 @@
           <div><strong>Designation:</strong> ${request.designation || '-'}</div>
           <div><strong>Reason:</strong> <span class="text-red-600 font-semibold">${request.request_reason || 'No reason provided'}</span></div>
           <div><strong>Requested At:</strong> ${new Date(request.requested_at).toLocaleString()}</div>
+          ${request.status !== 'pending' ? `
+            <div class="bg-${request.status === 'approved' ? 'green' : 'red'}-50 border border-${request.status === 'approved' ? 'green' : 'red'}-300 rounded p-3 mt-3">
+              <strong>Status:</strong> <span class="uppercase font-bold text-${request.status === 'approved' ? 'green' : 'red'}-700">${request.status}</span><br>
+              <strong>${request.status === 'approved' ? 'Approved' : 'Rejected'} By:</strong> ${request.approved_by} (${request.approved_by_role})<br>
+              <strong>${request.status === 'approved' ? 'Approved' : 'Rejected'} At:</strong> ${new Date(request.approved_at).toLocaleString()}
+              ${request.rejection_reason ? `<br><strong>Rejection Reason:</strong> <span class="text-red-600">${request.rejection_reason}</span>` : ''}
+            </div>
+          ` : ''}
           <div class="border-t pt-3 mt-3">
             <strong class="text-lg text-purple-700">Record to be Edited:</strong>
             <div class="mt-2 max-h-96 overflow-y-auto border rounded p-3 bg-white">
@@ -405,6 +417,15 @@
       `;
 
       content.innerHTML = html;
+      
+      // Show/hide approve/reject buttons based on status
+      const actionButtons = modal.querySelector('.mt-6.flex.gap-4');
+      if (request.status !== 'pending') {
+        actionButtons.classList.add('hidden');
+      } else {
+        actionButtons.classList.remove('hidden');
+      }
+      
       modal.classList.remove('hidden');
     }
 
