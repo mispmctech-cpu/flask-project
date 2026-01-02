@@ -56,7 +56,7 @@
       <div id="notifMsg" class="notif-msg"></div>
       <button
         class="notif-btn"
-        onclick="window.history.length > 1 ? window.history.back() : window.location.href='faculty-form2.html'"
+        onclick="handleBackNavigation()"
       >
         Back
       </button>
@@ -67,6 +67,15 @@
       const msg = params.get("msg");
       const notifIcon = document.getElementById("notifIcon");
       const notifMsg = document.getElementById("notifMsg");
+      
+      function handleBackNavigation() {
+        // Get current email for redirect
+        const email = localStorage.getItem('facultyEmail') || new URLSearchParams(window.location.search).get('email') || '';
+        
+        // Navigate directly to faculty-profile with cache-busting parameter
+        window.location.href = `faculty-profile.html?email=${encodeURIComponent(email)}&refresh=${Date.now()}`;
+      }
+      
       if (status === "success") {
         notifIcon.innerHTML = '<span class="notif-success">✔️</span>';
         notifMsg.textContent = "Your submission was successful!";
