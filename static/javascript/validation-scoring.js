@@ -255,7 +255,7 @@ class ValidationScoring {
         submitted_at: this.currentRow.submitted_at || null,
         total_fields: totalFields,
         validated_fields: validatedFields,
-        validation_score: parseFloat(validationScore),
+        validation_score: Math.round(parseFloat(validationScore)), // Round to integer for database
         field_scores: this.fieldScores,
         validation_notes: validationNotes,
         validation_status: validationStatus

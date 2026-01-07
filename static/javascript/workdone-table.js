@@ -49,7 +49,11 @@ class WorkdoneTable {
       "AP(Yearly)",
       "ASP(Yearly)",
       "Prof(Yearly)",
-      "Core_scope"
+      "Core_scope",
+      "AP_SH_Yearly",
+      "ASP_SH_Yearly",
+      "Prof_SH_Yearly",
+      "Core_scope_SH"
     ];
     
     // All forms (Institution Level Forms + Faculty Forms)
@@ -114,6 +118,11 @@ class WorkdoneTable {
       { table: "AP(Yearly)", portfolio: "AP Yearly Form" },
       { table: "Prof(Yearly)", portfolio: "Prof Yearly Form" },
       { table: "Core_scope", portfolio: "Faculty Core Scope (Monthly)" },
+      // S&H Faculty Forms
+      { table: "AP_SH_Yearly", portfolio: "AP Yearly Form (S&H)" },
+      { table: "ASP_SH_Yearly", portfolio: "ASP Yearly Form (S&H)" },
+      { table: "Prof_SH_Yearly", portfolio: "Prof Yearly Form (S&H)" },
+      { table: "Core_scope_SH", portfolio: "Faculty Core Scope (Monthly) (S&H)" },
     ];
     
     // Filter to only faculty forms if requested
@@ -155,6 +164,10 @@ class WorkdoneTable {
         if (entry.table === "ASP" && designation?.toUpperCase() !== "ASP") continue;
         if (entry.table === "AP" && designation?.toUpperCase() !== "AP") continue;
         if (entry.table === "Prof" && !["PROF", "PROFESSOR"].includes(designation?.toUpperCase())) continue;
+        // Skip S&H forms if designation doesn't match
+        if (entry.table === "ASP_SH_Yearly" && designation?.toUpperCase() !== "ASP") continue;
+        if (entry.table === "AP_SH_Yearly" && designation?.toUpperCase() !== "AP") continue;
+        if (entry.table === "Prof_SH_Yearly" && !["PROF", "PROFESSOR"].includes(designation?.toUpperCase())) continue;
 
         // Fetch all records with pagination (handle >1000 records)
         let allData = [];

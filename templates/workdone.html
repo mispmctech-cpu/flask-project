@@ -605,6 +605,11 @@
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
+      // Initialize validation scoring after supabaseClient is ready
+      if (typeof ValidationScoring !== 'undefined' && !window.validationScoring) {
+        window.validationScoring = new ValidationScoring(supabaseClient);
+      }
+      
       loadWorkdone();
       loadValidatedWorkdone();
     });

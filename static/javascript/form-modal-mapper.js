@@ -50,6 +50,70 @@ function getFormModalContent(row, details) {
     return html;
   }
 
+  // Core Scope SH (Monthly) form - CHECK THIS BEFORE REGULAR CORE SCOPE
+  if (
+    tableName.includes('core_scope_sh') ||
+    tableName.includes('core-scope-sh') ||
+    (portfolio.includes('core scope') && portfolio.includes('s&h')) ||
+    (portfolio.includes('core scope') && portfolio.includes('sh'))
+  ) {
+    html += `<div class="mb-4"><span class="text-2xl font-extrabold text-purple-800 tracking-wide">Faculty Core Scope (Monthly) - S&H</span></div>`;
+    html += `<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">`;
+    html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || '-'}</span></div>`;
+    html += `</div>`;
+    
+    // Core Scope SH labels (13 rows, excluding rows 10 and 14)
+    const coreScopeSHLabels = [
+      'Teaching & Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+      'Teaching & Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+      'Teaching & Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+      'Teaching & Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+      'Student Mentorship & Support: Act as academic mentor and guide 30 students on coursework, projects, and career planning.',
+      'Student Mentorship & Support: Monitor student attendance, performance, and well-being.',
+      'Student Mentorship & Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+      'Student Mentorship & Support: Maintain the Mentor book for assigned mentee.',
+      'Student Mentorship & Support: Consolidate innovative course material, Lab manuals',
+      'Contribute to accreditation processes (NBA),(NAAC) and quality Assurance initiatives.',
+      'Serve on academic and administrative committees. ',
+      'ADMINISTRATIVE DUTIES : MAINTAIN ACADEMIC RECORDS, COURSE FILES, LOG BOOK AND STUDENT EVALUATIONS',
+      'Library Utilization'
+    ];
+
+    html += `<div class="overflow-x-auto">`;
+    html += `<table class="w-full text-sm border border-gray-300">`;
+    html += `<thead class="bg-orange-400 text-white"><tr>`;
+    html += `<th class="border border-gray-300 px-3 py-2 text-center" style="width: 5%;">S.No</th>`;
+    html += `<th class="border border-gray-300 px-3 py-2" style="width: 40%;">Scope</th>`;
+    html += `<th class="border border-gray-300 px-3 py-2" style="width: 15%;">Status</th>`;
+    html += `<th class="border border-gray-300 px-3 py-2" style="width: 30%;">Description</th>`;
+    html += `<th class="border border-gray-300 px-3 py-2 text-center" style="width: 10%;">File</th>`;
+    html += `</tr></thead><tbody>`;
+    
+    for (let i = 1; i <= 13; i++) {
+      const statusVal = details[`Status_${i}`] || '-';
+      const descVal = details[`Description_${i}`] || '-';
+      let fileVal = details[`Upload The Scanned File_${i}`];
+      let fileHtml = '-';
+      if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
+        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-xs'>View File</a>`;
+      }
+      
+      html += `<tr class="hover:bg-gray-50 ${i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}">`;
+      html += `<td class="border border-gray-300 px-3 py-2 text-center font-semibold">${i}</td>`;
+      html += `<td class="border border-gray-300 px-3 py-2">${coreScopeSHLabels[i-1]}</td>`;
+      html += `<td class="border border-gray-300 px-3 py-2"><span class="px-2 py-1 rounded ${statusVal === 'Completed' || statusVal === 'Completed and Updated' ? 'bg-green-100 text-green-800' : statusVal === 'Not Applicable' ? 'bg-gray-100 text-gray-600' : 'bg-yellow-100 text-yellow-800'}">${statusVal}</span></td>`;
+      html += `<td class="border border-gray-300 px-3 py-2 text-sm">${descVal}</td>`;
+      html += `<td class="border border-gray-300 px-3 py-2 text-center">${fileHtml}</td>`;
+      html += `</tr>`;
+    }
+    
+    html += `</tbody></table></div>`;
+    return html;
+  }
+
   // Core Scope (Monthly) form - CHECK THIS BEFORE AP FORM
   if (
     tableName.includes('core_scope') ||
@@ -107,6 +171,93 @@ function getFormModalContent(row, details) {
       html += `<td class="border border-gray-300 px-3 py-2"><span class="px-2 py-1 rounded ${statusVal === 'Completed' || statusVal === 'Completed and Updated' ? 'bg-green-100 text-green-800' : statusVal === 'Not Applicable' ? 'bg-gray-100 text-gray-600' : 'bg-yellow-100 text-yellow-800'}">${statusVal}</span></td>`;
       html += `<td class="border border-gray-300 px-3 py-2 text-sm">${descVal}</td>`;
       html += `<td class="border border-gray-300 px-3 py-2 text-center">${fileHtml}</td>`;
+      html += `</tr>`;
+    }
+    
+    html += `</tbody></table></div>`;
+    return html;
+  }
+
+  // form-ap-sh.html (AP Yearly Form S&H - 5 items)
+  if (
+    tableName.includes('ap_sh_yearly') ||
+    tableName.includes('ap-sh-yearly') ||
+    (portfolio.includes('ap yearly') && (portfolio.includes('s&h') || portfolio.includes('sh'))) ||
+    (portfolio.includes('ap form') && (portfolio.includes('s&h') || portfolio.includes('sh')))
+  ) {
+    html += `<div class="mb-4"><span class="text-2xl font-extrabold text-purple-800 tracking-wide">Assistant Professor: Faculty Mandatory Scope (Yearly) - S&H</span></div>`;
+    html += `<div class="text-center mb-4"><span class="text-lg text-gray-600 italic">in Research, Innovations and Extension activity/ Faculty Contributions</span></div>`;
+    html += `<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-purple-50 p-4 rounded-lg">`;
+    html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || '-'}</span></div>`;
+    html += `</div>`;
+    
+    // Table view for 5 yearly items (excluded rows 2, 5, 6)
+    const apSHYearlyLabels = [
+      'Present at Conferences.',
+      'Attend FDPs / workshop/Seminars',
+      'Engage in extension activities, and social outreach programs.',
+      'Membership in professional body',
+      'No of Proposals submitted in Manthan Portal'
+    ];
+    
+    const apSHYearlyTargets = [
+      '1/Year',
+      '2/Year',
+      '1 / SEM',
+      '1 per year',
+      '1 per Sem'
+    ];
+    
+    const apSHYearlyTAT = [
+      '31st May',
+      '31st May',
+      '31st DEC / 31st May',
+      '31st May',
+      ''
+    ];
+    
+    html += `<div class="overflow-x-auto"><table class="w-full text-sm border">`;
+    html += `<thead class="bg-yellow-400"><tr>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 5%">S.NO</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 35%">PARTICULAR</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">TARGET</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">TAT</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">Compliance</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">Description</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">File</th>`;
+    html += `</tr></thead><tbody>`;
+    
+    for (let i = 1; i <= 5; i++) {
+      const status = details[`Status_${i}`] || '-';
+      const description = details[`Description_${i}`] || '-';
+      const fileVal = details[`Upload The Scanned File_${i}`];
+      
+      // Status color coding
+      let statusClass = 'bg-gray-100 text-gray-800';
+      if (status.toLowerCase().includes('completed')) {
+        statusClass = 'bg-green-100 text-green-800';
+      } else if (status.toLowerCase().includes('in progress')) {
+        statusClass = 'bg-yellow-100 text-yellow-800';
+      } else if (status.toLowerCase().includes('not applicable')) {
+        statusClass = 'bg-gray-200 text-gray-600';
+      }
+      
+      html += `<tr class="hover:bg-gray-50">`;
+      html += `<td class="border px-2 py-2 text-center font-semibold">${i}</td>`;
+      html += `<td class="border px-2 py-2">${apSHYearlyLabels[i-1]}</td>`;
+      html += `<td class="border px-2 py-2 text-center">${apSHYearlyTargets[i-1]}</td>`;
+      html += `<td class="border px-2 py-2 text-center">${apSHYearlyTAT[i-1]}</td>`;
+      html += `<td class="border px-2 py-2"><span class="inline-block px-2 py-1 rounded text-xs font-semibold ${statusClass}">${status}</span></td>`;
+      html += `<td class="border px-2 py-2 text-sm">${description}</td>`;
+      
+      let fileHtml = '<span class="text-gray-400">-</span>';
+      if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
+        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs'>View File</a>`;
+      }
+      html += `<td class="border px-2 py-2 text-center">${fileHtml}</td>`;
       html += `</tr>`;
     }
     
@@ -211,6 +362,96 @@ function getFormModalContent(row, details) {
     return html;
   }
 
+  // form-asp-sh.html (ASP Yearly Form S&H - 6 items)
+  if (
+    tableName.includes('asp_sh_yearly') ||
+    tableName.includes('asp-sh-yearly') ||
+    (portfolio.includes('asp yearly') && (portfolio.includes('s&h') || portfolio.includes('sh'))) ||
+    (portfolio.includes('asp form') && (portfolio.includes('s&h') || portfolio.includes('sh')))
+  ) {
+    html += `<div class="mb-4"><span class="text-2xl font-extrabold text-purple-800 tracking-wide">Associate Professor: Faculty Mandatory Scope (Yearly) - S&H</span></div>`;
+    html += `<div class="text-center mb-4"><span class="text-lg text-gray-600 italic">in Research, Innovations and Extension activity/ Faculty Contributions</span></div>`;
+    html += `<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-purple-50 p-4 rounded-lg">`;
+    html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || '-'}</span></div>`;
+    html += `</div>`;
+    
+    // Table view for 6 yearly items (excluded rows 3, 5, 6)
+    const aspSHYearlyLabels = [
+      'Publish in peer-reviewed journals',
+      'Apply for research grants',
+      'Organize FDPs / workshop/Seminars',
+      'Engage in Consultancy.',
+      'Membership in professional body',
+      'No of Proposals submitted in Manthan Portal'
+    ];
+    
+    const aspSHYearlyTargets = [
+      '1/Year',
+      '1/per',
+      '1/Year',
+      '1 / YEAR',
+      'As Required',
+      '1 per Sem'
+    ];
+    
+    const aspSHYearlyTAT = [
+      '31st May',
+      '31st May',
+      '31st May',
+      '31st May',
+      '31st May',
+      ''
+    ];
+    
+    html += `<div class="overflow-x-auto"><table class="w-full text-sm border">`;
+    html += `<thead class="bg-yellow-400"><tr>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 5%">S.NO</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 35%">PARTICULAR</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">TARGET</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">TAT</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">Compliance</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">Description</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">File</th>`;
+    html += `</tr></thead><tbody>`;
+    
+    for (let i = 1; i <= 6; i++) {
+      const status = details[`Status_${i}`] || '-';
+      const description = details[`Description_${i}`] || '-';
+      const fileVal = details[`Upload The Scanned File_${i}`];
+      
+      // Status color coding
+      let statusClass = 'bg-gray-100 text-gray-800';
+      if (status.toLowerCase().includes('completed')) {
+        statusClass = 'bg-green-100 text-green-800';
+      } else if (status.toLowerCase().includes('in progress')) {
+        statusClass = 'bg-yellow-100 text-yellow-800';
+      } else if (status.toLowerCase().includes('not applicable')) {
+        statusClass = 'bg-gray-200 text-gray-600';
+      }
+      
+      html += `<tr class="hover:bg-gray-50">`;
+      html += `<td class="border px-2 py-2 text-center font-semibold">${i}</td>`;
+      html += `<td class="border px-2 py-2">${aspSHYearlyLabels[i-1]}</td>`;
+      html += `<td class="border px-2 py-2 text-center">${aspSHYearlyTargets[i-1]}</td>`;
+      html += `<td class="border px-2 py-2 text-center">${aspSHYearlyTAT[i-1]}</td>`;
+      html += `<td class="border px-2 py-2"><span class="inline-block px-2 py-1 rounded text-xs font-semibold ${statusClass}">${status}</span></td>`;
+      html += `<td class="border px-2 py-2 text-sm">${description}</td>`;
+      
+      let fileHtml = '<span class="text-gray-400">-</span>';
+      if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
+        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs'>View File</a>`;
+      }
+      html += `<td class="border px-2 py-2 text-center">${fileHtml}</td>`;
+      html += `</tr>`;
+    }
+    
+    html += `</tbody></table></div>`;
+    return html;
+  }
+
   // form-asp.html (ASP Yearly Form - 7 items only)
   if (
     portfolio.includes('asp form') ||
@@ -295,6 +536,97 @@ function getFormModalContent(row, details) {
       html += `<td class="border px-2 py-2">${aspYearlyLabels[i-1]}</td>`;
       html += `<td class="border px-2 py-2 text-center">${aspYearlyTargets[i-1]}</td>`;
       html += `<td class="border px-2 py-2 text-center">${aspYearlyTAT[i-1]}</td>`;
+      html += `<td class="border px-2 py-2"><span class="inline-block px-2 py-1 rounded text-xs font-semibold ${statusClass}">${status}</span></td>`;
+      html += `<td class="border px-2 py-2 text-sm">${description}</td>`;
+      
+      let fileHtml = '<span class="text-gray-400">-</span>';
+      if (fileVal && typeof fileVal === 'string' && fileVal !== 'null' && fileVal.trim() !== '' && fileVal !== '-') {
+        fileHtml = `<a href='${fileVal}' target='_blank' class='inline-block bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs'>View File</a>`;
+      }
+      html += `<td class="border px-2 py-2 text-center">${fileHtml}</td>`;
+      html += `</tr>`;
+    }
+    
+    html += `</tbody></table></div>`;
+    return html;
+  }
+
+  // form-prof-sh.html (Professor Yearly Form S&H - 6 items)
+  if (
+    tableName.includes('prof_sh_yearly') ||
+    tableName.includes('prof-sh-yearly') ||
+    (portfolio.includes('prof yearly') && (portfolio.includes('s&h') || portfolio.includes('sh'))) ||
+    (portfolio.includes('prof form') && (portfolio.includes('s&h') || portfolio.includes('sh'))) ||
+    (portfolio.includes('professor form') && (portfolio.includes('s&h') || portfolio.includes('sh')))
+  ) {
+    html += `<div class="mb-4"><span class="text-2xl font-extrabold text-purple-800 tracking-wide">Professor: Faculty Mandatory Scope (Yearly) - S&H</span></div>`;
+    html += `<div class="text-center mb-4"><span class="text-lg text-gray-600 italic">in Research, Innovations and Extension activity/ Faculty Contributions</span></div>`;
+    html += `<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-purple-50 p-4 rounded-lg">`;
+    html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || details['Department:'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Name:</span> <span>${details['Portfolio Name'] || details['Portfolio Name:'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Portfolio Member Name:</span> <span>${details['Portfolio Member Name'] || '-'}</span></div>`;
+    html += `<div><span class="font-semibold text-gray-700">Month:</span> <span>${details['Month'] || '-'}</span></div>`;
+    html += `</div>`;
+    
+    // Table view for 6 yearly items (excluded rows 3, 5, 6)
+    const profSHYearlyLabels = [
+      'Publish in peer-reviewed journals',
+      'Apply for research grants',
+      'Organize FDPs / workshop/Seminars',
+      'Engage in Consultancy.',
+      'Membership in professional body',
+      'No of Proposals submitted in Manthan Portal'
+    ];
+    
+    const profSHYearlyTargets = [
+      '2/Year',
+      '1/year',
+      '1/Year',
+      '1 / YEAR',
+      '1 per year',
+      '1 per Sem'
+    ];
+    
+    const profSHYearlyTAT = [
+      '31st May',
+      '31st May',
+      '31st May',
+      '31st May',
+      '31st May',
+      ''
+    ];
+    
+    html += `<div class="overflow-x-auto"><table class="w-full text-sm border">`;
+    html += `<thead class="bg-yellow-400"><tr>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 5%">S.NO</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 35%">PARTICULAR</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">TARGET</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">TAT</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">Compliance</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">Description</th>`;
+    html += `<th class="border px-2 py-2 font-bold text-gray-800" style="width: 12%">File</th>`;
+    html += `</tr></thead><tbody>`;
+    
+    for (let i = 1; i <= 6; i++) {
+      const status = details[`Status_${i}`] || '-';
+      const description = details[`Description_${i}`] || '-';
+      const fileVal = details[`Upload The Scanned File_${i}`];
+      
+      // Status color coding
+      let statusClass = 'bg-gray-100 text-gray-800';
+      if (status.toLowerCase().includes('completed')) {
+        statusClass = 'bg-green-100 text-green-800';
+      } else if (status.toLowerCase().includes('in progress')) {
+        statusClass = 'bg-yellow-100 text-yellow-800';
+      } else if (status.toLowerCase().includes('not applicable')) {
+        statusClass = 'bg-gray-200 text-gray-600';
+      }
+      
+      html += `<tr class="hover:bg-gray-50">`;
+      html += `<td class="border px-2 py-2 text-center font-semibold">${i}</td>`;
+      html += `<td class="border px-2 py-2">${profSHYearlyLabels[i-1]}</td>`;
+      html += `<td class="border px-2 py-2 text-center">${profSHYearlyTargets[i-1]}</td>`;
+      html += `<td class="border px-2 py-2 text-center">${profSHYearlyTAT[i-1]}</td>`;
       html += `<td class="border px-2 py-2"><span class="inline-block px-2 py-1 rounded text-xs font-semibold ${statusClass}">${status}</span></td>`;
       html += `<td class="border px-2 py-2 text-sm">${description}</td>`;
       

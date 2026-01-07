@@ -253,6 +253,11 @@
         console.log('Number of records:', data ? data.length : 0);
 
         let filteredData = data || [];
+        
+        // Block edit requests for Form2-daily (Class Advisor Daily)
+        filteredData = filteredData.filter(r => r.workdone_table_name !== 'Form2-daily');
+        console.log('Filtered after blocking Form2-daily:', filteredData.length);
+        
         if (searchTerm) {
           filteredData = filteredData.filter(r => r.faculty_name.toLowerCase().includes(searchTerm));
           console.log('Filtered by search term:', filteredData.length);

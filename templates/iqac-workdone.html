@@ -111,9 +111,15 @@
 
         if (error) throw error;
 
-        window._allValidatedRows = data || [];
-        window._filteredValidatedRows = window._allValidatedRows;
-        window._workingValidatedRows = window._allValidatedRows;
+        // Filter out Form2-daily table records (ignore for this page)
+        const filteredData = (data || []).filter(row => {
+          const tableName = (row.table_name || '').toString().toLowerCase();
+          return tableName !== 'form2-daily' && tableName !== 'form2-dailty';
+        });
+
+        window._allValidatedRows = filteredData;
+        window._filteredValidatedRows = filteredData;
+        window._workingValidatedRows = filteredData;
         renderFilteredValidatedWorkdoneTable(1);
       } catch (error) {
         console.error('Error loading validated workdone:', error);

@@ -43,6 +43,7 @@
           <nav class="hidden sm:flex gap-6 ml-6 text-sm font-medium items-center">
             <a href="hod.html" class="opacity-90 hover:opacity-100">Back</a>
             <span class="underline decoration-2 underline-offset-4">Faculty Profile</span>
+            <a href="faculty-documents.html" class="opacity-90 hover:opacity-100">Documents</a>
             <button onclick="openNotificationModal()" aria-label="Messages" class="ml-4 focus:outline-none">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-white hover:text-orange-400 transition">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z" />
@@ -64,6 +65,7 @@
           <nav class="flex flex-col gap-3 text-base font-medium bg-purple-800 rounded shadow">
             <a href="hod.html" class="opacity-90 hover:opacity-100 py-2">Back</a>
             <span class="underline decoration-2 underline-offset-4 py-2">Faculty Profile</span>
+            <a href="faculty-documents.html" class="opacity-90 hover:opacity-100 py-2">Documents</a>
             <button onclick="openNotificationModal()" aria-label="Messages" class="focus:outline-none py-2 text-left">
               <span class="inline-flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-white hover:text-orange-400 transition">
@@ -1504,6 +1506,8 @@
           const facultyName = data["Name"] || "";
           const department = data["department"] || "";
           const designation = (data["Designation"] || "").toUpperCase();
+          const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+          const isSHFaculty = shDepartments.includes(department);
           
           // Normalize designation
           let desig = '';
@@ -1515,8 +1519,8 @@
             return;
           }
           
-          // Particulars for each designation
-          const particularsMap = {
+          // Particulars for each designation (Engineering)
+          const particularsMapEng = {
             AP: [
               'Present at Conference',
               'Guide student research and final year projects',
@@ -1551,8 +1555,37 @@
             ]
           };
           
-          const particulars = particularsMap[desig];
-          const tableName = desig === 'Prof' ? 'Prof(Yearly)' : `${desig}(Yearly)`;
+          // Particulars for S&H faculty (reduced items)
+          const particularsMapSH = {
+            AP: [
+              'Present at Conferences.',
+              'Attend FDPs / workshop/Seminars',
+              'Engage in extension activities, and social outreach programs.',
+              'Membership in professional body',
+              'No of Proposals submitted in Manthan Portal'
+            ],
+            ASP: [
+              'Publish in peer-reviewed journals',
+              'Apply for research grants',
+              'Organize FDPs / workshop/Seminars',
+              'Engage in Consultancy.',
+              'Membership in professional body',
+              'No of Proposals submitted in Manthan Portal'
+            ],
+            Prof: [
+              'Publish in peer-reviewed journals',
+              'Apply for research grants',
+              'Organize FDPs / workshop/Seminars',
+              'Engage in Consultancy.',
+              'Membership in professional body',
+              'No of Proposals submitted in Manthan Portal'
+            ]
+          };
+          
+          const particulars = isSHFaculty ? particularsMapSH[desig] : particularsMapEng[desig];
+          const tableName = isSHFaculty 
+            ? (desig === 'Prof' ? 'Prof_SH_Yearly' : `${desig}_SH_Yearly`)
+            : (desig === 'Prof' ? 'Prof(Yearly)' : `${desig}(Yearly)`);
           
           // All months
           const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -1721,13 +1754,20 @@
           const facultyName = data["Name"] || "";
           const department = data["department"] || "";
           const designation = (data["Designation"] || "").toUpperCase();
+          const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+          const isSHFaculty = shDepartments.includes(department);
+          
+          // Use appropriate table based on department
+          const tableName = isSHFaculty ? 'Core_scope_SH' : 'Core_scope';
+          // Core_scope_SH uses created_at, Core_scope uses submitted_at
+          const orderColumn = isSHFaculty ? 'created_at' : 'submitted_at';
           
           // Fetch ALL Core_scope data for this department (all months)
           const { data: allData, error } = await supabaseClient
-            .from('Core_scope')
+            .from(tableName)
             .select('*')
             .eq('Department', department)
-            .order('submitted_at', { ascending: false });
+            .order(orderColumn, { ascending: false });
           
           if (error) {
             console.error('Error fetching Core Scope data:', error);
@@ -1764,8 +1804,8 @@
             }
           });
           
-          // Core Scope particulars (15 items)
-          const particulars = [
+          // Core Scope particulars - Engineering (15 items) vs S&H (13 items)
+          const particularsEng = [
             'Design and deliver lectures and lab sessions',
             'Develop course materials, lesson plans and assessments ',
             'Incorporating innovative teaching methods including ICT tools ',
@@ -1781,8 +1821,26 @@
             'Maintain academic records, course files and logbook and student evaluations',
             'Assist in exam duties, QP setting, Invigilation and evaluation.',
             'Library Utilization'
-   
           ];
+          
+          // Core Scope particulars for S&H (13 items - excludes items 10 and 14)
+          const particularsSH = [
+            'Teaching & Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+            'Teaching & Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+            'Teaching & Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+            'Teaching & Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+            'Student Mentorship & Support: Act as academic mentor and guide 30 students on coursework, projects, and career planning.',
+            'Student Mentorship & Support: Monitor student attendance, performance, and well-being.',
+            'Student Mentorship & Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+            'Student Mentorship & Support: Maintain the Mentor book for assigned mentee.',
+            'Student Mentorship & Support: Consolidate innovative course material, Lab manuals',
+            'Contribute to accreditation processes (NBA),(NAAC) and quality Assurance initiatives.',
+            'Serve on academic and administrative committees. ',
+            'ADMINISTRATIVE DUTIES : MAINTAIN ACADEMIC RECORDS, COURSE FILES, LOG BOOK AND STUDENT EVALUATIONS',
+            'Library Utilization'
+          ];
+          
+          const particulars = isSHFaculty ? particularsSH : particularsEng;
           
           // Build month-wise matrix table
           let html = '<div class="overflow-x-auto">';
@@ -1841,9 +1899,10 @@
             
             if (row) {
               let completedCount = 0;
-              const totalCount = 15; // Fixed denominator for Core Scope
+              // Use 13 for S&H, 15 for Engineering
+              const totalCount = isSHFaculty ? 13 : 15;
               
-              for (let i = 1; i <= 15; i++) {
+              for (let i = 1; i <= totalCount; i++) {
                 const status = row[`Status_${i}`];
                 const statusLower = (status + '').toLowerCase().trim();
                 
@@ -2031,15 +2090,22 @@
               return;
             }
             
-            // Fetch Core Scope Monthly data
+            // Check if S&H faculty
+            const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+            const isSHFaculty = shDepartments.includes(dept);
+            
+            // Fetch Core Scope Monthly data (use appropriate table)
+            const coreScopeTableName = isSHFaculty ? 'Core_scope_SH' : 'Core_scope';
             const { data: coreScopeData } = await supabaseClient
-              .from('Core_scope')
+              .from(coreScopeTableName)
               .select('*')
               .eq('Month', selectedFacultySummaryMonth)
               .eq('Department', dept);
             
-            // Fetch Yearly Mandatory Scope data (don't filter by Month - it's stored as column data)
-            let yearlyTableName = desigDisplay === 'Prof' ? 'Prof(Yearly)' : `${desigDisplay}(Yearly)`;
+            // Fetch Yearly Mandatory Scope data (use appropriate table)
+            let yearlyTableName = isSHFaculty
+              ? (desigDisplay === 'Prof' ? 'Prof_SH_Yearly' : `${desigDisplay}_SH_Yearly`)
+              : (desigDisplay === 'Prof' ? 'Prof(Yearly)' : `${desigDisplay}(Yearly)`);
             const orderColumn = desigDisplay === 'Prof' ? 'created_at' : 'submitted_at';
             const { data: yearlyData } = await supabaseClient
               .from(yearlyTableName)
@@ -2070,8 +2136,9 @@
               console.log('[Consolidated Core Scope DEBUG] Found row:', coreScopeRow);
               if (coreScopeRow) {
                 let completedCount = 0;
-                const totalCount = 15; // Fixed denominator for Core Scope
-                for (let i = 1; i <= 15; i++) {
+                // Use 13 for S&H, 15 for Engineering
+                const totalCount = isSHFaculty ? 13 : 15;
+                for (let i = 1; i <= totalCount; i++) {
                   const status = (coreScopeRow[`Status_${i}`] || '').toString().toLowerCase();
                   console.log(`[Consolidated Core Scope DEBUG] Status_${i}: "${status}"`);
                   // Count as completed if status is "completed" or "completed and updated"
@@ -2102,9 +2169,24 @@
               
               if (yearlyRow) {
                 let completedCount = 0;
-                // Professor has 9 particulars, others have 8
-                let totalCount = desigDisplay === 'Prof' ? 9 : 8;
-                let maxStatus = desigDisplay === 'Prof' ? 9 : 8;
+                // S&H: AP=5, ASP=6, Prof=6 | Engineering: AP=8, ASP=8, Prof=9
+                let totalCount, maxStatus;
+                if (isSHFaculty) {
+                  if (desigDisplay === 'AP') {
+                    totalCount = 5;
+                    maxStatus = 5;
+                  } else if (desigDisplay === 'ASP') {
+                    totalCount = 6;
+                    maxStatus = 6;
+                  } else { // Prof
+                    totalCount = 6;
+                    maxStatus = 6;
+                  }
+                } else {
+                  // Engineering
+                  totalCount = desigDisplay === 'Prof' ? 9 : 8;
+                  maxStatus = desigDisplay === 'Prof' ? 9 : 8;
+                }
                 for (let i = 1; i <= maxStatus; i++) {
                   const status = (yearlyRow[`Status_${i}`] || '').toString().toLowerCase();
                   console.log(`[Consolidated Yearly DEBUG] Status_${i}: "${status}"`);
@@ -2289,15 +2371,22 @@
               return;
             }
             
-            // Fetch Core Scope Monthly data
+            // Check if S&H faculty
+            const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+            const isSHFaculty = shDepartments.includes(dept);
+            
+            // Fetch Core Scope Monthly data (use appropriate table)
+            const coreScopeTableName = isSHFaculty ? 'Core_scope_SH' : 'Core_scope';
             const { data: coreScopeData } = await supabaseClient
-              .from('Core_scope')
+              .from(coreScopeTableName)
               .select('*')
               .eq('Month', selectedFacultySummaryMonth)
               .eq('Department', dept);
             
-            // Fetch Yearly Mandatory Scope data
-            let yearlyTableName = desigDisplay === 'Prof' ? 'Prof(Yearly)' : `${desigDisplay}(Yearly)`;
+            // Fetch Yearly Mandatory Scope data (use appropriate table)
+            let yearlyTableName = isSHFaculty
+              ? (desigDisplay === 'Prof' ? 'Prof_SH_Yearly' : `${desigDisplay}_SH_Yearly`)
+              : (desigDisplay === 'Prof' ? 'Prof(Yearly)' : `${desigDisplay}(Yearly)`);
             const { data: yearlyData } = await supabaseClient
               .from(yearlyTableName)
               .select('*')
@@ -2324,8 +2413,9 @@
               );
               if (coreScopeRow) {
                 let completedCount = 0;
-                const totalCount = 15; // Fixed denominator for Core Scope
-                for (let i = 1; i <= 15; i++) {
+                // Use 13 for S&H, 15 for Engineering
+                const totalCount = isSHFaculty ? 13 : 15;
+                for (let i = 1; i <= totalCount; i++) {
                   const status = (coreScopeRow[`Status_${i}`] || '').toString().toLowerCase();
                   // Count as completed if status is "completed" or "completed and updated"
                   if (status === 'completed' || status === 'completed and updated') {
@@ -2350,8 +2440,25 @@
               
               if (yearlyRow) {
                 let completedCount = 0;
-                let totalCount = 8; // Fixed denominator of 8 for all designations
-                for (let i = 1; i <= 8; i++) {
+                // S&H: AP=5, ASP=6, Prof=6 | Engineering: AP=8, ASP=8, Prof=9
+                let totalCount, maxStatus;
+                if (isSHFaculty) {
+                  if (desigDisplay === 'AP') {
+                    totalCount = 5;
+                    maxStatus = 5;
+                  } else if (desigDisplay === 'ASP') {
+                    totalCount = 6;
+                    maxStatus = 6;
+                  } else { // Prof
+                    totalCount = 6;
+                    maxStatus = 6;
+                  }
+                } else {
+                  // Engineering
+                  totalCount = desigDisplay === 'Prof' ? 9 : 8;
+                  maxStatus = desigDisplay === 'Prof' ? 9 : 8;
+                }
+                for (let i = 1; i <= maxStatus; i++) {
                   const status = (yearlyRow[`Status_${i}`] || '').toString().toLowerCase();
                   if (status === 'completed' || status === 'completed and updated') {
                     completedCount++;
@@ -2861,22 +2968,52 @@
           .toString()
           .trim()
           .toUpperCase();
+        const department = (data["department"] || "").toString().trim();
+        const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+        const isSHFaculty = shDepartments.includes(department);
+        
         let yearlyFormName = "";
         let yearlyFormLink = "";
         let yearlyTableName = "";
+        let coreScopeFormLink = "faculty-core-scope.html";
+        let coreScopeTableName = "Core_scope";
         
         if (designation === "AP") {
-          yearlyFormName = "Faculty Mandatory Scope Form (AP - Yearly)";
-          yearlyFormLink = "form-ap.html";
-          yearlyTableName = "AP(Yearly)";
+          if (isSHFaculty) {
+            yearlyFormName = "Faculty Mandatory Scope Form (AP - Yearly) - S&H";
+            yearlyFormLink = "form-ap-sh.html";
+            yearlyTableName = "AP_SH_Yearly";
+            coreScopeFormLink = "faculty-core-scope-sh.html";
+            coreScopeTableName = "Core_scope_SH";
+          } else {
+            yearlyFormName = "Faculty Mandatory Scope Form (AP - Yearly)";
+            yearlyFormLink = "form-ap.html";
+            yearlyTableName = "AP(Yearly)";
+          }
         } else if (designation === "ASP") {
-          yearlyFormName = "Faculty Mandatory Scope Form (ASP - Yearly)";
-          yearlyFormLink = "form-asp.html";
-          yearlyTableName = "ASP(Yearly)";
+          if (isSHFaculty) {
+            yearlyFormName = "Faculty Mandatory Scope Form (ASP - Yearly) - S&H";
+            yearlyFormLink = "form-asp-sh.html";
+            yearlyTableName = "ASP_SH_Yearly";
+            coreScopeFormLink = "faculty-core-scope-sh.html";
+            coreScopeTableName = "Core_scope_SH";
+          } else {
+            yearlyFormName = "Faculty Mandatory Scope Form (ASP - Yearly)";
+            yearlyFormLink = "form-asp.html";
+            yearlyTableName = "ASP(Yearly)";
+          }
         } else if (designation === "PROF" || designation === "PROFESSOR") {
-          yearlyFormName = "Faculty Mandatory Scope Form (Professor - Yearly)";
-          yearlyFormLink = "form-prof.html";
-          yearlyTableName = "Prof(Yearly)";
+          if (isSHFaculty) {
+            yearlyFormName = "Faculty Mandatory Scope Form (Professor - Yearly) - S&H";
+            yearlyFormLink = "form-prof-sh.html";
+            yearlyTableName = "Prof_SH_Yearly";
+            coreScopeFormLink = "faculty-core-scope-sh.html";
+            coreScopeTableName = "Core_scope_SH";
+          } else {
+            yearlyFormName = "Faculty Mandatory Scope Form (Professor - Yearly)";
+            yearlyFormLink = "form-prof.html";
+            yearlyTableName = "Prof(Yearly)";
+          }
         }
         
         // Add Monthly form (row 1)
@@ -2984,10 +3121,10 @@
             }
           }
           
-          // Check Core Scope Monthly
+          // Check Core Scope Monthly (use S&H table if S&H faculty)
           const coreMonthlyBtn = document.getElementById('coreMonthlyFormBtn');
           if (coreMonthlyBtn) {
-            const isFilledMonthly = await checkFormSubmissionStatus('Core_scope', facultyName, department, currentMonth);
+            const isFilledMonthly = await checkFormSubmissionStatus(coreScopeTableName, facultyName, department, currentMonth);
             
             if (isFilledMonthly) {
               coreMonthlyBtn.innerHTML = `<span class="inline-flex items-center gap-2 rounded-full bg-green-600 text-white px-4 py-2 text-xs font-medium">
@@ -2997,7 +3134,7 @@
                 You filled the form
               </span>`;
             } else {
-              coreMonthlyBtn.innerHTML = `<button onclick="openForm('faculty-core-scope.html', '${department}', 'Faculty Core Scope (Monthly)', '${facultyName}', '${designation}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button>`;
+              coreMonthlyBtn.innerHTML = `<button onclick="openForm('${coreScopeFormLink}', '${department}', 'Faculty Core Scope (Monthly)', '${facultyName}', '${designation}')" class="inline-flex items-center gap-2 rounded-full bg-purple-700 text-white px-4 py-2 text-xs font-medium hover:bg-purple-800 transition">Open Form</button>`;
             }
           }
           
@@ -3129,7 +3266,7 @@
     <!-- Footer -->
     <footer class="text-center py-4 mt-8">
     <p class="text-sm">
-      &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline">PMC TECH</a><br>
+      &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" rel="noopener noreferrer" class="underline">PMC TECH</a><br>
       <p class="text-xs opacity-80 flex items-center justify-center gap-2">
                         Powered by 
                         <a href="https://zeonytechnologies.com" target="_blank" rel="noopener noreferrer" class="inline-block hover:opacity-100 transition-all duration-300 hover:scale-105">
