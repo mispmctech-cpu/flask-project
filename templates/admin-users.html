@@ -1,0 +1,1176 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <img src="../static/img/pmc.jpg" alt="PMC Tech" class="h-10 w-auto rounded-lg">
+                    <div class="ml-4">
+                        <h1 class="text-xl font-bold text-gray-900">User Management</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="admin-dashboard.html" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                <!-- Admin Access Section: Hide/Unhide Faculty Details -->
+                <section class="max-w-2xl mx-auto mt-8 mb-8 bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-bold text-purple-700 mb-4 flex items-center gap-2">
+                        <i class="fas fa-user-shield"></i> Faculty Details Access Control
+                    </h2>
+                    <div class="flex items-center gap-4">
+                        <label class="font-medium text-gray-700">Show Salary & Sensitive Details:</label>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggleFacultyDetails" class="form-checkbox h-5 w-5 text-purple-600" />
+                            <span class="ml-2 text-gray-700">Visible to All</span>
+                        </label>
+                        <span id="facultyDetailsStatus" class="ml-4 text-sm text-gray-500"></span>
+                    </div>
+                </section>
+        <!-- Enhanced Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-100 rounded-lg">
+                        <i class="fas fa-users text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Users</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalUsers">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-100 rounded-lg">
+                        <i class="fas fa-user-tie text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Faculty</p>
+                        <p class="text-2xl font-bold text-gray-900" id="facultyCount">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-yellow-100 rounded-lg">
+                        <i class="fas fa-user-graduate text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">HODs</p>
+                        <p class="text-2xl font-bold text-gray-900" id="hodCount">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-purple-100 rounded-lg">
+                        <i class="fas fa-crown text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Admins</p>
+                        <p class="text-2xl font-bold text-gray-900" id="adminCount">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-indigo-100 rounded-lg">
+                        <i class="fas fa-check-circle text-indigo-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Users</p>
+                        <p class="text-2xl font-bold text-gray-900" id="activeCount">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow border">
+                <div class="flex items-center">
+                    <div class="p-3 bg-red-100 rounded-lg">
+                        <i class="fas fa-user-slash text-red-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Inactive Users</p>
+                        <p class="text-2xl font-bold text-gray-900" id="inactiveCount">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Filters and Search -->
+        <div class="bg-white p-6 rounded-lg shadow border mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search Users</label>
+                    <input type="text" id="searchInput" placeholder="Search by name, email, or ID..." 
+                           class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Role</label>
+                    <select id="roleFilter" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All Roles</option>
+                        <option value="faculty">Faculty</option>
+                        <option value="hod">HOD</option>
+                        <option value="principal">Principal</option>
+                        <option value="iqac">IQAC</option>
+                        <option value="management">Management</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                    <select id="deptFilter" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All Departments</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select id="statusFilter" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="applyFilters()" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        <i class="fas fa-filter mr-2"></i>Apply Filters
+                    </button>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <div class="flex justify-between items-center">
+                    <div class="text-sm text-gray-600">
+                        <span id="filterResultCount">0</span> users found
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="clearFilters()" class="text-gray-500 hover:text-gray-700 text-sm">
+                            <i class="fas fa-times mr-1"></i>Clear Filters
+                        </button>
+                        <button onclick="bulkActivate()" class="text-green-600 hover:text-green-800 text-sm">
+                            <i class="fas fa-check-circle mr-1"></i>Bulk Activate
+                        </button>
+                        <button onclick="bulkDeactivate()" class="text-red-600 hover:text-red-800 text-sm">
+                            <i class="fas fa-times-circle mr-1"></i>Bulk Deactivate
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="bg-white rounded-lg shadow border">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-gray-900">All Users</h2>
+                    <div class="flex space-x-2">
+                        <button onclick="showAddFacultyModal()" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700">
+                            <i class="fas fa-user-plus mr-2"></i>Add Faculty
+                        </button>
+                        <button onclick="exportUsers()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
+                            <i class="fas fa-download mr-2"></i>Export
+                        </button>
+                        <button onclick="refreshUsers()" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortUsers('name')">
+                                User <i class="fas fa-sort text-xs ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortUsers('role')">
+                                Role <i class="fas fa-sort text-xs ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortUsers('department')">
+                                Department <i class="fas fa-sort text-xs ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Contact
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortUsers('status')">
+                                Status <i class="fas fa-sort text-xs ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                                <i class="fas fa-spinner fa-spin mr-2"></i>Loading users...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="bg-gray-50 px-6 py-3 flex items-center justify-between border-t">
+                <div class="text-sm text-gray-700">
+                    Showing <span id="showingFrom">0</span> to <span id="showingTo">0</span> of <span id="totalCount">0</span> results
+                </div>
+                <div class="flex space-x-2">
+                    <button id="prevBtn" onclick="previousPage()" class="px-3 py-2 border rounded-md hover:bg-gray-100 disabled:opacity-50" disabled>
+                        Previous
+                    </button>
+                    <span id="pageInfo" class="px-3 py-2">Page 1</span>
+                    <button id="nextBtn" onclick="nextPage()" class="px-3 py-2 border rounded-md hover:bg-gray-100 disabled:opacity-50" disabled>
+                        Next
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Detail Modal -->
+    <div id="userModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">User Details</h3>
+                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div id="userModalContent">
+                        <!-- User details will be populated here -->
+                    </div>
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button onclick="closeModal()" class="px-4 py-2 border rounded-md hover:bg-gray-50">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Faculty Modal -->
+    <div id="addFacultyModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Add New Faculty</h3>
+                        <button onclick="closeAddFacultyModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <form id="addFacultyForm" onsubmit="addFaculty(event)">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Employee ID *</label>
+                                <input type="text" name="EmployeeID" required 
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                                <input type="text" name="Name" required 
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Username *</label>
+                                <input type="text" name="Username" required 
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                                <input type="email" name="email" required 
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                                <input type="password" name="password" required 
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Department *</label>
+                                <select name="department" required 
+                                        class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                    <option value="" disabled selected>Select Department</option>
+                                                    <option value="AERO">AERO</option>
+                                                    <option value="AIDS">AIDS</option>
+                                                    <option value="AIML">AIML</option>
+                                                    <option value="CHEM">CHEM</option>
+                                                    <option value="CIVIL">CIVIL</option>
+                                                    <option value="CSBS">CSBS</option>
+                                                    <option value="CSE">CSE</option>
+                                                    <option value="ECE">ECE</option>
+                                                    <option value="EEE">EEE</option>
+                                                    <option value="IT">IT</option>
+                                                    <option value="MBA">MBA</option>
+                                                    <option value="MCA">MCA</option>
+                                                    <option value="MCO">MCO</option>
+                                                    <option value="MECH">MECH</option>
+                                                    <option value="S&H V1">S&H V1</option>
+                                                    <option value="S&H V2">S&H V2</option>
+                                                    <option value="S&H V3">S&H V3</option>
+                                                    <option value="S&H V4">S&H V4</option>
+                                                    <option value="S&H V5">S&H V5</option>
+                                                    <option value="S&H V6">S&H V6</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Designation *</label>
+                                <select name="Designation" required 
+                                        class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select Designation</option>
+                                    <option value="Professor">Professor</option>
+                                    <option value="Associate Professor">Associate Professor</option>
+                                    <option value="Assistant Professor">Assistant Professor</option>
+                                    <option value="Lecturer">Lecturer</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Qualification</label>
+                                <input type="text" name="Qualification" 
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Experience (Years)</label>
+                                <input type="number" name="Experience" min="0"
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Salary</label>
+                                <input type="number" name="Salary" min="0"
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Upload Image URL</label>
+                                <input type="url" name="Upload Image" 
+                                       placeholder="https://example.com/image.jpg"
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <button type="button" onclick="closeAddFacultyModal()" 
+                                    class="px-4 py-2 border rounded-md hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                <i class="fas fa-save mr-2"></i>Add Faculty
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+                // Admin toggle for faculty details visibility
+                document.addEventListener('DOMContentLoaded', function() {
+                    const toggleFacultyDetails = document.getElementById('toggleFacultyDetails');
+                    const facultyDetailsStatus = document.getElementById('facultyDetailsStatus');
+                    function loadFacultyDetailsSetting() {
+                        const val = localStorage.getItem('showFacultySensitiveDetails');
+                        toggleFacultyDetails.checked = val === 'true';
+                        facultyDetailsStatus.textContent = toggleFacultyDetails.checked ? 'Sensitive details are visible on all faculty pages.' : 'Sensitive details are hidden on all faculty pages.';
+                    }
+                    if (toggleFacultyDetails) {
+                        toggleFacultyDetails.addEventListener('change', function() {
+                            localStorage.setItem('showFacultySensitiveDetails', toggleFacultyDetails.checked ? 'true' : 'false');
+                            facultyDetailsStatus.textContent = toggleFacultyDetails.checked ? 'Sensitive details are visible on all faculty pages.' : 'Sensitive details are hidden on all faculty pages.';
+                        });
+                        loadFacultyDetailsSetting();
+                    }
+                });
+        // Supabase configuration
+        const supabaseClient = window.supabase.createClient(
+            "https://cbhodgwaazmjszkujrti.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+        );
+
+        let currentSort = { field: null, direction: 'asc' };
+        let allUsers = [];
+        let filteredUsers = [];
+        let currentPage = 1;
+        const pageSize = 10;
+
+        // Sort users function
+        function sortUsers(field) {
+            // Toggle direction if same field, otherwise start with ascending
+            if (currentSort.field === field) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.field = field;
+                currentSort.direction = 'asc';
+            }
+
+            filteredUsers.sort((a, b) => {
+                let aVal, bVal;
+                
+                switch (field) {
+                    case 'name':
+                        aVal = (a.displayName || '').toLowerCase();
+                        bVal = (b.displayName || '').toLowerCase();
+                        break;
+                    case 'role':
+                        aVal = a.role.toLowerCase();
+                        bVal = b.role.toLowerCase();
+                        break;
+                    case 'department':
+                        aVal = (a.displayDepartment || '').toLowerCase();
+                        bVal = (b.displayDepartment || '').toLowerCase();
+                        break;
+                    case 'status':
+                        aVal = (a.Status || 'Active').toLowerCase();
+                        bVal = (b.Status || 'Active').toLowerCase();
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
+                if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            displayUsers();
+            showNotification(`Sorted by ${field} (${currentSort.direction})`, 'success');
+        }
+
+        // Load all users (adapted for your database structure)
+        async function loadUsers() {
+            try {
+                // Load faculty using your actual column structure
+                const { data: faculty, error: facultyError } = await supabaseClient
+                    .from('Faculty')
+                    .select('department, "Name", email, "Username", "Designation", "EmployeeID"');
+
+                // Load HODs using your actual column structure
+                const { data: hods, error: hodError } = await supabaseClient
+                    .from('HOD')
+                    .select('department, "Name", email, "Username", "Designation"');
+
+                // Load Principals using your actual column structure
+                const { data: principals, error: principalError } = await supabaseClient
+                    .from('Principal')
+                    .select('"Name", email, "Username"');
+
+                // Load IQAC users
+                const { data: iqac, error: iqacError } = await supabaseClient
+                    .from('IQAC')
+                    .select('*');
+
+                // Load Management users
+                const { data: management, error: managementError } = await supabaseClient
+                    .from('Management')
+                    .select('*');
+
+                // Load Admin users
+                const { data: admin, error: adminError } = await supabaseClient
+                    .from('Admin')
+                    .select('*');
+
+                if (facultyError) console.log('Faculty error:', facultyError);
+                if (hodError) console.log('HOD error:', hodError);
+                if (principalError) console.log('Principal error:', principalError);
+
+                // Combine all users with proper column access from schema
+                allUsers = [
+                    ...(faculty || []).map(u => ({
+                        ...u,
+                        role: 'Faculty',
+                        displayName: u["Name"] || 'Unknown',
+                        displayEmail: u.email || 'No email',
+                        displayDepartment: u.department || 'Not specified',
+                        displayDesignation: u["Designation"] || 'Faculty',
+                        displayEmployeeID: u["EmployeeID"] || 'Not provided',
+                        displayStatus: u.Status || 'Active'
+                    })),
+                    ...(hods || []).map(u => ({
+                        ...u,
+                        role: 'HOD',
+                        displayName: u["Name"] || 'Unknown',
+                        displayEmail: u.email || 'No email',
+                        displayDepartment: u.department || 'Not specified',
+                        displayDesignation: u["Designation"] || 'HOD',
+                        displayEmployeeID: u["EmployeeID"] || 'Not provided',
+                        displayStatus: u.Status || 'Active'
+                    })),
+                    ...(principals || []).map(u => ({
+                        ...u,
+                        role: 'Principal',
+                        displayName: u["Name"] || 'Unknown',
+                        displayEmail: u.email || 'No email',
+                        displayDepartment: 'Administration',
+                        displayDesignation: 'Principal',
+                        displayEmployeeID: u["EmployeeID"] || 'Not provided',
+                        displayStatus: u.Status || 'Active'
+                    })),
+                    ...(iqac || []).map(u => ({
+                        ...u,
+                        role: 'IQAC',
+                        Name: u.Name || u.name || 'Unknown',
+                        email: u.email || u.Email || 'No email',
+                        Department: u.department || u.Department || 'IQAC',
+                        Mobile: u.Mobile || u.mobile || u.phone || 'Not provided',
+                        Status: u.Status || u.status || 'Active'
+                    })),
+                    ...(management || []).map(u => ({
+                        ...u,
+                        role: 'Management',
+                        Name: u.Name || u.name || 'Unknown',
+                        email: u.email || u.Email || 'No email',
+                        Department: u.department || u.Department || 'Management',
+                        Mobile: u.Mobile || u.mobile || u.phone || 'Not provided',
+                        Status: u.Status || u.status || 'Active'
+                    })),
+                    ...(admin || []).map(u => ({
+                        ...u,
+                        role: 'Admin',
+                        Name: u.Name || u.name || 'Administrator',
+                        email: u.email || u.Email || 'No email',
+                        Department: u.department || u.Department || 'Administration',
+                        Mobile: u.Mobile || u.mobile || u.phone || 'Not provided',
+                        Status: u.Status || u.status || 'Active'
+                    }))
+                ];
+
+                // Update stats with enhanced counters
+                const activeUsers = allUsers.filter(u => (u.Status || 'Active') === 'Active').length;
+                const inactiveUsers = allUsers.length - activeUsers;
+                const admins = (admin?.length || 0) + (management?.length || 0) + (iqac?.length || 0) + (principals?.length || 0);
+
+                document.getElementById('totalUsers').textContent = allUsers.length;
+                document.getElementById('facultyCount').textContent = faculty?.length || 0;
+                document.getElementById('hodCount').textContent = hods?.length || 0;
+                document.getElementById('adminCount').textContent = admins;
+                document.getElementById('activeCount').textContent = activeUsers;
+                document.getElementById('inactiveCount').textContent = inactiveUsers;
+
+                // Load departments for filter
+                loadDepartments();
+
+                // Display users
+                filteredUsers = [...allUsers];
+                document.getElementById('filterResultCount').textContent = filteredUsers.length;
+                displayUsers();
+
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showError('Failed to load users');
+            }
+        }
+
+        // Load departments for filter
+        function loadDepartments() {
+            const departments = [...new Set(allUsers.map(u => u.Department).filter(d => d))];
+            const deptFilter = document.getElementById('deptFilter');
+            
+            // Clear existing options except "All Departments"
+            deptFilter.innerHTML = '<option value="all">All Departments</option>';
+            
+            departments.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept;
+                option.textContent = dept;
+                deptFilter.appendChild(option);
+            });
+        }
+
+        // Display users in table
+        function displayUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, filteredUsers.length);
+            const pageUsers = filteredUsers.slice(startIndex, endIndex);
+
+            if (pageUsers.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                            No users found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const usersHtml = pageUsers.map(user => {
+                const statusClass = user.Status === 'Active' ? 'text-green-800 bg-green-100' : 'text-red-800 bg-red-100';
+                
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="h-10 w-10 bg-gray-300 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user text-gray-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">${user.displayName || 'N/A'}</div>
+                                    <div class="text-sm text-gray-500">${user.displayEmail || 'No email'}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                ${user.role}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${user.displayDepartment || 'N/A'}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div>${user.phone || user.Mobile || user.mobile || 'N/A'}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">
+                                ${user.Status || 'Unknown'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="viewUserDetails('${user.email || user.id}')" class="text-blue-600 hover:text-blue-900 mr-3">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button onclick="editUser('${user.email || user.id}')" class="text-green-600 hover:text-green-900 mr-3">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            ${user.role === 'Faculty' ? `
+                            <button onclick="deleteFaculty('${user.email}', '${user.displayName}')" class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                            ` : ''}
+                            <button onclick="toggleUserStatus('${user.email || user.id}', '${user.Status || 'Active'}', '${user.displayName}')" 
+                                    class="text-yellow-600 hover:text-yellow-900 ml-2">
+                                <i class="fas fa-toggle-${(user.Status || 'Active') === 'Active' ? 'on' : 'off'}"></i> 
+                                ${(user.Status || 'Active') === 'Active' ? 'Deactivate' : 'Activate'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            tbody.innerHTML = usersHtml;
+            updatePagination();
+        }
+
+        // Update pagination
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredUsers.length / pageSize);
+            const startIndex = (currentPage - 1) * pageSize + 1;
+            const endIndex = Math.min(currentPage * pageSize, filteredUsers.length);
+
+            document.getElementById('showingFrom').textContent = filteredUsers.length > 0 ? startIndex : 0;
+            document.getElementById('showingTo').textContent = endIndex;
+            document.getElementById('totalCount').textContent = filteredUsers.length;
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+
+            document.getElementById('prevBtn').disabled = currentPage === 1;
+            document.getElementById('nextBtn').disabled = currentPage === totalPages || totalPages === 0;
+        }
+
+        // Enhanced apply filters with status filtering
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const roleFilter = document.getElementById('roleFilter').value;
+            const deptFilter = document.getElementById('deptFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            filteredUsers = allUsers.filter(user => {
+                const matchesSearch = !searchTerm || 
+                    (user.displayName && user.displayName.toLowerCase().includes(searchTerm)) ||
+                    (user.email && user.email.toLowerCase().includes(searchTerm)) ||
+                    (user.displayEmployeeID && user.displayEmployeeID.toLowerCase().includes(searchTerm)) ||
+                    (user.Username && user.Username.toLowerCase().includes(searchTerm));
+                
+                const matchesRole = roleFilter === 'all' || 
+                    user.role.toLowerCase() === roleFilter.toLowerCase();
+                
+                const matchesDept = deptFilter === 'all' || 
+                    user.displayDepartment === deptFilter;
+                
+                const matchesStatus = statusFilter === 'all' || 
+                    (statusFilter === 'active' && (user.Status || 'Active') === 'Active') ||
+                    (statusFilter === 'inactive' && (user.Status || 'Active') !== 'Active');
+
+                return matchesSearch && matchesRole && matchesDept && matchesStatus;
+            });
+
+            document.getElementById('filterResultCount').textContent = filteredUsers.length;
+            currentPage = 1;
+            displayUsers();
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('roleFilter').value = 'all';
+            document.getElementById('deptFilter').value = 'all';
+            document.getElementById('statusFilter').value = 'all';
+            
+            filteredUsers = [...allUsers];
+            document.getElementById('filterResultCount').textContent = filteredUsers.length;
+            currentPage = 1;
+            displayUsers();
+            showNotification('Filters cleared successfully!', 'success');
+        }
+
+        // Bulk activate users (only works for filtered/selected users)
+        function bulkActivate() {
+            const inactiveUsers = filteredUsers.filter(u => (u.Status || 'Active') !== 'Active');
+            if (inactiveUsers.length === 0) {
+                showNotification('No inactive users found in current filter.', 'error');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to activate ${inactiveUsers.length} inactive users?`)) {
+                // This is a simplified version - you'd want to implement proper bulk update
+                showNotification(`Bulk activation feature will be implemented soon (${inactiveUsers.length} users selected).`, 'success');
+            }
+        }
+
+        // Bulk deactivate users (only works for filtered/selected users)
+        function bulkDeactivate() {
+            const activeUsers = filteredUsers.filter(u => (u.Status || 'Active') === 'Active');
+            if (activeUsers.length === 0) {
+                showNotification('No active users found in current filter.', 'error');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to deactivate ${activeUsers.length} active users?`)) {
+                // This is a simplified version - you'd want to implement proper bulk update
+                showNotification(`Bulk deactivation feature will be implemented soon (${activeUsers.length} users selected).`, 'success');
+            }
+        }
+
+        // Enhanced view user details
+        function viewUserDetails(identifier) {
+            const user = allUsers.find(u => u.email === identifier || u.id === identifier);
+            if (!user) return;
+
+            const modalContent = document.getElementById('userModalContent');
+            // Hide/unhide salary and sensitive details based on admin setting
+            const showSensitive = localStorage.getItem('showFacultySensitiveDetails') === 'true';
+            modalContent.innerHTML = `
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="h-16 w-16 bg-gray-300 rounded-full flex items-center justify-center">
+                            ${user["Upload Image"] ? `<img src="${user["Upload Image"]}" class="h-16 w-16 rounded-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+                            <i class="fas fa-user text-2xl text-gray-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900">${user.displayName || 'Unknown User'}</h4>
+                            <p class="text-sm text-gray-600">${user.role} - ${user.displayDepartment || 'No Department'}</p>
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${(user.Status || 'Active') === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${user.Status || 'Active'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.displayName || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Username</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.Username || user.username || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email Address</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.email || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Employee ID</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.displayEmployeeID || user.EmployeeID || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Role</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.role}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Department</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.displayDepartment || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Designation</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.displayDesignation || user.Designation || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Mobile Number</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.Mobile || user.mobile || user.phone || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Experience</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.Experience || 'N/A'} ${user.Experience ? 'years' : ''}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Qualification</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.Qualification || 'N/A'}</p>
+                    </div>
+                    <div style="display:${showSensitive ? '' : 'none'}">
+                        <label class="block text-sm font-medium text-gray-700">Salary</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.Salary ? '₹' + parseFloat(user.Salary).toLocaleString() : 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Account Status</label>
+                        <p class="mt-1 text-sm text-gray-900">${user.Status || 'Unknown'}</p>
+                    </div>
+                </div>
+                ${user.role === 'Faculty' ? `
+                <div class="mt-6 pt-4 border-t">
+                    <h5 class="text-md font-medium text-gray-900 mb-3">Form Assignments</h5>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        ${['form1', 'form2', 'form3', 'form4', 'form5', 'form6', 'form7', 'form8'].map(form => `
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3 h-3 rounded-full ${(user[form] && user[form].toLowerCase() === 'yes') ? 'bg-green-500' : 'bg-gray-300'}"></span>
+                                <span class="text-sm">${form.toUpperCase()}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                <div class="mt-6 pt-4 border-t">
+                    <div class="flex space-x-3">
+                        <button onclick="editUser('${user.email || user.id}')" 
+                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            <i class="fas fa-edit mr-2"></i>Edit User
+                        </button>
+                        <button onclick="toggleUserStatus('${user.email || user.id}', '${user.Status || 'Active'}', '${user.displayName}')" 
+                                class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700">
+                            <i class="fas fa-toggle-${(user.Status || 'Active') === 'Active' ? 'on' : 'off'} mr-2"></i>
+                            ${(user.Status || 'Active') === 'Active' ? 'Deactivate' : 'Activate'} User
+                        </button>
+                        ${user.role === 'Faculty' ? `
+                        <button onclick="deleteFaculty('${user.email}', '${user.displayName}'); closeModal();" 
+                                class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">
+                            <i class="fas fa-trash mr-2"></i>Delete Faculty
+                        </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('userModal').classList.remove('hidden');
+        }
+
+        // Toggle user status (activate/deactivate)
+        async function toggleUserStatus(identifier, currentStatus, userName) {
+            const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+            const action = newStatus === 'Active' ? 'activate' : 'deactivate';
+            
+            if (!confirm(`Are you sure you want to ${action} "${userName}"?`)) {
+                return;
+            }
+            
+            try {
+                const user = allUsers.find(u => u.email === identifier || u.id === identifier);
+                if (!user) {
+                    throw new Error('User not found');
+                }
+                
+                let updateQuery;
+                const updateData = { Status: newStatus };
+                
+                // Determine which table to update based on user role
+                switch (user.role.toLowerCase()) {
+                    case 'faculty':
+                        updateQuery = supabaseClient.from('Faculty').update(updateData).eq('email', identifier);
+                        break;
+                    case 'hod':
+                        updateQuery = supabaseClient.from('HOD').update(updateData).eq('email', identifier);
+                        break;
+                    case 'principal':
+                        updateQuery = supabaseClient.from('Principal').update(updateData).eq('email', identifier);
+                        break;
+                    case 'iqac':
+                        updateQuery = supabaseClient.from('IQAC').update(updateData).eq('email', identifier);
+                        break;
+                    case 'management':
+                        updateQuery = supabaseClient.from('Management').update(updateData).eq('email', identifier);
+                        break;
+                    case 'admin':
+                        updateQuery = supabaseClient.from('Admin').update(updateData).eq('email', identifier);
+                        break;
+                    default:
+                        throw new Error('Unknown user role: ' + user.role);
+                }
+                
+                const { error } = await updateQuery;
+                
+                if (error) {
+                    throw error;
+                }
+                
+                showNotification(`User "${userName}" has been ${action}d successfully!`, 'success');
+                refreshUsers(); // Reload the users list
+                closeModal(); // Close any open modal
+                
+            } catch (error) {
+                console.error('Error toggling user status:', error);
+                showNotification('Failed to update user status: ' + (error.message || 'Unknown error'), 'error');
+            }
+        }
+
+        // Edit user function (placeholder for now)
+        function editUser(identifier) {
+            const user = allUsers.find(u => u.email === identifier || u.id === identifier);
+            if (!user) return;
+            
+            // For now, just show an alert. You can implement a full edit modal later
+            alert(`Edit functionality for ${user.displayName} will be implemented soon.\n\nUser Role: ${user.role}\nDepartment: ${user.displayDepartment}`);
+        }
+
+        // Show notification function
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
+            notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'check-circle'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('userModal').classList.add('hidden');
+        }
+
+        // Show Add Faculty Modal
+        function showAddFacultyModal() {
+            document.getElementById('addFacultyModal').classList.remove('hidden');
+        }
+
+        // Close Add Faculty Modal
+        function closeAddFacultyModal() {
+            document.getElementById('addFacultyModal').classList.add('hidden');
+            document.getElementById('addFacultyForm').reset();
+        }
+
+        // Add Faculty Function
+        async function addFaculty(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            const facultyData = {};
+            
+            // Convert FormData to object with exact column names matching your schema
+            for (let [key, value] of formData) {
+                if (value.trim() !== '') { // Only add non-empty values
+                    facultyData[key] = value;
+                }
+            }
+            
+            console.log('Faculty data to insert:', facultyData);
+            
+            try {
+                const submitButton = form.querySelector('button[type="submit"]');
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding...';
+                
+                const { data, error } = await supabaseClient
+                    .from('Faculty')
+                    .insert([facultyData]);
+                
+                if (error) {
+                    throw error;
+                }
+                
+                alert('Faculty added successfully!');
+                closeAddFacultyModal();
+                refreshUsers(); // Reload the users list
+                
+            } catch (error) {
+                console.error('Error adding faculty:', error);
+                alert('Failed to add faculty: ' + (error.message || 'Unknown error'));
+            } finally {
+                const submitButton = form.querySelector('button[type="submit"]');
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-save mr-2"></i>Add Faculty';
+            }
+        }
+
+        // Delete Faculty Function
+        async function deleteFaculty(email, name) {
+            if (!confirm(`Are you sure you want to delete faculty member "${name}"?\n\nThis action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                // First, get the complete faculty record to store in deleted table
+                const { data: facultyData, error: fetchError } = await supabaseClient
+                    .from('Faculty')
+                    .select('*')
+                    .eq('email', email)
+                    .single();
+                
+                if (fetchError) {
+                    throw new Error('Failed to fetch faculty data: ' + fetchError.message);
+                }
+                
+                if (!facultyData) {
+                    throw new Error('Faculty record not found');
+                }
+                
+                // Store in Deleted_Faculty table for audit trail
+                const deletedRecord = {
+                    original_faculty_id: facultyData.id,
+                    department: facultyData.department,
+                    email: facultyData.email,
+                    "Name": facultyData["Name"],
+                    "Username": facultyData["Username"],
+                    password: facultyData.password,
+                    "Upload Image": facultyData["Upload Image"],
+                    "Designation": facultyData["Designation"],
+                    "EmployeeID": facultyData["EmployeeID"],
+                    "Salary": facultyData["Salary"],
+                    "Experience": facultyData["Experience"],
+                    "Qualification": facultyData["Qualification"],
+                    deleted_by: 'admin', // You can get this from session or login state
+                    deletion_reason: 'Manual deletion from admin panel'
+                };
+                
+                const { error: backupError } = await supabaseClient
+                    .from('deleted_faculty_backup')
+                    .insert([deletedRecord]);
+                
+                if (backupError) {
+                    throw new Error('Failed to backup faculty data: ' + backupError.message);
+                }
+                
+                // Now delete from main Faculty table
+                const { error: deleteError } = await supabaseClient
+                    .from('Faculty')
+                    .delete()
+                    .eq('email', email);
+                
+                if (deleteError) {
+                    throw new Error('Failed to delete faculty: ' + deleteError.message);
+                }
+                
+                alert(`Faculty "${name}" has been deleted successfully.\n\nRecord has been backed up for audit purposes.`);
+                refreshUsers(); // Reload the users list
+                
+            } catch (error) {
+                console.error('Error deleting faculty:', error);
+                alert('Failed to delete faculty: ' + (error.message || 'Unknown error'));
+            }
+        }
+
+        // Pagination functions
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                displayUsers();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredUsers.length / pageSize);
+            if (currentPage < totalPages) {
+                currentPage++;
+                displayUsers();
+            }
+        }
+
+        // Enhanced export users with detailed information
+        function exportUsers() {
+            const csvContent = "data:text/csv;charset=utf-8," + 
+                "Name,Username,Email,Role,Department,Designation,Employee ID,Mobile,Experience,Qualification,Salary,Status,Last Updated\n" +
+                filteredUsers.map(user => {
+                    const salary = user.Salary ? parseFloat(user.Salary).toLocaleString() : '';
+                    const experience = user.Experience ? user.Experience + ' years' : '';
+                    return `"${user.displayName || ''}","${user.Username || user.username || ''}","${user.displayEmail || ''}","${user.role}","${user.displayDepartment || ''}","${user.displayDesignation || ''}","${user.displayEmployeeID || ''}","${user.Mobile || user.mobile || user.phone || ''}","${experience}","${user.Qualification || ''}","${salary}","${user.displayStatus || ''}","${new Date().toLocaleString()}"`;
+                }).join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `users_detailed_export_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification(`Exported ${filteredUsers.length} users to CSV successfully!`, 'success');
+        }
+
+        // Refresh users
+        function refreshUsers() {
+            loadUsers();
+        }
+
+        // Show error
+        function showError(message) {
+            document.getElementById('usersTableBody').innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-red-500">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>${message}
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(applyFilters, 300);
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadUsers);
+
+        // Close modal when clicking outside
+        document.getElementById('userModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Close Add Faculty modal when clicking outside
+        document.getElementById('addFacultyModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAddFacultyModal();
+            }
+        });
+    </script>
+
+        <!-- Footer -->
+        <footer class="text-center py-4 mt-8">
+    <p class="text-sm">
+      &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline">PMC TECH</a><br>
+      <p class="text-xs opacity-80 flex items-center justify-center gap-2">
+                        Powered by 
+                        <a href="https://zeonytechnologies.com" target="_blank" rel="noopener noreferrer" class="inline-block hover:opacity-100 transition-all duration-300 hover:scale-105">
+                            <img src="../static/img/zeony logo.png" alt="Zeony Technologies" class="h-12 w-22 py-2 object-contain"/>
+                        </a><p class="text-xs opacity-80">A Student driven Software!</p>
+    </p>
+  </footer>
+</body>
+</html>
