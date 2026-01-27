@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HOD Dashboard - S&H Faculty Core Scope Compliance</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- html2pdf for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+  <style>
+    .star-rating {
+      font-size: 18px;
+      color: #FFD700;
+      white-space: nowrap;
+    }
+    .star-rating .shining {
+      animation: shine 1.5s infinite;
+      font-size: 20px;
+      display: inline-block;
+    }
+    @keyframes shine {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.2); }
+    }
+    .rating-excellent { color: #10b981; font-weight: 600; }
+    .rating-good { color: #3b82f6; font-weight: 600; }
+    .rating-average { color: #f59e0b; font-weight: 600; }
+    .rating-poor { color: #ef4444; font-weight: 600; }
+  </style>
+</head>
+<body class="bg-pmcBg min-h-screen">
+  <header class="bg-purple-700 text-white w-full">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+      <div class="flex items-center">
+        <a href="hod.html" class="flex items-center">
+          <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 rounded shadow bg-white p-1" />
+        </a>
+        <span class="ml-4 text-xl font-bold">HOD Dashboard - S&H Faculty Core Scope Compliance</span>
+      </div>
+      <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+        </svg>
+      </button>
+    </div>
+  </header>
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <h2 class="text-2xl font-bold text-purple-700 mb-6">Faculty Mandatory Scope - Yearly (S&H)</h2>
+    <div class="mb-6 flex flex-wrap gap-4 items-center">
+      <div>
+        <label class="font-semibold text-gray-800">Department:</label>
+        <span id="deptDisplay" class="ml-2 font-medium text-purple-700"></span>
+      </div>
+      <label for="designationFilter" class="font-medium text-purple-700 mr-2">Filter by Designation:</label>
+      <select id="designationFilter" class="p-2 border rounded">
+        <option value="All">All</option>
+        <option value="AP">Assistant Professor (AP)</option>
+        <option value="ASP">Associate Professor (ASP)</option>
+        <option value="Prof">Professor (Prof)</option>
+      </select>
+      <label for="yearlyMonthFilter" class="font-medium text-purple-700 mr-2">Month:</label>
+      <select id="yearlyMonthFilter" class="p-2 border rounded">
+        <option value="January">January</option>
+        <option value="February">February</option>
+        <option value="March">March</option>
+        <option value="April">April</option>
+        <option value="May">May</option>
+        <option value="June">June</option>
+        <option value="July">July</option>
+        <option value="August">August</option>
+        <option value="September">September</option>
+        <option value="October">October</option>
+        <option value="November">November</option>
+        <option value="December">December</option>
+      </select>
+    </div>
+    <div id="dashboardTableContainer" class="overflow-x-auto"></div>
+
+    <!-- Faculty Core Scope - Monthly Table (S&H) -->
+    <h2 class="text-2xl font-bold text-green-700 mt-12 mb-6">Faculty Core Scope - Monthly (S&H)</h2>
+    <div class="mb-6 flex flex-wrap gap-4 items-center">
+      <label for="coreScopeDesignationFilter" class="font-medium text-green-700 mr-2">Filter by Designation:</label>
+      <select id="coreScopeDesignationFilter" class="p-2 border rounded">
+        <option value="All">All</option>
+        <option value="AP">AP</option>
+        <option value="ASP">ASP</option>
+        <option value="Prof">Prof</option>
+      </select>
+      <label for="coreScopeMonthFilter" class="font-medium text-green-700 mr-2">Month:</label>
+      <select id="coreScopeMonthFilter" class="p-2 border rounded">
+        <option value="January">January</option>
+        <option value="February">February</option>
+        <option value="March">March</option>
+        <option value="April">April</option>
+        <option value="May">May</option>
+        <option value="June">June</option>
+        <option value="July">July</option>
+        <option value="August">August</option>
+        <option value="September">September</option>
+        <option value="October">October</option>
+        <option value="November">November</option>
+        <option value="December">December</option>
+      </select>
+    </div>
+    <div id="coreScopeTableContainer" class="overflow-x-auto"></div>
+
+    <!-- Modal for viewing form details -->
+    <div id="viewFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+        <button onclick="closeViewFormModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <h3 id="viewFormModalTitle" class="text-xl font-bold mb-4 text-blue-700">Form Details</h3>
+        <div id="viewFormModalContent"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/static/javascript/form-modal-mapper.js"></script>
+  <script>
+    // Initialize Supabase client
+    const supabaseClient = window.supabase.createClient(
+      "https://cbhodgwaazmjszkujrti.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+
+    // Get department from query param or localStorage
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+    const departmentParam = getQueryParam('department');
+    const department = departmentParam || localStorage.getItem('department') || '';
+    
+    if (department) {
+      document.getElementById('deptDisplay').textContent = department;
+    }
+
+    let selectedDesignation = 'All';
+    let selectedYearlyMonth = 'January';
+    let selectedCoreScopeDesignation = 'All';
+    let selectedCoreScopeMonth = 'January';
+
+    // Event listeners
+    document.getElementById('designationFilter').addEventListener('change', () => {
+      selectedDesignation = document.getElementById('designationFilter').value;
+      loadDashboardTable();
+    });
+
+    document.getElementById('yearlyMonthFilter').addEventListener('change', () => {
+      selectedYearlyMonth = document.getElementById('yearlyMonthFilter').value;
+      loadDashboardTable();
+    });
+
+    document.getElementById('coreScopeDesignationFilter').addEventListener('change', () => {
+      selectedCoreScopeDesignation = document.getElementById('coreScopeDesignationFilter').value;
+      loadCoreScopeTable();
+    });
+
+    document.getElementById('coreScopeMonthFilter').addEventListener('change', () => {
+      selectedCoreScopeMonth = document.getElementById('coreScopeMonthFilter').value;
+      loadCoreScopeTable();
+    });
+
+    // --- Faculty Mandatory Scope - Yearly Table ---
+    async function loadDashboardTable() {
+      if (!department) {
+        document.getElementById('dashboardTableContainer').innerHTML = '<div class="text-red-500">Department not found. Please login again.</div>';
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from('Faculty')
+        .select('*')
+        .eq('department', department);
+
+      if (error || !data || data.length === 0) {
+        document.getElementById('dashboardTableContainer').innerHTML = '<div class="text-gray-500">No faculty found for this department.</div>';
+        return;
+      }
+
+      renderDashboardTable(data);
+    }
+
+    function renderDashboardTable(facultyList) {
+      // Group by designation
+      const groups = { AP: [], ASP: [], Prof: [] };
+      facultyList.forEach(fac => {
+        const desig = (fac.Designation || '').toUpperCase();
+        if (desig === 'AP' || desig === 'ASSISTANT PROFESSOR') groups.AP.push(fac);
+        else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') groups.ASP.push(fac);
+        else if (desig === 'PROF' || desig === 'PROFESSOR') groups.Prof.push(fac);
+      });
+
+      let html = '';
+
+      // Particulars for S&H faculty (AP=5 items, ASP/Prof=6 items)
+      const particularsMapSH = {
+        AP: [
+          'Present at Conferences.',
+          'Guide student research and final-year projects.',
+          'Attend FDPs / workshop/Seminars',
+          'NPTEL/ MOOC certifications 2/Sem',
+          'Facilitate industry-institute interaction through guest lectures, internships.'
+        ],
+        ASP: [
+          'Publish in peer-reviewed journals',
+          'Apply for research grants',
+          'Guide student research and final-year projects.',
+          'Organize FDPs / workshop/Seminars',
+          'NPTEL/ MOOC certifications',
+          'Facilitate industry-institute interaction through guest lectures, internships.'
+        ],
+        Prof: [
+          'Publish in peer-reviewed journals',
+          'Apply for research grants',
+          'Guide student research and final-year projects.',
+          'Organize FDPs / workshop/Seminars',
+          'NPTEL/ MOOC certifications',
+          'Facilitate MoU'
+        ]
+      };
+
+      (async function renderDashboardAsync() {
+        // Preload yearly form data and verification data
+        const [apRes, aspRes, profRes, verifyRes, rejectRes] = await Promise.all([
+          supabaseClient.from('AP_SH_Yearly').select('*').eq('Department', department).eq('Month', selectedYearlyMonth),
+          supabaseClient.from('ASP_SH_Yearly').select('*').eq('Department', department).eq('Month', selectedYearlyMonth),
+          supabaseClient.from('Prof_SH_Yearly').select('*').eq('Department', department).eq('Month', selectedYearlyMonth),
+          supabaseClient.from('Hod-workdone').select('*'),
+          supabaseClient.from('hod-workdone_reject').select('*')
+        ]);
+        
+        const verifyData = verifyRes.data || [];
+        const rejectData = rejectRes.data || [];
+
+        const formDataMaps = {
+          AP: {},
+          ASP: {},
+          Prof: {}
+        };
+
+        // Build lookup maps
+        [
+          { designation: 'AP', data: apRes.data || [] },
+          { designation: 'ASP', data: aspRes.data || [] },
+          { designation: 'Prof', data: profRes.data || [] }
+        ].forEach(({ designation, data }) => {
+          data.forEach(row => {
+            const nameField = row['Portfolio Member Name'] || row.Name || '';
+            const nameKey = nameField.toString().trim().toLowerCase();
+            if (nameKey) {
+              if (!formDataMaps[designation][nameKey] || row.input_id > (formDataMaps[designation][nameKey].input_id || 0)) {
+                formDataMaps[designation][nameKey] = row;
+              }
+            }
+          });
+        });
+
+        for (const key of ['AP', 'ASP', 'Prof']) {
+          if (selectedDesignation !== 'All' && selectedDesignation !== key) continue;
+          const particularsSH = particularsMapSH[key] || [];
+          const facultyInGroup = groups[key];
+          if (facultyInGroup.length === 0) continue;
+
+          html += `<h3 class="text-lg font-bold text-purple-600 mt-6 mb-2">${key} - Yearly Compliance</h3>`;
+          html += '<div class="overflow-x-auto border rounded-lg shadow-sm mb-6"><table class="min-w-full text-xs bg-white"><thead class="bg-purple-100 sticky top-0"><tr>';
+          html += '<th class="px-3 py-2 border text-left">Department</th>';
+          html += '<th class="px-3 py-2 border text-left">Designation</th>';
+          html += '<th class="px-3 py-2 border text-left">Faculty Name</th>';
+          html += '<th class="px-3 py-2 border text-center">Percentage</th>';
+          html += '<th class="px-3 py-2 border text-center">Verification</th>';
+          html += '<th class="px-3 py-2 border text-center">View</th>';
+
+          particularsSH.forEach((p, idx) => {
+            html += `<th class="px-3 py-2 border text-center" style="min-width:120px;" title="${p}">${idx + 1}. ${p.substring(0, 30)}...</th>`;
+          });
+
+          html += '</tr></thead><tbody>';
+
+          for (const fac of facultyInGroup) {
+            const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+            const nameKey = facultyName.toString().trim().toLowerCase();
+            const row = formDataMaps[key][nameKey];
+
+            let completedCount = 0;
+            const totalCount = particularsSH.length;
+            let statusCells = '';
+
+            for (let i = 1; i <= particularsSH.length; i++) {
+              const statusVal = row ? (row[`Status_${i}`] || '').toString().trim().toLowerCase() : '';
+              const isCompleted = statusVal === 'completed' || statusVal === 'completed and updated';
+              if (isCompleted) completedCount++;
+
+              const bgColor = isCompleted ? 'bg-green-100' : statusVal === 'not applicable' ? 'bg-gray-100' : 'bg-red-100';
+              const textColor = isCompleted ? 'text-green-800' : statusVal === 'not applicable' ? 'text-gray-600' : 'text-red-700';
+              const displayText = statusVal || 'Not Filled';
+
+              statusCells += `<td class="px-2 py-2 border ${bgColor} ${textColor} text-center text-xs">${displayText}</td>`;
+            }
+
+            let percentage = Math.round((completedCount / totalCount) * 100);
+            
+            // Check verification status and update percentage if validated
+            let verificationMark = '<span class="text-red-600 font-bold text-lg" title="Not verified">✗</span>';
+            if (row && row.input_id) {
+              const expectedTableName = key === 'AP' ? 'AP_SH_Yearly' : 
+                                       key === 'ASP' ? 'ASP_SH_Yearly' : 
+                                       'Prof_SH_Yearly';
+              
+              // Check if rejected first
+              let matchingReject = rejectData.find(v => v.input_id === row.input_id);
+              if (!matchingReject) {
+                matchingReject = rejectData.find(v => {
+                  if (v.table_name && v.department === department) {
+                    const tableNameLower = v.table_name.toLowerCase();
+                    const expectedLower = expectedTableName.toLowerCase();
+                    const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
+                    return (tableNameLower === expectedLower || 
+                            (tableNameLower.includes(key.toLowerCase() + '_sh') && tableNameLower.includes('yearly'))) && 
+                           nameMatch;
+                  }
+                  return false;
+                });
+              }
+              
+              if (matchingReject) {
+                verificationMark = '<span class="text-red-600 font-bold text-lg" title="Rejected">✗</span>';
+              } else {
+                // Check if verified - match by input_id first (most reliable)
+                let matchingVerify = verifyData.find(v => {
+                  if (v.input_id === row.input_id) {
+                    if (v.table_name) {
+                      const tableNameLower = v.table_name.toLowerCase();
+                      const expectedLower = expectedTableName.toLowerCase();
+                      return tableNameLower === expectedLower || 
+                             (tableNameLower.includes(key.toLowerCase() + '_sh') && tableNameLower.includes('yearly'));
+                    }
+                    return true;
+                  }
+                  return false;
+                });
+                
+                // If no match by input_id, try matching by table_name and name
+                if (!matchingVerify) {
+                  matchingVerify = verifyData.find(v => {
+                    if (v.table_name && v.department === department) {
+                      const tableNameLower = v.table_name.toLowerCase();
+                      const expectedLower = expectedTableName.toLowerCase();
+                      const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
+                      return (tableNameLower === expectedLower || 
+                              (tableNameLower.includes(key.toLowerCase() + '_sh') && tableNameLower.includes('yearly'))) && 
+                             nameMatch;
+                    }
+                    return false;
+                  });
+                }
+                
+                if (matchingVerify) {
+                  const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
+                  verificationMark = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
+                  
+                  // Update percentage with validation score from Hod-workdone if verified
+                  if (matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
+                    const validationScore = parseFloat(matchingVerify.validation_score);
+                    if (!isNaN(validationScore)) {
+                      percentage = Math.round(validationScore);
+                    }
+                  }
+                }
+              }
+            }
+
+            const percentColor = percentage >= 70 ? 'text-green-600' : percentage >= 40 ? 'text-yellow-600' : 'text-red-600';
+
+            html += `<tr class="hover:bg-purple-50">`;
+            html += `<td class="px-3 py-2 border">${department}</td>`;
+            html += `<td class="px-3 py-2 border">${key}</td>`;
+            html += `<td class="px-3 py-2 border">${facultyName}</td>`;
+            html += `<td class="px-3 py-2 border text-center ${percentColor} font-bold">${percentage}%</td>`;
+            html += `<td class="px-3 py-2 border text-center">${verificationMark}</td>`;
+            if (row) {
+              html += `<button onclick="viewYearlyFacultyForm('${key}', '${facultyName.replace(/'/g, "\\'")}', '${department}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs">View</button>`;
+            } else {
+              html += '<span class="text-gray-400 text-xs">No Data</span>';
+            }
+            html += `</td>`;
+            html += statusCells;
+            html += '</tr>';
+          }
+
+          html += '</tbody></table></div>';
+        }
+
+        document.getElementById('dashboardTableContainer').innerHTML = html || '<div class="text-gray-500">No compliance data found.</div>';
+      })();
+    }
+
+    // --- Faculty Core Scope - Monthly Table (S&H) ---
+    async function loadCoreScopeTable() {
+      if (!department) {
+        document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-red-500">Department not found.</div>';
+        return;
+      }
+
+      // Fetch faculty for department
+      const { data: facultyList, error: facErr } = await supabaseClient
+        .from('Faculty')
+        .select('*')
+        .eq('department', department);
+
+      if (facErr || !facultyList || facultyList.length === 0) {
+        document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500">No faculty found.</div>';
+        return;
+      }
+
+      // Fetch Core_scope_SH data
+      const { data: coreScopeData, error: csErr } = await supabaseClient
+        .from('Core_scope_SH')
+        .select('*')
+        .eq('Month', selectedCoreScopeMonth)
+        .eq('Department', department);
+
+      // Core Scope field labels (13 fields for S&H)
+      const coreScopeLabels = [
+        'Teaching & Curriculum Delivery: Design and deliver lectures',
+        'Teaching & Curriculum Delivery: Develop course materials',
+        'Teaching & Curriculum Delivery: Incorporate innovative teaching methods',
+        'Teaching & Curriculum Delivery: Prepare Product model',
+        'Student Mentorship & Support: Act as academic mentor',
+        'Student Mentorship & Support: Monitor student attendance',
+        'Student Mentorship & Support: Provide remedial support',
+        'Student Mentorship & Support: Maintain the Mentor book',
+        'Student Mentorship & Support: Consolidate innovative course material',
+        'Contribute to accreditation processes',
+        'Serve on academic and administrative committees',
+        'ADMINISTRATIVE DUTIES: MAINTAIN ACADEMIC RECORDS',
+        'Library Utilization'
+      ];
+
+      const coreScopeShortLabels = coreScopeLabels.map((label, idx) => `${idx + 1}`);
+
+      // Filter faculty by designation
+      let filteredFacultyList = facultyList;
+      if (selectedCoreScopeDesignation !== 'All') {
+        filteredFacultyList = facultyList.filter(fac => {
+          const desig = (fac.Designation || '').toUpperCase();
+          if (selectedCoreScopeDesignation === 'AP') return desig === 'AP' || desig === 'ASSISTANT PROFESSOR';
+          if (selectedCoreScopeDesignation === 'ASP') return desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR';
+          if (selectedCoreScopeDesignation === 'Prof') return desig === 'PROF' || desig === 'PROFESSOR';
+          return false;
+        });
+      }
+
+      let html = '';
+
+      if (filteredFacultyList.length === 0) {
+        document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500">No faculty match the selected filters.</div>';
+        return;
+      }
+
+      // Build table
+      html += `<div class="overflow-auto mb-6 border rounded-lg shadow-sm" style="max-height: 600px;">`;
+      html += `<table class="min-w-full text-xs bg-white" style="table-layout: auto;">`;
+      html += `<thead class="bg-green-700 text-white sticky top-0 z-20"><tr>`;
+      html += `<th class="px-3 py-2 sticky left-0 bg-green-700 z-30" style="min-width: 150px;">Department</th>`;
+      html += `<th class="px-3 py-2 bg-green-700" style="min-width: 120px;">Designation</th>`;
+      html += `<th class="px-3 py-2" style="min-width: 180px;">Faculty Name</th>`;
+      html += `<th class="px-3 py-2" style="min-width: 100px;">Percentage</th>`;
+      html += `<th class="px-3 py-2" style="min-width: 120px;">Verification</th>`;
+
+      // Add columns for 13 status fields
+      for (let i = 0; i < 13; i++) {
+        html += `<th class="px-3 py-2 text-center" style="min-width:100px;" title="${coreScopeLabels[i]}">${i + 1}</th>`;
+      }
+
+      html += `</tr></thead><tbody>`;
+
+      // Fetch verification data
+      const [verifyRes, rejectRes] = await Promise.all([
+        supabaseClient.from('Hod-workdone').select('*'),
+        supabaseClient.from('hod-workdone_reject').select('*')
+      ]);
+      const verifyDataMap = verifyRes.data || [];
+      const rejectDataMap = rejectRes.data || [];
+
+      // Process each faculty
+      for (const fac of filteredFacultyList) {
+        const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+        const designation = fac.Designation || 'N/A';
+
+        // Normalize designation for display
+        let displayDesig = designation.toUpperCase();
+        if (displayDesig === 'ASSISTANT PROFESSOR') displayDesig = 'AP';
+        else if (displayDesig === 'ASSOCIATE PROFESSOR') displayDesig = 'ASP';
+        else if (displayDesig === 'PROFESSOR') displayDesig = 'Prof';
+
+        // Find matching Core_scope_SH data
+        const facNamesToTry = [facultyName, fac.Name, fac['Portfolio Member Name'], fac.email]
+          .filter(Boolean)
+          .map(n => n.toString().trim().toLowerCase());
+
+        let matchingRows = [];
+        if (coreScopeData && coreScopeData.length > 0) {
+          matchingRows = coreScopeData.filter(row => {
+            const rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+            return facNamesToTry.includes(rowName);
+          });
+        }
+
+        // Get latest row
+        let row = null;
+        if (matchingRows.length > 0) {
+          matchingRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
+          row = matchingRows[0];
+        }
+
+        // Calculate percentage
+        let completedCount = 0;
+        const totalCount = 13;
+        if (row) {
+          for (let i = 1; i <= 13; i++) {
+            const statusVal = (row[`Status_${i}`] || '').toString().trim().toLowerCase();
+            if (statusVal === 'completed' || statusVal === 'completed and updated') {
+              completedCount++;
+            }
+          }
+        }
+
+        const percentage = Math.round((completedCount / totalCount) * 100);
+
+        // Check verification status
+        let verificationStatus = 'Not Submitted';
+        let verificationClass = 'bg-gray-100 text-gray-700';
+
+        if (row && row.input_id) {
+          // Check if rejected
+          let matchingReject = rejectDataMap.find(v => v.input_id === row.input_id);
+          if (matchingReject) {
+            verificationStatus = 'Rejected';
+            verificationClass = 'bg-red-100 text-red-700';
+          } else {
+            // Check if verified
+            let matchingVerify = verifyDataMap.find(v => v.input_id === row.input_id);
+            if (matchingVerify) {
+              const score = `${matchingVerify.validated_fields || 0}/${matchingVerify.total_fields || 0}`;
+              verificationStatus = `Verified (${score})`;
+              verificationClass = 'bg-green-100 text-green-700';
+            }
+          }
+        }
+
+        // Build row
+        html += `<tr class="hover:bg-green-50">`;
+        html += `<td class="px-3 py-2 border sticky left-0 bg-white font-semibold">${department}</td>`;
+        html += `<td class="px-3 py-2 border bg-green-50 font-semibold">${displayDesig}</td>`;
+        html += `<td class="px-3 py-2 border">${facultyName}</td>`;
+
+        const percentColor = percentage >= 70 ? 'text-green-700' : percentage >= 40 ? 'text-yellow-600' : 'text-red-600';
+        html += `<td class="px-3 py-2 border text-center ${percentColor} font-bold text-base">${percentage}%</td>`;
+        html += `<td class="px-3 py-2 border text-center ${verificationClass} font-semibold text-xs">${verificationStatus}</td>`;
+
+        // Status fields
+        for (let i = 1; i <= 13; i++) {
+          const statusVal = row ? (row[`Status_${i}`] || '').toString().trim().toLowerCase() : '';
+          const isCompleted = statusVal === 'completed' || statusVal === 'completed and updated';
+          const bgColor = isCompleted ? 'bg-green-100' : statusVal === 'not applicable' ? 'bg-gray-100' : 'bg-red-100';
+          const textColor = isCompleted ? 'text-green-800' : statusVal === 'not applicable' ? 'text-gray-600' : 'text-red-700';
+          const displayText = statusVal || 'Not Filled';
+
+          html += `<td class="px-2 py-2 border ${bgColor} ${textColor} text-center text-xs">${displayText}</td>`;
+        }
+
+        html += '</tr>';
+      }
+
+      html += `</tbody></table></div>`;
+      document.getElementById('coreScopeTableContainer').innerHTML = html || '<div class="text-gray-500">No core scope data found.</div>';
+    }
+
+    // View yearly faculty form
+    async function viewYearlyFacultyForm(designation, facultyName, dept) {
+      const modal = document.getElementById('viewFormModal');
+      const modalContent = document.getElementById('viewFormModalContent');
+      const modalTitle = document.getElementById('viewFormModalTitle');
+
+      modal.classList.remove('hidden');
+      modalContent.innerHTML = '<div class="text-center text-gray-500">Loading form data...</div>';
+
+      let tableName = '';
+      if (designation === 'AP') tableName = 'AP_SH_Yearly';
+      else if (designation === 'ASP') tableName = 'ASP_SH_Yearly';
+      else if (designation === 'Prof') tableName = 'Prof_SH_Yearly';
+
+      const { data, error } = await supabaseClient
+        .from(tableName)
+        .select('*')
+        .eq('Portfolio Member Name', facultyName)
+        .eq('Department', dept)
+        .eq('Month', selectedYearlyMonth)
+        .order('input_id', { ascending: false });
+
+      if (error || !data || data.length === 0) {
+        modalContent.innerHTML = '<div class="text-red-500">No form data found.</div>';
+        return;
+      }
+
+      const row = data[0];
+      let html = `<div class="mb-4">
+        <p><strong>Faculty Name:</strong> ${row['Portfolio Member Name'] || 'N/A'}</p>
+        <p><strong>Department:</strong> ${row.Department || 'N/A'}</p>
+        <p><strong>Month:</strong> ${row.Month || 'N/A'}</p>
+        <p><strong>Designation:</strong> ${designation}</p>
+      </div>`;
+
+      // Sections depend on designation (AP=5, ASP/Prof=6)
+      const sectionsMap = {
+        AP: [
+          'Present at Conferences.',
+          'Guide student research and final-year projects.',
+          'Attend FDPs / workshop/Seminars',
+          'NPTEL/ MOOC certifications 2/Sem',
+          'Facilitate industry-institute interaction through guest lectures, internships.'
+        ],
+        ASP: [
+          'Publish in peer-reviewed journals',
+          'Apply for research grants',
+          'Guide student research and final-year projects.',
+          'Organize FDPs / workshop/Seminars',
+          'NPTEL/ MOOC certifications',
+          'Facilitate industry-institute interaction through guest lectures, internships.'
+        ],
+        Prof: [
+          'Publish in peer-reviewed journals',
+          'Apply for research grants',
+          'Guide student research and final-year projects.',
+          'Organize FDPs / workshop/Seminars',
+          'NPTEL/ MOOC certifications',
+          'Facilitate MoU'
+        ]
+      };
+      const sections = sectionsMap[designation] || sectionsMap.AP;
+
+      html += `<div class="space-y-4">`;
+      sections.forEach((section, idx) => {
+        const i = idx + 1;
+        const status = row[`Status_${i}`] || 'Not Filled';
+        const description = row[`Description_${i}`] || 'N/A';
+        const file = row[`Upload The Scanned File_${i}`] || '';
+
+        const statusColor = status.toLowerCase().includes('completed') ? 'text-green-600' : 
+                           status.toLowerCase() === 'not applicable' ? 'text-gray-600' : 'text-red-600';
+
+        html += `<div class="border p-3 rounded">
+          <h4 class="font-bold text-purple-700">${i}. ${section}</h4>
+          <p><strong>Status:</strong> <span class="${statusColor}">${status}</span></p>
+          <p><strong>Description:</strong> ${description}</p>`;
+        
+        if (file) {
+          html += `<p><strong>File:</strong> <a href="${file}" target="_blank" class="text-blue-500 underline">View File</a></p>`;
+        }
+        
+        html += `</div>`;
+      });
+      html += `</div>`;
+
+      modalContent.innerHTML = html;
+      modalTitle.textContent = `${designation} Yearly Form - ${facultyName}`;
+    }
+
+    function closeViewFormModal() {
+      document.getElementById('viewFormModal').classList.add('hidden');
+      document.getElementById('viewFormModalContent').innerHTML = '';
+    }
+
+    // Initialize tables
+    loadDashboardTable();
+    loadCoreScopeTable();
+  </script>
+
+  <footer class="text-center py-4 mt-8">
+    <p class="text-sm">
+      &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline hover:text-purple-700">PMC TECH</a><br>
+      <span class="text-xs opacity-80 flex items-center justify-center gap-2">
+        Powered by 
+        <a href="https://zeonytechnologies.com" target="_blank" rel="noopener noreferrer" class="inline-block hover:opacity-100 transition-all duration-300 hover:scale-105">
+          <img src="../static/img/zeony logo.png" alt="Zeony Technologies" class="h-10 object-contain"/>
+        </a>
+      </span>
+      <span class="text-xs opacity-80">A Student driven Software!</span>
+    </p>
+  </footer>
+</body>
+</html>

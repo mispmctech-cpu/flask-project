@@ -315,10 +315,13 @@
         const department = departmentParam || localStorage.getItem('department') || '';
         // Set department name in heading
         document.getElementById('deptDisplay').textContent = department;
-        // Set HOD Dashboard link
+        // Set HOD Dashboard link - check if S&H department
         const hodDashboardLink = document.getElementById('hodDashboardLink');
         if (hodDashboardLink) {
-          hodDashboardLink.href = `hod-dashboard.html?department=${encodeURIComponent(department)}`;
+          // Check if department is S&H V1 to S&H V6
+          const isSHDepartment = department.match(/^S&H V[1-6]$/i);
+          const dashboardPage = isSHDepartment ? 'hod-dashboard-sh.html' : 'hod-dashboard.html';
+          hodDashboardLink.href = `${dashboardPage}?department=${encodeURIComponent(department)}`;
         }
         // Supabase client
         const supabaseClient = window.supabase.createClient(
