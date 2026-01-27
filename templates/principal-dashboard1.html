@@ -1324,7 +1324,7 @@ function attachExportButtons() {
           }
           
           // Update the percentage cell
-          const percentCell = document.getElementById(`percent-${row.rowId}`);
+          let percentCell = document.getElementById(`percent-${row.rowId}`);
           if (percentCell) {
             // Apply status filter
             if (selectedStatus === 'Completed' && !filled) {
@@ -1336,7 +1336,7 @@ function attachExportButtons() {
               return;
             }
             
-            // Display percentage with color coding
+            // Display percentage with color coding (this will be overwritten if verified)
             if (filled) {
               percentCell.innerHTML = `<span class="font-semibold ${percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600'}">${percentage}%</span>`;
             } else {
@@ -1344,49 +1344,58 @@ function attachExportButtons() {
             }
           }
           
-          // Check verification status in both Hod-workdone and hod-workdone_reject tables
+          // Check verification status AFTER setting initial percentage
+          // This allows the validation score to override the calculated percentage
           const verifyCell = document.getElementById(`verify-${row.rowId}`);
           if (verifyCell && bestRow) {
             // Extract form number from table name (e.g., "form2-monthly" -> "form2")
             const formNumber = row.tableName.match(/form\d+/)?.[0] || row.tableName;
             
-            // Check if rejected first
-            const { data: rejectData } = await supabaseClient
-              .from('hod-workdone_reject')
+            // Check if verified
+            const { data: verifyData } = await supabaseClient
+              .from('Hod-workdone')
               .select('*')
               .eq('department', row.dept)
               .ilike('portfolio_member_name', row.facultyName);
             
-            const matchingReject = rejectData?.find(v => {
-              const tableNameMatch = v.table_name && v.table_name.toLowerCase().includes(formNumber.toLowerCase());
+            // First, try to find exact match by input_id AND table_name
+            let matchingVerify = verifyData?.find(v => {
               const inputIdMatch = v.input_id === bestRow.input_id;
-              return tableNameMatch || inputIdMatch;
+              const tableNameMatch = v.table_name && v.table_name.toLowerCase() === row.tableName.toLowerCase();
+              return inputIdMatch && tableNameMatch;
             });
             
-            if (matchingReject) {
-              const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
-              const reason = matchingReject.Commands || 'No reason provided';
-              verifyCell.innerHTML = `<span class="text-red-600 font-bold text-lg" title="Rejected by HOD on ${rejectDate}\nReason: ${reason}">✗</span>`;
-            } else {
-              // Check if verified
-              const { data: verifyData } = await supabaseClient
-                .from('Hod-workdone')
-                .select('*')
-                .eq('department', row.dept)
-                .ilike('portfolio_member_name', row.facultyName);
-              
-              const matchingVerify = verifyData?.find(v => {
-                const tableNameMatch = v.table_name && v.table_name.toLowerCase().includes(formNumber.toLowerCase());
+            // If no exact match, try partial matching
+            if (!matchingVerify) {
+              matchingVerify = verifyData?.find(v => {
+                // Match by table_name (form6_monthly should match form6)
+                const tableNameMatch = v.table_name && v.table_name.toLowerCase() === row.tableName.toLowerCase();
+                // Also try partial match for the form number
+                const formNumberMatch = v.table_name && v.table_name.toLowerCase().includes(formNumber.toLowerCase());
                 const inputIdMatch = v.input_id === bestRow.input_id;
-                return tableNameMatch || inputIdMatch;
+                return tableNameMatch || formNumberMatch || inputIdMatch;
               });
+            }
+            
+            if (matchingVerify) {
+              const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
+              verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
               
-              if (matchingVerify) {
-                const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
-                verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
-              } else {
-                verifyCell.innerHTML = '<span class="text-orange-500 font-bold text-lg" title="Pending verification">⚠</span>';
+              // Update percentage with validation score from Hod-workdone if verified
+              const currentPercentCell = document.getElementById(`percent-${row.rowId}`);
+              if (currentPercentCell) {
+                // Check if validation_score exists and is not null/undefined
+                const rawScore = matchingVerify.validation_score;
+                if (rawScore != null && rawScore !== '') {
+                  const validationScore = parseFloat(rawScore);
+                  if (!isNaN(validationScore)) {
+                    const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
+                    currentPercentCell.innerHTML = `<span class="font-semibold ${percentageClass}">${Math.round(validationScore)}%</span>`;
+                  }
+                }
               }
+            } else {
+              verifyCell.innerHTML = '<span class="text-red-600 font-bold text-lg" title="Not verified">✗</span>';
             }
           } else if (verifyCell) {
             verifyCell.innerHTML = '<span class="text-gray-400" title="No data submitted">-</span>';
@@ -1631,54 +1640,57 @@ function attachExportButtons() {
         const percentageClass = row ? (percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600') : 'text-red-600';
         
         // Check verification in Hod-workdone table
+        const coreScopeRowId = `corescope-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
+        const coreScopePercentageId = `percentage-${coreScopeRowId}`;
         let verificationMark = '<span class="text-gray-400">-</span>';
         if (row && row.input_id) {
           // We'll check this asynchronously after rendering
-          const rowId = `corescope-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
-          verificationMark = `<span id="verify-${rowId}" class="text-gray-400">...</span>`;
+          verificationMark = `<span id="verify-${coreScopeRowId}" class="text-gray-400">...</span>`;
           
           // Async check
           setTimeout(async () => {
-            // Check if rejected first
-            const { data: rejectData } = await supabaseClient
-              .from('hod-workdone_reject')
+            // Check if verified
+            const { data: verifyData } = await supabaseClient
+              .from('Hod-workdone')
               .select('*')
               .eq('department', dept)
               .ilike('portfolio_member_name', facultyName);
             
-            const verifyCell = document.getElementById(`verify-${rowId}`);
+            const verifyCell = document.getElementById(`verify-${coreScopeRowId}`);
+            const percentageCell = document.getElementById(`${coreScopePercentageId}`);
             if (verifyCell) {
-              const matchingReject = rejectData?.find(v => 
-                (v.table_name && v.table_name.toLowerCase().includes('core')) || 
-                v.input_id === row.input_id
-              );
+              // First, try to find exact match by input_id AND table_name
+              let matchingVerify = verifyData?.find(v => {
+                const inputIdMatch = v.input_id === row.input_id;
+                const tableNameMatch = v.table_name && v.table_name.toLowerCase().includes('core');
+                return inputIdMatch && tableNameMatch;
+              });
               
-              if (matchingReject) {
-                const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
-                const reason = matchingReject.Commands || 'No reason provided';
-                verifyCell.innerHTML = `<span class="text-red-600 font-bold text-lg" title="Rejected by HOD on ${rejectDate}\nReason: ${reason}">✗</span>`;
-                verifyCell.className = 'text-red-600';
-              } else {
-                // Check if verified
-                const { data: verifyData } = await supabaseClient
-                  .from('Hod-workdone')
-                  .select('*')
-                  .eq('department', dept)
-                  .ilike('portfolio_member_name', facultyName);
-                
-                const matchingVerify = verifyData?.find(v => 
+              // If no exact match, try partial matching
+              if (!matchingVerify) {
+                matchingVerify = verifyData?.find(v => 
                   (v.table_name && v.table_name.toLowerCase().includes('core')) || 
                   v.input_id === row.input_id
                 );
+              }
+              
+              if (matchingVerify) {
+                const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
+                verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
+                verifyCell.className = 'text-green-600';
                 
-                if (matchingVerify) {
-                  const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
-                  verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
-                  verifyCell.className = 'text-green-600';
-                } else {
-                  verifyCell.innerHTML = '<span class="text-orange-500 font-bold text-lg" title="Pending verification">⚠</span>';
-                  verifyCell.className = 'text-orange-500';
+                // Update percentage with validation score from Hod-workdone if verified
+                if (percentageCell && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
+                  const validationScore = parseFloat(matchingVerify.validation_score);
+                  if (!isNaN(validationScore)) {
+                    const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
+                    percentageCell.className = `px-3 py-2 border ${percentageClass} font-semibold`;
+                    percentageCell.textContent = `${Math.round(validationScore)}%`;
+                  }
                 }
+              } else {
+                verifyCell.innerHTML = '<span class="text-red-600 font-bold text-lg" title="Not verified">✗</span>';
+                verifyCell.className = 'text-red-600';
               }
             }
           }, 100);
@@ -1688,7 +1700,7 @@ function attachExportButtons() {
         html += `<td class="px-3 py-2 border sticky left-0 bg-white z-10 font-medium">${dept}</td>`;
         html += `<td class="px-3 py-2 border font-medium">${desigDisplay}</td>`;
         html += `<td class="px-3 py-2 border font-medium text-green-700">${facultyName}</td>`;
-        html += `<td class="px-3 py-2 border ${percentageClass} font-semibold">${percentageDisplay}</td>`;
+        html += `<td id="${coreScopePercentageId}" class="px-3 py-2 border ${percentageClass} font-semibold">${percentageDisplay}</td>`;
         html += `<td class="px-3 py-2 border text-center">${verificationMark}</td>`;
         
         // Add status cells for all 15 fields
@@ -1906,49 +1918,53 @@ function attachExportButtons() {
             // Check verification in Hod-workdone table
             const yearlyTableName = key === 'Prof' ? 'Prof(Yearly)' : `${key}(Yearly)`;
             const rowId = `yearly-${key}-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
+            const percentageId = `percentage-${rowId}`;
             let verificationMark = '<span class="text-gray-400">-</span>';
             if (row && row.input_id) {
               verificationMark = `<span id="verify-${rowId}" class="text-gray-400">...</span>`;
               
               // Async verification check
               setTimeout(async () => {
-                // Check if rejected first
-                const { data: rejectData } = await supabaseClient
-                  .from('hod-workdone_reject')
+                // Check if verified
+                const { data: verifyData } = await supabaseClient
+                  .from('Hod-workdone')
                   .select('*')
                   .eq('department', dept)
                   .ilike('portfolio_member_name', facultyName);
                 
                 const verifyCell = document.getElementById(`verify-${rowId}`);
+                const percentageCell = document.getElementById(`${percentageId}`);
                 if (verifyCell) {
-                  const matchingReject = rejectData?.find(v => 
-                    (v.table_name && v.table_name.includes(key) && v.table_name.toLowerCase().includes('yearly')) || 
-                    v.input_id === row.input_id
-                  );
+                  // First, try to find exact match by input_id AND table_name
+                  let matchingVerify = verifyData?.find(v => {
+                    const inputIdMatch = v.input_id === row.input_id;
+                    const tableNameMatch = v.table_name && v.table_name.includes(key) && v.table_name.toLowerCase().includes('yearly');
+                    return inputIdMatch && tableNameMatch;
+                  });
                   
-                  if (matchingReject) {
-                    const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
-                    const reason = matchingReject.Commands || 'No reason provided';
-                    verifyCell.innerHTML = `<span class="text-red-600 font-bold text-lg" title="Rejected by HOD on ${rejectDate}\nReason: ${reason}">✗</span>`;
-                  } else {
-                    // Check if verified
-                    const { data: verifyData } = await supabaseClient
-                      .from('Hod-workdone')
-                      .select('*')
-                      .eq('department', dept)
-                      .ilike('portfolio_member_name', facultyName);
-                    
-                    const matchingVerify = verifyData?.find(v => 
+                  // If no exact match, try partial matching
+                  if (!matchingVerify) {
+                    matchingVerify = verifyData?.find(v => 
                       (v.table_name && v.table_name.includes(key) && v.table_name.toLowerCase().includes('yearly')) || 
                       v.input_id === row.input_id
                     );
+                  }
+                  
+                  if (matchingVerify) {
+                    const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
+                    verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
                     
-                    if (matchingVerify) {
-                      const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
-                      verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
-                    } else {
-                      verifyCell.innerHTML = '<span class="text-orange-500 font-bold text-lg" title="Pending verification">⚠</span>';
+                    // Update percentage with validation score from Hod-workdone if verified
+                    if (percentageCell && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
+                      const validationScore = parseFloat(matchingVerify.validation_score);
+                      if (!isNaN(validationScore)) {
+                        const bgClass = validationScore >= 70 ? 'bg-green-100 text-green-700' : validationScore >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700';
+                        percentageCell.className = `px-2 py-2 border text-center font-bold ${bgClass}`;
+                        percentageCell.textContent = `${Math.round(validationScore)}%`;
+                      }
                     }
+                  } else {
+                    verifyCell.innerHTML = '<span class="text-red-600 font-bold text-lg" title="Not verified">✗</span>';
                   }
                 }
               }, 100);
@@ -1959,8 +1975,8 @@ function attachExportButtons() {
             html += `<td class="px-2 py-2 border font-medium text-purple-700 cursor-pointer underline" onclick="viewYearlyFacultyForm('${key}','${facultyName.replace(/'/g, "\\'")}', '${selectedDepartment.replace(/'/g, "\\'")}')">
                 ${facultyName}
             </td>`;
-            // Percentage column with color coding
-            html += `<td class="px-2 py-2 border text-center font-bold ${percentage >= 70 ? 'bg-green-100 text-green-700' : percentage >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}">${percentage}%</td>`;
+            // Percentage column with color coding and ID for later update
+            html += `<td id="${percentageId}" class="px-2 py-2 border text-center font-bold ${percentage >= 70 ? 'bg-green-100 text-green-700' : percentage >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}">${percentage}%</td>`;
             // Verification column
             html += `<td class="px-2 py-2 border text-center">${verificationMark}</td>`;
             // Display each particular's value in order, matching the header
@@ -2537,6 +2553,8 @@ function attachExportButtons() {
           let deptPortfolio1Percent = '-';
           let deptPortfolio2Percent = '-';
           let deptPortfolioCount = 0;
+          let deptPortfolio1Data = null;
+          let deptPortfolio2Data = null;
           
           for (let i = 0; i < deptPortfolioFormMap.length; i++) {
             const formMapping = deptPortfolioFormMap[i];
@@ -2568,11 +2586,13 @@ function attachExportButtons() {
                 percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
               }
               
-              // Assign percent (either calculated or 0% if not submitted)
+              // Assign percent and store data for validation score updates
               if (deptPortfolioCount === 0) {
                 deptPortfolio1Percent = percent;
+                deptPortfolio1Data = formRow ? { input_id: formRow.input_id, table_name: formMapping.table } : null;
               } else if (deptPortfolioCount === 1) {
                 deptPortfolio2Percent = percent;
+                deptPortfolio2Data = formRow ? { input_id: formRow.input_id, table_name: formMapping.table } : null;
               }
               deptPortfolioCount++;
             }
@@ -2644,7 +2664,9 @@ function attachExportButtons() {
             deptPortfolio1Percent,
             deptPortfolio2Percent,
             instPortfolio1Percent,
-            instPortfolio2Percent
+            instPortfolio2Percent,
+            deptPortfolio1Data,
+            deptPortfolio2Data
           });
         }
         
@@ -2666,6 +2688,8 @@ function attachExportButtons() {
         html += '<th class="px-3 py-2 bg-blue-700">Overall Rating</th>';
         html += '</tr></thead><tbody>';
         
+        // Render rows with unique IDs for async validation score updates
+        let rowIndex = 0;
         for (const row of summaryRows) {
           // Calculate faculty rating
           const rating = calculateFacultyRating(
@@ -2677,25 +2701,156 @@ function attachExportButtons() {
             row.instPortfolio2Percent
           );
           
+          const summaryRowId = `summary-row-${rowIndex}`;
           html += '<tr class="hover:bg-gray-50" data-faculty-name="' + row.facultyName + '" data-dept="' + row.dept + '" data-designation="' + row.designation + '">';
           html += `<td class="px-2 py-2 border sticky left-0 bg-white z-10">${row.dept}</td>`;
           html += `<td class="px-2 py-2 border text-center">${row.designation}</td>`;
           html += `<td class="px-2 py-2 border">${row.facultyName}</td>`;
-          html += `<td class="px-2 py-2 border text-center font-semibold">${row.coreScopePercent}</td>`;
-          html += `<td class="px-2 py-2 border text-center font-semibold">${row.yearlyPercent}</td>`;
-          html += `<td class="px-2 py-2 border text-center font-semibold">${row.deptPortfolio1Percent}</td>`;
-          html += `<td class="px-2 py-2 border text-center font-semibold">${row.deptPortfolio2Percent}</td>`;
-          html += `<td class="px-2 py-2 border text-center font-semibold">${row.instPortfolio1Percent}</td>`;
-          html += `<td class="px-2 py-2 border text-center font-semibold">${row.instPortfolio2Percent}</td>`;
-          html += `<td class="px-2 py-2 border text-center">`;
+          html += `<td id="summary-core-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.coreScopePercent}</td>`;
+          html += `<td id="summary-yearly-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.yearlyPercent}</td>`;
+          html += `<td id="summary-dept1-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.deptPortfolio1Percent}</td>`;
+          html += `<td id="summary-dept2-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.deptPortfolio2Percent}</td>`;
+          html += `<td id="summary-inst1-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.instPortfolio1Percent}</td>`;
+          html += `<td id="summary-inst2-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.instPortfolio2Percent}</td>`;
+          html += `<td id="summary-rating-${summaryRowId}" class="px-2 py-2 border text-center">`;
           html += `<div class="star-rating ${rating.colorClass}">${rating.stars}</div>`;
           html += `<div class="text-xs mt-1 ${rating.colorClass}">${rating.average}%</div>`;
           html += `</td>`;
           html += '</tr>';
+          
+          // Store row data for async validation score updates
+          row.summaryRowId = summaryRowId;
+          row.rowIndex = rowIndex;
+          rowIndex++;
         }
         
         html += '</tbody></table></div>';
         container.innerHTML = html || '<div class="text-gray-500 text-center py-4">No summary data found.</div>';
+        
+        // Async update validation scores from Hod-workdone table
+        for (const row of summaryRows) {
+          setTimeout(async () => {
+            try {
+              const { data: verifyData } = await supabaseClient
+                .from('Hod-workdone')
+                .select('*')
+                .eq('department', row.dept)
+                .ilike('portfolio_member_name', row.facultyName);
+              
+              if (!verifyData || verifyData.length === 0) return;
+              
+              // Update Faculty Core Scope Monthly if verified
+              const coreCell = document.getElementById(`summary-core-${row.summaryRowId}`);
+              if (coreCell && coreScopeData) {
+                const matchingCoreRows = coreScopeData.filter(r => 
+                  (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === row.facultyName.trim().toLowerCase()
+                );
+                if (matchingCoreRows.length > 0) {
+                  matchingCoreRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
+                  const coreScopeRow = matchingCoreRows[0];
+                  
+                  const matchingVerify = verifyData.find(v => 
+                    v.input_id === coreScopeRow.input_id && 
+                    v.table_name && v.table_name.toLowerCase().includes('core')
+                  );
+                  
+                  if (matchingVerify && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
+                    const validationScore = parseFloat(matchingVerify.validation_score);
+                    if (!isNaN(validationScore)) {
+                      const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
+                      coreCell.innerHTML = `<span class="${percentageClass}">${Math.round(validationScore)}%</span>`;
+                      row.coreScopePercent = `${Math.round(validationScore)}%`;
+                    }
+                  }
+                }
+              }
+              
+              // Update Faculty Mandatory Scope Yearly if verified
+              const yearlyCell = document.getElementById(`summary-yearly-${row.summaryRowId}`);
+              if (yearlyCell) {
+                const desigDisplay = row.designation;
+                let yearlyData = desigDisplay === 'AP' ? (await supabaseClient.from('AP(Yearly)').select('*').eq('Month', selectedSummaryMonth).eq('Department', row.dept)).data : 
+                                 desigDisplay === 'ASP' ? (await supabaseClient.from('ASP(Yearly)').select('*').eq('Month', selectedSummaryMonth).eq('Department', row.dept)).data : 
+                                 (await supabaseClient.from('Prof(Yearly)').select('*').eq('Month', selectedSummaryMonth).eq('Department', row.dept)).data;
+                
+                if (yearlyData) {
+                  const yearlyRow = yearlyData.find(r => 
+                    (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === row.facultyName.trim().toLowerCase()
+                  );
+                  
+                  if (yearlyRow) {
+                    const matchingVerify = verifyData.find(v => 
+                      v.input_id === yearlyRow.input_id && 
+                      v.table_name && v.table_name.includes(desigDisplay) && v.table_name.toLowerCase().includes('yearly')
+                    );
+                    
+                    if (matchingVerify && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
+                      const validationScore = parseFloat(matchingVerify.validation_score);
+                      if (!isNaN(validationScore)) {
+                        const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
+                        yearlyCell.innerHTML = `<span class="${percentageClass}">${Math.round(validationScore)}%</span>`;
+                        row.yearlyPercent = `${Math.round(validationScore)}%`;
+                      }
+                    }
+                  }
+                }
+              }
+              
+              // Update Department Portfolio Scope-1 if verified
+              const dept1Cell = document.getElementById(`summary-dept1-${row.summaryRowId}`);
+              if (dept1Cell && row.deptPortfolio1Data) {
+                const matchingVerify = verifyData.find(v => 
+                  v.input_id === row.deptPortfolio1Data.input_id && 
+                  v.table_name && v.table_name.toLowerCase() === row.deptPortfolio1Data.table_name.toLowerCase()
+                );
+                
+                if (matchingVerify && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
+                  const validationScore = parseFloat(matchingVerify.validation_score);
+                  if (!isNaN(validationScore)) {
+                    const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
+                    dept1Cell.innerHTML = `<span class="${percentageClass}">${Math.round(validationScore)}%</span>`;
+                    row.deptPortfolio1Percent = `${Math.round(validationScore)}%`;
+                  }
+                }
+              }
+              
+              // Update Department Portfolio Scope-2 if verified
+              const dept2Cell = document.getElementById(`summary-dept2-${row.summaryRowId}`);
+              if (dept2Cell && row.deptPortfolio2Data) {
+                const matchingVerify = verifyData.find(v => 
+                  v.input_id === row.deptPortfolio2Data.input_id && 
+                  v.table_name && v.table_name.toLowerCase() === row.deptPortfolio2Data.table_name.toLowerCase()
+                );
+                
+                if (matchingVerify && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
+                  const validationScore = parseFloat(matchingVerify.validation_score);
+                  if (!isNaN(validationScore)) {
+                    const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
+                    dept2Cell.innerHTML = `<span class="${percentageClass}">${Math.round(validationScore)}%</span>`;
+                    row.deptPortfolio2Percent = `${Math.round(validationScore)}%`;
+                  }
+                }
+              }
+              
+              // Recalculate overall rating based on updated validation scores
+              const ratingCell = document.getElementById(`summary-rating-${row.summaryRowId}`);
+              if (ratingCell) {
+                const updatedRating = calculateFacultyRating(
+                  row.coreScopePercent,
+                  row.yearlyPercent,
+                  row.deptPortfolio1Percent,
+                  row.deptPortfolio2Percent,
+                  row.instPortfolio1Percent,
+                  row.instPortfolio2Percent
+                );
+                ratingCell.innerHTML = `<div class="star-rating ${updatedRating.colorClass}">${updatedRating.stars}</div><div class="text-xs mt-1 ${updatedRating.colorClass}">${updatedRating.average}%</div>`;
+              }
+              
+            } catch (err) {
+              console.error('Error updating validation scores for summary row:', err);
+            }
+          }, 100);
+        }
         
       } catch (error) {
         console.error('Summary table error:', error);
