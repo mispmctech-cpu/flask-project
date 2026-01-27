@@ -1832,11 +1832,10 @@
             
             if (monthData) {
               let completedCount = 0;
-              // Professor has 9 particulars, others have 8
-              const totalCount = desig === 'Prof' ? 9 : 8;
-              const maxStatus = desig === 'Prof' ? 9 : 8;
+              // Use actual number of particulars defined for this designation and faculty type
+              const totalCount = particulars.length;
               
-              for (let i = 1; i <= maxStatus; i++) {
+              for (let i = 1; i <= totalCount; i++) {
                 const status = monthData[`Status_${i}`];
                 const statusLower = status ? status.toString().trim().toLowerCase() : '';
                 
