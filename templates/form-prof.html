@@ -192,6 +192,9 @@
     <!-- Supabase JS CDN (load before using it) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <script>
+    // Global object to store draft file URLs
+    window.draftFileUrls = {};
+    
     // Autofetch using localStorage
     document.addEventListener('DOMContentLoaded', function() {
         var dept = localStorage.getItem('department') || '';
@@ -290,11 +293,16 @@
                 </select>
             </td>
             <td class="border px-2 py-1">
-                <input type="text" name="Description_${idx}" maxlength="500" class="w-full border rounded px-1 py-1" placeholder="Enter description..." />
+                <input type="text" name="Description_${idx}" maxlength="50
+                0" class="w-full border rounded px-1 py-1" placeholder="Enter description..." />
             </td>
             <td class="border px-2 py-1">
-                <button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
-                <span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">?</span>
+                <button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">
+                    <i class="fas fa-upload mr-1"></i>Upload
+                </button>
+                <span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">
+                    <i class="fas fa-check-circle"></i>
+                </span>
                 <input type="file" name="Upload The Scanned File_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
             </td>
         `;
@@ -318,9 +326,14 @@
             const row = uploadBtn.getAttribute('data-row');
             const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
             
-            uploadBtn.textContent = 'Uploaded';
-            uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
+            uploadBtn.innerHTML = '<i class="fas fa-check mr-1"></i>Uploaded';
+            uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full cursor-default';
             uploadBtn.disabled = true;
+            
+            // Store the uploaded file URL for later use during submission
+            if (row) {
+                window.draftFileUrls[row] = urlData.publicUrl;
+            }
             
             // Show checkmark
             if (checkMark) {
@@ -410,11 +423,14 @@
             }
             
             if (draft[`Upload The Scanned File_${i}`]) {
+                // Store draft file URL for later use during submission
+                window.draftFileUrls[i] = draft[`Upload The Scanned File_${i}`];
+                
                 const uploadBtn = document.querySelector(`button.upload-btn[data-row="${i}"]`);
                 const checkMark = document.querySelector(`.file-check[data-row="${i}"]`);
                 if (uploadBtn) {
-                    uploadBtn.textContent = 'Uploaded';
-                    uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
+                    uploadBtn.innerHTML = '<i class="fas fa-check mr-1"></i>Uploaded';
+                    uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full cursor-default';
                     uploadBtn.disabled = true;
                 }
                 if (checkMark) {
@@ -600,7 +616,8 @@
                     return;
                 }
             } else {
-                dataRow[`Upload The Scanned File_${i}`] = null;
+                // Check if there's a draft file URL for this row
+                dataRow[`Upload The Scanned File_${i}`] = window.draftFileUrls[i] || null;
             }
         }
 
