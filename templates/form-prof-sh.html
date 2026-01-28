@@ -192,6 +192,9 @@
     <!-- Supabase JS CDN (load before using it) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <script>
+    // Global object to store draft file URLs
+    window.draftFileUrls = {};
+    
     // Autofetch using localStorage
     document.addEventListener('DOMContentLoaded', function() {
         var dept = localStorage.getItem('department') || '';
@@ -328,6 +331,11 @@
             uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
             uploadBtn.disabled = true;
             
+            // Store the uploaded file URL for later use during submission
+            if (row) {
+                window.draftFileUrls[row] = urlData.publicUrl;
+            }
+            
             // Show checkmark
             if (checkMark) {
                 checkMark.classList.remove('hidden');
@@ -417,6 +425,9 @@
             }
             
             if (draft[`Upload The Scanned File_${i}`]) {
+                // Store draft file URL for later use during submission
+                window.draftFileUrls[i] = draft[`Upload The Scanned File_${i}`];
+                
                 const uploadBtn = document.querySelector(`button.upload-btn[data-row="${i}"]`);
                 const checkMark = document.querySelector(`.file-check[data-row="${i}"]`);
                 if (uploadBtn) {
@@ -609,7 +620,8 @@
                     return;
                 }
             } else {
-                dataRow[`Upload The Scanned File_${i}`] = null;
+                // Check if there's a draft file URL for this row
+                dataRow[`Upload The Scanned File_${i}`] = window.draftFileUrls[i] || null;
             }
         }
 
