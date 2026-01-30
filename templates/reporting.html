@@ -40,7 +40,7 @@
                 <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 rounded shadow bg-white p-1" />
             </div>
             <nav class="flex gap-6 text-base font-medium items-center">
-                <a href="hod.html" class="hover:underline">← Back to HOD</a>
+               <!-- <a id="backLink" href="hod.html" class="hover:underline">← Back</a> -->
             </nav>
         </div>
     </header>
@@ -133,8 +133,6 @@
                         <table class="w-full border-collapse border-2 border-black text-sm">
                             <thead>
                                 <tr class="bg-gray-100">
-                                    <th class="border border-black px-3 py-2">Total Faculty</th>
-                                    <th class="border border-black px-3 py-2">No of Faculty Present</th>
                                     <th class="border border-black px-3 py-2">Name of the Faculty on OD</th>
                                     <th class="border border-black px-3 py-2">Name of the Faculty on Leave</th>
                                     <th class="border border-black px-3 py-2">Name of the Faculty on Absent</th>
@@ -143,19 +141,13 @@
                             <tbody>
                                 <tr>
                                     <td class="border border-black px-2 py-2">
-                                        <input type="number" name="total_faculty" class="w-full px-2 py-1 border rounded text-center" min="0" />
+                                        <textarea name="faculty_od" rows="3" class="w-full px-2 py-1 border rounded text-sm" placeholder="Enter names..."></textarea>
                                     </td>
                                     <td class="border border-black px-2 py-2">
-                                        <input type="number" name="faculty_present" class="w-full px-2 py-1 border rounded text-center" min="0" />
+                                        <textarea name="faculty_leave" rows="3" class="w-full px-2 py-1 border rounded text-sm" placeholder="Enter names..."></textarea>
                                     </td>
                                     <td class="border border-black px-2 py-2">
-                                        <textarea name="faculty_od" rows="2" class="w-full px-2 py-1 border rounded text-sm" placeholder="Enter names..."></textarea>
-                                    </td>
-                                    <td class="border border-black px-2 py-2">
-                                        <textarea name="faculty_leave" rows="2" class="w-full px-2 py-1 border rounded text-sm" placeholder="Enter names..."></textarea>
-                                    </td>
-                                    <td class="border border-black px-2 py-2">
-                                        <textarea name="faculty_absent" rows="2" class="w-full px-2 py-1 border rounded text-sm" placeholder="Enter names..."></textarea>
+                                        <textarea name="faculty_absent" rows="3" class="w-full px-2 py-1 border rounded text-sm" placeholder="Enter names..."></textarea>
                                     </td>
                                 </tr>
                             </tbody>
@@ -181,9 +173,21 @@
         }
 
         const department = getQueryParam('department') || localStorage.getItem('department') || '';
+        const fromFaculty = getQueryParam('from') === 'faculty';
+        const facultyEmail = getQueryParam('email') || '';
 
-        // Auto-fill department and HOD name
+        // Update back link based on where user came from
         document.addEventListener('DOMContentLoaded', async function() {
+            // Set back link
+            const backLink = document.getElementById('backLink');
+            if (fromFaculty && facultyEmail) {
+                backLink.href = `faculty-profile.html?email=${encodeURIComponent(facultyEmail)}`;
+                backLink.textContent = '← Back to Profile';
+            } else {
+                backLink.href = `hod.html?department=${encodeURIComponent(department)}&as=hod`;
+                backLink.textContent = '← Back to HOD';
+            }
+            
             document.getElementById('departmentName').value = department;
             document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
 
@@ -272,8 +276,6 @@
                 department: department,
                 hod_name: document.getElementById('hodName').value,
                 report_date: document.getElementById('reportDate').value,
-                total_faculty: parseInt(document.querySelector('input[name="total_faculty"]').value) || 0,
-                faculty_present: parseInt(document.querySelector('input[name="faculty_present"]').value) || 0,
                 faculty_od: document.querySelector('textarea[name="faculty_od"]').value,
                 faculty_leave: document.querySelector('textarea[name="faculty_leave"]').value,
                 faculty_absent: document.querySelector('textarea[name="faculty_absent"]').value,
@@ -309,8 +311,6 @@
                         department: reportData.department,
                         hod_name: reportData.hod_name,
                         report_date: reportData.report_date,
-                        total_faculty: reportData.total_faculty,
-                        faculty_present: reportData.faculty_present,
                         faculty_od: reportData.faculty_od,
                         faculty_leave: reportData.faculty_leave,
                         faculty_absent: reportData.faculty_absent,
@@ -320,7 +320,12 @@
                 if (error) throw error;
 
                 alert('Report submitted successfully!');
-                window.location.href = `hod.html?department=${encodeURIComponent(department)}&as=hod`;
+                // Redirect based on where user came from
+                if (fromFaculty && facultyEmail) {
+                    window.location.href = `faculty-profile.html?email=${encodeURIComponent(facultyEmail)}`;
+                } else {
+                    window.location.href = `hod.html?department=${encodeURIComponent(department)}&as=hod`;
+                }
             } catch (err) {
                 alert('Failed to submit report: ' + err.message);
             }

@@ -307,7 +307,7 @@
         </div>
         <!-- View My Reports Link -->
         <div class="mt-6 pt-4 border-t-2 border-gray-200">
-          <a href="#" id="viewMyReportsLink" class="block p-4 bg-gradient-to-r from-pmcPurple to-purple-600 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition shadow-lg">
+          <a href="#" id="viewMyReportsLink" class="block p-4 bg-gradient-to-r from-pmcPurple to-purple-600 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition shadow-lg mb-3">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-white text-pmcPurple rounded-full flex items-center justify-center">
@@ -326,6 +326,105 @@
               </svg>
             </div>
           </a>
+          <!-- Assign Reports to Faculty -->
+          <button onclick="closeReportsModal(); openAssignReportsModal();" class="w-full block p-4 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-700 hover:to-green-600 transition shadow-lg">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-white text-green-600 rounded-full flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg">👥 Assign Reports to Faculty</h3>
+                  <p class="text-sm opacity-90">Assign categories to faculty members</p>
+                </div>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assign Reports to Faculty Modal -->
+    <div id="assignReportsModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden overflow-y-auto">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl m-4 p-6 relative max-h-[90vh] overflow-y-auto">
+        <button type="button" onclick="closeAssignReportsModal()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-2xl font-bold">&times;</button>
+        <h2 class="text-xl font-bold text-green-700 mb-6 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+          </svg>
+          Assign Report Categories to Faculty
+        </h2>
+        
+        <!-- Faculty Selection -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Select Faculty Member</label>
+          <select id="assignFacultySelect" onchange="loadFacultyAssignments()" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            <option value="">-- Select Faculty --</option>
+          </select>
+        </div>
+        
+        <!-- Category Checkboxes -->
+        <div id="categoryAssignments" class="hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-3">Assign Categories</label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label class="flex items-center gap-3 p-3 border-2 border-purple-200 rounded-lg hover:bg-purple-50 cursor-pointer transition">
+              <input type="checkbox" id="assignCat1" value="attendance" class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500">
+              <div class="flex items-center gap-2">
+                <span class="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</span>
+                <span class="font-medium">Attendance</span>
+              </div>
+            </label>
+            <label class="flex items-center gap-3 p-3 border-2 border-blue-200 rounded-lg hover:bg-blue-50 cursor-pointer transition">
+              <input type="checkbox" id="assignCat2" value="academics" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+              <div class="flex items-center gap-2">
+                <span class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</span>
+                <span class="font-medium">Academics</span>
+              </div>
+            </label>
+            <label class="flex items-center gap-3 p-3 border-2 border-green-200 rounded-lg hover:bg-green-50 cursor-pointer transition">
+              <input type="checkbox" id="assignCat3" value="activities" class="w-5 h-5 text-green-600 rounded focus:ring-green-500">
+              <div class="flex items-center gap-2">
+                <span class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</span>
+                <span class="font-medium">Activities</span>
+              </div>
+            </label>
+            <label class="flex items-center gap-3 p-3 border-2 border-yellow-200 rounded-lg hover:bg-yellow-50 cursor-pointer transition">
+              <input type="checkbox" id="assignCat4" value="achievements" class="w-5 h-5 text-yellow-600 rounded focus:ring-yellow-500">
+              <div class="flex items-center gap-2">
+                <span class="w-8 h-8 bg-yellow-500 text-white rounded-full flex items-center justify-center text-sm font-bold">4</span>
+                <span class="font-medium">Achievements</span>
+              </div>
+            </label>
+            <label class="flex items-center gap-3 p-3 border-2 border-red-200 rounded-lg hover:bg-red-50 cursor-pointer transition md:col-span-2">
+              <input type="checkbox" id="assignCat5" value="disciplinary" class="w-5 h-5 text-red-600 rounded focus:ring-red-500">
+              <div class="flex items-center gap-2">
+                <span class="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold">5</span>
+                <span class="font-medium">Disciplinary</span>
+              </div>
+            </label>
+          </div>
+          
+          <div class="mt-6 flex gap-3 justify-end">
+            <button onclick="closeAssignReportsModal()" class="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition">Cancel</button>
+            <button onclick="saveAssignments()" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold shadow transition">
+              <span id="saveAssignBtn">Save Assignments</span>
+            </button>
+          </div>
+          
+          <div id="assignStatus" class="mt-4 text-center font-medium"></div>
+        </div>
+        
+        <!-- Current Assignments List -->
+        <div class="mt-6 pt-4 border-t">
+          <h3 class="font-bold text-gray-700 mb-3">Current Assignments</h3>
+          <div id="currentAssignmentsList" class="space-y-2 max-h-48 overflow-y-auto">
+            <p class="text-gray-500 text-sm">Loading...</p>
+          </div>
         </div>
       </div>
     </div>
@@ -347,6 +446,186 @@
       // Close modal when clicking outside
       document.getElementById('reportsModal').addEventListener('click', function(e) {
         if (e.target === this) closeReportsModal();
+      });
+
+      // Assign Reports Modal Functions
+      async function openAssignReportsModal() {
+        document.getElementById('assignReportsModal').classList.remove('hidden');
+        await loadFacultyForAssignment();
+        await loadAllAssignments();
+      }
+      
+      function closeAssignReportsModal() {
+        document.getElementById('assignReportsModal').classList.add('hidden');
+        document.getElementById('assignFacultySelect').value = '';
+        document.getElementById('categoryAssignments').classList.add('hidden');
+        clearCheckboxes();
+      }
+      
+      function clearCheckboxes() {
+        ['assignCat1', 'assignCat2', 'assignCat3', 'assignCat4', 'assignCat5'].forEach(id => {
+          document.getElementById(id).checked = false;
+        });
+      }
+      
+      async function loadFacultyForAssignment() {
+        const dept = localStorage.getItem('department') || '';
+        const select = document.getElementById('assignFacultySelect');
+        
+        try {
+          const { data, error } = await supabaseClient
+            .from('Faculty')
+            .select('email, Name')
+            .eq('department', dept)
+            .order('Name');
+          
+          if (error) throw error;
+          
+          select.innerHTML = '<option value="">-- Select Faculty --</option>';
+          if (data && data.length > 0) {
+            data.forEach(f => {
+              select.innerHTML += `<option value="${f.email}">${f.Name || f.email}</option>`;
+            });
+          }
+        } catch (err) {
+          console.error('Error loading faculty:', err);
+        }
+      }
+      
+      async function loadFacultyAssignments() {
+        const facultyEmail = document.getElementById('assignFacultySelect').value;
+        
+        if (!facultyEmail) {
+          document.getElementById('categoryAssignments').classList.add('hidden');
+          return;
+        }
+        
+        document.getElementById('categoryAssignments').classList.remove('hidden');
+        clearCheckboxes();
+        
+        try {
+          const { data, error } = await supabaseClient
+            .from('faculty_report_assignments')
+            .select('categories')
+            .eq('faculty_email', facultyEmail)
+            .single();
+          
+          if (data && data.categories) {
+            const cats = data.categories;
+            if (cats.includes('attendance')) document.getElementById('assignCat1').checked = true;
+            if (cats.includes('academics')) document.getElementById('assignCat2').checked = true;
+            if (cats.includes('activities')) document.getElementById('assignCat3').checked = true;
+            if (cats.includes('achievements')) document.getElementById('assignCat4').checked = true;
+            if (cats.includes('disciplinary')) document.getElementById('assignCat5').checked = true;
+          }
+        } catch (err) {
+          console.log('No existing assignments or error:', err);
+        }
+      }
+      
+      async function saveAssignments() {
+        const facultyEmail = document.getElementById('assignFacultySelect').value;
+        const facultyName = document.getElementById('assignFacultySelect').selectedOptions[0]?.text || '';
+        const dept = localStorage.getItem('department') || '';
+        const statusDiv = document.getElementById('assignStatus');
+        
+        if (!facultyEmail) {
+          statusDiv.textContent = 'Please select a faculty member';
+          statusDiv.className = 'mt-4 text-center font-medium text-red-600';
+          return;
+        }
+        
+        const categories = [];
+        if (document.getElementById('assignCat1').checked) categories.push('attendance');
+        if (document.getElementById('assignCat2').checked) categories.push('academics');
+        if (document.getElementById('assignCat3').checked) categories.push('activities');
+        if (document.getElementById('assignCat4').checked) categories.push('achievements');
+        if (document.getElementById('assignCat5').checked) categories.push('disciplinary');
+        
+        statusDiv.textContent = 'Saving...';
+        statusDiv.className = 'mt-4 text-center font-medium text-blue-600';
+        
+        try {
+          // Upsert assignment
+          const { error } = await supabaseClient
+            .from('faculty_report_assignments')
+            .upsert({
+              faculty_email: facultyEmail,
+              faculty_name: facultyName,
+              department: dept,
+              categories: categories,
+              assigned_by: 'HOD',
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'faculty_email' });
+          
+          if (error) throw error;
+          
+          statusDiv.textContent = '✅ Assignments saved successfully!';
+          statusDiv.className = 'mt-4 text-center font-medium text-green-600';
+          
+          await loadAllAssignments();
+          
+          setTimeout(() => {
+            statusDiv.textContent = '';
+          }, 3000);
+        } catch (err) {
+          console.error('Error saving assignments:', err);
+          statusDiv.textContent = 'Error: ' + err.message;
+          statusDiv.className = 'mt-4 text-center font-medium text-red-600';
+        }
+      }
+      
+      async function loadAllAssignments() {
+        const dept = localStorage.getItem('department') || '';
+        const container = document.getElementById('currentAssignmentsList');
+        
+        try {
+          const { data, error } = await supabaseClient
+            .from('faculty_report_assignments')
+            .select('*')
+            .eq('department', dept)
+            .order('faculty_name');
+          
+          if (error) throw error;
+          
+          if (!data || data.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 text-sm">No assignments yet.</p>';
+            return;
+          }
+          
+          const categoryColors = {
+            'attendance': 'bg-purple-100 text-purple-700',
+            'academics': 'bg-blue-100 text-blue-700',
+            'activities': 'bg-green-100 text-green-700',
+            'achievements': 'bg-yellow-100 text-yellow-700',
+            'disciplinary': 'bg-red-100 text-red-700'
+          };
+          
+          let html = '';
+          data.forEach(a => {
+            html += `<div class="p-3 bg-gray-50 rounded-lg border">
+              <div class="font-medium text-gray-800">${a.faculty_name || a.faculty_email}</div>
+              <div class="flex flex-wrap gap-1 mt-1">`;
+            if (a.categories && a.categories.length > 0) {
+              a.categories.forEach(cat => {
+                const colorClass = categoryColors[cat] || 'bg-gray-100 text-gray-700';
+                html += `<span class="text-xs px-2 py-1 rounded-full ${colorClass}">${cat}</span>`;
+              });
+            } else {
+              html += '<span class="text-xs text-gray-400">No categories assigned</span>';
+            }
+            html += `</div></div>`;
+          });
+          
+          container.innerHTML = html;
+        } catch (err) {
+          container.innerHTML = '<p class="text-red-500 text-sm">Error loading assignments</p>';
+        }
+      }
+      
+      // Close modal on outside click
+      document.getElementById('assignReportsModal').addEventListener('click', function(e) {
+        if (e.target === this) closeAssignReportsModal();
       });
     </script>
 

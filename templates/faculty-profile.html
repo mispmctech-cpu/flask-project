@@ -193,6 +193,19 @@
           <div id="facultySemSubjectClassTable" class="mt-1"></div>
         </div>
 
+        <!-- Assigned Daily Reports Section (Compact) -->
+        <div id="assignedReportsSection" class="mt-6 mb-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200 hidden">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-base font-semibold text-green-700 flex items-center gap-2">
+              📋 Your Assigned Daily Reports
+              <span class="text-xs text-green-500 font-normal">(Assigned by HOD)</span>
+            </h3>
+          </div>
+          <div id="assignedReportsGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+            <!-- Cards will be inserted here -->
+          </div>
+        </div>
+
         <!-- Timetable Section -->
         <div class="mt-8">
           <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
@@ -3392,6 +3405,103 @@
         setTimeout(() => {
           loadTimetable();
         }, 500);
+        
+        // Load assigned daily reports
+        loadAssignedReports(email);
+      }
+      
+      // Load assigned daily reports for faculty
+      async function loadAssignedReports(facultyEmail) {
+        try {
+          const { data, error } = await supabaseClient
+            .from('faculty_report_assignments')
+            .select('categories, department')
+            .eq('faculty_email', facultyEmail)
+            .single();
+          
+          if (error || !data || !data.categories || data.categories.length === 0) {
+            document.getElementById('assignedReportsSection').classList.add('hidden');
+            return;
+          }
+          
+          const section = document.getElementById('assignedReportsSection');
+          const grid = document.getElementById('assignedReportsGrid');
+          const dept = data.department;
+          
+          const categoryConfig = {
+            'attendance': {
+              title: 'Attendance Report',
+              desc: 'Students & Faculty Daily Attendance',
+              color: 'purple',
+              icon: '👥',
+              link: `reporting.html?department=${encodeURIComponent(dept)}&from=faculty&email=${encodeURIComponent(facultyEmail)}`
+            },
+            'academics': {
+              title: 'Academics Report',
+              desc: 'Subject, Faculty & Topics Covered',
+              color: 'blue',
+              icon: '📚',
+              link: `reporting-academics.html?department=${encodeURIComponent(dept)}&from=faculty&email=${encodeURIComponent(facultyEmail)}`
+            },
+            'activities': {
+              title: 'Activities Report',
+              desc: 'R&D, FDP, Training & Events',
+              color: 'green',
+              icon: '⭐',
+              link: `reporting-activities.html?department=${encodeURIComponent(dept)}&from=faculty&email=${encodeURIComponent(facultyEmail)}`
+            },
+            'achievements': {
+              title: 'Achievements Report',
+              desc: 'Positive Things & Challenges',
+              color: 'yellow',
+              icon: '🏆',
+              link: `reporting-achievements.html?department=${encodeURIComponent(dept)}&from=faculty&email=${encodeURIComponent(facultyEmail)}`
+            },
+            'disciplinary': {
+              title: 'Disciplinary Report',
+              desc: 'Student Disciplinary Actions',
+              color: 'red',
+              icon: '⚠️',
+              link: `reporting-disciplinary.html?department=${encodeURIComponent(dept)}&from=faculty&email=${encodeURIComponent(facultyEmail)}`
+            }
+          };
+          
+          let html = '';
+          data.categories.forEach(cat => {
+            const config = categoryConfig[cat];
+            if (!config) return;
+            
+            const colorClasses = {
+              'purple': 'border-purple-200 bg-purple-50 hover:bg-purple-100',
+              'blue': 'border-blue-200 bg-blue-50 hover:bg-blue-100',
+              'green': 'border-green-200 bg-green-50 hover:bg-green-100',
+              'yellow': 'border-yellow-200 bg-yellow-50 hover:bg-yellow-100',
+              'red': 'border-red-200 bg-red-50 hover:bg-red-100'
+            };
+            const textColors = {
+              'purple': 'text-purple-700',
+              'blue': 'text-blue-700',
+              'green': 'text-green-700',
+              'yellow': 'text-yellow-700',
+              'red': 'text-red-700'
+            };
+            
+            // Compact card design
+            html += `
+              <a href="${config.link}" class="block border ${colorClasses[config.color]} rounded-lg p-3 transition-all hover:shadow-md text-center cursor-pointer">
+                <div class="text-xl mb-1">${config.icon}</div>
+                <h4 class="font-semibold ${textColors[config.color]} text-sm leading-tight">${config.title.replace(' Report', '')}</h4>
+              </a>
+            `;
+          });
+          
+          grid.innerHTML = html;
+          section.classList.remove('hidden');
+          
+        } catch (err) {
+          console.log('Error loading assigned reports:', err);
+          document.getElementById('assignedReportsSection').classList.add('hidden');
+        }
       }
 
       loadFacultyProfile();

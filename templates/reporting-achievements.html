@@ -40,7 +40,7 @@
                 <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 rounded shadow bg-white p-1" />
             </div>
             <nav class="flex gap-6 text-base font-medium items-center">
-                <a href="hod.html" class="hover:underline">← Back to HOD</a>
+              <!--  <a id="backLink" href="hod.html" class="hover:underline">← Back</a> -->
             </nav>
         </div>
     </header>
@@ -133,8 +133,20 @@
         }
 
         const department = getQueryParam('department') || localStorage.getItem('department') || '';
+        const fromFaculty = getQueryParam('from') === 'faculty';
+        const facultyEmail = getQueryParam('email') || '';
 
         document.addEventListener('DOMContentLoaded', async function() {
+            // Set back link
+            const backLink = document.getElementById('backLink');
+            if (fromFaculty && facultyEmail) {
+                backLink.href = `faculty-profile.html?email=${encodeURIComponent(facultyEmail)}`;
+                backLink.textContent = '← Back to Profile';
+            } else {
+                backLink.href = `hod.html?department=${encodeURIComponent(department)}&as=hod`;
+                backLink.textContent = '← Back to HOD';
+            }
+
             document.getElementById('departmentName').value = department;
             document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
 
@@ -204,7 +216,12 @@
                 if (error) throw error;
 
                 alert('Achievements Report submitted successfully!');
-                window.location.href = `hod.html?department=${encodeURIComponent(department)}&as=hod`;
+                // Redirect based on where user came from
+                if (fromFaculty && facultyEmail) {
+                    window.location.href = `faculty-profile.html?email=${encodeURIComponent(facultyEmail)}`;
+                } else {
+                    window.location.href = `hod.html?department=${encodeURIComponent(department)}&as=hod`;
+                }
             } catch (err) {
                 alert('Failed to submit report: ' + err.message);
             }
