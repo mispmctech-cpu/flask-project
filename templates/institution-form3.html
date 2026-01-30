@@ -8,6 +8,45 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Supabase JS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Draft Popup Modal */
+        .draft-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .draft-modal.show {
+            display: flex;
+        }
+        .draft-modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
 <script>
 // Auto-fill Portfolio Name, Portfolio Person Name, and Month from localStorage if available
 document.addEventListener('DOMContentLoaded', function() {
@@ -142,7 +181,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         </tbody>
                     </table>
                 </div>
-                <button type="submit" class="mt-8 bg-[#7d4c9e] hover:bg-[#5e357a] text-white font-bold py-3 px-16 rounded-full text-lg tracking-wide transition-all duration-200 mx-auto block shadow-lg">Submit</button>
+                <div class="flex justify-center gap-4 mt-8">
+                    <button type="button" id="saveDraftBtnMonthly" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-full text-lg tracking-wide transition-all duration-200 shadow-lg">
+                        <i class="fas fa-save mr-2"></i>Save as Draft
+                    </button>
+                    <button type="submit" class="bg-[#7d4c9e] hover:bg-[#5e357a] text-white font-bold py-3 px-16 rounded-full text-lg tracking-wide transition-all duration-200 shadow-lg">Submit</button>
+                </div>
             </form>
         </div>
 
@@ -216,8 +260,43 @@ document.addEventListener('DOMContentLoaded', function() {
                         </tbody>
                     </table>
                 </div>
-                <button type="submit" class="mt-8 bg-[#7d4c9e] hover:bg-[#5e357a] text-white font-bold py-3 px-16 rounded-full text-lg tracking-wide transition-all duration-200 mx-auto block shadow-lg">Submit</button>
+                <div class="flex justify-center gap-4 mt-8">
+                    <button type="button" id="saveDraftBtnSemester" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-full text-lg tracking-wide transition-all duration-200 shadow-lg">
+                        <i class="fas fa-save mr-2"></i>Save as Draft
+                    </button>
+                    <button type="submit" class="bg-[#7d4c9e] hover:bg-[#5e357a] text-white font-bold py-3 px-16 rounded-full text-lg tracking-wide transition-all duration-200 shadow-lg">Submit</button>
+                </div>
             </form>
+        </div>
+        
+        <!-- Draft loaded banner -->
+        <div id="draftBanner" class="hidden fixed top-4 right-4 bg-blue-100 border-2 border-blue-500 text-blue-800 px-6 py-3 rounded-lg shadow-lg z-50">
+            <i class="fas fa-info-circle mr-2"></i>Draft loaded - Continue editing or submit when ready
+        </div>
+        
+        <!-- Draft Popup Modal -->
+        <div id="draftModal" class="draft-modal">
+            <div class="draft-modal-content">
+                <h2 class="text-2xl font-bold text-[#7d4c9e] mb-4">
+                    <i class="fas fa-file-alt text-blue-600 mr-2"></i>Draft Found!
+                </h2>
+                <p class="text-gray-700 mb-2">You have a saved draft for this form.</p>
+                <p class="text-sm text-gray-600 mb-2">
+                    <span class="font-semibold">Form Type:</span> <span id="draftFormTypeInfo" class="text-blue-600"></span>
+                </p>
+                <p class="text-sm text-gray-600 mb-6">
+                    <span class="font-semibold">Saved Month:</span> <span id="draftMonthInfo" class="text-blue-600"></span>
+                </p>
+                <p class="text-gray-700 mb-6">Would you like to load it and continue where you left off?</p>
+                <div class="flex gap-4 justify-end">
+                    <button id="draftDeclineBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-6 rounded-lg transition-all">
+                        <i class="fas fa-times mr-2"></i>Start Fresh
+                    </button>
+                    <button id="draftAcceptBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all">
+                        <i class="fas fa-check mr-2"></i>Load Draft
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
     <script>
@@ -225,6 +304,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const supabaseUrl = "https://cbhodgwaazmjszkujrti.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU";
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    // Global object to store draft file URLs
+    window.draftFileUrls = {};
 
     // File check functionality
     document.addEventListener('change', function(e) {
@@ -247,6 +329,240 @@ document.addEventListener('DOMContentLoaded', function() {
         const { data: urlData } = supabaseClient.storage.from('Institution form3').getPublicUrl(path);
         return urlData.publicUrl;
     }
+
+    // Check for draft and show popup
+    async function checkForDraft(formType) {
+        const form = document.getElementById(`institution-form3-${formType}`);
+        const member = form.querySelector('input[name="Portfolio Member Name:"]').value;
+        
+        if (!member) return;
+        
+        const { data: drafts, error } = await supabaseClient
+            .from('institution_form3_drafts')
+            .select('*')
+            .eq('portfolio_member_name', member)
+            .eq('form_type', formType)
+            .order('created_at', { ascending: false })
+            .limit(1);
+        
+        if (error || !drafts || drafts.length === 0) return;
+        
+        // Show popup asking if user wants to use draft
+        showDraftPopup(drafts[0]);
+    }
+
+    function showDraftPopup(draft) {
+        const modal = document.getElementById('draftModal');
+        const draftMonth = draft.draft_data?.['Month:'] || 'Unknown';
+        const formType = draft.form_type === 'monthly' ? 'Monthly' : 'Once in a Semester';
+        document.getElementById('draftMonthInfo').textContent = draftMonth;
+        document.getElementById('draftFormTypeInfo').textContent = formType;
+        modal.classList.add('show');
+        
+        // Store draft for later use
+        window.pendingDraft = draft;
+    }
+
+    // Load draft data into form
+    function loadDraftData(draft) {
+        const formType = draft.form_type;
+        const form = document.getElementById(`institution-form3-${formType}`);
+        const draftData = draft.draft_data || {};
+        
+        // Populate Portfolio Name
+        const portfolioField = form.querySelector('input[name="Portfolio Name:"]');
+        if (portfolioField && draftData['Portfolio Name:']) {
+            portfolioField.value = draftData['Portfolio Name:'];
+        }
+        
+        // Populate Portfolio Member Name
+        const memberField = form.querySelector('input[name="Portfolio Member Name:"]');
+        if (memberField && draftData['Portfolio Member Name:']) {
+            memberField.value = draftData['Portfolio Member Name:'];
+        }
+        
+        // Populate Month
+        const monthField = form.querySelector('select[name="Month:"]');
+        if (monthField && draftData['Month:']) {
+            monthField.value = draftData['Month:'];
+        }
+        
+        // Determine number of rows based on form type
+        const numRows = formType === 'monthly' ? 2 : 1;
+        
+        for (let i = 1; i <= numRows; i++) {
+            const statusSelect = form.querySelector(`select[name="Status_${i}"]`);
+            const descInput = form.querySelector(`input[name="Description_${i}"]`);
+            
+            if (statusSelect && draftData[`Status_${i}`]) {
+                statusSelect.value = draftData[`Status_${i}`];
+            }
+            if (descInput && draftData[`Description_${i}`]) {
+                descInput.value = draftData[`Description_${i}`];
+            }
+            
+            if (draftData[`Upload the scanned file_${i}`]) {
+                // Store draft file URL for later use during submission
+                window.draftFileUrls[`${formType}-${i}`] = draftData[`Upload the scanned file_${i}`];
+                
+                const checkMark = document.querySelector(`.file-check[data-row="${formType}-${i}"]`);
+                if (checkMark) {
+                    checkMark.classList.remove('hidden');
+                    checkMark.textContent = '✓ From Draft';
+                }
+            }
+        }
+        
+        const banner = document.getElementById('draftBanner');
+        if (banner) {
+            banner.classList.remove('hidden');
+            setTimeout(() => banner.classList.add('hidden'), 5000);
+        }
+    }
+    
+    // Save as Draft function
+    async function saveAsDraft(formType) {
+        const form = document.getElementById(`institution-form3-${formType}`);
+        const formData = new FormData(form);
+        
+        const portfolioName = formData.get('Portfolio Name:');
+        const memberName = formData.get('Portfolio Member Name:');
+        const month = formData.get('Month:');
+        
+        if (!memberName || !month) {
+            alert('Please fill in Portfolio Member Name and Month to save as draft');
+            return;
+        }
+        
+        const saveDraftBtn = document.getElementById(formType === 'monthly' ? 'saveDraftBtnMonthly' : 'saveDraftBtnSemester');
+        const originalText = saveDraftBtn.innerHTML;
+        saveDraftBtn.disabled = true;
+        saveDraftBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+        
+        try {
+            const draftData = {
+                "Portfolio Name:": portfolioName,
+                "Portfolio Member Name:": memberName,
+                "Month:": month
+            };
+            
+            // Determine number of rows based on form type
+            const numRows = formType === 'monthly' ? 2 : 1;
+            
+            for (let i = 1; i <= numRows; i++) {
+                draftData[`Status_${i}`] = formData.get(`Status_${i}`);
+                draftData[`Description_${i}`] = formData.get(`Description_${i}`);
+                
+                // Check for existing draft file URL
+                const existingFileUrl = window.draftFileUrls[`${formType}-${i}`];
+                
+                const fileInput = form.querySelector(`input[name="Upload the scanned file_${i}"]`);
+                const file = fileInput && fileInput.files[0];
+                if (file && file.size > 0) {
+                    const ts = Date.now();
+                    const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+                    const path = `form3_${formType}_draft_${i}_${ts}_${safeName}`;
+                    try {
+                        draftData[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
+                    } catch (err) {
+                        console.error(`File upload error for row ${i}:`, err);
+                        draftData[`Upload the scanned file_${i}`] = existingFileUrl || null;
+                    }
+                } else {
+                    draftData[`Upload the scanned file_${i}`] = existingFileUrl || null;
+                }
+            }
+            
+            // Check for existing draft
+            const { data: existing, error: selectError } = await supabaseClient
+                .from('institution_form3_drafts')
+                .select('*')
+                .eq('portfolio_member_name', memberName)
+                .eq('form_type', formType)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+            
+            if (existing) {
+                // Preserve existing file URLs if not replaced
+                const existingDraftData = existing.draft_data || {};
+                for (let i = 1; i <= numRows; i++) {
+                    const fileKey = `Upload the scanned file_${i}`;
+                    if (!draftData[fileKey] && existingDraftData[fileKey]) {
+                        draftData[fileKey] = existingDraftData[fileKey];
+                    }
+                }
+                
+                const { error } = await supabaseClient
+                    .from('institution_form3_drafts')
+                    .update({
+                        portfolio_name: portfolioName,
+                        draft_data: draftData,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', existing.id);
+                if (error) throw error;
+            } else {
+                const { error } = await supabaseClient
+                    .from('institution_form3_drafts')
+                    .insert([{
+                        portfolio_name: portfolioName,
+                        portfolio_member_name: memberName,
+                        form_type: formType,
+                        draft_data: draftData
+                    }]);
+                if (error) throw error;
+            }
+            
+            saveDraftBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Draft Saved!';
+            saveDraftBtn.className = 'bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-10 rounded-full text-lg tracking-wide transition-all duration-200 shadow-lg';
+            
+            setTimeout(() => {
+                saveDraftBtn.innerHTML = originalText;
+                saveDraftBtn.className = 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-full text-lg tracking-wide transition-all duration-200 shadow-lg';
+                saveDraftBtn.disabled = false;
+            }, 2000);
+            
+        } catch (err) {
+            alert('Failed to save draft: ' + err.message);
+            saveDraftBtn.innerHTML = originalText;
+            saveDraftBtn.disabled = false;
+        }
+    }
+    
+    // Draft button event handlers
+    document.getElementById('saveDraftBtnMonthly').addEventListener('click', () => saveAsDraft('monthly'));
+    document.getElementById('saveDraftBtnSemester').addEventListener('click', () => saveAsDraft('semester'));
+    
+    // Draft popup button handlers
+    document.getElementById('draftAcceptBtn').addEventListener('click', function() {
+        document.getElementById('draftModal').classList.remove('show');
+        if (window.pendingDraft) {
+            loadDraftData(window.pendingDraft);
+            window.pendingDraft = null;
+        }
+    });
+    
+    document.getElementById('draftDeclineBtn').addEventListener('click', function() {
+        document.getElementById('draftModal').classList.remove('show');
+        window.pendingDraft = null;
+    });
+    
+    // Check for drafts after auto-fill completes
+    setTimeout(() => {
+        const monthlyForm = document.getElementById('institution-form3-monthly');
+        const semesterForm = document.getElementById('institution-form3-semester');
+        
+        const monthlyMember = monthlyForm.querySelector('input[name="Portfolio Member Name:"]').value;
+        const semesterMember = semesterForm.querySelector('input[name="Portfolio Member Name:"]').value;
+        
+        if (monthlyMember) {
+            checkForDraft('monthly');
+        }
+        if (semesterMember) {
+            setTimeout(() => checkForDraft('semester'), 500);
+        }
+    }, 1000);
 
     // Monthly form submission
     document.getElementById('institution-form3-monthly').addEventListener('submit', async function(e) {
@@ -278,7 +594,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
             } else {
-                row[`Upload the scanned file_${i}`] = null;
+                // Use draft file URL as fallback
+                row[`Upload the scanned file_${i}`] = window.draftFileUrls[`monthly-${i}`] || null;
             }
         }
 
@@ -289,6 +606,17 @@ document.addEventListener('DOMContentLoaded', function() {
         if (error) {
             window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
         } else {
+            // Delete draft after successful submission
+            try {
+                await supabaseClient
+                    .from('institution_form3_drafts')
+                    .delete()
+                    .eq('portfolio_member_name', row['Portfolio Member Name:'])
+                    .eq('form_type', 'monthly');
+            } catch (err) {
+                console.log('Draft deletion failed:', err);
+            }
+            
             window.location.href = 'notification.html?status=success';
             form.reset();
             // Hide file check marks for monthly
@@ -327,7 +655,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
         } else {
-            row[`Upload the scanned file_1`] = null;
+            // Use draft file URL as fallback
+            row[`Upload the scanned file_1`] = window.draftFileUrls['semester-1'] || null;
         }
 
         // Insert into Supabase
@@ -337,6 +666,17 @@ document.addEventListener('DOMContentLoaded', function() {
         if (error) {
             window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
         } else {
+            // Delete draft after successful submission
+            try {
+                await supabaseClient
+                    .from('institution_form3_drafts')
+                    .delete()
+                    .eq('portfolio_member_name', row['Portfolio Member Name:'])
+                    .eq('form_type', 'semester');
+            } catch (err) {
+                console.log('Draft deletion failed:', err);
+            }
+            
             window.location.href = 'notification.html?status=success';
             form.reset();
             // Hide file check marks for semester

@@ -57,6 +57,41 @@
 		label {
 			letter-spacing: 0.01em;
 		}
+		/* Draft Popup Modal */
+		.draft-modal {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0, 0, 0, 0.5);
+			z-index: 9999;
+			align-items: center;
+			justify-content: center;
+		}
+		.draft-modal.show {
+			display: flex;
+		}
+		.draft-modal-content {
+			background: white;
+			padding: 2rem;
+			border-radius: 1rem;
+			box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+			max-width: 500px;
+			width: 90%;
+			animation: slideIn 0.3s ease-out;
+		}
+		@keyframes slideIn {
+			from {
+				transform: translateY(-50px);
+				opacity: 0;
+			}
+			to {
+				transform: translateY(0);
+				opacity: 1;
+			}
+		}
 		.table-section-title {
 			font-size: 1.1rem;
 			font-weight: 700;
@@ -77,29 +112,34 @@
 		}
 		.file-preview {
 			display: flex;
-			align-items: center;
-			gap: 8px;
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 6px;
 			margin-top: 8px;
-			padding: 8px 12px;
+			padding: 10px 12px;
 			background: #f0fdf4;
-			border: 1px solid #86efac;
-			border-radius: 8px;
-			font-size: 0.9rem;
+			border: 2px solid #86efac;
+			border-radius: 10px;
+			font-size: 0.85rem;
 		}
-		.file-preview a {
-			color: #15803d;
-			text-decoration: underline;
+		.file-preview .file-name {
+			color: #166534;
+			font-weight: 500;
 			word-break: break-all;
+			display: flex;
+			align-items: center;
+			gap: 6px;
 		}
 		.file-preview .file-actions {
 			display: flex;
 			gap: 8px;
-			margin-left: auto;
+			margin-top: 4px;
 		}
 		.file-preview .btn-view, .file-preview .btn-replace {
-			padding: 4px 10px;
+			padding: 5px 14px;
 			border-radius: 6px;
 			font-size: 0.8rem;
+			font-weight: 600;
 			cursor: pointer;
 			border: none;
 			transition: all 0.2s;
@@ -117,6 +157,16 @@
 		}
 		.file-preview .btn-replace:hover {
 			background: #d97706;
+		}
+		.upload-success {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 2px;
+		}
+		.upload-success .checkmark {
+			color: #16a34a;
+			font-size: 1rem;
 		}
 		.validation-error {
 			color: #dc2626;
@@ -190,10 +240,46 @@
 						</tbody>
 					</table>
 				</div>
-				<div class="flex justify-center mt-10">
+				<div class="flex justify-center gap-4 mt-10">
+					<button type="button" id="saveDraftBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">
+						<i class="fas fa-save mr-2"></i>Save as Draft
+					</button>
 					<button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
 				</div>
 			</form>
+
+			<!-- Draft Found Banner -->
+			<div id="draftBanner" class="hidden fixed top-0 left-0 right-0 bg-blue-600 text-white py-3 px-4 text-center z-50 shadow-lg">
+				<i class="fas fa-file-alt mr-2"></i>
+				<span>You have a saved draft from <span id="draftDate"></span></span>
+				<button onclick="showDraftPopup(window.currentDraft)" class="ml-4 bg-white text-blue-600 px-4 py-1 rounded-lg font-semibold hover:bg-blue-50 transition-all">
+					Load Draft
+				</button>
+				<button onclick="document.getElementById('draftBanner').classList.add('hidden')" class="ml-2 text-white hover:text-blue-200">
+					<i class="fas fa-times"></i>
+				</button>
+			</div>
+
+			<!-- Draft Popup Modal -->
+			<div id="draftModal" class="draft-modal">
+				<div class="draft-modal-content">
+					<div class="text-center">
+						<i class="fas fa-file-alt text-5xl text-blue-600 mb-4"></i>
+						<h2 class="text-2xl font-bold text-gray-800 mb-2">Draft Found!</h2>
+						<p class="text-gray-600 mb-2">You have a saved draft from:</p>
+						<p id="draftTimestamp" class="text-lg font-semibold text-blue-600 mb-6"></p>
+						<p class="text-gray-500 mb-6">Would you like to continue where you left off?</p>
+						<div class="flex gap-4 justify-center">
+							<button id="loadDraftBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-xl transition-all">
+								<i class="fas fa-check mr-2"></i>Load Draft
+							</button>
+							<button id="discardDraftBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-xl transition-all">
+								<i class="fas fa-times mr-2"></i>Start Fresh
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 	<script src="https://unpkg.com/@supabase/supabase-js"></script>
@@ -265,11 +351,13 @@
 				</select>
 			</td>
 			<td class="border px-2 py-1 file-upload-container">
-				<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
-				<span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">✓</span>
+				<div class="upload-success">
+					<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
+					<span class="checkmark hidden" data-row="${idx}">✓</span>
+				</div>
 				<input type="file" name="Upload a Scanned File_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
 				<div id="file-preview-${idx}" class="file-preview" style="display: none;">
-					<span class="file-name">No file</span>
+					<span class="file-name"><span class="filename-text">No file</span></span>
 					<div class="file-actions">
 						<button type="button" class="btn-view" onclick="viewFile(${idx})">View</button>
 						<button type="button" class="btn-replace" onclick="replaceFile(${idx})">Replace</button>
@@ -313,12 +401,18 @@
 	function updateFilePreview(taskNum, fileName, fileUrl) {
 		const preview = document.getElementById(`file-preview-${taskNum}`);
 		if (preview) {
-			const nameSpan = preview.querySelector('.file-name');
+			const nameSpan = preview.querySelector('.filename-text');
 			if (nameSpan) {
 				nameSpan.textContent = fileName;
 			}
 			preview.style.display = 'flex';
 			uploadedFiles[taskNum] = fileUrl;
+			
+			// Show checkmark
+			const checkMark = document.querySelector(`.checkmark[data-row="${taskNum}"]`);
+			if (checkMark) {
+				checkMark.classList.remove('hidden');
+			}
 		}
 	}
 
@@ -372,6 +466,8 @@
 		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
 	);
 
+	window.draftFileUrls = {};
+
 	async function uploadFileToStorage(file, path, bucket, uploadBtn) {
 		if (!file) return null;
 		const { data, error } = await supabaseClient.storage.from(bucket).upload(path, file, { upsert: true });
@@ -381,7 +477,7 @@
 		// Change the upload button to 'Uploaded' after successful upload
 		if (uploadBtn) {
 			const row = uploadBtn.getAttribute('data-row');
-			const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
+			const checkMark = document.querySelector(`.checkmark[data-row="${row}"]`);
 			
 			uploadBtn.textContent = 'Uploaded';
 			uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
@@ -446,6 +542,199 @@
 		}
 	});
 
+	// Draft Functions
+	async function checkForDraft() {
+		try {
+			const dept = localStorage.getItem('department') || '';
+			const member = localStorage.getItem('selectedMemberName') || '';
+			
+			if (!dept || !member) return;
+			
+			const { data, error } = await supabaseClient
+				.from('form5_monthly_drafts')
+				.select('*')
+				.eq('Department', dept)
+				.eq('Portfolio Member Name', member)
+				.order('updated_at', { ascending: false })
+				.limit(1);
+			
+			if (error) {
+				console.error('Error checking for draft:', error);
+				return;
+			}
+			
+			if (data && data.length > 0) {
+				window.currentDraft = data[0];
+				showDraftPopup(data[0]);
+			}
+		} catch (err) {
+			console.error('Error in checkForDraft:', err);
+		}
+	}
+
+	function showDraftPopup(draft) {
+		const modal = document.getElementById('draftModal');
+		const timestamp = document.getElementById('draftTimestamp');
+		const banner = document.getElementById('draftBanner');
+		const draftDate = document.getElementById('draftDate');
+		
+		const date = new Date(draft.updated_at || draft.created_at);
+		const formattedDate = date.toLocaleString();
+		
+		timestamp.textContent = formattedDate;
+		draftDate.textContent = formattedDate;
+		modal.classList.add('show');
+		banner.classList.add('hidden');
+	}
+
+	function loadDraftData(draft) {
+		const form = document.getElementById('facultyForm5');
+		
+		// Load header fields
+		if (draft['Department']) {
+			const field = form.querySelector('input[name="Department"]');
+			if (field) field.value = draft['Department'];
+		}
+		if (draft['Portfolio Name']) {
+			const field = form.querySelector('input[name="Portfolio Name"]');
+			if (field) field.value = draft['Portfolio Name'];
+		}
+		if (draft['Portfolio Member Name']) {
+			const field = form.querySelector('input[name="Portfolio Member Name"]');
+			if (field) field.value = draft['Portfolio Member Name'];
+		}
+		if (draft['Month']) {
+			const field = form.querySelector('select[name="Month"]');
+			if (field) field.value = draft['Month'];
+		}
+		
+		// Load row data for all 12 rows
+		for (let i = 1; i <= 12; i++) {
+			if (draft[`Status_${i}`]) {
+				const field = form.querySelector(`select[name="Status_${i}"]`);
+				if (field) field.value = draft[`Status_${i}`];
+			}
+			if (draft[`Description_${i}`]) {
+				const field = form.querySelector(`input[name="Description_${i}"]`);
+				if (field) field.value = draft[`Description_${i}`];
+			}
+			// Handle file URLs from draft
+			if (draft[`Upload a Scanned File_${i}`]) {
+				const fileUrl = draft[`Upload a Scanned File_${i}`];
+				window.draftFileUrls[i] = fileUrl;
+				uploadedFiles[i] = fileUrl;
+				
+				// Update UI to show file is loaded
+				const uploadBtn = document.querySelector(`button.upload-btn[data-row="${i}"]`);
+				const checkMark = document.querySelector(`.checkmark[data-row="${i}"]`);
+				
+				if (uploadBtn) {
+					uploadBtn.textContent = 'Uploaded';
+					uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
+				}
+				if (checkMark) {
+					checkMark.classList.remove('hidden');
+				}
+				
+				// Show file preview
+				const fileName = fileUrl.split('/').pop() || 'Uploaded file';
+				updateFilePreview(i, fileName, fileUrl);
+			}
+		}
+		
+		// Close modal
+		document.getElementById('draftModal').classList.remove('show');
+		
+		// Show success message
+		alert('Draft loaded successfully!');
+	}
+
+	async function saveAsDraft() {
+		const form = document.getElementById('facultyForm5');
+		const formData = new FormData(form);
+		
+		const dept = formData.get('Department');
+		const member = formData.get('Portfolio Member Name');
+		
+		if (!dept || !member) {
+			alert('Please fill in Department and Portfolio Member Name before saving draft.');
+			return;
+		}
+		
+		const draftData = {
+			'Department': dept,
+			'Portfolio Name': formData.get('Portfolio Name'),
+			'Portfolio Member Name': member,
+			'Month': formData.get('Month'),
+			'updated_at': new Date().toISOString()
+		};
+		
+		// Save row data for all 12 rows
+		for (let i = 1; i <= 12; i++) {
+			draftData[`Status_${i}`] = formData.get(`Status_${i}`) || null;
+			draftData[`Description_${i}`] = formData.get(`Description_${i}`) || null;
+			
+			// Save file URL if available
+			if (uploadedFiles[i]) {
+				draftData[`Upload a Scanned File_${i}`] = uploadedFiles[i];
+			} else if (window.draftFileUrls[i]) {
+				draftData[`Upload a Scanned File_${i}`] = window.draftFileUrls[i];
+			} else {
+				draftData[`Upload a Scanned File_${i}`] = null;
+			}
+		}
+		
+		try {
+			// Check if draft exists
+			const { data: existing } = await supabaseClient
+				.from('form5_monthly_drafts')
+				.select('id')
+				.eq('Department', dept)
+				.eq('Portfolio Member Name', member)
+				.limit(1);
+			
+			let result;
+			if (existing && existing.length > 0) {
+				// Update existing draft
+				result = await supabaseClient
+					.from('form5_monthly_drafts')
+					.update(draftData)
+					.eq('id', existing[0].id);
+			} else {
+				// Insert new draft
+				result = await supabaseClient
+					.from('form5_monthly_drafts')
+					.insert([draftData]);
+			}
+			
+			if (result.error) {
+				throw result.error;
+			}
+			
+			alert('Draft saved successfully!');
+		} catch (err) {
+			console.error('Error saving draft:', err);
+			alert('Failed to save draft: ' + err.message);
+		}
+	}
+
+	// Draft button event handlers
+	document.getElementById('saveDraftBtn').addEventListener('click', saveAsDraft);
+
+	document.getElementById('loadDraftBtn').addEventListener('click', function() {
+		if (window.currentDraft) {
+			loadDraftData(window.currentDraft);
+		}
+	});
+
+	document.getElementById('discardDraftBtn').addEventListener('click', function() {
+		document.getElementById('draftModal').classList.remove('show');
+		document.getElementById('draftBanner').classList.remove('hidden');
+	});
+
+	// Check for existing draft after page loads
+	setTimeout(checkForDraft, 1000);
+
 	// Form submission
 	document.getElementById('facultyForm5').addEventListener('submit', async function(e) {
 		e.preventDefault();
@@ -501,7 +790,7 @@
 					dataRow[`Upload a Scanned File_${i}`] = null;
 				}
 			} else {
-				dataRow[`Upload a Scanned File_${i}`] = null;
+				dataRow[`Upload a Scanned File_${i}`] = window.draftFileUrls[i] || null;
 			}
 		}
 
@@ -510,6 +799,17 @@
 		if (error) {
 			window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
 			return;
+		}
+
+		// Delete draft after successful submission
+		try {
+			await supabaseClient
+				.from('form5_monthly_drafts')
+				.delete()
+				.eq('Department', dataRow['Department'])
+				.eq('Portfolio Member Name', dataRow['Portfolio Member Name']);
+		} catch (err) {
+			console.error('Error deleting draft:', err);
 		}
 
 		window.location.href = 'notification.html?status=success';

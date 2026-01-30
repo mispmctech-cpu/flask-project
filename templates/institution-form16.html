@@ -36,6 +36,8 @@
 	<title>PRO : MONTHLY</title>
 	<script src="https://cdn.tailwindcss.com"></script>
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+	<!-- Font Awesome for icons -->
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 	<style>
 		body, input, select, textarea, button {
 			font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
@@ -110,6 +112,86 @@
 			.p-8 { padding: 0.5rem !important; }
 			.p-6, .md\:p-10 { padding: 0.5rem !important; }
 		}
+		/* Draft Popup Modal */
+		.draft-modal {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0, 0, 0, 0.5);
+			z-index: 9999;
+			align-items: center;
+			justify-content: center;
+		}
+		.draft-modal.show {
+			display: flex;
+		}
+		.draft-modal-content {
+			background: white;
+			padding: 2rem;
+			border-radius: 1rem;
+			box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+			max-width: 500px;
+			width: 90%;
+			animation: slideIn 0.3s ease-out;
+		}
+		@keyframes slideIn {
+			from {
+				transform: translateY(-50px);
+				opacity: 0;
+			}
+			to {
+				transform: translateY(0);
+				opacity: 1;
+			}
+		}
+		/* File upload preview styles */
+		.file-preview { 
+			display: flex; 
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 6px; 
+			margin-top: 8px; 
+			padding: 10px 12px; 
+			background: #f0fdf4; 
+			border: 2px solid #86efac; 
+			border-radius: 10px; 
+			font-size: 0.85rem; 
+		}
+		.file-preview .file-name { 
+			color: #166534; 
+			font-weight: 500;
+			word-break: break-all; 
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+		.file-preview .file-actions { display: flex; gap: 8px; margin-top: 4px; }
+		.file-preview .btn-view, .file-preview .btn-replace { 
+			padding: 5px 14px; 
+			border-radius: 6px; 
+			font-size: 0.8rem; 
+			font-weight: 600;
+			cursor: pointer; 
+			border: none; 
+			transition: all 0.2s; 
+		}
+		.file-preview .btn-view { background: #3b82f6; color: white; }
+		.file-preview .btn-view:hover { background: #2563eb; }
+		.file-preview .btn-replace { background: #f59e0b; color: white; }
+		.file-preview .btn-replace:hover { background: #d97706; }
+		.upload-success {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 2px;
+		}
+		.upload-success .checkmark {
+			color: #16a34a;
+			font-size: 1rem;
+		}
 	</style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col min-h-screen">
@@ -164,13 +246,44 @@
 						</tbody>
 					</table>
 				</div>
-				<div class="flex justify-center mt-10">
+				<div class="flex justify-center gap-4 mt-10">
+					<button type="button" id="saveDraftBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">
+						<i class="fas fa-save mr-2"></i>Save as Draft
+					</button>
 					<button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
 				</div>
 			</form>
+			<!-- Draft loaded banner -->
+			<div id="draftBanner" class="hidden fixed top-4 right-4 bg-blue-100 border-2 border-blue-500 text-blue-800 px-6 py-3 rounded-lg shadow-lg z-50">
+				<i class="fas fa-info-circle mr-2"></i>Draft loaded - Continue editing or submit when ready
+			</div>
+			
+			<!-- Draft Popup Modal -->
+			<div id="draftModal" class="draft-modal">
+				<div class="draft-modal-content">
+					<h2 class="text-2xl font-bold text-purple-900 mb-4">
+						<i class="fas fa-file-alt text-blue-600 mr-2"></i>Draft Found!
+					</h2>
+					<p class="text-gray-700 mb-2">You have a saved draft for this form.</p>
+					<p class="text-sm text-gray-600 mb-6">
+						<span class="font-semibold">Saved Month:</span> <span id="draftMonthInfo" class="text-blue-600"></span>
+					</p>
+					<p class="text-gray-700 mb-6">Would you like to load it and continue where you left off?</p>
+					<div class="flex gap-4 justify-end">
+						<button id="draftDeclineBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-6 rounded-lg transition-all">
+							<i class="fas fa-times mr-2"></i>Start Fresh
+						</button>
+						<button id="draftAcceptBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all">
+							<i class="fas fa-check mr-2"></i>Load Draft
+						</button>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 	<script>
+	// Global object to store draft file URLs
+	window.draftFileUrls = {};
 	// 24 scope labels from the image
 	const fileRows = [
 		// 1. Media Relations
@@ -240,11 +353,206 @@
 		const { data: urlData } = supabase.storage.from('institution-files16').getPublicUrl(path);
 		return urlData.publicUrl;
 	}
+	
+	// Check for draft and show popup
+	async function checkForDraft() {
+		const form = document.getElementById('form16');
+		const member = form.querySelector('input[name="Portfolio Member Name:"]').value;
+		
+		if (!member) return;
+		
+		const { data: drafts, error } = await supabase
+			.from('institution_form16_drafts')
+			.select('*')
+			.eq('Portfolio Member Name', member)
+			.order('created_at', { ascending: false })
+			.limit(1);
+		
+		if (error || !drafts || drafts.length === 0) return;
+		
+		showDraftPopup(drafts[0]);
+	}
+
+	function showDraftPopup(draft) {
+		const modal = document.getElementById('draftModal');
+		const draftMonth = draft.Month || 'Unknown';
+		document.getElementById('draftMonthInfo').textContent = draftMonth;
+		modal.classList.add('show');
+		window.pendingDraft = draft;
+	}
+
+	// Load draft data into form
+	function loadDraftData(draft) {
+		const form = document.getElementById('form16');
+		
+		if (draft.Month) {
+			const monthSelect = form.querySelector('select[name="Month:"]');
+			if (monthSelect) monthSelect.value = draft.Month;
+		}
+		
+		const draftData = draft.draft_data || {};
+		
+		for (let i = 1; i <= 24; i++) {
+			const statusSelect = form.querySelector(`select[name="Status_${i}"]`);
+			const descInput = form.querySelector(`input[name="Description_${i}"]`);
+			
+			if (statusSelect && draftData[`Status_${i}`]) {
+				statusSelect.value = draftData[`Status_${i}`];
+			}
+			if (descInput && draftData[`Description_${i}`]) {
+				descInput.value = draftData[`Description_${i}`];
+			}
+			
+			if (draftData[`Upload the scanned file_${i}`]) {
+				window.draftFileUrls[i] = draftData[`Upload the scanned file_${i}`];
+				const checkMark = document.querySelector(`.file-check[data-row="${i}"]`);
+				if (checkMark) {
+					checkMark.classList.remove('hidden');
+				}
+			}
+		}
+		
+		const banner = document.getElementById('draftBanner');
+		if (banner) {
+			banner.classList.remove('hidden');
+			setTimeout(() => banner.classList.add('hidden'), 5000);
+		}
+	}
+	
+	// Save as Draft function
+	async function saveAsDraft() {
+		const form = document.getElementById('form16');
+		const formData = new FormData(form);
+		
+		const portfolio = formData.get('Portfolio Name:');
+		const member = formData.get('Portfolio Member Name:');
+		const month = formData.get('Month:');
+		
+		if (!member || !month) {
+			alert('Please fill in Portfolio Member Name and Month to save as draft');
+			return;
+		}
+		
+		const saveDraftBtn = document.getElementById('saveDraftBtn');
+		const originalText = saveDraftBtn.innerHTML;
+		saveDraftBtn.disabled = true;
+		saveDraftBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+		
+		try {
+			const draftData = {};
+			
+			for (let i = 1; i <= 24; i++) {
+				draftData[`Status_${i}`] = formData.get(`Status_${i}`);
+				draftData[`Description_${i}`] = formData.get(`Description_${i}`);
+				
+				const checkMark = document.querySelector(`.file-check[data-row="${i}"]`);
+				const isAlreadyUploaded = checkMark && !checkMark.classList.contains('hidden');
+				
+				if (isAlreadyUploaded && window.draftFileUrls[i]) {
+					draftData[`Upload the scanned file_${i}`] = window.draftFileUrls[i];
+				} else {
+					const fileInput = document.querySelector(`input.file-input[data-row='${i}']`);
+					const file = fileInput && fileInput.files[0];
+					if (file && file.size > 0) {
+						const ts = Date.now();
+						const path = `form16_draft_${i}_${ts}_${file.name}`;
+						try {
+							draftData[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
+							window.draftFileUrls[i] = draftData[`Upload the scanned file_${i}`];
+						} catch (err) {
+							console.error(`File upload error for row ${i}:`, err);
+							draftData[`Upload the scanned file_${i}`] = null;
+						}
+					} else {
+						draftData[`Upload the scanned file_${i}`] = null;
+					}
+				}
+			}
+			
+			const { data: existing } = await supabase
+				.from('institution_form16_drafts')
+				.select('*')
+				.eq('Portfolio Member Name', member)
+				.order('created_at', { ascending: false })
+				.limit(1)
+				.single();
+			
+			if (existing) {
+				// Preserve existing file URLs if not being replaced
+				const existingData = existing.draft_data || {};
+				for (let i = 1; i <= 24; i++) {
+					const fileKey = `Upload the scanned file_${i}`;
+					if (!draftData[fileKey] && existingData[fileKey]) {
+						draftData[fileKey] = existingData[fileKey];
+						window.draftFileUrls[i] = existingData[fileKey];
+					}
+				}
+				
+				const { error } = await supabase
+					.from('institution_form16_drafts')
+					.update({
+						"Portfolio Name": portfolio,
+						"Month": month,
+						"draft_data": draftData,
+						"updated_at": new Date().toISOString()
+					})
+					.eq('id', existing.id);
+				if (error) throw error;
+			} else {
+				const { error } = await supabase
+					.from('institution_form16_drafts')
+					.insert([{
+						"Portfolio Name": portfolio,
+						"Portfolio Member Name": member,
+						"Month": month,
+						"draft_data": draftData
+					}]);
+				if (error) throw error;
+			}
+			
+			saveDraftBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Draft Saved!';
+			saveDraftBtn.className = 'bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-10 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200';
+			
+			setTimeout(() => {
+				saveDraftBtn.innerHTML = originalText;
+				saveDraftBtn.className = 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200';
+				saveDraftBtn.disabled = false;
+			}, 2000);
+			
+		} catch (err) {
+			alert('Failed to save draft: ' + err.message);
+			saveDraftBtn.innerHTML = originalText;
+			saveDraftBtn.disabled = false;
+		}
+	}
+	
+	document.getElementById('saveDraftBtn').addEventListener('click', saveAsDraft);
+	
+	// Draft popup button handlers
+	document.getElementById('draftAcceptBtn').addEventListener('click', function() {
+		document.getElementById('draftModal').classList.remove('show');
+		if (window.pendingDraft) {
+			loadDraftData(window.pendingDraft);
+			window.pendingDraft = null;
+		}
+	});
+	
+	document.getElementById('draftDeclineBtn').addEventListener('click', function() {
+		document.getElementById('draftModal').classList.remove('show');
+		window.pendingDraft = null;
+	});
+	
+	// Check for draft after auto-fill completes
+	setTimeout(() => {
+		checkForDraft();
+	}, 1000);
+
 	// Form submit
 	document.getElementById('form16').addEventListener('submit', async function(e) {
 		e.preventDefault();
 		const form = e.target;
 		const formData = new FormData(form);
+		const member = formData.get('Portfolio Member Name:');
 		const row = {
 			"Portfolio Name:": formData.get('Portfolio Name:'),
 			"Portfolio Member Name:": formData.get('Portfolio Member Name:'),
@@ -263,6 +571,9 @@
 					window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
 					return;
 				}
+			} else if (window.draftFileUrls[i]) {
+				// Use draft file URL if available
+				row[`Upload the scanned file_${i}`] = window.draftFileUrls[i];
 			} else {
 				row[`Upload the scanned file_${i}`] = null;
 			}
@@ -272,6 +583,10 @@
 		if (error) {
 			window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
 		} else {
+			// Delete draft after successful submission
+			if (member) {
+				await supabase.from('institution_form16_drafts').delete().eq('Portfolio Member Name', member);
+			}
 			window.location.href = 'notification.html?status=success';
 		}
 	});

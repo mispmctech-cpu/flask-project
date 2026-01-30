@@ -75,9 +75,9 @@
                 </div>
             </div>
             <div class="flex justify-end mt-4">
-                <button onclick="exportAllReports()" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition mr-2">
+              <!--  <button onclick="exportAllReports()" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition mr-2">
                     <i class="fas fa-download mr-2"></i>Export All
-                </button>
+                </button> -->
                 <button onclick="loadReports()" class="bg-pmcPurple hover:bg-pmcPurpleDark text-white font-semibold px-4 py-2 rounded-lg shadow transition">
                     <i class="fas fa-sync-alt mr-2"></i>Refresh
                 </button>
@@ -135,6 +135,10 @@
 
     <!-- html2canvas for image download -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- JSZip for creating zip files (needed for docx) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- html-docx-js for Word document generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-docx-js/0.3.7/html-docx.js"></script>
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <script>
@@ -580,18 +584,94 @@
                 return;
             }
             
-            let csvContent = 'Category,HOD Name,Report Date,Created At\n';
-            allReports.forEach(r => {
-                csvContent += `"${getCategoryLabel(r._category)}","${r.hod_name || ''}","${r.report_date}","${r.created_at || ''}"\n`;
-            });
+            // Show loading state
+            const exportBtn = event.target.closest('button');
+            const originalText = exportBtn.innerHTML;
+            exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating Word Doc...';
+            exportBtn.disabled = true;
             
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${department}_reports_export_${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
+            try {
+                // Create HTML table
+                let htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            h1, h2 { color: #6a2c91; }
+                            table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+                            th { background-color: #6a2c91; color: white; padding: 12px; text-align: left; border: 1px solid #ddd; }
+                            td { padding: 10px; border: 1px solid #ddd; }
+                            tr:nth-child(even) { background-color: #f9f9f9; }
+                            .header-info { margin: 10px 0; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>PMC TECH - Reports Export</h1>
+                        <div class="header-info">
+                            <p><strong>Department:</strong> ${department}</p>
+                            <p><strong>Exported on:</strong> ${new Date().toLocaleString('en-IN')}</p>
+                            <p><strong>Total Reports:</strong> ${allReports.length}</p>
+                        </div>
+                        
+                        <h2>Reports Summary</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>HOD Name</th>
+                                    <th>Report Date</th>
+                                    <th>Created At</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                // Add all reports
+                allReports.forEach(r => {
+                    htmlContent += `
+                        <tr>
+                            <td>${getCategoryLabel(r._category)}</td>
+                            <td>${r.hod_name || '-'}</td>
+                            <td>${new Date(r.report_date).toLocaleDateString('en-IN')}</td>
+                            <td>${r.created_at ? new Date(r.created_at).toLocaleString('en-IN') : '-'}</td>
+                        </tr>
+                    `;
+                });
+                
+                htmlContent += `
+                            </tbody>
+                        </table>
+                        <hr>
+                        <p style="font-size: 11px; color: #888; margin-top: 20px;">
+                            © PMC TECH - Daily Reporting System | Generated on ${new Date().toLocaleString('en-IN')}
+                        </p>
+                    </body>
+                    </html>
+                `;
+                
+                // Generate Word document
+                const docName = `${department}_reports_export_${new Date().toISOString().split('T')[0]}.docx`;
+                const converted = window.html2docx.convert(htmlContent, {
+                    orientation: 'landscape'
+                });
+                
+                // Download
+                const link = document.createElement('a');
+                link.href = converted;
+                link.download = docName;
+                link.click();
+                
+                // Restore button
+                exportBtn.innerHTML = originalText;
+                exportBtn.disabled = false;
+            } catch (err) {
+                alert('Failed to generate Word document. Please try again.');
+                console.error('Export error:', err);
+                exportBtn.innerHTML = originalText;
+                exportBtn.disabled = false;
+            }
         }
 
         // Close modal on outside click

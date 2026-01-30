@@ -144,14 +144,16 @@
         const facultyEmail = getQueryParam('email') || '';
 
         document.addEventListener('DOMContentLoaded', async function() {
-            // Set back link
+            // Set back link (only if element exists)
             const backLink = document.getElementById('backLink');
-            if (fromFaculty && facultyEmail) {
-                backLink.href = `faculty-profile.html?email=${encodeURIComponent(facultyEmail)}`;
-                backLink.textContent = '← Back to Profile';
-            } else {
-                backLink.href = `hod.html?department=${encodeURIComponent(department)}&as=hod`;
-                backLink.textContent = '← Back to HOD';
+            if (backLink) {
+                if (fromFaculty && facultyEmail) {
+                    backLink.href = `faculty-profile.html?email=${encodeURIComponent(facultyEmail)}`;
+                    backLink.textContent = '← Back to Profile';
+                } else {
+                    backLink.href = `hod.html?department=${encodeURIComponent(department)}&as=hod`;
+                    backLink.textContent = '← Back to HOD';
+                }
             }
 
             document.getElementById('departmentName').value = department;
@@ -162,8 +164,10 @@
                 addActivityRow();
             }
 
-            // Fetch HOD name
-            if (department) {
+            // Fetch HOD name from localStorage first, then from database
+            let hodName = localStorage.getItem('hodName');
+            
+            if (!hodName && department) {
                 const { data, error } = await supabase
                     .from('HOD')
                     .select('Name')
@@ -171,8 +175,13 @@
                     .maybeSingle();
                 
                 if (data && data.Name) {
-                    document.getElementById('hodName').value = data.Name;
+                    hodName = data.Name;
+                    localStorage.setItem('hodName', hodName);
                 }
+            }
+            
+            if (hodName) {
+                document.getElementById('hodName').value = hodName;
             }
         });
 
@@ -222,7 +231,11 @@
                         department: department,
                         hod_name: document.getElementById('hodName').value,
                         report_date: document.getElementById('reportDate').value,
-                        activities: activities
+                        activities: activities,
+                        verification_status: 'pending',
+                        verified_by: null,
+                        verification_date: null,
+                        verification_comments: null
                     }]);
 
                 if (error) throw error;

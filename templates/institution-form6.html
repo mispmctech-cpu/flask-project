@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Supabase JS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
@@ -44,6 +46,10 @@
                     </select>
                 </div>
             </div>
+            <!-- Draft Banner -->
+            <div id="draftBanner" class="hidden mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
+                <p class="font-semibold">You have a saved draft for this form. Would you like to load it?</p>
+            </div>
             <div class="overflow-x-auto rounded-xl">
                 <table class="w-full min-w-[1200px] text-base border-separate border-spacing-y-2">
                     <thead>
@@ -76,10 +82,32 @@
                     </tbody>
                 </table>
             </div>
-            <button type="submit" class="mt-12 bg-[#7d4c9e] hover:bg-[#5e357a] text-white font-bold py-4 px-24 rounded-full text-xl tracking-wide transition-all duration-200 mx-auto block shadow-lg">Submit</button>
+            <div class="flex gap-4 mt-12 justify-center">
+                <button type="button" onclick="window._internalSaveAsDraft()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 px-12 rounded-full text-xl tracking-wide transition-all duration-200 shadow-lg">
+                    <i class="fas fa-save mr-2"></i>Save Draft
+                </button>
+                <button type="submit" class="bg-[#7d4c9e] hover:bg-[#5e357a] text-white font-bold py-4 px-24 rounded-full text-xl tracking-wide transition-all duration-200 shadow-lg">Submit</button>
+            </div>
         </form>
                                 
     </div>
+
+    <!-- Draft Modal -->
+    <div id="draftModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-2xl">
+            <h3 class="text-2xl font-bold text-[#7d4c9e] mb-4">Draft Found</h3>
+            <p class="text-gray-700 mb-6">You have a saved draft from a previous session. Would you like to load it?</p>
+            <div class="flex gap-4 justify-end">
+                <button onclick="window._internalCloseDraftModal()" class="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg transition-all duration-200">
+                    Ignore
+                </button>
+                <button onclick="window._internalLoadDraft()" class="px-6 py-2 bg-[#7d4c9e] hover:bg-[#5e357a] text-white font-semibold rounded-lg transition-all duration-200">
+                    Load Draft
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
 
 
@@ -117,6 +145,22 @@
     const supabaseUrl = "https://cbhodgwaazmjszkujrti.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU";
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+    
+    // Include shared institution draft script
+    </script>
+    <script src="../static/javascript/institution-draft.js"></script>
+    <script>
+
+    // Initialize draft system for institution-form6
+    initInstitutionDraft({
+        formId: 'institution-form6-monthly',
+        draftTable: 'institution_form6_drafts',
+        rows: 16,
+        bucket: 'institution-files6',
+        fileFieldPrefix: 'Upload the scanned file_',
+        supabaseClient: supabaseClient,
+        formType: null // No form_type for this form
+    });
 
     // Upload file to Supabase Storage
     async function uploadFileToStorage(file, path) {
@@ -132,12 +176,13 @@
         e.preventDefault();
         const form = e.target;
         const formData = new FormData(form);
+        const member = formData.get('Portfolio Member Name:');
         let row = {
             "Portfolio Name:": formData.get('Portfolio Name:'),
-            "Portfolio Member Name:": formData.get('Portfolio Member Name:'),
+            "Portfolio Member Name:": member,
             "Month:": formData.get('Month:')
         };
-        for (let i = 1; i <= 5; i++) {
+        for (let i = 1; i <= 16; i++) {
             row[`Status_${i}`] = formData.get(`Status_${i}`) || null;
             row[`Description_${i}`] = formData.get(`Description_${i}`) || null;
             const file = formData.get(`Upload the scanned file_${i}`);
@@ -151,6 +196,8 @@
                     window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(err.message);
                     return;
                 }
+            } else if (window.draftFileUrls && window.draftFileUrls[i]) {
+                row[`Upload the scanned file_${i}`] = window.draftFileUrls[i];
             } else {
                 row[`Upload the scanned file_${i}`] = null;
             }
@@ -161,45 +208,10 @@
         if (error) {
             window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
         } else {
-            window.location.href = 'notification.html?status=success';
-            form.reset();
-        }
-    });
-
-    // Once in 6 months form submission
-    document.getElementById('institution-form6-oncein6months').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const form = e.target;
-        const formData = new FormData(form);
-        let row = {
-            "Portfolio Name:": formData.get('Portfolio Name:'),
-            "Portfolio Member Name:": formData.get('Portfolio Member Name:'),
-            "Month:": formData.get('Month:')
-        };
-        for (let i = 6; i <= 13; i++) {
-            row[`Status_${i}`] = formData.get(`Status_${i}`) || null;
-            row[`Description_${i}`] = formData.get(`Description_${i}`) || null;
-            const file = formData.get(`Upload the scanned file_${i}`);
-            if (file && file.size > 0) {
-                const ts = Date.now();
-                const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-                const path = `form6_oncein6months_${i}_${ts}_${safeName}`;
-                try {
-                    row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
-                } catch (err) {
-                    window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(err.message);
-                    return;
-                }
-            } else {
-                row[`Upload the scanned file_${i}`] = null;
+            // Delete draft after successful submission
+            if (member) {
+                await supabaseClient.from('institution_form6_drafts').delete().eq('Portfolio Member Name', member);
             }
-        }
-        const { data, error } = await supabaseClient
-            .from('Institution-form6-oncein6months')
-            .insert([row]);
-        if (error) {
-            window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
-        } else {
             window.location.href = 'notification.html?status=success';
             form.reset();
         }

@@ -111,9 +111,10 @@ document.addEventListener('DOMContentLoaded', function() {
 		form.addEventListener('submit', async function(e) {
 			e.preventDefault();
 			const formData = new FormData(form);
+			const member = formData.get('Portfolio Member Name:');
 			const row = {
 				"Portfolio Name:": formData.get('Portfolio Name:'),
-				"Portfolio Member Name:": formData.get('Portfolio Member Name:'),
+				"Portfolio Member Name:": member,
 				"Month:": formData.get('Month:'),
 			};
 			for (let i = 1; i <= 15; i++) {
@@ -129,6 +130,8 @@ document.addEventListener('DOMContentLoaded', function() {
 						window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
 						return;
 					}
+				} else if (window.draftFileUrls && window.draftFileUrls[i]) {
+					row[`Upload the scanned file_${i}`] = window.draftFileUrls[i];
 				} else {
 					row[`Upload the scanned file_${i}`] = null;
 				}
@@ -138,6 +141,10 @@ document.addEventListener('DOMContentLoaded', function() {
 			if (error) {
 				window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
 			} else {
+				// Delete draft after successful submission
+				if (member) {
+					await supabase.from('institution_form5_drafts').delete().eq('Portfolio Member Name', member);
+				}
 				window.location.href = 'notification.html?status=success';
 			}
 		});
@@ -291,10 +298,38 @@ document.addEventListener('DOMContentLoaded', function() {
 						</tbody>
 					</table>
 				</div>
-				<div class="flex justify-center mt-10">
+				<div class="flex justify-center gap-4 mt-10">
+					<button type="button" id="saveDraftBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">
+						<i class="fas fa-save mr-2"></i>Save as Draft
+					</button>
 					<button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
 				</div>
 			</form>
+		</div>
+	</div>
+	<!-- Draft loaded banner -->
+	<div id="draftBanner" class="hidden fixed top-4 right-4 bg-blue-100 border-2 border-blue-500 text-blue-800 px-6 py-3 rounded-lg shadow-lg z-50">
+		<i class="fas fa-info-circle mr-2"></i>Draft loaded - Continue editing or submit when ready
+	</div>
+	<!-- Draft Popup Modal -->
+	<div id="draftModal" class="draft-modal">
+		<div class="draft-modal-content">
+			<h2 class="text-2xl font-bold text-purple-900 mb-4">
+				<i class="fas fa-file-alt text-blue-600 mr-2"></i>Draft Found!
+			</h2>
+			<p class="text-gray-700 mb-2">You have a saved draft for this form.</p>
+			<p class="text-sm text-gray-600 mb-6">
+				<span class="font-semibold">Saved Month:</span> <span id="draftMonthInfo" class="text-blue-600"></span>
+			</p>
+			<p class="text-gray-700 mb-6">Would you like to load it and continue where you left off?</p>
+			<div class="flex gap-4 justify-end">
+				<button id="draftDeclineBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-6 rounded-lg transition-all">
+					<i class="fas fa-times mr-2"></i>Start Fresh
+				</button>
+				<button id="draftAcceptBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all">
+					<i class="fas fa-check mr-2"></i>Load Draft
+				</button>
+			</div>
 		</div>
 	</div>
 	<script>
@@ -313,8 +348,21 @@ document.addEventListener('DOMContentLoaded', function() {
     </p>
 	</footer>
 		<!-- Supabase JS CDN (required for month-filter.js) -->
-		<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-		<script src="../static/javascript/month-filter.js"></script>
+			<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+			<script src="../static/javascript/institution-draft.js"></script>
+			<script>
+			if (window.initInstitutionDraft && typeof initInstitutionDraft === 'function') {
+				initInstitutionDraft({
+					formId: 'acadForm1',
+					draftTable: 'institution_form5_drafts',
+					rows: 15,
+					bucket: 'Institution form5',
+					fileFieldPrefix: 'Upload the scanned file_',
+					supabaseClient: supabase
+				});
+			}
+			</script>
+			<script src="../static/javascript/month-filter.js"></script>
     <!-- Form Access Control - checks if form is open/closed -->
     <script src="../static/javascript/form-access-control.js"></script>
 </body>

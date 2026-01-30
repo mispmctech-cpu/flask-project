@@ -229,16 +229,19 @@
     </header>
 
     <!-- Reports Category Modal -->
-    <div id="reportsModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-      <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative transform transition-all">
-        <button type="button" onclick="closeReportsModal()" class="absolute top-3 right-3 text-gray-400 hover:text-pmcPurple text-2xl font-bold">&times;</button>
-        <h2 class="text-xl font-bold text-pmcPurple mb-6 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-          </svg>
-          Select Report Category
-        </h2>
-        <div class="space-y-4">
+    <div id="reportsModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden overflow-hidden">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col relative transform transition-all">
+        <button type="button" onclick="closeReportsModal()" class="absolute top-3 right-3 text-gray-400 hover:text-pmcPurple text-2xl font-bold z-10">&times;</button>
+        <div class="flex-shrink-0 px-6 pt-6 pb-4">
+          <h2 class="text-xl font-bold text-pmcPurple flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+            Select Report Category
+          </h2>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6">
+          <div class="space-y-4 pb-6">
           <a href="#" id="reportAttendanceLink" class="block p-4 border-2 border-pmcPurple rounded-lg hover:bg-pmcPurple hover:text-white transition group">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 bg-pmcPurple text-white rounded-full flex items-center justify-center group-hover:bg-white group-hover:text-pmcPurple transition">
@@ -305,9 +308,10 @@
             </div>
           </a>
         </div>
+        </div>
         <!-- View My Reports Link -->
-        <div class="mt-6 pt-4 border-t-2 border-gray-200">
-          <a href="#" id="viewMyReportsLink" class="block p-4 bg-gradient-to-r from-pmcPurple to-purple-600 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition shadow-lg mb-3">
+        <div class="flex-shrink-0 border-t-2 border-gray-200 px-6 py-4 space-y-3">
+          <a href="#" id="viewMyReportsLink" class="block p-4 bg-gradient-to-r from-pmcPurple to-purple-600 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition shadow-lg">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-white text-pmcPurple rounded-full flex items-center justify-center">
@@ -338,6 +342,25 @@
                 <div>
                   <h3 class="font-bold text-lg">👥 Assign Reports to Faculty</h3>
                   <p class="text-sm opacity-90">Assign categories to faculty members</p>
+                </div>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </div>
+          </button>
+          <!-- Verify Reports Button -->
+          <button onclick="location.href='hod-report-verification.html?department=' + encodeURIComponent(localStorage.getItem('department'))" class="w-full block p-4 bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-lg hover:from-orange-700 hover:to-orange-600 transition shadow-lg">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-white text-orange-600 rounded-full flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg">✓ Verify Faculty Reports</h3>
+                  <p class="text-sm opacity-90">Review and approve submitted reports</p>
                 </div>
               </div>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
@@ -438,8 +461,42 @@
         document.getElementById('reportAchievementsLink').href = `reporting-achievements.html?department=${encodeURIComponent(dept)}`;
         document.getElementById('reportDisciplinaryLink').href = `reporting-disciplinary.html?department=${encodeURIComponent(dept)}`;
         document.getElementById('viewMyReportsLink').href = `hod-reports-dashboard.html?department=${encodeURIComponent(dept)}`;
+        
+        // Fetch and display HOD info
+        fetchAndDisplayHodInfo(dept);
+        
         document.getElementById('reportsModal').classList.remove('hidden');
       }
+      
+      // Fetch HOD name and department from database
+      async function fetchAndDisplayHodInfo(department) {
+        try {
+          const supabaseUrl = "https://cbhodgwaazmjszkujrti.supabase.co";
+          const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU";
+          const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+          
+          // Fetch HOD info from HOD table
+          const { data, error } = await supabaseClient
+            .from('HOD')
+            .select('Name, Department')
+            .eq('department', department)
+            .maybeSingle();
+          
+          if (error) {
+            console.error('Error fetching HOD info:', error);
+            return;
+          }
+          
+          if (data) {
+            // Store HOD name in localStorage for use in reporting forms
+            localStorage.setItem('hodName', data.Name);
+            localStorage.setItem('hodDepartment', data.Department);
+          }
+        } catch (err) {
+          console.error('Exception fetching HOD info:', err);
+        }
+      }
+      
       function closeReportsModal() {
         document.getElementById('reportsModal').classList.add('hidden');
       }

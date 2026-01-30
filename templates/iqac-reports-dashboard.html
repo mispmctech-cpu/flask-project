@@ -198,6 +198,9 @@
                     const tableName = getTableName(cat);
                     let query = supabase.from(tableName).select('*').order('report_date', { ascending: false });
                     
+                    // IMPORTANT: Only show verified reports
+                    query = query.eq('verification_status', 'verified');
+                    
                     if (department) query = query.eq('department', department);
                     if (dateFrom) query = query.gte('report_date', dateFrom);
                     if (dateTo) query = query.lte('report_date', dateTo);
@@ -444,22 +447,24 @@
             let html = '';
             if (data.academics && Array.isArray(data.academics)) {
                 data.academics.forEach(ac => {
-                    html += `<h3 style="font-size: 15px; font-weight: bold; color: #6a2c91; margin: 16px 0 10px 0; padding: 8px; background: #f8f5fa; border-left: 4px solid #6a2c91; border-radius: 4px;">📚 ${ac.class_section || ac.year + ' ' + ac.class_name + ' ' + ac.section}</h3>`;
+                    html += `<h3 style="font-size: 15px; font-weight: bold; color: #6a2c91; margin: 16px 0 10px 0; padding: 8px; background: #f8f5fa; border-left: 4px solid #6a2c91; border-radius: 4px;">📚 ${ac.class_section || (ac.year + ' / ' + (ac.class_name || '') + ' / ' + ac.section)}</h3>`;
                     html += `<table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px;">
                         <thead><tr style="background: linear-gradient(135deg, #2563eb, #3b82f6); color: white;">
                             <th style="border: 1px solid #ddd; padding: 10px; width: 60px;">Hour</th>
                             <th style="border: 1px solid #ddd; padding: 10px;">Subject</th>
                             <th style="border: 1px solid #ddd; padding: 10px;">Faculty</th>
                             <th style="border: 1px solid #ddd; padding: 10px;">Topics Covered</th>
+                            <th style="border: 1px solid #ddd; padding: 10px;">Teaching Aid</th>
                         </tr></thead><tbody>`;
                     if (ac.timetable && Array.isArray(ac.timetable)) {
                         ac.timetable.forEach((t, i) => {
                             const bgColor = i % 2 === 0 ? '#fff' : '#f0f7ff';
                             html += `<tr style="background: ${bgColor};">
-                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold; color: #2563eb;">${t.hour}</td>
+                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold; color: #2563eb;">${t.hour || i + 1}</td>
                                 <td style="border: 1px solid #ddd; padding: 8px;">${t.subject || '-'}</td>
                                 <td style="border: 1px solid #ddd; padding: 8px;">${t.faculty_name || '-'}</td>
                                 <td style="border: 1px solid #ddd; padding: 8px;">${t.topics_covered || '-'}</td>
+                                <td style="border: 1px solid #ddd; padding: 8px;">${t.teaching_aid || '-'}</td>
                             </tr>`;
                         });
                     }
@@ -481,14 +486,14 @@
                 data.activities.forEach((a, i) => {
                     const bgColor = i % 2 === 0 ? '#fff' : '#f0fdf4';
                     html += `<tr style="background: ${bgColor};">
-                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold; color: #16a34a;">${a.sno}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold; color: #16a34a;">${a.sno || i + 1}</td>
                         <td style="border: 1px solid #ddd; padding: 8px;">${a.details || '-'}</td>
                         <td style="border: 1px solid #ddd; padding: 8px;">${a.outcome || '-'}</td>
                     </tr>`;
                 });
                 html += '</tbody></table>';
             }
-            return html;
+            return html || '<p style="color: #888; padding: 16px; text-align: center;">No activities data available.</p>';
         }
 
         function renderAchievementsReport(data) {
@@ -502,13 +507,13 @@
                 data.achievements.forEach((a, i) => {
                     const bgColor = i % 2 === 0 ? '#fff' : '#fefce8';
                     html += `<tr style="background: ${bgColor};">
-                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold; color: #ca8a04;">${a.sno}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold; color: #ca8a04;">${a.sno || i + 1}</td>
                         <td style="border: 1px solid #ddd; padding: 8px;">${a.details || '-'}</td>
                     </tr>`;
                 });
                 html += '</tbody></table>';
             }
-            return html;
+            return html || '<p style="color: #888; padding: 16px; text-align: center;">No achievements data available.</p>';
         }
 
         function renderDisciplinaryReport(data) {
@@ -526,13 +531,13 @@
                 data.disciplinary_actions.forEach((a, i) => {
                     const bgColor = i % 2 === 0 ? '#fff' : '#fef2f2';
                     html += `<tr style="background: ${bgColor};">
-                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold; color: #dc2626;">${a.sno}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold; color: #dc2626;">${a.sno || i + 1}</td>
                         <td style="border: 1px solid #ddd; padding: 8px;">${a.details || '-'}</td>
                     </tr>`;
                 });
                 html += '</tbody></table>';
             }
-            return html;
+            return html || '<p style="color: #888; padding: 16px; text-align: center;">No disciplinary actions recorded.</p>';
         }
 
         function closeReportModal() {

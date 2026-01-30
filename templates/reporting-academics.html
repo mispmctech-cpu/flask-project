@@ -151,21 +151,25 @@
 
         // Auto-fill department and HOD name
         document.addEventListener('DOMContentLoaded', async function() {
-            // Set back link
+            // Set back link (only if element exists)
             const backLink = document.getElementById('backLink');
-            if (fromFaculty && facultyEmail) {
-                backLink.href = `faculty-profile.html?email=${encodeURIComponent(facultyEmail)}`;
-                backLink.textContent = '← Back to Profile';
-            } else {
-                backLink.href = `hod.html?department=${encodeURIComponent(department)}&as=hod`;
-                backLink.textContent = '← Back to HOD';
+            if (backLink) {
+                if (fromFaculty && facultyEmail) {
+                    backLink.href = `faculty-profile.html?email=${encodeURIComponent(facultyEmail)}`;
+                    backLink.textContent = '← Back to Profile';
+                } else {
+                    backLink.href = `hod.html?department=${encodeURIComponent(department)}&as=hod`;
+                    backLink.textContent = '← Back to HOD';
+                }
             }
 
             document.getElementById('departmentName').value = department;
             document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
 
-            // Fetch HOD name
-            if (department) {
+            // Fetch HOD name from localStorage first, then from database
+            let hodName = localStorage.getItem('hodName');
+            
+            if (!hodName && department) {
                 const { data, error } = await supabase
                     .from('HOD')
                     .select('Name')
@@ -173,8 +177,13 @@
                     .maybeSingle();
                 
                 if (data && data.Name) {
-                    document.getElementById('hodName').value = data.Name;
+                    hodName = data.Name;
+                    localStorage.setItem('hodName', hodName);
                 }
+            }
+            
+            if (hodName) {
+                document.getElementById('hodName').value = hodName;
             }
         });
 
@@ -328,7 +337,11 @@
                         department: reportData.department,
                         hod_name: reportData.hod_name,
                         report_date: reportData.report_date,
-                        academics: reportData.academics
+                        academics: reportData.academics,
+                        verification_status: 'pending',
+                        verified_by: null,
+                        verification_date: null,
+                        verification_comments: null
                     }]);
 
                 if (error) throw error;

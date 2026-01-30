@@ -61,6 +61,41 @@
 		label {
 			letter-spacing: 0.01em;
 		}
+		/* Draft Popup Modal */
+		.draft-modal {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0, 0, 0, 0.5);
+			z-index: 9999;
+			align-items: center;
+			justify-content: center;
+		}
+		.draft-modal.show {
+			display: flex;
+		}
+		.draft-modal-content {
+			background: white;
+			padding: 2rem;
+			border-radius: 1rem;
+			box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+			max-width: 500px;
+			width: 90%;
+			animation: slideIn 0.3s ease-out;
+		}
+		@keyframes slideIn {
+			from {
+				transform: translateY(-50px);
+				opacity: 0;
+			}
+			to {
+				transform: translateY(0);
+				opacity: 1;
+			}
+		}
 		.table-section-title {
 			font-size: 1.1rem;
 			font-weight: 700;
@@ -74,6 +109,68 @@
 		}
 		@media (max-width: 600px) {
 			th, td { font-size: 0.9rem; }
+		}
+		/* File upload preview styles */
+		.file-upload-container {
+			position: relative;
+		}
+		.file-preview {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 6px;
+			margin-top: 8px;
+			padding: 10px 12px;
+			background: #f0fdf4;
+			border: 2px solid #86efac;
+			border-radius: 10px;
+			font-size: 0.85rem;
+		}
+		.file-preview .file-name {
+			color: #166534;
+			font-weight: 500;
+			word-break: break-all;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+		.file-preview .file-actions {
+			display: flex;
+			gap: 8px;
+			margin-top: 4px;
+		}
+		.file-preview .btn-view, .file-preview .btn-replace {
+			padding: 5px 14px;
+			border-radius: 6px;
+			font-size: 0.8rem;
+			font-weight: 600;
+			cursor: pointer;
+			border: none;
+			transition: all 0.2s;
+		}
+		.file-preview .btn-view {
+			background: #3b82f6;
+			color: white;
+		}
+		.file-preview .btn-view:hover {
+			background: #2563eb;
+		}
+		.file-preview .btn-replace {
+			background: #f59e0b;
+			color: white;
+		}
+		.file-preview .btn-replace:hover {
+			background: #d97706;
+		}
+		.upload-success {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 2px;
+		}
+		.upload-success .checkmark {
+			color: #16a34a;
+			font-size: 1rem;
 		}
 	</style>
 </head>
@@ -146,10 +243,29 @@
 						</tbody>
 					</table>
 				</div>
-				<div class="flex justify-center mt-10">
+				<div class="flex justify-center gap-4 mt-10">
+					<button type="button" id="saveDraftBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Save Draft</button>
 					<button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
 				</div>
 			</form>
+
+			<!-- Draft Saved Banner -->
+			<div id="draftBanner" class="hidden fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300">
+				<i class="fas fa-check-circle mr-2"></i>Draft saved successfully!
+			</div>
+
+			<!-- Draft Found Modal -->
+			<div id="draftModal" class="draft-modal">
+				<div class="draft-modal-content">
+					<h3 class="text-xl font-bold text-purple-900 mb-4"><i class="fas fa-file-alt mr-2"></i>Draft Found!</h3>
+					<p class="text-gray-700 mb-2">You have a saved draft from:</p>
+					<p id="draftDate" class="text-purple-700 font-semibold mb-6"></p>
+					<div class="flex gap-4 justify-end">
+						<button id="discardDraftBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-6 rounded-lg transition-all">Start Fresh</button>
+						<button id="loadDraftBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-6 rounded-lg transition-all">Load Draft</button>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 	<script src="https://unpkg.com/@supabase/supabase-js"></script>
@@ -229,10 +345,19 @@
 			<td class="border px-2 py-1">
 				<input type="text" name="Description-${idx}" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="${row.status}" />
 			</td>
-			<td class="border px-2 py-1">
-				<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
-				<span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">✓</span>
+			<td class="border px-2 py-1 file-upload-container">
+				<div class="upload-success">
+					<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
+					<span class="checkmark hidden" data-row="${idx}">✓</span>
+				</div>
 				<input type="file" name="Upload The Scanned File-${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
+				<div id="file-preview-${idx}" class="file-preview" style="display: none;">
+					<span class="file-name"><i class="fas fa-file-image mr-1"></i><span class="filename-text"></span></span>
+					<div class="file-actions">
+						<button type="button" class="btn-view" onclick="viewFile(${idx})">View</button>
+						<button type="button" class="btn-replace" onclick="replaceFile(${idx})">Replace</button>
+					</div>
+				</div>
 			</td>
 		`;
 		tbody.appendChild(tr);
@@ -244,6 +369,47 @@
 		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
 	);
 
+	// Store file URLs from drafts
+	window.draftFileUrls = {};
+	
+	// Store uploaded file URLs
+	var uploadedFiles = {};
+	
+	// View file function
+	function viewFile(taskNum) {
+		const fileUrl = uploadedFiles[taskNum];
+		if (fileUrl) {
+			window.open(fileUrl, '_blank');
+		}
+	}
+	
+	// Replace file function
+	function replaceFile(taskNum) {
+		const fileInput = document.querySelector(`input.file-input-row[data-row='${taskNum}']`);
+		if (fileInput) {
+			fileInput.click();
+		}
+	}
+	
+	// Update file preview function
+	function updateFilePreview(taskNum, fileName, fileUrl) {
+		const preview = document.getElementById(`file-preview-${taskNum}`);
+		if (preview) {
+			const filenameText = preview.querySelector('.filename-text');
+			if (filenameText) {
+				const displayName = fileName.length > 15 ? fileName.substring(0, 12) + '...' + fileName.slice(-4) : fileName;
+				filenameText.textContent = displayName;
+			}
+			preview.style.display = 'flex';
+			uploadedFiles[taskNum] = fileUrl;
+			
+			const checkmark = document.querySelector(`.checkmark[data-row="${taskNum}"]`);
+			if (checkmark) {
+				checkmark.classList.remove('hidden');
+			}
+		}
+	}
+
 	async function uploadFileToStorage(file, path, bucket, uploadBtn) {
 		if (!file) return null;
 		const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
@@ -253,7 +419,7 @@
 		// Change the upload button to 'Uploaded' after successful upload
 		if (uploadBtn) {
 			const row = uploadBtn.getAttribute('data-row');
-			const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
+			const checkMark = document.querySelector(`.checkmark[data-row="${row}"]`);
 			
 			uploadBtn.textContent = 'Uploaded';
 			uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
@@ -263,6 +429,9 @@
 			if (checkMark) {
 				checkMark.classList.remove('hidden');
 			}
+			
+			// Update file preview
+			updateFilePreview(row, file.name, urlData.publicUrl);
 		}
 		return urlData.publicUrl;
 	}
@@ -292,6 +461,185 @@
 			}
 		}
 	});
+
+	// ========== DRAFT FUNCTIONALITY ==========
+	
+	// Check for existing draft
+	async function checkForDraft() {
+		try {
+			const memberName = localStorage.getItem('selectedMemberName');
+			if (!memberName) return;
+			
+			const { data, error } = await supabase
+				.from('form1_monthly_drafts')
+				.select('*')
+				.eq('Portfolio Member Name', memberName)
+				.order('updated_at', { ascending: false })
+				.limit(1);
+			
+			if (error) {
+				console.error('Error checking for draft:', error);
+				return;
+			}
+			
+			if (data && data.length > 0) {
+				showDraftPopup(data[0]);
+			}
+		} catch (err) {
+			console.error('Error in checkForDraft:', err);
+		}
+	}
+	
+	// Show draft popup
+	function showDraftPopup(draft) {
+		const modal = document.getElementById('draftModal');
+		const dateEl = document.getElementById('draftDate');
+		const date = new Date(draft.updated_at);
+		dateEl.textContent = date.toLocaleString();
+		modal.classList.add('show');
+		modal.dataset.draftId = draft.id;
+		window.currentDraft = draft;
+	}
+	
+	// Load draft data into form
+	function loadDraftData(draft) {
+		const form = document.getElementById('facultyForm1');
+		
+		// Load basic fields
+		if (draft['Department']) {
+			const field = form.querySelector('input[name="Department"]');
+			if (field) field.value = draft['Department'];
+		}
+		if (draft['Portfolio Name']) {
+			const field = form.querySelector('input[name="Portfolio Name"]');
+			if (field) field.value = draft['Portfolio Name'];
+		}
+		if (draft['Portfolio Member Name']) {
+			const field = form.querySelector('input[name="Portfolio Member Name"]');
+			if (field) field.value = draft['Portfolio Member Name'];
+		}
+		if (draft['Month']) {
+			const field = form.querySelector('select[name="Month"]');
+			if (field) field.value = draft['Month'];
+		}
+		
+		// Load all 18 rows
+		for (let i = 1; i <= 18; i++) {
+			if (draft[`Status-${i}`]) {
+				const field = form.querySelector(`select[name="Status-${i}"]`);
+				if (field) field.value = draft[`Status-${i}`];
+			}
+			if (draft[`Description-${i}`]) {
+				const field = form.querySelector(`input[name="Description-${i}"]`);
+				if (field) field.value = draft[`Description-${i}`];
+			}
+			// Store file URLs from draft for submission
+			if (draft[`Upload The Scanned File-${i}`]) {
+				const fileUrl = draft[`Upload The Scanned File-${i}`];
+				window.draftFileUrls[i] = fileUrl;
+				// Update UI to show file exists
+				const uploadBtn = document.querySelector(`button.upload-btn[data-row="${i}"]`);
+				const checkMark = document.querySelector(`.checkmark[data-row="${i}"]`);
+				if (uploadBtn) {
+					uploadBtn.textContent = 'Uploaded';
+					uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
+				}
+				if (checkMark) {
+					checkMark.classList.remove('hidden');
+				}
+				// Extract filename from URL and update preview
+				const fileName = fileUrl.split('/').pop().split('?')[0];
+				updateFilePreview(i, fileName, fileUrl);
+			}
+		}
+	}
+	
+	// Save as draft
+	async function saveAsDraft() {
+		try {
+			const form = document.getElementById('facultyForm1');
+			const formData = new FormData(form);
+			const memberName = formData.get('Portfolio Member Name');
+			
+			if (!memberName) {
+				alert('Please enter Portfolio Member Name before saving draft.');
+				return;
+			}
+			
+			const draftData = {
+				'Department': formData.get('Department'),
+				'Portfolio Name': formData.get('Portfolio Name'),
+				'Portfolio Member Name': memberName,
+				'Month': formData.get('Month'),
+				'updated_at': new Date().toISOString()
+			};
+			
+			// Save all 18 rows
+			for (let i = 1; i <= 18; i++) {
+				draftData[`Status-${i}`] = formData.get(`Status-${i}`);
+				draftData[`Description-${i}`] = formData.get(`Description-${i}`);
+				// Preserve existing file URLs from draft
+				if (window.draftFileUrls[i]) {
+					draftData[`Upload The Scanned File-${i}`] = window.draftFileUrls[i];
+				}
+			}
+			
+			// Check if draft exists for this member
+			const { data: existingDraft } = await supabase
+				.from('form1_monthly_drafts')
+				.select('id')
+				.eq('Portfolio Member Name', memberName)
+				.limit(1);
+			
+			let result;
+			if (existingDraft && existingDraft.length > 0) {
+				// Update existing draft
+				result = await supabase
+					.from('form1_monthly_drafts')
+					.update(draftData)
+					.eq('id', existingDraft[0].id);
+			} else {
+				// Insert new draft
+				result = await supabase
+					.from('form1_monthly_drafts')
+					.insert([draftData]);
+			}
+			
+			if (result.error) {
+				throw result.error;
+			}
+			
+			// Show success banner
+			const banner = document.getElementById('draftBanner');
+			banner.classList.remove('hidden');
+			setTimeout(() => {
+				banner.classList.add('hidden');
+			}, 3000);
+			
+		} catch (err) {
+			console.error('Error saving draft:', err);
+			alert('Failed to save draft: ' + err.message);
+		}
+	}
+	
+	// Event handlers for draft buttons
+	document.getElementById('saveDraftBtn').addEventListener('click', saveAsDraft);
+	
+	document.getElementById('loadDraftBtn').addEventListener('click', function() {
+		if (window.currentDraft) {
+			loadDraftData(window.currentDraft);
+		}
+		document.getElementById('draftModal').classList.remove('show');
+	});
+	
+	document.getElementById('discardDraftBtn').addEventListener('click', function() {
+		document.getElementById('draftModal').classList.remove('show');
+	});
+	
+	// Check for draft after page loads
+	setTimeout(checkForDraft, 1000);
+	
+	// ========== END DRAFT FUNCTIONALITY ==========
 
 	// Form submission
 	document.getElementById('facultyForm1').addEventListener('submit', async function(e) {
@@ -342,6 +690,9 @@
 					window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
 					return;
 				}
+			} else if (window.draftFileUrls[i]) {
+				// Use file URL from draft if available
+				dataRow[`Upload The Scanned File-${i}`] = window.draftFileUrls[i];
 			} else {
 				dataRow[`Upload The Scanned File-${i}`] = null;
 			}
@@ -352,6 +703,19 @@
 		if (error) {
 			window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
 			return;
+		}
+
+		// Delete draft after successful submission
+		try {
+			const memberName = formData.get('Portfolio Member Name');
+			if (memberName) {
+				await supabase
+					.from('form1_monthly_drafts')
+					.delete()
+					.eq('Portfolio Member Name', memberName);
+			}
+		} catch (draftErr) {
+			console.error('Error deleting draft:', draftErr);
 		}
 
 		window.location.href = 'notification.html?status=success';

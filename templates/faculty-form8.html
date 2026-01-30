@@ -61,6 +61,41 @@
 		label {
 			letter-spacing: 0.01em;
 		}
+		/* Draft Popup Modal */
+		.draft-modal {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0, 0, 0, 0.5);
+			z-index: 9999;
+			align-items: center;
+			justify-content: center;
+		}
+		.draft-modal.show {
+			display: flex;
+		}
+		.draft-modal-content {
+			background: white;
+			padding: 2rem;
+			border-radius: 1rem;
+			box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+			max-width: 500px;
+			width: 90%;
+			animation: slideIn 0.3s ease-out;
+		}
+		@keyframes slideIn {
+			from {
+				transform: translateY(-50px);
+				opacity: 0;
+			}
+			to {
+				transform: translateY(0);
+				opacity: 1;
+			}
+		}
 		.table-section-title {
 			font-size: 1.1rem;
 			font-weight: 700;
@@ -69,53 +104,67 @@
 			background: linear-gradient(90deg, #f59e42 0%, #fbbf24 100%);
 			padding-left: 1rem;
 		}
+		/* File upload preview styles */
 		.file-upload-container {
 			position: relative;
 		}
 		.file-preview {
 			display: flex;
-			align-items: center;
-			gap: 0.5rem;
-			margin-top: 0.5rem;
-			padding: 0.5rem;
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 6px;
+			margin-top: 8px;
+			padding: 10px 12px;
 			background: #f0fdf4;
-			border: 1px solid #86efac;
-			border-radius: 0.5rem;
+			border: 2px solid #86efac;
+			border-radius: 10px;
+			font-size: 0.85rem;
 		}
 		.file-preview .file-name {
-			flex: 1;
-			font-size: 0.875rem;
-			color: #16a34a;
+			color: #166534;
 			font-weight: 500;
-		}
-		.file-actions {
+			word-break: break-all;
 			display: flex;
-			gap: 0.5rem;
+			align-items: center;
+			gap: 6px;
 		}
-		.btn-view, .btn-replace {
-			padding: 0.25rem 0.75rem;
-			font-size: 0.75rem;
+		.file-preview .file-actions {
+			display: flex;
+			gap: 8px;
+			margin-top: 4px;
+		}
+		.file-preview .btn-view, .file-preview .btn-replace {
+			padding: 5px 14px;
+			border-radius: 6px;
+			font-size: 0.8rem;
 			font-weight: 600;
-			border-radius: 0.375rem;
-			border: none;
 			cursor: pointer;
+			border: none;
 			transition: all 0.2s;
 		}
-		.btn-view {
-			background: #dbeafe;
-			color: #1e40af;
-		}
-		.btn-view:hover {
+		.file-preview .btn-view {
 			background: #3b82f6;
 			color: white;
 		}
-		.btn-replace {
-			background: #fef3c7;
-			color: #92400e;
+		.file-preview .btn-view:hover {
+			background: #2563eb;
 		}
-		.btn-replace:hover {
+		.file-preview .btn-replace {
 			background: #f59e0b;
 			color: white;
+		}
+		.file-preview .btn-replace:hover {
+			background: #d97706;
+		}
+		.upload-success {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 2px;
+		}
+		.upload-success .checkmark {
+			color: #16a34a;
+			font-size: 1rem;
 		}
 		.validation-error {
 			margin-top: 0.5rem;
@@ -217,12 +266,53 @@
 					</table>
 				</div>
 
-				<div class="flex justify-center mt-10">
+				<div class="flex justify-center gap-4 mt-10">
+					<button type="button" id="saveDraftBtn" class="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white font-bold py-4 px-12 rounded-full shadow-2xl hover:shadow-yellow-500/50 hover:scale-105 transform transition duration-200 text-lg tracking-wide">
+						<i class="fas fa-save mr-2"></i>Save Draft
+					</button>
 					<button type="submit" class="bg-gradient-to-r from-purple-600 to-purple-800 text-white font-bold py-4 px-12 rounded-full shadow-2xl hover:shadow-purple-500/50 hover:scale-105 transform transition duration-200 text-lg tracking-wide">
 						Submit Form
 					</button>
 				</div>
 			</form>
+
+			<!-- Draft Resume Banner -->
+			<div id="draftBanner" class="hidden fixed top-0 left-0 right-0 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black py-3 px-4 shadow-lg z-50">
+				<div class="max-w-6xl mx-auto flex items-center justify-between">
+					<div class="flex items-center gap-3">
+						<i class="fas fa-file-alt text-2xl"></i>
+						<span class="font-semibold">You have an unsaved draft from <span id="draftDate"></span></span>
+					</div>
+					<div class="flex gap-3">
+						<button id="resumeDraftBtn" class="bg-white text-yellow-700 font-bold py-2 px-6 rounded-full hover:bg-yellow-100 transition">
+							<i class="fas fa-redo mr-2"></i>Resume
+						</button>
+						<button id="discardDraftBtn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-full hover:bg-red-700 transition">
+							<i class="fas fa-trash mr-2"></i>Discard
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Draft Modal -->
+			<div id="draftModal" class="draft-modal">
+				<div class="draft-modal-content">
+					<div class="text-center">
+						<i class="fas fa-file-alt text-5xl text-yellow-500 mb-4"></i>
+						<h3 class="text-xl font-bold text-gray-800 mb-2">Draft Found!</h3>
+						<p class="text-gray-600 mb-4">You have an unsaved draft from <span id="modalDraftDate" class="font-semibold"></span></p>
+						<p class="text-sm text-gray-500 mb-6">Would you like to continue where you left off?</p>
+						<div class="flex gap-3 justify-center">
+							<button id="modalResumeDraft" class="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white font-bold py-3 px-6 rounded-full hover:shadow-lg transition">
+								<i class="fas fa-redo mr-2"></i>Resume Draft
+							</button>
+							<button id="modalDiscardDraft" class="bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-full hover:bg-gray-300 transition">
+								<i class="fas fa-times mr-2"></i>Start Fresh
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 	<script src="https://unpkg.com/@supabase/supabase-js"></script>
@@ -296,10 +386,15 @@
 			</td>
 			<td class="border px-2 py-1 file-upload-container">
 				<input type="file" class="file-input-row hidden" data-row="${idx}" accept=".pdf,.jpg,.jpeg,.png">
-				<button type="button" class="upload-btn bg-purple-100 text-purple-800 font-semibold px-3 py-1 rounded w-full hover:bg-purple-200 transition" data-row="${idx}">Upload</button>
+				<div class="upload-success">
+					<button type="button" class="upload-btn bg-purple-100 text-purple-800 font-semibold px-3 py-1 rounded w-full hover:bg-purple-200 transition" data-row="${idx}">Upload</button>
+					<span class="checkmark hidden" data-row="${idx}"><i class="fas fa-check-circle"></i></span>
+				</div>
 				<div id="file-preview-${idx}" class="file-preview" style="display: none;">
-					<i class="fas fa-file text-green-600"></i>
-					<span class="file-name"></span>
+					<div class="file-name">
+						<i class="fas fa-file text-green-600"></i>
+						<span class="filename-text"></span>
+					</div>
 					<div class="file-actions">
 						<button type="button" class="btn-view" onclick="viewFile(${idx})"><i class="fas fa-eye"></i> View</button>
 						<button type="button" class="btn-replace" onclick="replaceFile(${idx})"><i class="fas fa-sync-alt"></i> Replace</button>
@@ -343,12 +438,17 @@
 	function updateFilePreview(taskNum, fileName, fileUrl) {
 		const preview = document.getElementById(`file-preview-${taskNum}`);
 		if (preview) {
-			const nameSpan = preview.querySelector('.file-name');
+			const nameSpan = preview.querySelector('.filename-text');
 			if (nameSpan) {
 				nameSpan.textContent = fileName;
 			}
 			preview.style.display = 'flex';
 			uploadedFiles[taskNum] = fileUrl;
+			// Show checkmark
+			const checkMark = document.querySelector(`.checkmark[data-row="${taskNum}"]`);
+			if (checkMark) {
+				checkMark.classList.remove('hidden');
+			}
 		}
 	}
 
@@ -402,6 +502,9 @@
 		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
 	);
 
+	// Store draft file URLs
+	window.draftFileUrls = {};
+
 	async function uploadFileToStorage(file, path, bucket, uploadBtn) {
 		if (!file) return null;
 		const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
@@ -411,7 +514,7 @@
 		// Change the upload button to 'Uploaded' after successful upload
 		if (uploadBtn) {
 			const row = uploadBtn.getAttribute('data-row');
-			const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
+			const checkMark = document.querySelector(`.checkmark[data-row="${row}"]`);
 			
 			uploadBtn.textContent = 'Uploaded';
 			uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
@@ -474,6 +577,259 @@
 		});
 	}, 500);
 
+	// ==================== DRAFT FUNCTIONALITY ====================
+	
+	// Check for existing draft
+	async function checkForDraft() {
+		try {
+			const dept = localStorage.getItem('department') || '';
+			const member = localStorage.getItem('selectedMemberName') || '';
+			
+			if (!dept || !member) return;
+			
+			const { data, error } = await supabase
+				.from('form8_monthly_drafts')
+				.select('*')
+				.eq('Department', dept)
+				.eq('Portfolio Member Name', member)
+				.order('updated_at', { ascending: false })
+				.limit(1);
+			
+			if (error) {
+				console.error('Error checking for draft:', error);
+				return;
+			}
+			
+			if (data && data.length > 0) {
+				showDraftPopup(data[0]);
+			}
+		} catch (err) {
+			console.error('Error checking for draft:', err);
+		}
+	}
+	
+	// Show draft popup modal
+	function showDraftPopup(draft) {
+		const modal = document.getElementById('draftModal');
+		const banner = document.getElementById('draftBanner');
+		const draftDate = new Date(draft.updated_at).toLocaleString();
+		
+		document.getElementById('modalDraftDate').textContent = draftDate;
+		document.getElementById('draftDate').textContent = draftDate;
+		
+		modal.classList.add('show');
+		
+		// Store draft data for later use
+		window.currentDraft = draft;
+	}
+	
+	// Load draft data into form
+	function loadDraftData(draft) {
+		const form = document.getElementById('facultyForm8');
+		
+		// Load basic fields
+		if (draft['Department']) {
+			const field = form.querySelector('input[name="Department"]');
+			if (field) field.value = draft['Department'];
+		}
+		if (draft['Portfolio Name']) {
+			const field = form.querySelector('input[name="Portfolio Name"]');
+			if (field) field.value = draft['Portfolio Name'];
+		}
+		if (draft['Portfolio Member Name']) {
+			const field = form.querySelector('input[name="Portfolio Member Name"]');
+			if (field) field.value = draft['Portfolio Member Name'];
+		}
+		if (draft['Month']) {
+			const field = form.querySelector('select[name="Month"]');
+			if (field) field.value = draft['Month'];
+		}
+		
+		// Load row data (13 rows)
+		for (let i = 1; i <= 13; i++) {
+			const statusKey = `Status_${i}`;
+			const descKey = `Description_${i}`;
+			const fileKey = `Upload The Scanned File_${i}`;
+			
+			if (draft[statusKey]) {
+				const field = form.querySelector(`select[name="${statusKey}"]`);
+				if (field) field.value = draft[statusKey];
+			}
+			if (draft[descKey]) {
+				const field = form.querySelector(`input[name="${descKey}"]`);
+				if (field) field.value = draft[descKey];
+			}
+			if (draft[fileKey]) {
+				window.draftFileUrls[i] = draft[fileKey];
+				uploadedFiles[i] = draft[fileKey];
+				// Show file preview
+				const fileName = draft[fileKey].split('/').pop() || 'Uploaded file';
+				updateFilePreview(i, fileName, draft[fileKey]);
+				// Update button state
+				const uploadBtn = document.querySelector(`button.upload-btn[data-row="${i}"]`);
+				if (uploadBtn) {
+					uploadBtn.textContent = 'Uploaded';
+					uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
+				}
+				// Show checkmark
+				const checkMark = document.querySelector(`.checkmark[data-row="${i}"]`);
+				if (checkMark) {
+					checkMark.classList.remove('hidden');
+				}
+			}
+		}
+		
+		// Show banner
+		document.getElementById('draftBanner').classList.remove('hidden');
+	}
+	
+	// Save form as draft
+	async function saveAsDraft() {
+		const form = document.getElementById('facultyForm8');
+		const formData = new FormData(form);
+		const saveDraftBtn = document.getElementById('saveDraftBtn');
+		
+		// Disable button and show saving state
+		saveDraftBtn.disabled = true;
+		saveDraftBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+		
+		try {
+			const draftData = {
+				'Department': formData.get('Department'),
+				'Portfolio Name': formData.get('Portfolio Name'),
+				'Portfolio Member Name': formData.get('Portfolio Member Name'),
+				'Month': formData.get('Month'),
+				'updated_at': new Date().toISOString()
+			};
+			
+			// Process all 13 rows
+			for (let i = 1; i <= 13; i++) {
+				const statusKey = `Status_${i}`;
+				const descKey = `Description_${i}`;
+				const fileKey = `Upload The Scanned File_${i}`;
+				
+				draftData[statusKey] = formData.get(statusKey) || '';
+				draftData[descKey] = formData.get(descKey) || '';
+				
+				// Get file URL from uploaded files or draft
+				const fileInput = document.querySelector(`input.file-input-row[data-row='${i}']`);
+				if (fileInput && fileInput.files.length > 0) {
+					const file = fileInput.files[0];
+					const bucket = 'form5-files';
+					const path = `draft_facultyfile${i}_${Date.now()}_${file.name}`;
+					try {
+						const fileUrl = await uploadFileToStorage(file, path, bucket, null);
+						draftData[fileKey] = fileUrl || '';
+						if (fileUrl) {
+							window.draftFileUrls[i] = fileUrl;
+							uploadedFiles[i] = fileUrl;
+						}
+					} catch (err) {
+						console.error('Error uploading file:', err);
+						draftData[fileKey] = uploadedFiles[i] || window.draftFileUrls[i] || '';
+					}
+				} else {
+					draftData[fileKey] = uploadedFiles[i] || window.draftFileUrls[i] || '';
+				}
+			}
+			
+			// Check for existing draft
+			const { data: existingDraft } = await supabase
+				.from('form8_monthly_drafts')
+				.select('id')
+				.eq('Department', draftData['Department'])
+				.eq('Portfolio Member Name', draftData['Portfolio Member Name'])
+				.limit(1);
+			
+			let result;
+			if (existingDraft && existingDraft.length > 0) {
+				// Update existing draft
+				result = await supabase
+					.from('form8_monthly_drafts')
+					.update(draftData)
+					.eq('id', existingDraft[0].id);
+			} else {
+				// Insert new draft
+				result = await supabase
+					.from('form8_monthly_drafts')
+					.insert([draftData]);
+			}
+			
+			if (result.error) {
+				throw result.error;
+			}
+			
+			// Show success
+			saveDraftBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Draft Saved!';
+			saveDraftBtn.className = 'bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-4 px-12 rounded-full shadow-2xl transform transition duration-200 text-lg tracking-wide';
+			
+			setTimeout(() => {
+				saveDraftBtn.disabled = false;
+				saveDraftBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Draft';
+				saveDraftBtn.className = 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white font-bold py-4 px-12 rounded-full shadow-2xl hover:shadow-yellow-500/50 hover:scale-105 transform transition duration-200 text-lg tracking-wide';
+			}, 2000);
+			
+		} catch (err) {
+			console.error('Error saving draft:', err);
+			alert('Error saving draft: ' + err.message);
+			saveDraftBtn.disabled = false;
+			saveDraftBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Draft';
+			saveDraftBtn.className = 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white font-bold py-4 px-12 rounded-full shadow-2xl hover:shadow-yellow-500/50 hover:scale-105 transform transition duration-200 text-lg tracking-wide';
+		}
+	}
+	
+	// Event handlers for draft buttons
+	document.getElementById('saveDraftBtn').addEventListener('click', saveAsDraft);
+	
+	document.getElementById('modalResumeDraft').addEventListener('click', function() {
+		if (window.currentDraft) {
+			loadDraftData(window.currentDraft);
+		}
+		document.getElementById('draftModal').classList.remove('show');
+	});
+	
+	document.getElementById('modalDiscardDraft').addEventListener('click', async function() {
+		if (window.currentDraft) {
+			try {
+				await supabase
+					.from('form8_monthly_drafts')
+					.delete()
+					.eq('id', window.currentDraft.id);
+			} catch (err) {
+				console.error('Error discarding draft:', err);
+			}
+		}
+		document.getElementById('draftModal').classList.remove('show');
+		window.currentDraft = null;
+	});
+	
+	document.getElementById('resumeDraftBtn').addEventListener('click', function() {
+		if (window.currentDraft) {
+			loadDraftData(window.currentDraft);
+		}
+		document.getElementById('draftBanner').classList.add('hidden');
+	});
+	
+	document.getElementById('discardDraftBtn').addEventListener('click', async function() {
+		if (window.currentDraft) {
+			try {
+				await supabase
+					.from('form8_monthly_drafts')
+					.delete()
+					.eq('id', window.currentDraft.id);
+			} catch (err) {
+				console.error('Error discarding draft:', err);
+			}
+		}
+		document.getElementById('draftBanner').classList.add('hidden');
+		window.currentDraft = null;
+	});
+	
+	// Check for draft after page loads
+	setTimeout(checkForDraft, 1000);
+	
+	// ==================== END DRAFT FUNCTIONALITY ====================
+
 	// Form submission
 	document.getElementById('facultyForm8').addEventListener('submit', async function(e) {
 		e.preventDefault();
@@ -531,10 +887,11 @@
 					dataRow[fileKey] = fileUrl || '';
 				} catch (err) {
 					console.error('Error uploading file:', err);
-					dataRow[fileKey] = '';
+					dataRow[fileKey] = uploadedFiles[i] || window.draftFileUrls[i] || '';
 				}
 			} else {
-				dataRow[fileKey] = '';
+				// Use draft file URL if available
+				dataRow[fileKey] = uploadedFiles[i] || window.draftFileUrls[i] || '';
 			}
 		}
 
@@ -543,6 +900,17 @@
 		if (error) {
 			alert('Error submitting form: ' + error.message);
 			return;
+		}
+
+		// Delete draft after successful submission
+		try {
+			await supabase
+				.from('form8_monthly_drafts')
+				.delete()
+				.eq('Department', dataRow['Department'])
+				.eq('Portfolio Member Name', dataRow['Portfolio Member Name']);
+		} catch (err) {
+			console.error('Error deleting draft:', err);
 		}
 
 		window.location.href = 'notification.html?status=success';
