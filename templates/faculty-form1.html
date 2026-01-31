@@ -420,16 +420,15 @@
 		if (uploadBtn) {
 			const row = uploadBtn.getAttribute('data-row');
 			const checkMark = document.querySelector(`.checkmark[data-row="${row}"]`);
-			
+			// Save file URL for draft saving
+			window.draftFileUrls[row] = urlData.publicUrl;
 			uploadBtn.textContent = 'Uploaded';
 			uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
 			uploadBtn.disabled = true;
-			
 			// Show checkmark
 			if (checkMark) {
 				checkMark.classList.remove('hidden');
 			}
-			
 			// Update file preview
 			updateFilePreview(row, file.name, urlData.publicUrl);
 		}
@@ -474,7 +473,7 @@
 				.from('form1_monthly_drafts')
 				.select('*')
 				.eq('Portfolio Member Name', memberName)
-				.order('updated_at', { ascending: false })
+				.order('created_at', { ascending: false })
 				.limit(1);
 			
 			if (error) {
@@ -494,7 +493,7 @@
 	function showDraftPopup(draft) {
 		const modal = document.getElementById('draftModal');
 		const dateEl = document.getElementById('draftDate');
-		const date = new Date(draft.updated_at);
+		const date = new Date(draft.created_at);
 		dateEl.textContent = date.toLocaleString();
 		modal.classList.add('show');
 		modal.dataset.draftId = draft.id;
@@ -504,7 +503,6 @@
 	// Load draft data into form
 	function loadDraftData(draft) {
 		const form = document.getElementById('facultyForm1');
-		
 		// Load basic fields
 		if (draft['Department']) {
 			const field = form.querySelector('input[name="Department"]');
@@ -522,21 +520,21 @@
 			const field = form.querySelector('select[name="Month"]');
 			if (field) field.value = draft['Month'];
 		}
-		
 		// Load all 18 rows
 		for (let i = 1; i <= 18; i++) {
-			if (draft[`Status-${i}`]) {
+			if (draft[`Status_${i}`]) {
 				const field = form.querySelector(`select[name="Status-${i}"]`);
-				if (field) field.value = draft[`Status-${i}`];
+				if (field) field.value = draft[`Status_${i}`];
 			}
-			if (draft[`Description-${i}`]) {
+			if (draft[`Description_${i}`]) {
 				const field = form.querySelector(`input[name="Description-${i}"]`);
-				if (field) field.value = draft[`Description-${i}`];
+				if (field) field.value = draft[`Description_${i}`];
 			}
 			// Store file URLs from draft for submission
-			if (draft[`Upload The Scanned File-${i}`]) {
-				const fileUrl = draft[`Upload The Scanned File-${i}`];
+			if (draft[`Upload The Scanned File_${i}`]) {
+				const fileUrl = draft[`Upload The Scanned File_${i}`];
 				window.draftFileUrls[i] = fileUrl;
+				uploadedFiles[i] = fileUrl; // Ensure viewFile works for draft files
 				// Update UI to show file exists
 				const uploadBtn = document.querySelector(`button.upload-btn[data-row="${i}"]`);
 				const checkMark = document.querySelector(`.checkmark[data-row="${i}"]`);
@@ -560,37 +558,31 @@
 			const form = document.getElementById('facultyForm1');
 			const formData = new FormData(form);
 			const memberName = formData.get('Portfolio Member Name');
-			
 			if (!memberName) {
 				alert('Please enter Portfolio Member Name before saving draft.');
 				return;
 			}
-			
 			const draftData = {
 				'Department': formData.get('Department'),
 				'Portfolio Name': formData.get('Portfolio Name'),
 				'Portfolio Member Name': memberName,
-				'Month': formData.get('Month'),
-				'updated_at': new Date().toISOString()
+				'Month': formData.get('Month')
 			};
-			
-			// Save all 18 rows
+			// Save all 18 rows with underscores
 			for (let i = 1; i <= 18; i++) {
-				draftData[`Status-${i}`] = formData.get(`Status-${i}`);
-				draftData[`Description-${i}`] = formData.get(`Description-${i}`);
+				draftData[`Status_${i}`] = formData.get(`Status-${i}`);
+				draftData[`Description_${i}`] = formData.get(`Description-${i}`);
 				// Preserve existing file URLs from draft
 				if (window.draftFileUrls[i]) {
-					draftData[`Upload The Scanned File-${i}`] = window.draftFileUrls[i];
+					draftData[`Upload The Scanned File_${i}`] = window.draftFileUrls[i];
 				}
 			}
-			
 			// Check if draft exists for this member
 			const { data: existingDraft } = await supabase
 				.from('form1_monthly_drafts')
 				.select('id')
 				.eq('Portfolio Member Name', memberName)
 				.limit(1);
-			
 			let result;
 			if (existingDraft && existingDraft.length > 0) {
 				// Update existing draft
@@ -604,18 +596,15 @@
 					.from('form1_monthly_drafts')
 					.insert([draftData]);
 			}
-			
 			if (result.error) {
 				throw result.error;
 			}
-			
 			// Show success banner
 			const banner = document.getElementById('draftBanner');
 			banner.classList.remove('hidden');
 			setTimeout(() => {
 				banner.classList.add('hidden');
 			}, 3000);
-			
 		} catch (err) {
 			console.error('Error saving draft:', err);
 			alert('Failed to save draft: ' + err.message);
