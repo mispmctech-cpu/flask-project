@@ -7,6 +7,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Supabase JS library (must be loaded before any Supabase usage) -->
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <!-- Notification system (must load after Supabase) -->
+  <script src="/static/javascript/supabase-notifications.js"></script>
   <script src="../static/javascript/form-modal-mapper.js"></script>
   <script src="../static/javascript/workdone-edit-requests.js"></script>
   <!-- SheetJS for Excel export -->
@@ -3586,8 +3588,7 @@
   </footer>
 
   <!-- Load JavaScript files before closing body -->
-  <script src="../static/javascript/workdone-table.js"></script>
-  <script src="/static/javascript/supabase-notifications.js"></script>
+  <script src="/static/javascript/workdone-table.js"></script>
 </body>
 
 

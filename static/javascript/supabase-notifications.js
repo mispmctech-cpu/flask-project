@@ -1,11 +1,16 @@
 // supabase-notifications.js
 // Simple notification posting for Supabase
 
+// Check if Supabase is loaded
+if (typeof window.supabase === 'undefined') {
+  console.error('Supabase library not loaded! Make sure @supabase/supabase-js is included before this script.');
+}
+
 // Load Supabase client
-const supabase = window.supabase.createClient(
+const supabase = window.supabase ? window.supabase.createClient(
   "https://cbhodgwaazmjszkujrti.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
-);
+) : null;
 
 function getUsername() {
   return localStorage.getItem('pmc_username') || 'User';
@@ -174,7 +179,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Or call fetchNotifications directly when opening modal
 window.openNotificationModal = function() {
-  document.getElementById('messagingModal').classList.remove('hidden');
+  console.log('openNotificationModal called');
+  const modal = document.getElementById('messagingModal');
+  if (!modal) {
+    console.error('messagingModal element not found!');
+    return;
+  }
+  modal.classList.remove('hidden');
   setTimeout(fetchNotifications, 100); // Ensure DOM is ready
 }
+
+console.log('supabase-notifications.js loaded. openNotificationModal is now available.');
 // <button onclick="postNotification()">Send</button>
