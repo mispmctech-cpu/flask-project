@@ -1754,8 +1754,8 @@
           const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
           
           // Fetch ALL form data for this faculty (all months)
-          // Prof(Yearly) uses created_at, others use submitted_at
-          const orderColumn = desig === 'Prof' ? 'created_at' : 'submitted_at';
+          // S&H tables and Prof tables use created_at, Engineering non-Prof tables use submitted_at
+          const orderColumn = (isSHFaculty || desig === 'Prof') ? 'created_at' : 'submitted_at';
           const { data: allFormData, error } = await supabaseClient
             .from(tableName)
             .select('*')
@@ -2772,26 +2772,39 @@
           const name = data["Name"] || "";
           const department = data["department"] || "";
           const designation = (data["Designation"] || "").toUpperCase();
+          
+          // Check if S&H faculty
+          const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+          const isSHFaculty = shDepartments.includes(department);
+          
           let tableName = null;
           let scopes = [];
+          let orderColumn = 'created_at'; // Default for S&H tables
+          
           if (designation === "AP") {
-            tableName = "AP";
+            tableName = isSHFaculty ? "AP_SH_Yearly" : "AP";
+            orderColumn = isSHFaculty ? "created_at" : "submitted_at";
             scopes = [
               "1. Research Publications", "2. Research Projects", "3. Patents", "4. FDP/Workshops", "5. Awards", "6. Consultancy", "7. Memberships", "8. Resource Person", "9. Reviewer/Editor", "10. Others"
             ];
           } else if (designation === "ASP") {
-            tableName = "ASP";
+            tableName = isSHFaculty ? "ASP_SH_Yearly" : "ASP";
+            orderColumn = isSHFaculty ? "created_at" : "submitted_at";
             scopes = [
               "1. Research Publications", "2. Research Projects", "3. Patents", "4. FDP/Workshops", "5. Awards", "6. Consultancy", "7. Memberships", "8. Resource Person", "9. Reviewer/Editor", "10. Others"
             ];
           } else if (designation === "PROF" || designation === "PROFESSOR") {
-            tableName = "Prof";
+            tableName = isSHFaculty ? "Prof_SH_Yearly" : "Prof";
+            orderColumn = "created_at"; // Prof always uses created_at
             scopes = [
               "1. Research Publications", "2. Research Projects", "3. Patents", "4. FDP/Workshops", "5. Awards", "6. Consultancy", "7. Memberships", "8. Resource Person", "9. Reviewer/Editor", "10. Others"
             ];
           }
           if (!tableName) {
-            document.getElementById("facultyPortfolioStatusTable").innerHTML = '<div class="text-gray-400">No portfolio status available for this designation.</div>';
+            const container = document.getElementById("facultyPortfolioStatusTable");
+            if (container) {
+              container.innerHTML = '<div class="text-gray-400">No portfolio status available for this designation.</div>';
+            }
             return;
           }
           // Fetch the most recent submission for this faculty (match Portfolio Member Name)
@@ -2800,10 +2813,13 @@
             .select('*')
             .eq('Portfolio Member Name', name)
             .eq('Department', department)
-            .order('submitted_at', { ascending: false })
+            .order(orderColumn, { ascending: false })
             .limit(1);
           if (error || !portfolioRows || portfolioRows.length === 0) {
-            document.getElementById("facultyPortfolioStatusTable").innerHTML = '<div class="text-gray-400">No recent portfolio submission found.</div>';
+            const container = document.getElementById("facultyPortfolioStatusTable");
+            if (container) {
+              container.innerHTML = '<div class="text-gray-400">No recent portfolio submission found.</div>';
+            }
             return;
           }
           const row = portfolioRows[0];
@@ -2822,7 +2838,10 @@
             html += `<tr><td class="px-2 py-1 border border-gray-400">${scope}</td><td class="px-2 py-1 border border-gray-400">${statusDisplay}</td></tr>`;
           }
           html += '</tbody></table>';
-          document.getElementById("facultyPortfolioStatusTable").innerHTML = html;
+          const container = document.getElementById("facultyPortfolioStatusTable");
+          if (container) {
+            container.innerHTML = html;
+          }
         }
         renderFacultyPortfolioStatusTable();
         // --- End: Faculty Portfolio Status Table ---
