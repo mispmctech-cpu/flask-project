@@ -592,7 +592,7 @@
 				.select('*')
 				.eq('Department', dept)
 				.eq('Portfolio Member Name', member)
-				.order('updated_at', { ascending: false })
+				.order('created_at', { ascending: false })
 				.limit(1);
 			
 			if (error) {
@@ -612,7 +612,7 @@
 	function showDraftPopup(draft) {
 		const modal = document.getElementById('draftModal');
 		const banner = document.getElementById('draftBanner');
-		const draftDate = new Date(draft.updated_at).toLocaleString();
+		const draftDate = new Date(draft.updated_at || draft.created_at || Date.now()).toLocaleString();
 		
 		document.getElementById('modalDraftDate').textContent = draftDate;
 		document.getElementById('draftDate').textContent = draftDate;
@@ -698,8 +698,7 @@
 				'Department': formData.get('Department'),
 				'Portfolio Name': formData.get('Portfolio Name'),
 				'Portfolio Member Name': formData.get('Portfolio Member Name'),
-				'Month': formData.get('Month'),
-				'updated_at': new Date().toISOString()
+				'Month': formData.get('Month')
 			};
 			
 			// Process all 13 rows

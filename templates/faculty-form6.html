@@ -546,7 +546,7 @@
 				.eq('Department', dept)
 				.eq('Portfolio Member Name', member)
 				.eq('Month', month)
-				.order('updated_at', { ascending: false })
+				.order('created_at', { ascending: false })
 				.limit(1);
 			
 			if (error) {
@@ -567,10 +567,8 @@
 		const draftInfo = document.getElementById('draftInfo');
 		const banner = document.getElementById('draftBanner');
 		
-		if (draft.updated_at) {
-			const date = new Date(draft.updated_at);
-			draftInfo.textContent = `Last saved: ${date.toLocaleDateString()} at ${date.toLocaleTimeString()}`;
-		}
+		const date = new Date(draft.updated_at || draft.created_at || Date.now());
+		draftInfo.textContent = `Last saved: ${date.toLocaleDateString()} at ${date.toLocaleTimeString()}`;
 		
 		modal.classList.add('show');
 		window.currentDraft = draft;
@@ -639,8 +637,7 @@
 			"Department": formData.get('Department'),
 			"Portfolio Name": formData.get('Portfolio Name'),
 			"Portfolio Member Name": formData.get('Portfolio Member Name'),
-			"Month": formData.get('Month'),
-			"updated_at": new Date().toISOString()
+			"Month": formData.get('Month')
 		};
 		
 		// Save row data (16 rows)

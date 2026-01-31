@@ -493,7 +493,7 @@
 	function showDraftPopup(draft) {
 		const modal = document.getElementById('draftModal');
 		const dateEl = document.getElementById('draftDate');
-		const date = new Date(draft.created_at);
+		const date = new Date(draft.updated_at || draft.created_at || Date.now());
 		dateEl.textContent = date.toLocaleString();
 		modal.classList.add('show');
 		modal.dataset.draftId = draft.id;
@@ -522,6 +522,7 @@
 		}
 		// Load all 18 rows
 		for (let i = 1; i <= 18; i++) {
+<<<<<<< HEAD
 			if (draft[`Status_${i}`]) {
 				const field = form.querySelector(`select[name="Status-${i}"]`);
 				if (field) field.value = draft[`Status_${i}`];
@@ -533,6 +534,19 @@
 			// Store file URLs from draft for submission
 			if (draft[`Upload The Scanned File_${i}`]) {
 				const fileUrl = draft[`Upload The Scanned File_${i}`];
+=======
+			if (draft[`Status_${i}`] || draft[`Status-${i}`]) {
+				const field = form.querySelector(`select[name="Status-${i}"]`);
+				if (field) field.value = draft[`Status_${i}`] || draft[`Status-${i}`];
+			}
+			if (draft[`Description_${i}`] || draft[`Description-${i}`]) {
+				const field = form.querySelector(`input[name="Description-${i}"]`);
+				if (field) field.value = draft[`Description_${i}`] || draft[`Description-${i}`];
+			}
+			// Store file URLs from draft for submission
+			if (draft[`Upload The Scanned File_${i}`] || draft[`Upload The Scanned File-${i}`]) {
+				const fileUrl = draft[`Upload The Scanned File_${i}`] || draft[`Upload The Scanned File-${i}`];
+>>>>>>> 282bd2b (Fixed draft functionality for forms 1-8)
 				window.draftFileUrls[i] = fileUrl;
 				uploadedFiles[i] = fileUrl; // Ensure viewFile works for draft files
 				// Update UI to show file exists

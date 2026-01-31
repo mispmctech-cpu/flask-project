@@ -79,11 +79,7 @@
                 select.title = '';
             }
         });
-        if (enabledMonths.length < 12 && enabledMonths.length > 0) {
-            showMonthRestrictionNotice(enabledMonths);
-        } else if (enabledMonths.length === 0) {
-            showNoMonthsAvailableNotice();
-        }
+        // Pop-up notices disabled to avoid interrupting form entry.
     }
 
     // Show a notice that some months are restricted

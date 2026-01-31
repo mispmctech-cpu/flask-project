@@ -546,7 +546,7 @@
 				.select('*')
 				.eq('Department', department)
 				.eq('Portfolio Member Name', memberName)
-				.order('updated_at', { ascending: false })
+				.order('created_at', { ascending: false })
 				.limit(1);
 			
 			if (error) {
@@ -566,7 +566,7 @@
 		const modal = document.getElementById('draftModal');
 		const draftInfo = document.getElementById('draftInfo');
 		
-		const savedDate = new Date(draft.updated_at).toLocaleString();
+		const savedDate = new Date(draft.updated_at || draft.created_at || Date.now()).toLocaleString();
 		draftInfo.textContent = `Last saved: ${savedDate}`;
 		
 		modal.classList.add('show');
@@ -638,8 +638,7 @@
 				'Department': department,
 				'Portfolio Name': formData.get('Portfolio Name') || '',
 				'Portfolio Member Name': memberName,
-				'Month': formData.get('Month') || '',
-				'updated_at': new Date().toISOString()
+				'Month': formData.get('Month') || ''
 			};
 			
 			// Save row data (9 rows)

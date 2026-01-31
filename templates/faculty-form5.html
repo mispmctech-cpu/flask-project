@@ -355,7 +355,7 @@
 					<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
 					<span class="checkmark hidden" data-row="${idx}">✓</span>
 				</div>
-				<input type="file" name="Upload a Scanned File_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
+				<input type="file" name="Upload The Scanned File_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
 				<div id="file-preview-${idx}" class="file-preview" style="display: none;">
 					<span class="file-name"><span class="filename-text">No file</span></span>
 					<div class="file-actions">
@@ -555,7 +555,7 @@
 				.select('*')
 				.eq('Department', dept)
 				.eq('Portfolio Member Name', member)
-				.order('updated_at', { ascending: false })
+				.order('created_at', { ascending: false })
 				.limit(1);
 			
 			if (error) {
@@ -578,7 +578,7 @@
 		const banner = document.getElementById('draftBanner');
 		const draftDate = document.getElementById('draftDate');
 		
-		const date = new Date(draft.updated_at || draft.created_at);
+		const date = new Date(draft.updated_at || draft.created_at || Date.now());
 		const formattedDate = date.toLocaleString();
 		
 		timestamp.textContent = formattedDate;
@@ -619,8 +619,8 @@
 				if (field) field.value = draft[`Description_${i}`];
 			}
 			// Handle file URLs from draft
-			if (draft[`Upload a Scanned File_${i}`]) {
-				const fileUrl = draft[`Upload a Scanned File_${i}`];
+			if (draft[`Upload The Scanned File_${i}`]) {
+				const fileUrl = draft[`Upload The Scanned File_${i}`];
 				window.draftFileUrls[i] = fileUrl;
 				uploadedFiles[i] = fileUrl;
 				
@@ -665,8 +665,7 @@
 			'Department': dept,
 			'Portfolio Name': formData.get('Portfolio Name'),
 			'Portfolio Member Name': member,
-			'Month': formData.get('Month'),
-			'updated_at': new Date().toISOString()
+			'Month': formData.get('Month')
 		};
 		
 		// Save row data for all 12 rows
@@ -676,11 +675,11 @@
 			
 			// Save file URL if available
 			if (uploadedFiles[i]) {
-				draftData[`Upload a Scanned File_${i}`] = uploadedFiles[i];
+				draftData[`Upload The Scanned File_${i}`] = uploadedFiles[i];
 			} else if (window.draftFileUrls[i]) {
-				draftData[`Upload a Scanned File_${i}`] = window.draftFileUrls[i];
+				draftData[`Upload The Scanned File_${i}`] = window.draftFileUrls[i];
 			} else {
-				draftData[`Upload a Scanned File_${i}`] = null;
+				draftData[`Upload The Scanned File_${i}`] = null;
 			}
 		}
 		
@@ -784,13 +783,13 @@
 				const ts = Date.now();
 				const path = `facultyfile${i}_${ts}_${file.name}`;
 				try {
-					dataRow[`Upload a Scanned File_${i}`] = await uploadFileToStorage(file, path, 'form5-files');
+					dataRow[`Upload The Scanned File_${i}`] = await uploadFileToStorage(file, path, 'form5-files');
 				} catch (err) {
 					alert('File upload failed for row ' + i + ': ' + err.message);
-					dataRow[`Upload a Scanned File_${i}`] = null;
+					dataRow[`Upload The Scanned File_${i}`] = null;
 				}
 			} else {
-				dataRow[`Upload a Scanned File_${i}`] = window.draftFileUrls[i] || null;
+				dataRow[`Upload The Scanned File_${i}`] = window.draftFileUrls[i] || null;
 			}
 		}
 
