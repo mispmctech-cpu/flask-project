@@ -407,6 +407,10 @@ class WorkdoneEditRequestSystem {
                 </a>
               </div>
               <p class="text-xs text-green-700 ml-7">To keep this file, leave the upload field below empty</p>
+              <div class="mt-3 flex items-center gap-2 pl-7">
+                <input type="checkbox" id="remove_${name}" name="remove_${name}" class="w-4 h-4 text-red-600 border-gray-300 rounded cursor-pointer file-remove-checkbox" data-field="${name}">
+                <label for="remove_${name}" class="text-sm font-medium text-red-600 cursor-pointer">☒ Remove this file</label>
+              </div>
             </div>
           ` : `
             <div class="bg-yellow-50 border border-yellow-300 rounded p-3 text-sm text-yellow-700">
@@ -1090,7 +1094,15 @@ window.saveEditedWorkdone = async function() {
     // Check if this is a file input field
     const fileInput = form.querySelector(`input[name="${key}"][type="file"]`);
     
-    if (fileInput && value instanceof File && value.size > 0) {
+    // Check if user wants to remove this file
+    const removeCheckbox = form.querySelector(`input[name="remove_${key}"][type="checkbox"]`);
+    const shouldRemove = removeCheckbox && removeCheckbox.checked;
+    
+    if (shouldRemove) {
+      // User explicitly checked "Remove this file" - set to null
+      console.log(`Removing file: ${key}`);
+      editedData[key] = null;
+    } else if (fileInput && value instanceof File && value.size > 0) {
       // User selected a new file - upload it
       statusDiv.textContent = `Uploading ${key}...`;
       const fileUrl = await window.editRequestSystem.uploadFile(value);

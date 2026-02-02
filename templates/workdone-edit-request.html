@@ -413,9 +413,51 @@
             </div>
           ` : ''}
           <div class="border-t pt-3 mt-3">
-            <strong class="text-lg text-purple-700">Record to be Edited:</strong>
-            <div class="mt-2 max-h-96 overflow-y-auto border rounded p-3 bg-white">
-              ${dataHtml}
+            <strong class="text-lg text-purple-700">📋 Complete Record Data:</strong>
+            <div class="mt-2 max-h-screen overflow-y-auto border rounded p-4 bg-gray-50">
+              <div class="space-y-2">
+                ${(() => {
+                  const data = request.original_data || request;
+                  const html = [];
+                  
+                  // Display all fields with proper formatting
+                  for (const [key, value] of Object.entries(data)) {
+                    if (key === '_original') continue; // Skip the _original field
+                    
+                    let displayValue = value;
+                    let valueClass = 'text-gray-700';
+                    
+                    // Format the value based on type
+                    if (value === null) {
+                      displayValue = '<span class="text-gray-400">null</span>';
+                      valueClass = 'text-gray-400';
+                    } else if (value === '' || value === undefined) {
+                      displayValue = '<span class="text-gray-400 italic">empty</span>';
+                      valueClass = 'text-gray-400';
+                    } else if (typeof value === 'boolean') {
+                      displayValue = `<span class="font-bold ${value ? 'text-green-600' : 'text-red-600'}">${value}</span>`;
+                    } else if (typeof value === 'string' && value.startsWith('http')) {
+                      displayValue = `<a href="${value}" target="_blank" class="text-blue-600 hover:underline break-all">View File ↗</a>`;
+                    } else if (typeof value === 'string' && value.length > 100) {
+                      displayValue = `<div class="bg-white p-2 rounded border border-gray-300 text-sm break-words">${value}</div>`;
+                    } else if (typeof value === 'object') {
+                      displayValue = `<pre class="bg-white p-2 rounded border border-gray-300 text-xs overflow-auto max-h-48">${JSON.stringify(value, null, 2)}</pre>`;
+                    }
+                    
+                    // Format field name
+                    const fieldName = key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim();
+                    
+                    html.push(`
+                      <div class="border-b pb-2 mb-2 last:border-b-0">
+                        <div class="font-semibold text-gray-800">${fieldName}</div>
+                        <div class="${valueClass} text-sm">${displayValue}</div>
+                      </div>
+                    `);
+                  }
+                  
+                  return html.join('');
+                })()}
+              </div>
             </div>
           </div>
         </div>

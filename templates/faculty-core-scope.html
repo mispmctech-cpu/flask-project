@@ -111,6 +111,44 @@
 		@media (max-width: 600px) {
 			th, td { font-size: 0.9rem; }
 		}
+		/* File upload preview styles */
+		.file-upload-container { position: relative; }
+		.file-preview { 
+			display: flex; 
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 6px; 
+			margin-top: 8px; 
+			padding: 10px 12px; 
+			background: #f0fdf4; 
+			border: 2px solid #86efac; 
+			border-radius: 10px; 
+			font-size: 0.85rem; 
+		}
+		.file-preview .file-name { 
+			color: #166534; 
+			font-weight: 500;
+			word-break: break-all; 
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+		.file-preview .file-actions { display: flex; gap: 8px; margin-top: 4px; }
+		.file-preview .btn-view, .file-preview .btn-replace, .file-preview .btn-remove { 
+			padding: 5px 14px; 
+			border-radius: 6px; 
+			font-size: 0.8rem; 
+			font-weight: 600;
+			cursor: pointer; 
+			border: none; 
+			transition: all 0.2s; 
+		}
+		.file-preview .btn-view { background: #3b82f6; color: white; }
+		.file-preview .btn-view:hover { background: #2563eb; }
+		.file-preview .btn-replace { background: #f59e0b; color: white; }
+		.file-preview .btn-replace:hover { background: #d97706; }
+		.file-preview .btn-remove { background: #ef4444; color: white; }
+		.file-preview .btn-remove:hover { background: #dc2626; }
 	</style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
@@ -223,6 +261,59 @@
 	<script>
 	// Global object to store draft file URLs
 	window.draftFileUrls = {};
+	
+	// Store uploaded file URLs for preview
+	const uploadedFiles = {};
+	
+	// File preview and management functions
+	function viewFile(taskNum) {
+		const fileUrl = uploadedFiles[taskNum];
+		if (fileUrl) {
+			window.open(fileUrl, '_blank');
+		} else {
+			alert('No file uploaded yet.');
+		}
+	}
+	
+	function replaceFile(taskNum) {
+		const fileInput = document.querySelector(`.file-input-row[data-row="${taskNum}"]`);
+		if (fileInput) {
+			fileInput.value = '';
+			fileInput.click();
+		}
+	}
+	
+	function removeFile(taskNum) {
+		const preview = document.getElementById(`file-preview-${taskNum}`);
+		const uploadBtn = document.querySelector(`.upload-btn[data-row="${taskNum}"]`);
+		const fileInput = document.querySelector(`.file-input-row[data-row="${taskNum}"]`);
+		
+		if (preview) {
+			preview.style.display = 'none';
+		}
+		if (uploadBtn) {
+			uploadBtn.textContent = 'Upload';
+			uploadBtn.className = 'upload-btn bg-purple-200 hover:bg-purple-300 text-purple-800 font-semibold px-3 py-1 rounded w-full transition';
+			uploadBtn.disabled = false;
+		}
+		if (fileInput) {
+			fileInput.value = '';
+		}
+		uploadedFiles[taskNum] = null;
+		delete window.draftFileUrls[taskNum];
+	}
+	
+	function updateFilePreview(taskNum, fileName, fileUrl) {
+		const preview = document.getElementById(`file-preview-${taskNum}`);
+		if (preview) {
+			const nameSpan = preview.querySelector('.file-name span');
+			if (nameSpan) {
+				nameSpan.textContent = fileName;
+			}
+			preview.style.display = 'flex';
+			uploadedFiles[taskNum] = fileUrl;
+		}
+	}
 	
 	// Autofetch using localStorage
 	document.addEventListener('DOMContentLoaded', function() {
@@ -384,10 +475,20 @@
 			<td class="border px-2 py-1">
 				<input type="text" name="Description_${idx}" maxlength="500" class="w-full border rounded px-1 py-1" placeholder="${row.proof}" />
 			</td>
-			<td class="border px-2 py-1">
-				<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
-				<span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">✓</span>
-				<input type="file" name="Upload The Scanned File_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
+		<td class="border px-2 py-1 file-upload-container">
+			<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
+			<input type="file" name="Upload The Scanned File_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
+			<div class="file-preview" id="file-preview-${idx}" style="display: none;">
+				<div class="file-name">
+					<i class="fas fa-file-alt"></i>
+					<span id="file-name-${idx}">No file selected</span>
+				</div>
+				<div class="file-actions">
+					<button type="button" class="btn-view" onclick="viewFile(${idx})">View</button>
+					<button type="button" class="btn-replace" onclick="replaceFile(${idx})">Replace</button>
+					<button type="button" class="btn-remove" onclick="removeFile(${idx})">Remove</button>
+				</div>
+			</div>
 			</td>
 		`;
 		tbody.appendChild(tr);
@@ -442,13 +543,23 @@
 			const row = e.target.getAttribute('data-row');
 			const file = e.target.files[0];
 			if (!file) return;
+			
+			// Show preview immediately
+			const tempUrl = URL.createObjectURL(file);
+			updateFilePreview(row, file.name, tempUrl);
+			
 			const uploadBtn = document.querySelector(`button.upload-btn[data-row='${row}']`);
 			const bucket = 'form1-files';
 			const path = `corescope_${row}_${Date.now()}_${file.name}`;
 			try {
-				await uploadFileToStorage(file, path, bucket, uploadBtn);
+				const publicUrl = await uploadFileToStorage(file, path, bucket, uploadBtn);
+				// Update preview with actual URL after upload
+				if (publicUrl) {
+					uploadedFiles[row] = publicUrl;
+				}
 			} catch (err) {
-				alert('File upload failed for row ' + row + ': ' + err.message);
+				alert('Upload failed: ' + err.message);
+				removeFile(row);
 			}
 		}
 	});

@@ -233,6 +233,19 @@ class ValidationScoring {
       // Get validation data
       const totalFields = document.querySelectorAll('[id^="score_field_"]').length;
       const validatedFields = Object.values(this.fieldScores).reduce((sum, score) => sum + score, 0);
+      
+      // Check if at least 1 field is validated
+      if (validatedFields === 0) {
+        if (statusBox) {
+          statusBox.innerHTML = '<span class="text-red-600 font-semibold">⚠ Please validate at least 1 field before submitting</span>';
+        }
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = 'Submit Validation';
+        }
+        return;
+      }
+      
       const validationScore = totalFields > 0 ? ((validatedFields / totalFields) * 100).toFixed(2) : 0;
       const validationNotes = document.getElementById('validationNotes')?.value || '';
       const validatedBy = localStorage.getItem('Name') || localStorage.getItem('name') || 'HOD';
