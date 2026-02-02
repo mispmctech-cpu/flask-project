@@ -1964,10 +1964,9 @@ function getFormModalContent(row, details) {
     return html;
   }
 
-  // Faculty-form1.html (form1-monthly table with 18 rows)
+  // Faculty-form1.html (form1-monthly table with 18 rows for all frequencies)
   if (portfolio.includes('students performance in training & placement member') || 
-      (row.table && row.table.toLowerCase().includes('form1-monthly')) ||
-      (row.table && row.table.toLowerCase().includes('form1 - monthly'))) {
+      (row.table && row.table.toLowerCase().includes('form1-monthly'))) {
     html += `<div class="mb-4"><span class="text-2xl font-extrabold text-purple-800 tracking-wide">HOD, Students Performance in Training & Placement Member</span></div>`;
     html += `<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">`;
     html += `<div><span class="font-semibold text-gray-700">Department:</span> <span>${details['Department'] || '-'}</span></div>`;

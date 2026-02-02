@@ -86,11 +86,8 @@ class WorkdoneTable {
       { table: "Institution-form7-monthly", portfolio: "Executive Dean – International Affairs (Monthly)" },
       { table: "Institution-form8", portfolio: "Head - Placements" },
       { table: "Institution-form9", portfolio: "Placement officer" },
-      // Department Portfolio Forms (existing)
+      // Department Portfolio Forms (existing) - all form1 types use form1-monthly table
       { table: "form1-monthly", portfolio: "Students Performance in Training & Placement Member (Monthly)" },
-      { table: "form1-once in a year", portfolio: "Students Performance in Training & Placement Member (Yearly)" },
-      { table: "form1-Weekly", portfolio: "Students Performance in Training & Placement Member (Weekly)" },
-      { table: "form1-once in 15 days", portfolio: "Students Performance in Training & Placement Member (Bi-weekly)" },
       // NEW: Add support for new Form2-daily table (Postgres: "Form2-daily")
       { table: "Form2-daily", portfolio: "Class Advisor (Daily)" },
       { table: "form2-monthly", portfolio: "Class Advisor (Monthly)" },

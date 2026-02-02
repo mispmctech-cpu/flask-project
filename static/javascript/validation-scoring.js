@@ -17,7 +17,7 @@ class ValidationScoring {
   countStatusFields(rowData) {
     let count = 0;
     for (const key in rowData) {
-      if (key.toLowerCase().includes('status_') || key.toLowerCase() === 'status') {
+      if (key.toLowerCase().includes('status_') || key.toLowerCase().includes('status-') || key.toLowerCase() === 'status') {
         count++;
       }
     }
@@ -30,7 +30,7 @@ class ValidationScoring {
   extractStatusFields(rowData) {
     const statusFields = [];
     for (const key in rowData) {
-      if (key.toLowerCase().includes('status_') || (key.toLowerCase() === 'status' && typeof rowData[key] === 'string')) {
+      if (key.toLowerCase().includes('status_') || key.toLowerCase().includes('status-') || (key.toLowerCase() === 'status' && typeof rowData[key] === 'string')) {
         statusFields.push({
           fieldName: key,
           value: rowData[key] || 'N/A',
