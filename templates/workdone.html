@@ -6,10 +6,10 @@
   <title>Workdone Validation Overview</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
-  <script src="../static/javascript/form-modal-mapper.js"></script>
-  <script src="../static/javascript/workdone-table.js"></script>
-  <script src="../static/javascript/validation-scoring.js"></script>
-  <script src="../static/javascript/database-setup.js"></script>
+  <script src="../static/javascript/form-modal-mapper.js?v=2"></script>
+  <script src="../static/javascript/workdone-table.js?v=2"></script>
+  <script src="../static/javascript/validation-scoring.js?v=2"></script>
+  <script src="../static/javascript/database-setup.js?v=2"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
   <header class="bg-purple-700 text-white shadow-md">
@@ -178,19 +178,25 @@
         const workdoneTable = new WorkdoneTable(supabaseClient, true); // true = only faculty forms
         const rows = await workdoneTable.loadDepartmentWorkdone(dept);
         
-        // Filter out already validated records
+        // Filter out ONLY validated and rejected records, keep PENDING VERIFICATION
         const { data: validatedRecords } = await supabaseClient
           .from('Hod-workdone')
           .select('input_id, table_name')
           .eq('department', dept);
 
-        const validatedKeys = new Set(
-          (validatedRecords || []).map(r => `${r.table_name}_${r.input_id}`)
+        const { data: rejectedRecords } = await supabaseClient
+          .from('Hod-workdone_reject')
+          .select('input_id, table_name')
+          .eq('department', dept);
+
+        const processedKeys = new Set(
+          (validatedRecords || []).concat(rejectedRecords || []).map(r => `${r.table_name}_${r.input_id}`)
         );
 
         window._allWorkdoneRows = rows.filter(row => {
           const key = `${row.table}_${row.input_id}`;
-          return !validatedKeys.has(key);
+          // Only exclude if it has been processed (verified or rejected)
+          return !processedKeys.has(key);
         });
 
         window._filteredWorkdoneRows = window._allWorkdoneRows;

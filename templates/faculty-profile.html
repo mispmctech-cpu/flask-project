@@ -268,6 +268,33 @@
           </div>
           <div id="facultySummaryTableContainer" class="overflow-x-auto"></div>
         </div>
+
+        <!-- HOD Validated Score -->
+        <div class="mt-8">
+          <h2 class="text-2xl font-bold text-green-700 mb-4">HOD Validated Score</h2>
+          <div class="mb-4 flex flex-wrap gap-4 items-center">
+            <label for="hodValidatedMonthFilter" class="font-medium text-green-700 mr-2">Month:</label>
+            <select id="hodValidatedMonthFilter" class="p-2 border rounded">
+              <option value="January">January</option>
+              <option value="February">February</option>
+              <option value="March">March</option>
+              <option value="April">April</option>
+              <option value="May">May</option>
+              <option value="June">June</option>
+              <option value="July">July</option>
+              <option value="August">August</option>
+              <option value="September">September</option>
+              <option value="October">October</option>
+              <option value="November">November</option>
+              <option value="December">December</option>
+            </select>
+            <button id="exportHodValidatedBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export validated scores to Excel">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+              Export to Excel
+            </button>
+          </div>
+          <div id="hodValidatedTableContainer" class="overflow-x-auto"></div>
+        </div>
         
         <!-- DEPARTMENT PORTFOLIO -->
         <div class="mt-8">
@@ -2149,12 +2176,41 @@
         loadFacultyCoreScopeTable();
         // --- End: Faculty Core Scope - Monthly Table ---
 
-        // --- Begin: Consolidated Summary Table ---
-        (function() {
-        let selectedFacultySummaryMonth = 'January';
+        // --- Institution portfolio form mappings (accessible to all sections)
+        window.institutionFormTableMap = [
+          { name: "Director – Students welfare & Admission", table: "Institution-form1-monthly" },
+          { name: "Head - HR", table: "Institution-form2" },
+          { name: "Principal", table: "Institution-form3-monthly" },
+          { name: "Dean - IQAC", table: "Institution-form4-monthly" },
+          { name: "Director - Academics", table: "Institution-form5" },
+          { name: "Controller of Examinations", table: "Institution-form6-monthly" },
+          { name: "Executive Dean – International Affairs", table: "Institution-form7-monthly" },
+          { name: "Head - Placements", table: "Institution-form8" },
+          { name: "Placement Officer", table: "Institution-form9" },
+          { name: "Head – Training", table: "Institution-form10" },
+          { name: "Training Officer", table: "Institution-form11" },
+          { name: "Head - RISE", table: "Institution-form12" },
+          { name: "IT Infra – Coordinator", table: "Institution-form13-monthly" },
+          { name: "Website – Coordinator", table: "Institution-form14-monthly" },
+          { name: "ERP Coordinator", table: "Institution-form15" },
+          { name: "Public Relations Officer", table: "Institution-form16" },
+          { name: "Logistics Coordinator", table: "Institution-form17" }
+        ];
 
-        // Function to calculate faculty rating
-        function calculateFacultyRating(coreScopePercent, yearlyPercent, deptPortfolio1, deptPortfolio2, instPortfolio1, instPortfolio2) {
+        // --- Department portfolio form mappings (accessible to all sections)
+        window.deptPortfolioFormMap = [
+          { label: "1. Training & Placement", table: 'form1-monthly', formKey: 'form1' },
+          { label: "2. Class Advisor", table: 'form2-monthly', formKey: 'form2' },
+          { label: "3. Info & Contribution", table: 'form3-monthly', formKey: 'form3' },
+          { label: "4. Outcome & Exam Cell", table: 'form4-monthly', formKey: 'form4' },
+          { label: "5. Continuous Improvement", table: 'form5-monthly', formKey: 'form5' },
+          { label: "6. T&L Process (IQAC)", table: 'form6_monthly', formKey: 'form6' },
+          { label: "7. Student Support", table: 'form7-monthly', formKey: 'form7' },
+          { label: "8. Facilities & Lab", table: 'form8-monthly', formKey: 'form8' }
+        ];
+
+        // --- Function to calculate faculty rating (accessible globally)
+        window.calculateFacultyRating = function(coreScopePercent, yearlyPercent, deptPortfolio1, deptPortfolio2, instPortfolio1, instPortfolio2) {
           let validScores = [];
           
           // Helper function to parse percentage
@@ -2218,40 +2274,16 @@
             starCount: starCount,
             colorClass: colorClass
           };
-        }
+        };
 
-        // Institution portfolio form mappings
-        const institutionFormTableMap = [
-          { name: "Director – Students welfare & Admission", table: "Institution-form1-monthly" },
-          { name: "Head - HR", table: "Institution-form2" },
-          { name: "Principal", table: "Institution-form3-monthly" },
-          { name: "Dean - IQAC", table: "Institution-form4-monthly" },
-          { name: "Director - Academics", table: "Institution-form5" },
-          { name: "Controller of Examinations", table: "Institution-form6-monthly" },
-          { name: "Executive Dean – International Affairs", table: "Institution-form7-monthly" },
-          { name: "Head - Placements", table: "Institution-form8" },
-          { name: "Placement Officer", table: "Institution-form9" },
-          { name: "Head – Training", table: "Institution-form10" },
-          { name: "Training Officer", table: "Institution-form11" },
-          { name: "Head - RISE", table: "Institution-form12" },
-          { name: "IT Infra – Coordinator", table: "Institution-form13-monthly" },
-          { name: "Website – Coordinator", table: "Institution-form14-monthly" },
-          { name: "ERP Coordinator", table: "Institution-form15" },
-          { name: "Public Relations Officer", table: "Institution-form16" },
-          { name: "Logistics Coordinator", table: "Institution-form17" }
-        ];
-
-        // Department portfolio form mappings (8 forms)
-        const deptPortfolioFormMap = [
-          { label: "1. Training & Placement", table: 'form1-monthly', formKey: 'form1' },
-          { label: "2. Class Advisor", table: 'form2-monthly', formKey: 'form2' },
-          { label: "3. Info & Contribution", table: 'form3-monthly', formKey: 'form3' },
-          { label: "4. Outcome & Exam Cell", table: 'form4-monthly', formKey: 'form4' },
-          { label: "5. Continuous Improvement", table: 'form5-monthly', formKey: 'form5' },
-          { label: "6. T&L Process (IQAC)", table: 'form6_monthly', formKey: 'form6' },
-          { label: "7. Student Support", table: 'form7-monthly', formKey: 'form7' },
-          { label: "8. Facilities & Lab", table: 'form8-monthly', formKey: 'form8' }
-        ];
+        // --- Begin: Consolidated Summary Table ---
+        (function() {
+        // Reference the global form maps
+        const deptPortfolioFormMap = window.deptPortfolioFormMap;
+        const institutionFormTableMap = window.institutionFormTableMap;
+        const calculateFacultyRating = window.calculateFacultyRating;
+        
+        let selectedFacultySummaryMonth = 'January';
 
         async function loadFacultyConsolidatedSummary() {
           document.getElementById('facultySummaryMonthFilter').addEventListener('change', () => {
@@ -2310,13 +2342,13 @@
               .order(orderColumn, { ascending: false });
             
             // Fetch department portfolio data for all 8 forms
-            const deptPortfolioPromises = deptPortfolioFormMap.map(form => 
+            const deptPortfolioPromises = window.deptPortfolioFormMap.map(form => 
               supabaseClient.from(form.table).select('*').eq('Month', selectedFacultySummaryMonth)
             );
             const deptPortfolioResults = await Promise.all(deptPortfolioPromises);
             
             // Fetch institution portfolio data for all 17 forms
-            const instPortfolioPromises = institutionFormTableMap.map(form => 
+            const instPortfolioPromises = window.institutionFormTableMap.map(form => 
               supabaseClient.from(form.table).select('*')
             );
             const instPortfolioResults = await Promise.all(instPortfolioPromises);
@@ -2590,13 +2622,13 @@
               .eq('Department', dept);
             
             // Fetch department portfolio data
-            const deptPortfolioPromises = deptPortfolioFormMap.map(form => 
+            const deptPortfolioPromises = window.deptPortfolioFormMap.map(form => 
               supabaseClient.from(form.table).select('*').eq('Month', selectedFacultySummaryMonth)
             );
             const deptPortfolioResults = await Promise.all(deptPortfolioPromises);
             
             // Fetch institution portfolio data
-            const instPortfolioPromises = institutionFormTableMap.map(form => 
+            const instPortfolioPromises = window.institutionFormTableMap.map(form => 
               supabaseClient.from(form.table).select('*')
             );
             const instPortfolioResults = await Promise.all(instPortfolioPromises);
@@ -2800,6 +2832,276 @@
         loadFacultyConsolidatedSummary();
         })();
         // --- End: Consolidated Summary Table ---
+
+        // --- Begin: HOD Validated Score ---
+        let selectedHodValidatedMonth = new Date().toLocaleString('en-US', { month: 'long' });
+
+        async function loadHodValidatedScore() {
+          document.getElementById('hodValidatedMonthFilter').addEventListener('change', () => {
+            selectedHodValidatedMonth = document.getElementById('hodValidatedMonthFilter').value;
+            renderHodValidatedScore();
+          });
+          
+          document.getElementById('exportHodValidatedBtn').onclick = exportHodValidatedToExcel;
+          
+          await renderHodValidatedScore();
+        }
+
+        async function renderHodValidatedScore() {
+          const container = document.getElementById('hodValidatedTableContainer');
+          if (!container) return;
+          container.innerHTML = '<div class="text-center text-gray-500 py-4">Loading validated scores...</div>';
+          
+          try {
+            console.log('[HOD Validated] Starting to load validated scores...');
+            console.log('[HOD Validated] Data object:', data);
+            console.log('[HOD Validated] supabaseClient:', typeof supabaseClient);
+            console.log('[HOD Validated] deptPortfolioFormMap length:', window.deptPortfolioFormMap?.length);
+            console.log('[HOD Validated] institutionFormTableMap length:', window.institutionFormTableMap?.length);
+            
+            const facultyName = data["Name"] || "";
+            const dept = data["department"] || "Unknown";
+            const designation = data["Designation"] || "N/A";
+            
+            if (!facultyName || !dept) {
+              container.innerHTML = '<div class="text-gray-500 text-center py-4">Faculty information not available.</div>';
+              return;
+            }
+            
+            console.log('[HOD Validated] Faculty:', facultyName, 'Department:', dept);
+            
+            // Normalize designation
+            const desig = designation.toUpperCase();
+            let desigDisplay = '';
+            if (desig === 'AP' || desig === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
+            else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
+            else if (desig === 'PROF' || desig === 'PROFESSOR') desigDisplay = 'Prof';
+            else {
+              container.innerHTML = '<div class="text-gray-500 text-center py-4">Validated scores not available for non-teaching staff.</div>';
+              return;
+            }
+            
+            // Check if S&H faculty
+            const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+            const isSHFaculty = shDepartments.includes(dept);
+            
+            // Get table names for this faculty
+            const coreScopeTableName = isSHFaculty ? 'Core_scope_SH' : 'Core_scope';
+            let yearlyTableName = isSHFaculty
+              ? (desigDisplay === 'Prof' ? 'Prof_SH_Yearly' : `${desigDisplay}_SH_Yearly`)
+              : (desigDisplay === 'Prof' ? 'Prof(Yearly)' : `${desigDisplay}(Yearly)`);
+            
+            console.log('[HOD Validated] Table names - Core:', coreScopeTableName, 'Yearly:', yearlyTableName);
+            console.log('[HOD Validated] Selected month:', selectedHodValidatedMonth);
+            
+            // Fetch validated records from Hod-workdone table for this faculty, department, and MONTH
+            console.log('[HOD Validated] Fetching from Hod-workdone for month:', selectedHodValidatedMonth);
+            let hodWorkdoneRecords = [];
+            let hodError = null;
+            
+            try {
+              // Try to fetch with month filter (if column exists)
+              const result = await supabaseClient
+                .from('Hod-workdone')
+                .select('*')
+                .eq('department', dept)
+                .eq('month', selectedHodValidatedMonth)
+                .ilike('portfolio_member_name', `%${facultyName}%`);
+              
+              hodWorkdoneRecords = result.data || [];
+              hodError = result.error;
+            } catch (monthFilterErr) {
+              // If month filter fails, try without it (month column may not exist yet)
+              console.warn('[HOD Validated] Month filter failed, trying without month:', monthFilterErr.message);
+              const result = await supabaseClient
+                .from('Hod-workdone')
+                .select('*')
+                .eq('department', dept)
+                .ilike('portfolio_member_name', `%${facultyName}%`);
+              
+              hodWorkdoneRecords = result.data || [];
+              hodError = result.error;
+            }
+            
+            if (hodError) {
+              console.error('[HOD Validated] Error fetching Hod-workdone:', hodError);
+              throw new Error('Error fetching validation records: ' + hodError.message);
+            }
+            
+            console.log('[HOD Validated] Records found:', hodWorkdoneRecords?.length || 0);
+            if (hodWorkdoneRecords && hodWorkdoneRecords.length > 0) {
+              console.log('[HOD Validated] Sample record:', hodWorkdoneRecords[0]);
+            }
+            
+            // Helper function to calculate validation percentage for a specific table
+            const calculateValidationPercentage = (tableName) => {
+              if (!hodWorkdoneRecords || hodWorkdoneRecords.length === 0) {
+                console.log(`[HOD Validated] ${tableName}: no records available`);
+                return '-';
+              }
+              
+              // Filter records for this specific table
+              const tableRecords = hodWorkdoneRecords.filter(r => r.table_name === tableName);
+              
+              console.log(`[HOD Validated] ${tableName}: found ${tableRecords.length} records`);
+              
+              if (tableRecords.length === 0) return '-';
+              
+              // Sum up validated_fields and total_fields across all validation records for this table
+              let totalValidated = 0;
+              let totalFields = 0;
+              
+              tableRecords.forEach((record, idx) => {
+                console.log(`[HOD Validated] ${tableName} record ${idx}:`, 
+                  'validated_fields:', record.validated_fields, 
+                  'total_fields:', record.total_fields);
+                  
+                // Handle validated_fields - can be a number, array, or object
+                if (record.validated_fields !== null && record.validated_fields !== undefined) {
+                  if (typeof record.validated_fields === 'number') {
+                    // If it's already a number, add it directly
+                    totalValidated += record.validated_fields;
+                  } else if (typeof record.validated_fields === 'object') {
+                    // If it's a JSONB array or object
+                    if (Array.isArray(record.validated_fields)) {
+                      totalValidated += record.validated_fields.length;
+                    } else {
+                      totalValidated += Object.keys(record.validated_fields).length;
+                    }
+                  }
+                }
+                // Add to total fields count
+                totalFields += record.total_fields || 0;
+              });
+              
+              console.log(`[HOD Validated] ${tableName}: ${totalValidated} validated / ${totalFields} total`);
+              
+              if (totalFields === 0) return '-';
+              
+              return Math.round((totalValidated / totalFields) * 100) + '%';
+            };
+            
+            // Calculate percentages for each form category
+            let coreScopePercent = calculateValidationPercentage(coreScopeTableName);
+            let yearlyPercent = calculateValidationPercentage(yearlyTableName);
+            
+            console.log('[HOD Validated Core Scope]', coreScopeTableName, ':', coreScopePercent);
+            console.log('[HOD Validated Yearly]', yearlyTableName, ':', yearlyPercent);
+            
+            // Calculate Department Portfolio percentages
+            let deptPortfolio1Percent = '-';
+            let deptPortfolio2Percent = '-';
+            let deptPortfolioCount = 0;
+            
+            if (window.deptPortfolioFormMap && window.deptPortfolioFormMap.length > 0) {
+              for (let i = 0; i < window.deptPortfolioFormMap.length; i++) {
+                const formMapping = window.deptPortfolioFormMap[i];
+                const isAssigned = data[formMapping.formKey] && data[formMapping.formKey].toString().trim().toLowerCase() === 'yes';
+                
+                if (isAssigned) {
+                  const percent = calculateValidationPercentage(formMapping.table);
+                  if (percent !== '-') {
+                    if (deptPortfolioCount === 0) {
+                      deptPortfolio1Percent = percent;
+                    } else if (deptPortfolioCount === 1) {
+                      deptPortfolio2Percent = percent;
+                    }
+                    deptPortfolioCount++;
+                  }
+                }
+              }
+            }
+            
+            console.log('[HOD Validated Dept Portfolio]', deptPortfolio1Percent, deptPortfolio2Percent);
+            
+            // Calculate Institution Portfolio percentages
+            let instPortfolio1Percent = '-';
+            let instPortfolio2Percent = '-';
+            let instPortfolioCount = 0;
+            
+            if (window.institutionFormTableMap && window.institutionFormTableMap.length > 0) {
+              for (let i = 0; i < window.institutionFormTableMap.length; i++) {
+                const formMapping = window.institutionFormTableMap[i];
+                const percent = calculateValidationPercentage(formMapping.table);
+                
+                if (percent !== '-') {
+                  if (instPortfolioCount === 0) {
+                    instPortfolio1Percent = percent;
+                  } else if (instPortfolioCount === 1) {
+                    instPortfolio2Percent = percent;
+                  }
+                  instPortfolioCount++;
+                }
+              }
+            }
+            
+            console.log('[HOD Validated Inst Portfolio]', instPortfolio1Percent, instPortfolio2Percent);
+            
+            // Render table
+            let html = '<div class="overflow-auto border rounded-lg shadow-sm">';
+            html += '<table class="min-w-full text-sm bg-white"><thead class="bg-green-700 text-white"><tr>';
+            html += '<th class="px-3 py-2">Dept</th>';
+            html += '<th class="px-3 py-2">Desig</th>';
+            html += '<th class="px-3 py-2">Faculty Name</th>';
+            html += '<th class="px-3 py-2">Faculty Core Scope Monthly</th>';
+            html += '<th class="px-3 py-2">Faculty Mandatory Scope (Yearly)</th>';
+            html += '<th class="px-3 py-2">Department Portfolio Scope-1</th>';
+            html += '<th class="px-3 py-2">Department Portfolio Scope-2</th>';
+            html += '<th class="px-3 py-2">Institution Portfolio-1</th>';
+            html += '<th class="px-3 py-2">Institution Portfolio-2</th>';
+            html += '<th class="px-3 py-2 bg-green-700">Overall Rating</th>';
+            html += '</tr></thead><tbody>';
+            
+            html += '<tr class="hover:bg-gray-50">';
+            html += `<td class="px-2 py-2 border">${dept}</td>`;
+            html += `<td class="px-2 py-2 border text-center">${desigDisplay}</td>`;
+            html += `<td class="px-2 py-2 border">${facultyName}</td>`;
+            html += `<td class="px-2 py-2 border text-center font-semibold">${coreScopePercent}</td>`;
+            html += `<td class="px-2 py-2 border text-center font-semibold">${yearlyPercent}</td>`;
+            html += `<td class="px-2 py-2 border text-center font-semibold">${deptPortfolio1Percent}</td>`;
+            html += `<td class="px-2 py-2 border text-center font-semibold">${deptPortfolio2Percent}</td>`;
+            html += `<td class="px-2 py-2 border text-center font-semibold">${instPortfolio1Percent}</td>`;
+            html += `<td class="px-2 py-2 border text-center font-semibold">${instPortfolio2Percent}</td>`;
+            
+            // Calculate and display rating
+            const rating = window.calculateFacultyRating(
+              coreScopePercent, yearlyPercent,
+              deptPortfolio1Percent, deptPortfolio2Percent,
+              instPortfolio1Percent, instPortfolio2Percent
+            );
+            html += `<td class="px-2 py-2 border text-center">`;
+            html += `<div class="star-rating ${rating.colorClass}">${rating.stars}</div>`;
+            html += `<div class="text-xs mt-1 ${rating.colorClass}">${rating.average}%</div>`;
+            html += `</td>`;
+            
+            html += '</tr>';
+            html += '</tbody></table></div>';
+            
+            // Check if any validated data exists
+            const hasValidatedData = coreScopePercent !== '-' || yearlyPercent !== '-' || 
+                                     deptPortfolio1Percent !== '-' || deptPortfolio2Percent !== '-' ||
+                                     instPortfolio1Percent !== '-' || instPortfolio2Percent !== '-';
+            
+            if (!hasValidatedData) {
+              container.innerHTML = '<div class="text-gray-500 text-center py-4">No validated scores available for the selected month. HOD has not validated your work yet.</div>';
+            } else {
+              container.innerHTML = html;
+            }
+            
+          } catch (error) {
+            console.error('HOD Validated Score error:', error);
+            console.error('Error stack:', error.stack);
+            container.innerHTML = '<div class="text-red-500 text-center py-4">Failed to load validated scores.<br><small style="font-size: 11px;">' + error.message + '</small></div>';
+          }
+        }
+
+        async function exportHodValidatedToExcel() {
+          // Similar export logic but for validated scores
+          alert('Export functionality for HOD Validated Scores will be available soon.');
+        }
+
+        loadHodValidatedScore();
+        // --- End: HOD Validated Score ---
 
         // --- Begin: Faculty Portfolio Status Table (AP/ASP/Prof) ---
         async function renderFacultyPortfolioStatusTable() {

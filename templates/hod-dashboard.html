@@ -1227,19 +1227,37 @@
         
         if (facErr) throw facErr;
         
-        // Fetch Core Scope Monthly data
-        const { data: coreScopeData } = await supabaseClient
-          .from('Core_scope')
+        console.log('[HOD Consolidated] Fetched', allFaculty?.length || 0, 'total faculty from Faculty table');
+        
+        // Check if S&H department (use different table names)
+        const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+        const isSHDept = shDepartments.includes(department);
+        
+        console.log('[HOD Consolidated] Department:', department, 'isSH:', isSHDept, 'Month:', selectedSummaryMonth);
+        
+        // Fetch Core Scope Monthly data (use Core_scope_SH for S&H)
+        const coreScopeTableName = isSHDept ? 'Core_scope_SH' : 'Core_scope';
+        const { data: coreScopeData, error: coreErr } = await supabaseClient
+          .from(coreScopeTableName)
           .select('*')
           .eq('Month', selectedSummaryMonth)
           .eq('Department', department);
         
+        console.log('[HOD Consolidated] Core Scope table:', coreScopeTableName, 'Fetched:', coreScopeData?.length || 0, 'rows. Error:', coreErr?.message || 'none');
+        
         // Fetch Yearly Mandatory Scope data (AP, ASP, Prof)
+        // S&H tables have _SH suffix
+        const apTableName = isSHDept ? 'AP_SH_Yearly' : 'AP(Yearly)';
+        const aspTableName = isSHDept ? 'ASP_SH_Yearly' : 'ASP(Yearly)';
+        const profTableName = isSHDept ? 'Prof_SH_Yearly' : 'Prof(Yearly)';
+        
         const [apRes, aspRes, profRes] = await Promise.all([
-          supabaseClient.from('AP(Yearly)').select('*').eq('Month', selectedSummaryMonth).eq('Department', department),
-          supabaseClient.from('ASP(Yearly)').select('*').eq('Month', selectedSummaryMonth).eq('Department', department),
-          supabaseClient.from('Prof(Yearly)').select('*').eq('Month', selectedSummaryMonth).eq('Department', department)
+          supabaseClient.from(apTableName).select('*').eq('Month', selectedSummaryMonth).eq('Department', department),
+          supabaseClient.from(aspTableName).select('*').eq('Month', selectedSummaryMonth).eq('Department', department),
+          supabaseClient.from(profTableName).select('*').eq('Month', selectedSummaryMonth).eq('Department', department)
         ]);
+        
+        console.log('[HOD Consolidated] Yearly tables - AP:', apRes.data?.length || 0, 'ASP:', aspRes.data?.length || 0, 'Prof:', profRes.data?.length || 0);
         
         // Fetch department portfolio data for all 8 forms
         const deptPortfolioPromises = deptPortfolioFormMap.map(form => 
@@ -1255,6 +1273,7 @@
         
         // Build summary data
         const summaryRows = [];
+        let filteredByDesigCount = 0;
         
         for (const fac of allFaculty) {
           const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || '';
@@ -1270,6 +1289,7 @@
             continue; // Skip non-teaching staff
           }
           
+          filteredByDesigCount++;
           let desigDisplay = '';
           if (desig === 'AP' || desig === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
           else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
@@ -1441,6 +1461,11 @@
           });
         }
         
+        console.log('[HOD Consolidated] Faculty filtered by designation:', filteredByDesigCount, 'Summary rows created:', summaryRows.length);
+        if (summaryRows.length > 0) {
+          console.log('[HOD Consolidated] First faculty:', summaryRows[0].facultyName, 'Dept:', summaryRows[0].dept);
+        }
+        
         // Sort by designation, then by faculty name
         summaryRows.sort((a, b) => {
           const desigOrder = { 'Prof': 1, 'ASP': 2, 'AP': 3 };
@@ -1502,41 +1527,53 @@
         
         html += '</tbody></table></div>';
         container.innerHTML = html || '<div class="text-gray-500 text-center py-4">No summary data found.</div>';
+        console.log('[HOD Dashboard Consolidated] Rendered', summaryRows.length, 'faculty rows - now fetching HOD validation scores...');
         
         // Async update validation scores from Hod-workdone table
         for (const row of summaryRows) {
           setTimeout(async () => {
             try {
-              const { data: verifyData } = await supabaseClient
+              // Query Hod-workdone with MONTH filter first
+              let { data: verifyData, error: monthErr } = await supabaseClient
                 .from('Hod-workdone')
                 .select('*')
                 .eq('department', row.dept)
+                .eq('month', selectedSummaryMonth)
                 .ilike('portfolio_member_name', row.facultyName);
               
-              if (!verifyData || verifyData.length === 0) return;
+              // If month filter fails (column doesn't exist), try without month filter
+              if (monthErr && monthErr.code === 'PGRST116') {
+                console.log('[HOD Consolidated] Month column not found, querying without month filter for', row.facultyName);
+                const { data: allData } = await supabaseClient
+                  .from('Hod-workdone')
+                  .select('*')
+                  .eq('department', row.dept)
+                  .ilike('portfolio_member_name', row.facultyName);
+                verifyData = allData;
+              }
+              
+              console.log('[HOD Consolidated] Validation data for', row.facultyName, 'month', selectedSummaryMonth, ':', verifyData?.length || 0, 'records');
+              
+              if (!verifyData || verifyData.length === 0) {
+                console.log('[HOD Consolidated] No validation found for', row.facultyName, '- keeping raw scores');
+                return;
+              }
               
               // Update Faculty Core Scope Monthly if verified
               const coreCell = document.getElementById(`summary-core-${row.summaryRowId}`);
-              if (coreCell && coreScopeData) {
-                const matchingCoreRows = coreScopeData.filter(r => 
-                  (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === row.facultyName.trim().toLowerCase()
+              if (coreCell) {
+                // Look for Core Scope validation by faculty name and month
+                const coreValidation = verifyData.find(v => 
+                  v.table_name && v.table_name.toLowerCase().includes('core')
                 );
-                if (matchingCoreRows.length > 0) {
-                  matchingCoreRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
-                  const coreScopeRow = matchingCoreRows[0];
-                  
-                  const matchingVerify = verifyData.find(v => 
-                    v.input_id === coreScopeRow.input_id && 
-                    v.table_name && v.table_name.toLowerCase().includes('core')
-                  );
-                  
-                  if (matchingVerify && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
-                    const validationScore = parseFloat(matchingVerify.validation_score);
-                    if (!isNaN(validationScore)) {
-                      const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
-                      coreCell.innerHTML = `<span class="${percentageClass}">${Math.round(validationScore)}%</span>`;
-                      row.coreScopePercent = `${Math.round(validationScore)}%`;
-                    }
+                
+                if (coreValidation && coreValidation.validation_score != null && coreValidation.validation_score !== '') {
+                  const validationScore = parseFloat(coreValidation.validation_score);
+                  if (!isNaN(validationScore)) {
+                    console.log('[HOD Consolidated] Updating Core Scope for', row.facultyName, 'to', validationScore + '%');
+                    const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
+                    coreCell.innerHTML = `<span class="${percentageClass}">${Math.round(validationScore)}%</span>`;
+                    row.coreScopePercent = `${Math.round(validationScore)}%`;
                   }
                 }
               }
@@ -1545,44 +1582,59 @@
               const yearlyCell = document.getElementById(`summary-yearly-${row.summaryRowId}`);
               if (yearlyCell) {
                 const desigDisplay = row.designation;
-                let yearlyData = desigDisplay === 'AP' ? (await supabaseClient.from('AP(Yearly)').select('*').eq('Month', selectedSummaryMonth).eq('Department', row.dept)).data : 
-                                 desigDisplay === 'ASP' ? (await supabaseClient.from('ASP(Yearly)').select('*').eq('Month', selectedSummaryMonth).eq('Department', row.dept)).data : 
-                                 (await supabaseClient.from('Prof(Yearly)').select('*').eq('Month', selectedSummaryMonth).eq('Department', row.dept)).data;
+                // Look for Yearly validation by faculty name, month, and designation
+                const yearlyValidation = verifyData.find(v => 
+                  v.table_name && v.table_name.includes(desigDisplay) && v.table_name.toLowerCase().includes('yearly')
+                );
                 
-                if (yearlyData) {
-                  const yearlyRow = yearlyData.find(r => 
-                    (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === row.facultyName.trim().toLowerCase()
-                  );
-                  
-                  if (yearlyRow) {
-                    const matchingVerify = verifyData.find(v => 
-                      v.input_id === yearlyRow.input_id && 
-                      v.table_name && v.table_name.includes(desigDisplay) && v.table_name.toLowerCase().includes('yearly')
-                    );
-                    
-                    if (matchingVerify && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
-                      const validationScore = parseFloat(matchingVerify.validation_score);
-                      if (!isNaN(validationScore)) {
-                        const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
-                        yearlyCell.innerHTML = `<span class="${percentageClass}">${Math.round(validationScore)}%</span>`;
-                        row.yearlyPercent = `${Math.round(validationScore)}%`;
-                      }
-                    }
+                if (yearlyValidation && yearlyValidation.validation_score != null && yearlyValidation.validation_score !== '') {
+                  const validationScore = parseFloat(yearlyValidation.validation_score);
+                  if (!isNaN(validationScore)) {
+                    console.log('[HOD Consolidated] Updating Yearly for', row.facultyName, 'to', validationScore + '%');
+                    const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
+                    yearlyCell.innerHTML = `<span class="${percentageClass}">${Math.round(validationScore)}%</span>`;
+                    row.yearlyPercent = `${Math.round(validationScore)}%`;
                   }
                 }
               }
               
+              // Get ALL portfolio validations for this faculty (not just one)
+              const portfolioValidations = verifyData.filter(v => 
+                v.table_name && (v.table_name.toLowerCase().includes('form1') || 
+                                v.table_name.toLowerCase().includes('form2') ||
+                                v.table_name.toLowerCase().includes('form3') || 
+                                v.table_name.toLowerCase().includes('form4') ||
+                                v.table_name.toLowerCase().includes('form5') ||
+                                v.table_name.toLowerCase().includes('form6') ||
+                                v.table_name.toLowerCase().includes('form7') ||
+                                v.table_name.toLowerCase().includes('form8'))
+              );
+              
+              console.log('[HOD Consolidated] Portfolio validations found for', row.facultyName, ':', portfolioValidations.map(v => v.table_name + '=' + v.validation_score));
+              
               // Update Department Portfolio Scope-1 if verified
               const dept1Cell = document.getElementById(`summary-dept1-${row.summaryRowId}`);
-              if (dept1Cell && row.deptPortfolio1Data) {
-                const matchingVerify = verifyData.find(v => 
-                  v.input_id === row.deptPortfolio1Data.input_id && 
-                  v.table_name && v.table_name.toLowerCase() === row.deptPortfolio1Data.table_name.toLowerCase()
-                );
+              if (dept1Cell) {
+                // First try exact match, then use first available portfolio validation
+                let dept1Validation = null;
                 
-                if (matchingVerify && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
-                  const validationScore = parseFloat(matchingVerify.validation_score);
+                if (row.deptPortfolio1Data && row.deptPortfolio1Data.table_name) {
+                  dept1Validation = portfolioValidations.find(v => 
+                    v.table_name.toLowerCase() === row.deptPortfolio1Data.table_name.toLowerCase()
+                  );
+                }
+                
+                // Fallback: use first portfolio validation if no exact match
+                if (!dept1Validation && portfolioValidations.length > 0) {
+                  dept1Validation = portfolioValidations[0];
+                }
+                
+                console.log('[HOD Consolidated] Dept Portfolio 1 - stored:', row.deptPortfolio1Data?.table_name, 'matched:', dept1Validation?.table_name, 'score:', dept1Validation?.validation_score);
+                
+                if (dept1Validation && dept1Validation.validation_score != null && dept1Validation.validation_score !== '') {
+                  const validationScore = parseFloat(dept1Validation.validation_score);
                   if (!isNaN(validationScore)) {
+                    console.log('[HOD Consolidated] Updating Dept Portfolio 1 for', row.facultyName, 'to', validationScore + '%');
                     const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
                     dept1Cell.innerHTML = `<span class="${percentageClass}">${Math.round(validationScore)}%</span>`;
                     row.deptPortfolio1Percent = `${Math.round(validationScore)}%`;
@@ -1592,15 +1644,27 @@
               
               // Update Department Portfolio Scope-2 if verified
               const dept2Cell = document.getElementById(`summary-dept2-${row.summaryRowId}`);
-              if (dept2Cell && row.deptPortfolio2Data) {
-                const matchingVerify = verifyData.find(v => 
-                  v.input_id === row.deptPortfolio2Data.input_id && 
-                  v.table_name && v.table_name.toLowerCase() === row.deptPortfolio2Data.table_name.toLowerCase()
-                );
+              if (dept2Cell) {
+                // First try exact match, then use second available portfolio validation
+                let dept2Validation = null;
                 
-                if (matchingVerify && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
-                  const validationScore = parseFloat(matchingVerify.validation_score);
+                if (row.deptPortfolio2Data && row.deptPortfolio2Data.table_name) {
+                  dept2Validation = portfolioValidations.find(v => 
+                    v.table_name.toLowerCase() === row.deptPortfolio2Data.table_name.toLowerCase()
+                  );
+                }
+                
+                // Fallback: use second portfolio validation if no exact match
+                if (!dept2Validation && portfolioValidations.length > 1) {
+                  dept2Validation = portfolioValidations[1];
+                }
+                
+                console.log('[HOD Consolidated] Dept Portfolio 2 - stored:', row.deptPortfolio2Data?.table_name, 'matched:', dept2Validation?.table_name, 'score:', dept2Validation?.validation_score);
+                
+                if (dept2Validation && dept2Validation.validation_score != null && dept2Validation.validation_score !== '') {
+                  const validationScore = parseFloat(dept2Validation.validation_score);
                   if (!isNaN(validationScore)) {
+                    console.log('[HOD Consolidated] Updating Dept Portfolio 2 for', row.facultyName, 'to', validationScore + '%');
                     const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
                     dept2Cell.innerHTML = `<span class="${percentageClass}">${Math.round(validationScore)}%</span>`;
                     row.deptPortfolio2Percent = `${Math.round(validationScore)}%`;
@@ -1623,14 +1687,14 @@
               }
               
             } catch (err) {
-              console.error('Error updating validation scores for summary row:', err);
+              console.error('[HOD Dashboard Consolidated] Error updating validation scores:', err);
             }
           }, 100);
         }
         
       } catch (error) {
-        console.error('Summary table error:', error);
-        container.innerHTML = '<div class="text-red-500 text-center py-4">Failed to load summary data.</div>';
+        console.error('[HOD Dashboard Consolidated] Summary table error:', error);
+        container.innerHTML = '<div class="text-red-500 text-center py-4">Failed to load summary data. Check console for errors.</div>';
       }
     }
 

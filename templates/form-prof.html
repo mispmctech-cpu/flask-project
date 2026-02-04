@@ -158,7 +158,10 @@
                     <button type="button" id="saveDraftBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">
                         <i class="fas fa-save mr-2"></i>Save as Draft
                     </button>
-                    <button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
+                    <button type="submit" id="profYearlySubmitBtn" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">
+                        <span id="submitBtnText">Submit</span>
+                        <span id="submitBtnSpinner" class="hidden ml-2 inline-block animate-spin"><i class="fas fa-spinner"></i></span>
+                    </button>
                 </div>
             </form>
             <!-- Draft loaded banner -->
@@ -576,6 +579,14 @@
     document.getElementById('profYearlyForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
+        // Show loading state on submit button
+        const submitBtn = document.getElementById('profYearlySubmitBtn');
+        const submitBtnText = document.getElementById('submitBtnText');
+        const submitBtnSpinner = document.getElementById('submitBtnSpinner');
+        submitBtn.disabled = true;
+        submitBtnText.textContent = 'Submitting...';
+        submitBtnSpinner.classList.remove('hidden');
+        
         // Save autofetch values to localStorage for next time
         try {
             var autofetchForm = e.target;
@@ -624,6 +635,10 @@
         // Submit to Supabase
         const { data, error } = await supabase.from('Prof(Yearly)').insert([dataRow]);
         if (error) {
+            // Reset button on error
+            submitBtn.disabled = false;
+            submitBtnText.textContent = 'Submit';
+            submitBtnSpinner.classList.add('hidden');
             window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
             return;
         }

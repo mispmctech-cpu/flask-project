@@ -95,6 +95,9 @@
                 </div>
             </div>
             <div class="flex justify-end mt-4">
+                <button onclick="exportReportsPdf()" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition mr-2">
+                    <i class="fas fa-file-pdf mr-2"></i>Export PDF
+                </button>
                 <button onclick="exportAllReports()" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition mr-2">
                     <i class="fas fa-download mr-2"></i>Export All
                 </button>
@@ -155,6 +158,8 @@
 
     <!-- html2canvas for image download -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- html2pdf for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <script>
@@ -601,6 +606,289 @@
             a.download = `daily_reports_export_${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
             URL.revokeObjectURL(url);
+        }
+
+        async function exportReportsPdf() {
+            const exportBtn = event?.target?.closest('button');
+            const originalText = exportBtn ? exportBtn.innerHTML : '';
+            if (exportBtn) {
+                exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating PDF...';
+                exportBtn.disabled = true;
+            }
+
+            try {
+                if (typeof html2pdf === 'undefined') {
+                    alert('PDF library not loaded. Please refresh and try again.');
+                    return;
+                }
+
+                const dropdownCategory = document.getElementById('filterCategory')?.value || '';
+                const selectedCategory = dropdownCategory || currentCategory;
+                const selectedDepartment = document.getElementById('filterDepartment')?.value || '';
+
+                if (!selectedCategory || selectedCategory === '') {
+                    alert('Please select a category to export.');
+                    return;
+                }
+
+                if (!selectedDepartment || selectedDepartment === '') {
+                    alert('Please select a department to export.');
+                    return;
+                }
+
+                const filteredReports = allReports.filter(r => r._category === selectedCategory && r.department === selectedDepartment);
+
+                if (filteredReports.length === 0) {
+                    alert('No reports to export for the selected filters.');
+                    return;
+                }
+
+                const hodName = filteredReports[0]?.hod_name || '________________';
+                const department = selectedDepartment;
+                const exportDate = new Date().toLocaleDateString('en-IN');
+
+                const buildSection = (label, rowsHtml) => `
+                    <div style="margin-top: 8px; margin-bottom: 4px;">
+                        <div style="font-weight: 700; margin-bottom: 4px; font-size: 11px;">${label}</div>
+                        ${rowsHtml}
+                    </div>
+                `;
+
+                const renderAttendance = (report) => {
+                    const attendanceRows = (report.student_attendance || []).map(row => `
+                        <tr>
+                            <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.class_section || row.class_name || '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.total_students ?? '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.students_present ?? '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.students_od ?? '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.students_leave ?? '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.students_absent ?? '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.attendance_percent || '-'}</td>
+                        </tr>
+                    `).join('') || `
+                        <tr><td colspan="7" style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">-</td></tr>
+                    `;
+
+                    const facultyRow = `
+                        <tr>
+                            <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${report.faculty_od || '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${report.faculty_leave || '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${report.faculty_absent || '-'}</td>
+                        </tr>
+                    `;
+
+                    return `
+                        ${buildSection('Category: 1 Attendance', '')}
+                        <div style="border: 1px solid #333; padding: 3px; font-weight: 700; font-size: 10px;">Students Attendance</div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Year / Class / Section</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Total Students</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">No of Students Present</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">No of Students on OD</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">No of Students on Leave</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">No of Students Absent</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Attendance %</th>
+                                </tr>
+                            </thead>
+                            <tbody>${attendanceRows}</tbody>
+                        </table>
+                        <div style="margin-top: 4px; border: 1px solid #333; padding: 3px; font-weight: 700; font-size: 10px;">Faculty Attendance</div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Name of the Faculty on OD</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Name of the Faculty on Leave</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Name of the Faculty on Absent</th>
+                                </tr>
+                            </thead>
+                            <tbody>${facultyRow}</tbody>
+                        </table>
+                    `;
+                };
+
+                const renderAcademics = (report) => {
+                    const items = (report.academics || []).map(entry => {
+                        const classTitle = entry.class_section || `${entry.year || ''} ${entry.class_name || ''} ${entry.section || ''}`.trim() || '-';
+                        const rows = (entry.timetable || []).map((row, i) => `
+                            <tr>
+                                <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.hour ?? i + 1}</td>
+                                <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.subject || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.faculty_name || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.topics_covered || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.teaching_aid || '-'}</td>
+                            </tr>
+                        `).join('') || `
+                            <tr><td colspan="5" style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">-</td></tr>
+                        `;
+
+                        return `
+                            <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 4px;">
+                                <thead>
+                                    <tr>
+                                        <th colspan="5" style="border: 1px solid #333; padding: 3px; text-align: center; font-weight: 700; font-size: 10px;">${classTitle}</th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Hour</th>
+                                        <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Subject Name</th>
+                                        <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Faculty Name</th>
+                                        <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Topics Covered</th>
+                                        <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Teaching Aid / Pedagogy used</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        `;
+                    }).join('') || '<div style="font-size: 10px; color: #333;">-</div>';
+
+                    return `${buildSection('Category: 2 Academics', items)}`;
+                };
+
+                const renderActivities = (report) => {
+                    const rows = (report.activities || []).map((row, i) => `
+                        <tr>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.sno ?? i + 1}</td>
+                            <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.details || '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.outcome || '-'}</td>
+                        </tr>
+                    `).join('') || `
+                        <tr><td colspan="3" style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">-</td></tr>
+                    `;
+
+                    return `
+                        ${buildSection('Category: 3 Other Activities Conducted in the Department (If any)', '')}
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">S.No</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Details of R&D / Prof. Body / MOU Initiatives / Industry Interaction / Co-curricular / Extra Curricular Activities / Industry Visit / Training / Placement / Project Review / TEC / ERP / FDP / Club / Association / IIC / AICTE Idea Lab / Internship / Audits / Class Committee Meeting / Exam Cell Works / Feedback / Alumni / DAAC / PAC / BOS / Dept. Meetings / NPTEL / Mentoring / Lab Upgradation / Extension / Wellness / Value Added Courses / TSD / IL / Other Activities conducted in the Dept.</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Outcome of the Activity</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    `;
+                };
+
+                const renderAchievements = (report) => {
+                    const rows = (report.achievements || []).map((row, i) => `
+                        <tr>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.sno ?? i + 1}</td>
+                            <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.details || '-'}</td>
+                        </tr>
+                    `).join('') || `
+                        <tr><td colspan="2" style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">-</td></tr>
+                    `;
+
+                    return `
+                        ${buildSection('Category: 4 Positive things happened / Achievements / Challenges Faced on the Day', '')}
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">S.No</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    `;
+                };
+
+                const renderDisciplinary = (report) => {
+                    if (report.no_disciplinary) {
+                        return `${buildSection('Category: 5 Students Disciplinary Actions (if any)', '<div style="font-size: 10px;">No disciplinary actions reported.</div>')}`;
+                    }
+
+                    const rows = (report.disciplinary_actions || []).map((row, i) => `
+                        <tr>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.sno ?? i + 1}</td>
+                            <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.details || '-'}</td>
+                        </tr>
+                    `).join('') || `
+                        <tr><td colspan="2" style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">-</td></tr>
+                    `;
+
+                    return `
+                        ${buildSection('Category: 5 Students Disciplinary Actions (if any)', '')}
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">S.No</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    `;
+                };
+
+                const sectionMap = {
+                    attendance: renderAttendance,
+                    academics: renderAcademics,
+                    activities: renderActivities,
+                    achievements: renderAchievements,
+                    disciplinary: renderDisciplinary
+                };
+
+                const grouped = filteredReports.reduce((acc, r) => {
+                    if (!acc[r._category]) acc[r._category] = [];
+                    acc[r._category].push(r);
+                    return acc;
+                }, {});
+
+                const sectionsHtml = grouped[selectedCategory]
+                    ? grouped[selectedCategory].map(report => sectionMap[selectedCategory]?.(report) || '').join('')
+                    : '';
+
+                const templateHtml = `
+                    <div style="font-family: 'Times New Roman', serif; color: #111; font-size: 11px;">
+                        <table style="width: 100%; border: 1px solid #333; border-collapse: collapse; margin-bottom: 10px;">
+                            <tr>
+                                <td style="border: 1px solid #333; padding: 6px; vertical-align: top;">
+                                    <div style="font-weight: 700; font-size: 13px;">Departments Daily Reporting Format</div>
+                                    <div style="font-size: 10px; margin-top: 2px;">Academic Year: 2025-26 Even Semester</div>
+                                    <div style="margin-top: 6px; font-size: 10px;">Department of&nbsp; <span style="display: inline-block; min-width: 150px; border-bottom: 1px solid #333;">${department || ''}</span></div>
+                                    <div style="margin-top: 4px; font-size: 10px;">Name of the HOD:&nbsp; <span style="display: inline-block; min-width: 150px; border-bottom: 1px solid #333;">${hodName}</span></div>
+                                    <div style="margin-top: 4px; font-size: 10px;">Date:&nbsp; <span style="display: inline-block; min-width: 100px; border-bottom: 1px solid #333;">${exportDate}</span></div>
+                                </td>
+                                <td style="border: 1px solid #333; padding: 6px; width: 32%; text-align: center;">
+                                    <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC" style="height: 50px;" />
+                                    <div style="font-size: 9px; margin-top: 2px;">Autonomous Institution</div>
+                                    <div style="font-size: 9px;">NAAC | NBA | ISO 9001:2015</div>
+                                    <div style="font-size: 9px;">PMC/IQAC/DR/Form-1</div>
+                                </td>
+                            </tr>
+                        </table>
+                        ${sectionsHtml}
+                    </div>
+                `;
+
+                const wrapper = document.createElement('div');
+                wrapper.style.padding = '10px';
+                wrapper.style.background = '#ffffff';
+                wrapper.style.fontSize = '11px';
+                wrapper.style.lineHeight = '1.2';
+                wrapper.innerHTML = templateHtml;
+
+                const filename = `${department}_reports_${new Date().toISOString().split('T')[0]}.pdf`;
+
+                await html2pdf().from(wrapper).set({
+                    margin: [6, 6, 6, 6],
+                    filename,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 1.5, useCORS: true, logging: false, allowTaint: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                }).save();
+            } catch (err) {
+                alert('Failed to export PDF. Please try again.');
+                console.error(err);
+            } finally {
+                if (exportBtn) {
+                    exportBtn.innerHTML = originalText;
+                    exportBtn.disabled = false;
+                }
+            }
         }
 
         // Close modal on outside click

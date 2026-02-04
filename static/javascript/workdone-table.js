@@ -288,13 +288,17 @@ class WorkdoneTable {
     let rejectedData = [];
     let verifiedCompositeKeys = new Set(); // Use Set for faster lookup
     try {
-      const [verifyRes, rejectRes] = await Promise.all([
-        this.supabaseClient.from('Hod-workdone').select('*').eq('department', department),
-        this.supabaseClient.from('Hod-workdone_reject').select('*').eq('department', department)
-      ]);
-      
+      const verifyRes = await this.supabaseClient.from('Hod-workdone').select('*').eq('department', department);
       verifiedData = verifyRes.data || [];
-      rejectedData = rejectRes.data || [];
+      
+      // Try to fetch rejected data, but don't fail if table doesn't exist
+      try {
+        const rejectRes = await this.supabaseClient.from('Hod-workdone_reject').select('*').eq('department', department);
+        rejectedData = rejectRes.data || [];
+      } catch (rejectErr) {
+        console.warn('Hod-workdone_reject table not available (may not exist yet):', rejectErr.message);
+        rejectedData = [];
+      }
       
       // Store composite keys (input_id + table_name) for quick lookup
       verifiedData.forEach(record => {
@@ -313,6 +317,8 @@ class WorkdoneTable {
         if (entry.table.toLowerCase().startsWith('institution-')) {
           continue;
         }
+        
+        console.log(`[WorkdoneTable] Loading from table: ${entry.table}...`);
         
         // Fetch all records with pagination (handle >1000 records)
         let allData = [];
@@ -349,9 +355,9 @@ class WorkdoneTable {
         }
 
         if (data && data.length > 0) {
-          // Debug: Log data from form2-daily specifically
-          if (entry.table === 'form2-daily') {
-            console.log(`🔍 DEBUG: Found ${data.length} records in form2-daily table:`, data);
+          // Debug: Log data from form2-daily and form5-monthly specifically
+          if (entry.table === 'form2-daily' || entry.table === 'form5-monthly') {
+            console.log(`🔍 DEBUG: Found ${data.length} records in ${entry.table} table:`, data);
             console.log(`🔍 DEBUG: Looking for department: "${department}"`);
             data.forEach((row, idx) => {
               const rowDept = row['Department'] || row['Department:'] || row['department'] || row['department:'] || '';
@@ -374,9 +380,12 @@ class WorkdoneTable {
             return this.eq(rowDept, department);
           });
           
-          // Debug: Log filtered results for form2-daily
-          if (entry.table === 'form2-daily') {
-            console.log(`🔍 DEBUG: After department filter, form2-daily has ${filtered.length} records for department "${department}"`);
+          // Log results for all tables
+          console.log(`[WorkdoneTable] ${entry.table}: Found ${data.length} total records, ${filtered.length} after dept filter for department "${department}"`);
+          
+          // Debug: Log filtered results for form2-daily and form5-monthly
+          if (entry.table === 'form2-daily' || entry.table === 'form5-monthly') {
+            console.log(`🔍 DEBUG: After department filter, ${entry.table} has ${filtered.length} records for department "${department}"`);
           }
           
           // Debug: Log Institution form results

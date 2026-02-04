@@ -794,12 +794,17 @@
 		}
 
 		// Submit to Supabase
+		console.log('[Form5 Submit] Attempting to insert row:', dataRow);
 		const { data, error } = await supabaseClient.from('form5-monthly').insert([dataRow]);
 		if (error) {
+			console.error('[Form5 Submit] ERROR:', error);
+			console.error('[Form5 Submit] Error message:', error.message);
+			console.error('[Form5 Submit] Error details:', error);
 			window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
 			return;
 		}
 
+		console.log('[Form5 Submit] SUCCESS! Data inserted:', data);
 		// Delete draft after successful submission
 		try {
 			await supabaseClient

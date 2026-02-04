@@ -72,99 +72,78 @@ class ValidationScoring {
 
     // Build combined modal content: Form content + Validation scoring
     let html = `
-      <!-- Form Content Section -->
-      <div class="mb-6 pb-6 border-b-2 border-purple-200">
+      <div class="mb-6">
         ${formContent}
       </div>
       
-      <!-- Validation Scoring Section -->
-      <div class="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg">
-        <h4 class="text-xl font-bold text-purple-700 mb-4 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Validation Scoring
-        </h4>
-        
-        <div class="mb-4">
-          <h5 class="font-semibold text-gray-700 mb-3">Score Each Status Field:</h5>
-          <div class="bg-white p-4 rounded-lg max-h-96 overflow-y-auto shadow-inner">
-            <table class="w-full text-sm">
-              <thead class="bg-purple-100 sticky top-0">
-                <tr>
-                  <th class="px-2 py-2 text-left" style="width: 5%">#</th>
-                  <th class="px-2 py-2 text-left" style="width: 35%">Field</th>
-                  <th class="px-2 py-2 text-left" style="width: 30%">Status</th>
-                  <th class="px-2 py-2 text-center" style="width: 30%">Score</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-200">
-    `;
-
-    statusFields.forEach((field, idx) => {
-      const fieldId = `score_field_${idx}`;
-      const statusValue = (field.value || '').toLowerCase().trim();
-      const isValidatable = statusValue.includes('completed') || statusValue.includes('complted');
-      const disabledAttr = !isValidatable ? 'disabled' : '';
-      const checkboxClass = !isValidatable ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer';
-      
-      html += `
-        <tr class="${!isValidatable ? 'bg-gray-50' : ''}">
-          <td class="px-2 py-2">${idx + 1}</td>
-          <td class="px-2 py-2 text-xs">${field.fieldName}</td>
-          <td class="px-2 py-2">
-            <span class="inline-block px-2 py-1 rounded text-xs ${this.getStatusColor(field.value)}">${field.value}</span>
-          </td>
-          <td class="px-2 py-2 text-center">
-            <label class="inline-flex items-center gap-2 ${checkboxClass}">
-              <input type="checkbox" 
-                     id="${fieldId}" 
-                     class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500" 
-                     data-field="${field.fieldName}" 
-                     ${disabledAttr}
-                     onchange="window.validationScoring.updateScore('${fieldId}', '${field.fieldName}')">
-              <span class="text-sm ${!isValidatable ? 'text-gray-400' : 'text-gray-700'}">
-                ${isValidatable ? 'Validate' : 'Not Eligible'}
-              </span>
-            </label>
-          </td>
-        </tr>
-      `;
-    });
-
-    html += `
-              </tbody>
-            </table>
+      <!-- Scoring Summary at Bottom -->
+      <div class="bg-white p-4 rounded-lg shadow-md">
+        <div class="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <div class="text-2xl font-bold text-purple-700" id="validatedCount">0</div>
+            <div class="text-sm text-gray-600">Validated</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-gray-700">${totalFields}</div>
+            <div class="text-sm text-gray-600">Total Fields</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-green-700" id="validationPercentage">0%</div>
+            <div class="text-sm text-gray-600">Score</div>
           </div>
         </div>
-        
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Validation Notes (Optional):</label>
-          <textarea id="validationNotes" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-purple-500" rows="3" placeholder="Enter any notes or comments..."></textarea>
-        </div>
-        
-        <div class="bg-white p-4 rounded-lg shadow-md">
-          <div class="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <div class="text-2xl font-bold text-purple-700" id="validatedCount">0</div>
-              <div class="text-sm text-gray-600">Validated</div>
-            </div>
-            <div>
-              <div class="text-2xl font-bold text-gray-700">${totalFields}</div>
-              <div class="text-sm text-gray-600">Total Fields</div>
-            </div>
-            <div>
-              <div class="text-2xl font-bold text-green-700" id="validationPercentage">0%</div>
-              <div class="text-sm text-gray-600">Score</div>
-            </div>
-          </div>
-        </div>
-        
-        <div id="validationStatus" class="text-sm mb-4 mt-4"></div>
       </div>
     `;
 
     document.getElementById('validationModalContent').innerHTML = html;
+    modal.classList.remove('hidden');
+    
+    // Now inject Score column and checkboxes into the table
+    setTimeout(() => {
+      const table = document.querySelector('#validationModalContent table');
+      if (table) {
+        // Add Score header
+        const thead = table.querySelector('thead tr');
+        if (thead) {
+          const th = document.createElement('th');
+          th.className = 'px-3 py-3 text-center font-bold text-purple-700 text-sm bg-purple-100 border border-purple-300';
+          th.textContent = 'Score';
+          thead.appendChild(th);
+        }
+        
+        // Add checkboxes to each row
+        const tbody = table.querySelector('tbody');
+        if (tbody) {
+          const rows = tbody.querySelectorAll('tr');
+          rows.forEach((row, idx) => {
+            if (idx < statusFields.length) {
+              const field = statusFields[idx];
+              const fieldId = `score_field_${idx}`;
+              const statusValue = (field.value || '').toLowerCase().trim();
+              const isValidatable = statusValue === 'completed' || statusValue === 'complted' || statusValue === 'completed and updated' || statusValue === 'not applicable';
+              const disabledAttr = !isValidatable ? 'disabled' : '';
+              const checkboxClass = !isValidatable ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer';
+              
+              const td = document.createElement('td');
+              td.className = 'px-3 py-2 text-center border';
+              const label = document.createElement('label');
+              label.className = `inline-flex items-center justify-center ${checkboxClass}`;
+              const checkbox = document.createElement('input');
+              checkbox.type = 'checkbox';
+              checkbox.id = fieldId;
+              checkbox.className = 'w-5 h-5 text-purple-600 rounded focus:ring-purple-500';
+              checkbox.dataset.field = field.fieldName;
+              if (disabledAttr) checkbox.disabled = true;
+              checkbox.onchange = () => window.validationScoring.updateScore(fieldId, field.fieldName);
+              
+              label.appendChild(checkbox);
+              td.appendChild(label);
+              row.appendChild(td);
+            }
+          });
+        }
+      }
+    }, 50);
     modal.classList.remove('hidden');
 
     // Initialize scores
@@ -262,6 +241,7 @@ class ValidationScoring {
         department: this.currentRow.department,
         portfolio_name: this.currentRow.portfolio,
         portfolio_member_name: this.currentRow.member,
+        month: this.currentRow.month || this.currentRow.Month || new Date().toLocaleString('en-US', { month: 'long' }),
         status: this.currentRow.status || 'N/A',
         verified_by: validatedBy,
         verified_at: new Date().toISOString(),
