@@ -760,39 +760,57 @@
             }
           }
         
-        // Check verification status
+        // Check verification status by matching input_id (most reliable method)
         const verifyCell = document.getElementById(`verify-${row.rowId}`);
         if (verifyCell && bestRow) {
           // Extract form number from table name (e.g., "form2-monthly" -> "form2")
           const formNumber = row.tableName.match(/form\d+/)?.[0] || row.tableName;
           
-          // Check if verified
-          const { data: verifyData } = await supabaseClient
-            .from('Hod-workdone')
-            .select('*')
-            .eq('department', row.dept)
-            .ilike('portfolio_member_name', row.facultyName);
-          
-          const matchingVerify = verifyData?.find(v => {
-            const tableNameMatch = v.table_name && v.table_name.toLowerCase().includes(formNumber.toLowerCase());
-            const inputIdMatch = v.input_id === bestRow.input_id;
-            return tableNameMatch || inputIdMatch;
-          });
-          
-          if (matchingVerify) {
-            const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
-            verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
+          // Query Hod-workdone by input_id (most reliable - this field is indexed and never empty)
+          try {
+            const { data: verifyData, error: verifyErr } = await supabaseClient
+              .from('Hod-workdone')
+              .select('*')
+              .eq('input_id', bestRow.input_id)
+              .eq('department', row.dept);
             
-            // Update percentage with validation score from Hod-workdone if verified
-            if (percentCell && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
-              const validationScore = parseFloat(matchingVerify.validation_score);
-              if (!isNaN(validationScore)) {
-                const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
-                percentCell.innerHTML = `<span class="font-semibold ${percentageClass}">${Math.round(validationScore)}%</span>`;
-              }
+            console.log('[Department Portfolios] Query input_id:', bestRow.input_id, 'Found:', verifyData?.length || 0, 'records. Error:', verifyErr?.message || 'none');
+            
+            if (verifyErr) {
+              console.error('[Department Portfolios] Verification query error:', verifyErr);
+              verifyCell.innerHTML = '<span class="text-gray-400" title="Query error">-</span>';
+              return;
             }
-          } else {
-            verifyCell.innerHTML = '<span class="text-red-600 font-bold text-lg" title="Not verified">✗</span>';
+            
+            // Find matching validation by input_id and table_name
+            const matchingVerify = verifyData?.find(v => {
+              const tableNameMatch = v.table_name && v.table_name.toLowerCase().includes(formNumber.toLowerCase());
+              const inputIdMatch = v.input_id === bestRow.input_id;
+              console.log('[Department Portfolios] Checking record - input_id:', v.input_id, 'table:', v.table_name, 'matches:', inputIdMatch && tableNameMatch);
+              return inputIdMatch && tableNameMatch;
+            });
+            
+            if (matchingVerify) {
+              console.log('[Department Portfolios] ✓ Validation found for', row.facultyName, 'score:', matchingVerify.validation_score, 'status:', matchingVerify.validation_status);
+              const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
+              verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
+              
+              // Update percentage with validation score from Hod-workdone if verified
+              if (percentCell && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
+                const validationScore = parseFloat(matchingVerify.validation_score);
+                if (!isNaN(validationScore)) {
+                  console.log('[Department Portfolios] Updating', formNumber, 'score to:', validationScore + '%');
+                  const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
+                  percentCell.innerHTML = `<span class="font-semibold ${percentageClass}">${Math.round(validationScore)}%</span>`;
+                }
+              }
+            } else {
+              console.log('[Department Portfolios] ✗ No validation found for input_id:', bestRow.input_id);
+              verifyCell.innerHTML = '<span class="text-red-600 font-bold text-lg" title="Not verified">✗</span>';
+            }
+          } catch (err) {
+            console.error('[Department Portfolios] Error querying Hod-workdone:', err);
+            verifyCell.innerHTML = '<span class="text-gray-400" title="Error">-</span>';
           }
         } else if (verifyCell) {
           verifyCell.innerHTML = '<span class="text-gray-400" title="No data submitted">-</span>';
