@@ -42,10 +42,75 @@
     </div>
   </header>
   <main class="max-w-7xl mx-auto px-4 py-8">
+  <script>
+    // Ensure attachExportButtons exists (safe global fallback)
+    if (typeof window.attachExportButtons !== 'function') {
+      window.attachExportButtons = function() {
+        setTimeout(() => {
+          try {
+            const dashboardTable = document.querySelector('#dashboardTableContainer table');
+            if (dashboardTable) {
+              const exportBtn = document.getElementById('exportDashboardTableBtn');
+              if (exportBtn) exportBtn.onclick = function() {
+                const modal = document.getElementById('exportScopeModal');
+                if (modal) { modal.classList.remove('hidden'); return; }
+                // retry until modal element is available (max attempts)
+                let tries = 0;
+                const ti = setInterval(() => {
+                  const m = document.getElementById('exportScopeModal');
+                  if (m) { m.classList.remove('hidden'); clearInterval(ti); }
+                  if (++tries > 10) clearInterval(ti);
+                }, 300);
+              };
+
+              setTimeout(() => {
+                const currentBtn = document.getElementById('exportCurrentDeptBtn');
+                const allBtn = document.getElementById('exportAllDeptBtn');
+                if (currentBtn) currentBtn.onclick = function() {
+                  if (typeof exportYearlyCurrentDepartment === 'function') return exportYearlyCurrentDepartment();
+                  let tries = 0;
+                  const ti = setInterval(() => {
+                    if (typeof exportYearlyCurrentDepartment === 'function') { exportYearlyCurrentDepartment(); clearInterval(ti); }
+                    if (++tries > 10) clearInterval(ti);
+                  }, 300);
+                };
+                if (allBtn) allBtn.onclick = function() {
+                  if (typeof exportYearlyAllDepartments === 'function') return exportYearlyAllDepartments();
+                  let tries = 0;
+                  const ti = setInterval(() => {
+                    if (typeof exportYearlyAllDepartments === 'function') { exportYearlyAllDepartments(); clearInterval(ti); }
+                    if (++tries > 10) clearInterval(ti);
+                  }, 300);
+                };
+              }, 400);
+            }
+          } catch (e) {
+            console.warn('attachExportButtons fallback failed', e);
+          }
+        }, 300);
+      };
+    }
+  </script>
+  <script>
+    // Helper: call a function by name on window with error handling
+    function safeCallByName(name) {
+      return function(...args) {
+        try {
+          const fn = window[name];
+          if (typeof fn === 'function') return fn(...args);
+          console.error('Missing handler:', name);
+          alert('Handler not ready: ' + name);
+        } catch (e) {
+          console.error('Handler error:', name, e);
+          alert('Error invoking ' + name + ': ' + (e && e.message));
+        }
+      };
+    }
+  </script>
   <!-- Export Scope Modal -->
     <div id="exportScopeModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
       <div class="bg-white rounded-lg shadow-lg max-w-sm w-full p-6 relative">
-        <button onclick="closeExportScopeModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <button onclick="(function(){const m=document.getElementById('exportScopeModal'); if(m) m.classList.add('hidden');})()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
         <h3 class="text-lg font-bold mb-4 text-purple-700">Export Dashboard Table</h3>
         <p class="mb-4 text-gray-700">Select export scope:</p>
         <div class="flex flex-col gap-3">
@@ -179,301 +244,148 @@
       <div class="bg-white rounded-lg shadow-lg max-w-3xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
         <button onclick="closeFacultySelectionModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
         <h3 class="text-xl font-bold mb-4 text-blue-700">Select Faculty for PDF Export</h3>
-        <div class="flex gap-2 mb-4">
-          <button onclick="selectAllFacultyInModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
-            Select All
-          </button>
-          <button onclick="deselectAllFacultyInModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">
-            Deselect All
-          </button>
+        <div id="facultySelectionList" class="flex flex-col gap-2 mb-4"></div>
+        <div class="flex gap-3 justify-end mt-4">
+          <button type="button" onclick="selectAllFacultyInModal()" class="px-3 py-2 bg-gray-200 rounded">Select All</button>
+          <button type="button" onclick="deselectAllFacultyInModal()" class="px-3 py-2 bg-gray-200 rounded">Deselect All</button>
+          <button type="button" onclick="confirmFacultySelectionAndExport()" class="px-3 py-2 bg-blue-600 text-white rounded">Export Selected</button>
+          <button type="button" onclick="closeFacultySelectionModal()" class="px-3 py-2 bg-gray-300 rounded">Cancel</button>
         </div>
-        <div id="facultySelectionList" class="max-h-96 overflow-y-auto border border-gray-300 rounded p-4 mb-4"></div>
-        <div class="flex justify-end gap-3">
-          <button onclick="closeFacultySelectionModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded">
-            Cancel
-          </button>
-          <button onclick="confirmFacultySelectionAndExport()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded">
-            Confirm & Export
-          </button>
-        </div>
-      </div>
-    </div>
 
-    <!-- Modal for viewing AP/ASP/Prof form details from status table -->
-    <div id="viewStatusFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
-      <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
-        <button onclick="closeViewStatusFormModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
-        <h3 id="viewStatusFormModalTitle" class="text-xl font-bold mb-4 text-blue-700">Faculty Portfolio Form Details</h3>
-        <div id="viewStatusFormModalContent"></div>
-      </div>
-    </div>
-  </main>
-  <script src="/static/javascript/form-modal-mapper.js"></script>
-<script>
+      <script>
+        // Export yearly for ALL departments (S&H rules AP=5, ASP/Prof=6)
+      async function exportYearlyAllDepartments() {
+        // Show loading overlay
+        let loadingDiv = document.createElement('div');
+        loadingDiv.id = 'exportLoadingOverlay';
+        loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+        loadingDiv.innerHTML = `<div style="background:white;padding:32px 48px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;align-items:center;gap:16px;">
+          <svg class='animate-spin' style='height:48px;width:48px;color:#7c3aed;' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+            <circle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'></circle>
+            <path class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'></path>
+          </svg>
+          <div style='font-size:18px;color:#7c3aed;font-weight:600;'>Exporting all departments, please wait...</div>
+        </div>`;
+        document.body.appendChild(loadingDiv);
 
-// ===== CORE SCOPE TABLE EXPORT =====
-function openExportCoreScopeModal() {
-  document.getElementById('exportCoreScopeModal').classList.remove('hidden');
-}
-function closeExportCoreScopeModal() {
-  document.getElementById('exportCoreScopeModal').classList.add('hidden');
-}
+        try {
+          const monthFilter = document.getElementById('yearlyMonthFilter');
+          const selectedMonth = monthFilter ? monthFilter.value : 'January';
 
-// Export Core Scope Table to Excel utility
-async function exportCoreScopeTableToExcel(scope) {
-  // scope: 'current' or 'all'
-  closeExportCoreScopeModal();
-  
-  // Show loading overlay
-  let loadingDiv = document.createElement('div');
-  loadingDiv.id = 'exportLoadingOverlay';
-  loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
-  loadingDiv.innerHTML = `<div style="background:white;padding:32px 48px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;align-items:center;gap:16px;">
-    <svg class='animate-spin' style='height:48px;width:48px;color:#16a34a;' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
-      <circle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'></circle>
-      <path class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'></path>
-    </svg>
-    <div style='font-size:18px;color:#16a34a;font-weight:600;'>Exporting Core Scope data, please wait...</div>
-  </div>`;
-  document.body.appendChild(loadingDiv);
+          const [facultyRes, apRes, aspRes, profRes] = await Promise.all([
+            supabaseClient.from('Faculty').select('*'),
+            supabaseClient.from('AP_SH_Yearly').select('*').eq('Month', selectedMonth),
+            supabaseClient.from('ASP_SH_Yearly').select('*').eq('Month', selectedMonth),
+            supabaseClient.from('Prof_SH_Yearly').select('*').eq('Month', selectedMonth)
+          ]);
 
-  try {
-    console.log('🔍 Export Debug - Scope:', scope);
-    console.log('🔍 Filter Values:', {
-      dept: window.selectedCoreScopeDepartment,
-      designation: window.selectedCoreScopeDesignation,
-      month: window.selectedCoreScopeMonth
-    });
-      // Core Scope SH field labels (13 fields) - Full descriptions (excludes rows 10 and 14)
-      const coreScopeLabels = [
-        'Teaching & Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
-        'Teaching & Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
-        'Teaching & Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
-        'Teaching & Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
-        'Student Mentorship & Support: Act as academic mentor and guide 30 students on coursework, projects, and career planning.',
-        'Student Mentorship & Support: Monitor student attendance, performance, and well-being.',
-        'Student Mentorship & Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
-        'Student Mentorship & Support: Maintain the Mentor book for assigned mentee.',
-        'Student Mentorship & Support: Consolidate innovative course material, Lab manuals',
-        'Contribute to accreditation processes (NBA),(NAAC) and quality Assurance initiatives.',
-        'Serve on academic and administrative committees. ',
-        'ADMINISTRATIVE DUTIES : MAINTAIN ACADEMIC RECORDS, COURSE FILES, LOG BOOK AND STUDENT EVALUATIONS',
-        'Library Utilization'
-      ];
+          const allFaculty = facultyRes.data || [];
 
-    // Use global variables that track the current filter state
-    let selectedDept = scope === 'current' ? (window.selectedCoreScopeDepartment || 'All') : 'All';
-    let selectedDesignation = scope === 'current' ? (window.selectedCoreScopeDesignation || 'All') : 'All';
-    let selectedMonth = window.selectedCoreScopeMonth || 'January';
-    
-    // Fetch all Faculty data
-    let facultyQuery = supabaseClient.from('Faculty').select('*');
-    if (scope === 'current' && selectedDept && selectedDept !== 'All') {
-      facultyQuery = facultyQuery.eq('department', selectedDept);
-    }
-    
-    const { data: facultyData, error: facErr } = await facultyQuery;
-    
-    if (facErr) throw facErr;
-    if (!facultyData || facultyData.length === 0) {
-      alert('No faculty data found');
-      return;
-    }
-    
-      // Fetch Core_scope_SH data filtered by month
-      console.log('🔍 Building query - Month:', selectedMonth, 'Dept:', selectedDept, 'Scope:', scope);
-      let coreScopeQuery = supabaseClient.from('Core_scope_SH').select('*').eq('Month', selectedMonth);
-    if (scope === 'current' && selectedDept && selectedDept !== 'All') {
-      coreScopeQuery = coreScopeQuery.eq('Department', selectedDept);
-      console.log('🔍 Added department filter:', selectedDept);
-    }
-    
-    const { data: coreScopeData, error: csErr } = await coreScopeQuery;
-    if (csErr) {
-      console.error('❌ Query error:', csErr);
-      throw csErr;
-    }
-    console.log('✅ Core_scope data retrieved:', coreScopeData?.length, 'records');
-    if (coreScopeData && coreScopeData.length > 0) {
-      console.log('📊 Sample record:', coreScopeData[0]);
-    }
+          const particularsMap = {
+            AP: [
+              'Present at Conferences.',
+              'Attend FDPs / workshop/Seminars',
+              'Engage in extension activities, and social outreach programs.',
+              'Membership in professional body',
+              'No of Proposals submitted in Manthan Portal'
+            ],
+            ASP: [
+              'Present at Conferences.',
+              'Attend FDPs / workshop/Seminars',
+              'Engage in extension activities, and social outreach programs.',
+              'Membership in professional body',
+              'No of Proposals submitted in Manthan Portal'
+            ],
+            Prof: [
+              'Present at Conferences.',
+              'Attend FDPs / workshop/Seminars',
+              'Engage in extension activities, and social outreach programs.',
+              'Membership in professional body',
+              'No of Proposals submitted in Manthan Portal'
+            ]
+          };
 
-    // Fetch both Hod-workdone and hod-workdone_reject data
-    const [verifyRes, rejectRes] = await Promise.all([
-      supabaseClient.from('Hod-workdone').select('*'),
-      supabaseClient.from('hod-workdone_reject').select('*')
-    ]);
-    const verifyDataMap = verifyRes.data || [];
-    const rejectDataMap = rejectRes.data || [];
-    
-      // Build headers: Department, Designation, Faculty Name, Percentage, Verification, then 13 status columns with full descriptions (S&H)
-      const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', 'Verification Status', ...coreScopeLabels];
-    const allRows = [];
-
-    // Process each faculty
-    for (const fac of facultyData) {
-      const dept = fac.department || 'Unknown';
-      const designation = fac.Designation || 'N/A';
-      const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
-      
-      // Normalize designation
-      const desig = designation.toUpperCase();
-      if (desig !== 'AP' && desig !== 'ASSISTANT PROFESSOR' && 
-          desig !== 'ASP' && desig !== 'ASSOCIATE PROFESSOR' && 
-          desig !== 'PROF' && desig !== 'PROFESSOR') {
-        continue; // Skip non-teaching staff
-      }
-      
-      // Apply designation filter if scope is 'current'
-      if (scope === 'current' && selectedDesignation !== 'All') {
-        let normalizedDesig = '';
-        if (desig === 'AP' || desig === 'ASSISTANT PROFESSOR') normalizedDesig = 'AP';
-        else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') normalizedDesig = 'ASP';
-        else if (desig === 'PROF' || desig === 'PROFESSOR') normalizedDesig = 'Prof';
-        
-        if (normalizedDesig !== selectedDesignation) {
-          continue; // Skip faculty not matching designation filter
-        }
-      }
-      
-      // Find matching Core_scope data for this faculty
-      let facNamesToTry = [];
-      if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
-      if (fac.Name) facNamesToTry.push(fac.Name);
-      if (fac.email) facNamesToTry.push(fac.email);
-      facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n || '').toString().trim().toLowerCase()).filter(Boolean)));
-      
-      let matchingRows = [];
-      if (coreScopeData && coreScopeData.length > 0) {
-        matchingRows = coreScopeData.filter(row => {
-          const rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
-          return facNamesToTry.includes(rowName);
-        });
-      }
-      
-      // Get the latest row (by input_id)
-      let row = null;
-      if (matchingRows.length > 0) {
-        matchingRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
-        row = matchingRows[0];
-      }
-      
-      // Calculate percentage (fixed denominator: 13 for S&H Core Scope)
-      let completedCount = 0;
-      const totalCount = 13;
-      if (row) {
-        for (let i = 1; i <= 13; i++) {
-          const statusVal = (row[`Status_${i}`] || '').toString().trim().toLowerCase();
-          if (statusVal === 'completed' || statusVal === 'completed and updated') {
-            completedCount++;
-          }
-          // All statuses (including 'Not Applicable') are included in denominator
-        }
-      }
-      
-      const percentage = Math.round((completedCount / totalCount) * 100) + '%';
-      
-      // Check verification status
-      let verificationStatus = 'Not Submitted';
-      if (row && row.input_id) {
-        // Check if rejected first - match by input_id (most reliable)
-        let matchingReject = rejectDataMap.find(v => v.input_id === row.input_id);
-        
-        // If no match by input_id, try matching by table_name and name
-        if (!matchingReject) {
-          matchingReject = rejectDataMap.find(v => {
-            if (v.table_name && v.department === dept) {
-              const tableNameLower = v.table_name.toLowerCase();
-              const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
-              return (tableNameLower === 'core_scope_sh' || tableNameLower.includes('core_scope')) && nameMatch;
-            }
-            return false;
-          });
-        }
-        
-        if (matchingReject) {
-          const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
-          const reason = matchingReject.Commands || 'No reason';
-          verificationStatus = `Rejected (${rejectDate}) - ${reason}`;
-        } else {
-          // Check if verified - match by input_id first (most reliable)
-          let matchingVerify = verifyDataMap.find(v => v.input_id === row.input_id);
-          
-          // If no match by input_id, try matching by table_name and name
-          if (!matchingVerify) {
-            matchingVerify = verifyDataMap.find(v => {
-              if (v.table_name && v.department === dept) {
-                const tableNameLower = v.table_name.toLowerCase();
-                const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
-                return (tableNameLower === 'core_scope_sh' || tableNameLower.includes('core_scope')) && nameMatch;
-              }
-              return false;
+          const formDataMaps = { AP: {}, ASP: {}, Prof: {} };
+          [
+            { designation: 'AP', data: apRes.data || [] },
+            { designation: 'ASP', data: aspRes.data || [] },
+            { designation: 'Prof', data: profRes.data || [] }
+          ].forEach(({ designation, data }) => {
+            const grouped = {};
+            data.forEach(row => {
+              const dept = (row['Department'] || '').toString().trim();
+              const facultyName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+              if (!dept || !facultyName) return;
+              const key = `${dept}|${facultyName}`;
+              if (!grouped[key]) grouped[key] = [];
+              grouped[key].push(row);
             });
-          }
-          
-          if (matchingVerify) {
-            const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
-            verificationStatus = `Verified (${verifyDate})`;
-          } else {
-            verificationStatus = 'Pending Verification';
-          }
+            Object.keys(grouped).forEach(key => {
+              const rows = grouped[key].sort((a, b) => (b.input_id || b.id || 0) - (a.input_id || a.id || 0));
+              formDataMaps[designation][key] = rows[0];
+            });
+          });
+
+          const wb = XLSX.utils.book_new();
+          ['AP','ASP','Prof'].forEach(desigKey => {
+            const statusCount = desigKey === 'AP' ? 5 : 6;
+            const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', 'Verification Status', ...particularsMap[desigKey]];
+            const rows = [headers];
+
+            allFaculty.forEach(fac => {
+              const designation = (fac.Designation || '').toUpperCase();
+              let desig = '';
+              if (designation === 'AP' || designation === 'ASSISTANT PROFESSOR') desig = 'AP';
+              else if (designation === 'ASP' || designation === 'ASSOCIATE PROFESSOR') desig = 'ASP';
+              else if (designation === 'PROF' || designation === 'PROFESSOR') desig = 'Prof';
+              else return;
+              if (desig !== desigKey) return;
+
+              const dept = fac.department || 'Unknown';
+              const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+              const key = `${dept}|${facultyName.trim().toLowerCase()}`;
+              const formRow = formDataMaps[desig][key];
+
+              let percentage = 0;
+              let verificationStatus = 'Not Submitted';
+
+              if (formRow) {
+                let completedCount = 0;
+                for (let i = 1; i <= statusCount; i++) {
+                  const status = (formRow[`Status_${i}`] || '').toString().toLowerCase();
+                  if (status === 'completed' || status === 'completed and updated') {
+                    completedCount++;
+                  }
+                }
+                percentage = Math.round((completedCount / statusCount) * 100);
+                verificationStatus = 'Submitted';
+              }
+
+              const rowData = [dept, desig, facultyName, `${percentage}%`, verificationStatus];
+              for (let i = 1; i <= statusCount; i++) {
+                rowData.push(formRow ? (formRow[`Status_${i}`] || '-') : '-');
+              }
+              rows.push(rowData);
+            });
+
+            if (rows.length > 1) {
+              const ws = XLSX.utils.aoa_to_sheet(rows);
+              XLSX.utils.book_append_sheet(wb, ws, `${desigKey}_All`);
+            }
+          });
+
+          let filename = 'Yearly_Mandatory_Scope_AllDepts';
+          if (selectedMonth) filename += `_${selectedMonth}`;
+          filename += '.xlsx';
+          XLSX.writeFile(wb, filename);
+
+        } catch (error) {
+          console.error('Export error:', error);
+          alert('Failed to export data. Please try again.');
+        } finally {
+          const overlay = document.getElementById('exportLoadingOverlay');
+          if (overlay) overlay.remove();
         }
-      }
-      
-      // Build row data
-      const rowData = [dept, designation, facultyName, percentage, verificationStatus];
-      
-      // Add status values for all 13 fields (S&H Core Scope)
-      for (let i = 1; i <= 13; i++) {
-        rowData.push(row ? (row[`Status_${i}`] || '-') : '-');
-      }
-      
-      allRows.push(rowData);
-    }
-
-    // Sort by department, then designation, then faculty name
-    allRows.sort((a, b) => {
-      if (a[0] !== b[0]) return a[0].localeCompare(b[0]);
-      if (a[1] !== b[1]) return a[1].localeCompare(b[1]);
-      return a[2].localeCompare(b[2]);
-    });
-
-    // Create workbook and export
-    console.log('✅ Export Summary:', {
-      totalFaculty: facultyData.length,
-      filteredFaculty: allRows.length,
-      coreScopeRecords: coreScopeData?.length || 0,
-      month: selectedMonth,
-      dept: selectedDept,
-      designation: selectedDesignation
-    });
-    
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...allRows]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Core Scope');
-    
-    // Build filename with filters
-    let filename = 'CoreScope_Monthly';
-    if (scope === 'current') {
-      if (selectedDept !== 'All') filename += `_${selectedDept}`;
-      if (selectedDesignation !== 'All') filename += `_${selectedDesignation}`;
-      filename += `_${selectedMonth}`;
-    } else {
-      filename += '_All_Departments';
-      filename += `_${selectedMonth}`;
-    }
-    filename += '.xlsx';
-    
-    XLSX.writeFile(wb, filename);
-    console.log('📥 File exported:', filename);
-    
-  } catch (error) {
-    console.error('Export error:', error);
-    alert('Failed to export data: ' + error.message);
-  } finally {
-    // Remove loading overlay
-    const overlay = document.getElementById('exportLoadingOverlay');
-    if (overlay) overlay.remove();
   }
 }
 
@@ -481,13 +393,31 @@ async function exportCoreScopeTableToExcel(scope) {
 setTimeout(() => {
   const exportBtn = document.getElementById('exportCoreScopeTableBtn');
   if (exportBtn) {
-    exportBtn.onclick = () => openExportCoreScopeModal();
+    exportBtn.onclick = function(evt) { console.log('exportCoreScopeTableBtn clicked', evt); try { return safeCallByName('openExportCoreScopeModal')(); } catch (e) { console.error('openExportCoreScopeModal error', e); } };
     setTimeout(() => {
       const currentBtn = document.getElementById('exportCoreScopeCurrentDeptBtn');
       const allBtn = document.getElementById('exportCoreScopeAllDeptBtn');
-      if (currentBtn && allBtn) {
-        currentBtn.onclick = () => exportCoreScopeTableToExcel('current');
-        allBtn.onclick = () => exportCoreScopeTableToExcel('all');
+      if (currentBtn) {
+        currentBtn.addEventListener('click', function() {
+          const fn = window.exportCoreScopeTableToExcel;
+          if (typeof fn === 'function') {
+            console.log('DIAG: exportCoreScopeTableToExcel invoked via currentBtn listener');
+            try { fn('current'); } catch (e) { console.error('exportCoreScopeTableToExcel error', e); alert('Export failed: ' + (e && e.message)); }
+          } else {
+            alert('Handler not ready: exportCoreScopeTableToExcel');
+          }
+        });
+      }
+      if (allBtn) {
+        allBtn.addEventListener('click', function() {
+          const fn = window.exportCoreScopeTableToExcel;
+          if (typeof fn === 'function') {
+            console.log('DIAG: exportCoreScopeTableToExcel invoked via allBtn listener');
+            try { fn('all'); } catch (e) { console.error('exportCoreScopeTableToExcel error', e); alert('Export failed: ' + (e && e.message)); }
+          } else {
+            alert('Handler not ready: exportCoreScopeTableToExcel');
+          }
+        });
       }
     }, 600);
   }
@@ -533,37 +463,26 @@ async function exportYearlyCurrentDepartment() {
     
     const deptFaculty = facultyRes.data || [];
     
-    // Particulars for each designation
+    // Particulars for each designation (S&H yearly): AP=5 items, ASP/Prof=6 items
     const particularsMap = {
       AP: [
         'Present at Conferences.',
-        'Guide student research and final-year projects.',
         'Attend FDPs / workshop/Seminars',
-        'NPTEL/ MOOC certifications 2/Sem',
-        'Facilitate industry-institute interaction through guest lectures, internships.',
         'Engage in extension activities, and social outreach programs.',
         'Membership in professional body',
         'No of Proposals submitted in Manthan Portal'
       ],
       ASP: [
-        'Publish in peer-reviewed journals',
-        'Apply for research grants',
-        'Guide student research and final-year projects.',
-        'Organize FDPs / workshop/Seminars',
-        'NPTEL/ MOOC certifications',
-        'Facilitate industry-institute interaction through guest lectures, internships.',
-        'Engage in Consultancy.',
+        'Present at Conferences.',
+        'Attend FDPs / workshop/Seminars',
+        'Engage in extension activities, and social outreach programs.',
         'Membership in professional body',
         'No of Proposals submitted in Manthan Portal'
       ],
       Prof: [
-        'Publish in peer-reviewed journals',
-        'Apply for research grants',
-        'Guide student research and final-year projects.',
-        'Organize FDPs / workshop/Seminars',
-        'NPTEL/ MOOC certifications',
-        'Facilitate MoU',
-        'Engage in Consultancy.',
+        'Present at Conferences.',
+        'Attend FDPs / workshop/Seminars',
+        'Engage in extension activities, and social outreach programs.',
         'Membership in professional body',
         'No of Proposals submitted in Manthan Portal'
       ]
@@ -576,10 +495,6 @@ async function exportYearlyCurrentDepartment() {
     ]);
     const verifyDataMap = verifyRes2.data || [];
     const rejectDataMap = rejectRes2.data || [];
-    
-    // Build single combined sheet with all designations
-    const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', 'Verification Status', ...particularsMap.AP];
-    const allRows = [headers];
     
     // Create lookup maps for form submissions
     const formDataMaps = {
@@ -613,372 +528,281 @@ async function exportYearlyCurrentDepartment() {
     deptFaculty.forEach(fac => {
       const dept = fac.department || selectedDepartment;
       const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
-      const designation = (fac.Designation || '').toUpperCase();
-      
-      // Normalize designation
-      let desig = '';
-      if (designation === 'AP' || designation === 'ASSISTANT PROFESSOR') desig = 'AP';
-      else if (designation === 'ASP' || designation === 'ASSOCIATE PROFESSOR') desig = 'ASP';
-      else if (designation === 'PROF' || designation === 'PROFESSOR') desig = 'Prof';
-      else return; // Skip if designation not recognized
-      
-      const statusCount = desig === 'AP' ? 5 : 6; // S&H forms: AP=5, ASP/Prof=6
-      const key = facultyName.trim().toLowerCase();
-      const formRow = formDataMaps[desig][key];
-      
-      let percentage = 0;
-      const rowData = [dept, desig, facultyName];
-      
-      if (formRow) {
-        // Faculty has submitted form - calculate percentage (fixed denominator: 5 for AP, 6 for ASP/Prof - S&H forms)
-        let completedCount = 0;
-        for (let i = 1; i <= statusCount; i++) {
-          const status = (formRow[`Status_${i}`] || '').toString().toLowerCase();
-          if (status === 'completed' || status === 'completed and updated') {
-            completedCount++;
-          }
-          // All statuses (including 'Not Applicable') are included in denominator
-        }
-        percentage = Math.round((completedCount / statusCount) * 100);
-        rowData.push(percentage + '%');
-        
-        // Check verification status
-        let verificationStatus = 'Not Submitted';
-        if (formRow.input_id) {
-          const expectedTableName = desig === 'AP' ? 'AP_SH_Yearly' : 
-                                   desig === 'ASP' ? 'ASP_SH_Yearly' : 
-                                   'Prof_SH_Yearly';
-          
-          // Check if rejected first - match by input_id (most reliable)
-          let matchingReject = rejectDataMap.find(v => v.input_id === formRow.input_id);
-          
-          // If no match by input_id, try matching by table_name and name
-          if (!matchingReject) {
-            matchingReject = rejectDataMap.find(v => {
-              if (v.table_name && v.department === dept) {
-                const tableNameLower = v.table_name.toLowerCase();
-                const expectedLower = expectedTableName.toLowerCase();
-                const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
-                return (tableNameLower === expectedLower || 
-                        (tableNameLower.includes(desig.toLowerCase() + '_sh') && tableNameLower.includes('yearly'))) && 
-                       nameMatch;
-              }
-              return false;
-            });
-          }
-          
-          if (matchingReject) {
-            const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
-            const reason = matchingReject.Commands || 'No reason';
-            verificationStatus = `Rejected (${rejectDate}) - ${reason}`;
-          } else {
-            // Check if verified - match by input_id first (most reliable)
-            let matchingVerify = verifyDataMap.find(v => v.input_id === formRow.input_id);
-            
-            // If no match by input_id, try matching by table_name and name
-            if (!matchingVerify) {
-              matchingVerify = verifyDataMap.find(v => {
-                if (v.table_name && v.department === dept) {
-                  const tableNameLower = v.table_name.toLowerCase();
-                  const expectedLower = expectedTableName.toLowerCase();
-                  const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
-                  return (tableNameLower === expectedLower || 
-                          (tableNameLower.includes(desig.toLowerCase() + '_sh') && tableNameLower.includes('yearly'))) && 
-                         nameMatch;
-                }
-                return false;
-              });
-            }
-            
-            if (matchingVerify) {
-              const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
-              verificationStatus = `Verified (${verifyDate})`;
-            } else {
-              verificationStatus = 'Pending Verification';
-            }
-          }
-        }
-        rowData.push(verificationStatus);
-        
-        // Add status columns
-        for (let i = 1; i <= 8; i++) {
-          if (i <= statusCount) {
-            rowData.push(formRow[`Status_${i}`] || '-');
-          } else {
-            rowData.push('-');
-          }
-        }
-      } else {
-        // Faculty has NOT submitted form - show 0% and empty columns
-        rowData.push('0%');
-        rowData.push('Not Submitted');
-        for (let i = 1; i <= 8; i++) {
-          rowData.push('-');
-        }
-      }
-      
-      allRows.push(rowData);
-    });
-    
-    // Sort by designation, then faculty name
-    const dataRows = allRows.slice(1);
-    dataRows.sort((a, b) => {
-      if (a[1] !== b[1]) return a[1].localeCompare(b[1]);
-      return a[2].localeCompare(b[2]);
-    });
-    
-    // Create workbook and export
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, selectedDepartment);
-    XLSX.writeFile(wb, `IQAC_Dashboard_Yearly_SH_${selectedDepartment}.xlsx`);
-    
-  } catch (error) {
-    console.error('Export error:', error);
-    alert('Failed to export data. Please try again.');
-  } finally {
-    // Remove loading overlay
-    const overlay = document.getElementById('exportLoadingOverlay');
-    if (overlay) overlay.remove();
-  }
-}
+      // Build per-designation sheets (AP=5, ASP=6, Prof=6)
+      const wb = XLSX.utils.book_new();
 
-// Export Yearly Dashboard to Excel - All Departments
-async function exportYearlyAllDepartments() {
-  closeExportScopeModal();
-  
-  // Show loading overlay
-  let loadingDiv = document.createElement('div');
-  loadingDiv.id = 'exportLoadingOverlay';
-  loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
-  loadingDiv.innerHTML = `<div style="background:white;padding:32px 48px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;align-items:center;gap:16px;">
-    <svg class='animate-spin' style='height:48px;width:48px;color:#7c3aed;' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
-      <circle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'></circle>
-      <path class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'></path>
-    </svg>
-    <div style='font-size:18px;color:#7c3aed;font-weight:600;'>Exporting all departments, please wait...</div>
-  </div>`;
-  document.body.appendChild(loadingDiv);
-  
-  try {
-    // Get selected month
-    let monthFilter = document.getElementById('yearlyMonthFilter');
-    let selectedMonth = monthFilter ? monthFilter.value : 'January';
-    
-    // Fetch ALL faculty from Faculty table AND yearly form submissions filtered by month
-    const [facultyRes, apRes, aspRes, profRes] = await Promise.all([
-      supabaseClient.from('Faculty').select('*'),
-      supabaseClient.from('AP_SH_Yearly').select('*').eq('Month', selectedMonth),
-      supabaseClient.from('ASP_SH_Yearly').select('*').eq('Month', selectedMonth),
-      supabaseClient.from('Prof_SH_Yearly').select('*').eq('Month', selectedMonth)
-    ]);
-    
-    const allFaculty = facultyRes.data || [];
-    
-    // Particulars for each designation
-    const particularsMap = {
-      AP: [
-        'Present at Conferences.',
-        'Guide student research and final-year projects.',
-        'Attend FDPs / workshop/Seminars',
-        'NPTEL/ MOOC certifications 2/Sem',
-        'Facilitate industry-institute interaction through guest lectures, internships.',
-        'Engage in extension activities, and social outreach programs.',
-        'Membership in professional body',
-        'No of Proposals submitted in Manthan Portal'
-      ],
-      ASP: [
-        'Publish in peer-reviewed journals',
-        'Apply for research grants',
-        'Guide student research and final-year projects.',
-        'Organize FDPs / workshop/Seminars',
-        'NPTEL/ MOOC certifications',
-        'Facilitate industry-institute interaction through guest lectures, internships.',
-        'Engage in Consultancy.',
-        'Membership in professional body',
-        'No of Proposals submitted in Manthan Portal'
-      ],
-      Prof: [
-        'Publish in peer-reviewed journals',
-        'Apply for research grants',
-        'Guide student research and final-year projects.',
-        'Organize FDPs / workshop/Seminars',
-        'NPTEL/ MOOC certifications',
-        'Facilitate MoU',
-        'Engage in Consultancy.',
-        'Membership in professional body',
-        'No of Proposals submitted in Manthan Portal'
-      ]
-    };
-    
-    // Fetch both Hod-workdone and hod-workdone_reject data for verification
-    const [verifyRes, rejectRes] = await Promise.all([
-      supabaseClient.from('Hod-workdone').select('*'),
-      supabaseClient.from('hod-workdone_reject').select('*')
-    ]);
-    const verifyDataMap = verifyRes.data || [];
-    const rejectDataMap = rejectRes.data || [];
-    
-    // Build single combined sheet with all designations and departments
-    const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', 'Verification Status', ...particularsMap.AP];
-    const allRows = [headers];
-    
-    // Create lookup maps for form submissions
-    const formDataMaps = {
-      AP: {},
-      ASP: {},
-      Prof: {}
-    };
-    
-    // Build lookup maps: key = "dept|facultyName", value = latest row
-    [
-      { designation: 'AP', data: apRes.data || [] },
-      { designation: 'ASP', data: aspRes.data || [] },
-      { designation: 'Prof', data: profRes.data || [] }
-    ].forEach(({ designation, data }) => {
-      const grouped = {};
-      data.forEach(row => {
-        const dept = (row['Department'] || '').toString().trim();
-        const facultyName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
-        if (!dept || !facultyName) return;
-        const key = `${dept}|${facultyName}`;
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(row);
-      });
-      
-      // Get latest row for each faculty
-      Object.keys(grouped).forEach(key => {
-        const rows = grouped[key].sort((a, b) => (b.input_id || b.id || 0) - (a.input_id || a.id || 0));
-        formDataMaps[designation][key] = rows[0];
-      });
-    });
-    
-    // Process all faculty from Faculty table
-    allFaculty.forEach(fac => {
-      const dept = fac.department || 'Unknown';
-      const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
-      const designation = (fac.Designation || '').toUpperCase();
-      
-      // Normalize designation
-      let desig = '';
-      if (designation === 'AP' || designation === 'ASSISTANT PROFESSOR') desig = 'AP';
-      else if (designation === 'ASP' || designation === 'ASSOCIATE PROFESSOR') desig = 'ASP';
-      else if (designation === 'PROF' || designation === 'PROFESSOR') desig = 'Prof';
-      else return; // Skip if designation not recognized
-      
-      const statusCount = desig === 'AP' ? 5 : 6; // S&H forms: AP=5, ASP/Prof=6
-      const key = `${dept}|${facultyName.trim().toLowerCase()}`;
-      const formRow = formDataMaps[desig][key];
-      
-      let percentage = 0;
-      const rowData = [dept, desig, facultyName];
-      
-      if (formRow) {
-        // Faculty has submitted form - calculate percentage (fixed denominator: 5 for AP, 6 for ASP/Prof - S&H forms)
-        let completedCount = 0;
-        for (let i = 1; i <= statusCount; i++) {
-          const status = (formRow[`Status_${i}`] || '').toString().toLowerCase();
-          if (status === 'completed' || status === 'completed and updated') {
-            completedCount++;
-          }
-          // All statuses (including 'Not Applicable') are included in denominator
-        }
-        percentage = Math.round((completedCount / statusCount) * 100);
-        rowData.push(percentage + '%');
-        
-        // Check verification status
-        let verificationStatus = 'Not Submitted';
-        if (formRow.input_id) {
-          const expectedTableName = desig === 'AP' ? 'AP_SH_Yearly' : 
-                                   desig === 'ASP' ? 'ASP_SH_Yearly' : 
-                                   'Prof_SH_Yearly';
-          
-          // Check if rejected first - match by input_id (most reliable)
-          let matchingReject = rejectDataMap.find(v => v.input_id === formRow.input_id);
-          
-          // If no match by input_id, try matching by table_name and name
-          if (!matchingReject) {
-            matchingReject = rejectDataMap.find(v => {
-              if (v.table_name && v.department === dept) {
-                const tableNameLower = v.table_name.toLowerCase();
-                const expectedLower = expectedTableName.toLowerCase();
-                const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
-                return (tableNameLower === expectedLower || 
-                        (tableNameLower.includes(desig.toLowerCase() + '_sh') && tableNameLower.includes('yearly'))) && 
-                       nameMatch;
+      ['AP','ASP','Prof'].forEach(desigKey => {
+        const statusCount = desigKey === 'AP' ? 5 : 6;
+        const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', 'Verification Status', ...particularsMap[desigKey]];
+        const rows = [headers];
+
+        deptFaculty.forEach(fac => {
+          const designation = (fac.Designation || '').toUpperCase();
+          let desig = '';
+          if (designation === 'AP' || designation === 'ASSISTANT PROFESSOR') desig = 'AP';
+          else if (designation === 'ASP' || designation === 'ASSOCIATE PROFESSOR') desig = 'ASP';
+          else if (designation === 'PROF' || designation === 'PROFESSOR') desig = 'Prof';
+          else return;
+
+          if (desig !== desigKey) return;
+
+          const dept = fac.department || selectedDepartment;
+          const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+          const key = facultyName.trim().toLowerCase();
+          const formRow = formDataMaps[desig][key];
+
+          let percentage = 0;
+          const rowData = [dept, desig, facultyName];
+
+          if (formRow) {
+            let completedCount = 0;
+            for (let i = 1; i <= statusCount; i++) {
+              const status = (formRow[`Status_${i}`] || '').toString().toLowerCase();
+              if (status === 'completed' || status === 'completed and updated') {
+                completedCount++;
               }
-              return false;
-            });
-          }
-          
-          if (matchingReject) {
-            const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
-            const reason = matchingReject.Commands || 'No reason';
-            verificationStatus = `Rejected (${rejectDate}) - ${reason}`;
-          } else {
-            // Check if verified - match by input_id first (most reliable)
-            let matchingVerify = verifyDataMap.find(v => v.input_id === formRow.input_id);
-            
-            // If no match by input_id, try matching by table_name and name
-            if (!matchingVerify) {
-              matchingVerify = verifyDataMap.find(v => {
-                if (v.table_name && v.department === dept) {
-                  const tableNameLower = v.table_name.toLowerCase();
-                  const expectedLower = expectedTableName.toLowerCase();
-                  const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
-                  return (tableNameLower === expectedLower || 
-                          (tableNameLower.includes(desig.toLowerCase() + '_sh') && tableNameLower.includes('yearly'))) && 
-                         nameMatch;
+            }
+            percentage = Math.round((completedCount / statusCount) * 100);
+            rowData.push(percentage + '%');
+            async function exportYearlyAllDepartments() {
+              closeExportScopeModal();
+
+              const loadingDiv = document.createElement('div');
+              loadingDiv.id = 'exportLoadingOverlay';
+              loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+              loadingDiv.innerHTML = `<div style="background:white;padding:32px 48px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;align-items:center;gap:16px;">
+                <svg class='animate-spin' style='height:48px;width:48px;color:#7c3aed;' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+                  <circle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'></circle>
+                  <path class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'></path>
+                </svg>
+                <div style='font-size:18px;color:#7c3aed;font-weight:600;'>Exporting all departments, please wait...</div>
+              </div>`;
+              document.body.appendChild(loadingDiv);
+
+              try {
+                const monthFilter = document.getElementById('yearlyMonthFilter');
+                const selectedMonth = monthFilter ? monthFilter.value : 'January';
+
+                const [facultyRes, apRes, aspRes, profRes] = await Promise.all([
+                  supabaseClient.from('Faculty').select('*'),
+                  supabaseClient.from('AP_SH_Yearly').select('*').eq('Month', selectedMonth),
+                  supabaseClient.from('ASP_SH_Yearly').select('*').eq('Month', selectedMonth),
+                  supabaseClient.from('Prof_SH_Yearly').select('*').eq('Month', selectedMonth)
+                ]);
+
+                const allFaculty = facultyRes.data || [];
+
+                const particularsMap = {
+                  AP: [
+                    'Present at Conferences.',
+                    'Attend FDPs / workshop/Seminars',
+                    'Engage in extension activities, and social outreach programs.',
+                    'Membership in professional body',
+                    'No of Proposals submitted in Manthan Portal'
+                  ],
+                  ASP: [
+                    'Present at Conferences.',
+                    'Attend FDPs / workshop/Seminars',
+                    'Engage in extension activities, and social outreach programs.',
+                    'Membership in professional body',
+                    'No of Proposals submitted in Manthan Portal'
+                  ],
+                  Prof: [
+                    'Present at Conferences.',
+                    'Attend FDPs / workshop/Seminars',
+                    'Engage in extension activities, and social outreach programs.',
+                    'Membership in professional body',
+                    'No of Proposals submitted in Manthan Portal'
+                  ]
+                };
+
+                const formDataMaps = { AP: {}, ASP: {}, Prof: {} };
+                [
+                  { designation: 'AP', data: apRes.data || [] },
+                  { designation: 'ASP', data: aspRes.data || [] },
+                  { designation: 'Prof', data: profRes.data || [] }
+                ].forEach(({ designation, data }) => {
+                  const grouped = {};
+                  data.forEach(row => {
+                    const dept = (row['Department'] || '').toString().trim();
+                    const facultyName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+                    if (!dept || !facultyName) return;
+                    const key = `${dept}|${facultyName}`;
+                    if (!grouped[key]) grouped[key] = [];
+                    grouped[key].push(row);
+                  });
+                  Object.keys(grouped).forEach(key => {
+                    const rows = grouped[key].sort((a, b) => (b.input_id || b.id || 0) - (a.input_id || a.id || 0));
+                    formDataMaps[designation][key] = rows[0];
+                  });
+                });
+
+                const wb = XLSX.utils.book_new();
+                ['AP','ASP','Prof'].forEach(desigKey => {
+                  const statusCount = desigKey === 'AP' ? 5 : 6;
+                  const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', 'Verification Status', ...particularsMap[desigKey]];
+                  const rows = [headers];
+
+                  allFaculty.forEach(fac => {
+                    const designation = (fac.Designation || '').toUpperCase();
+                    let desig = '';
+                    if (designation === 'AP' || designation === 'ASSISTANT PROFESSOR') desig = 'AP';
+                    else if (designation === 'ASP' || designation === 'ASSOCIATE PROFESSOR') desig = 'ASP';
+                    else if (designation === 'PROF' || designation === 'PROFESSOR') desig = 'Prof';
+                    else return;
+                    if (desig !== desigKey) return;
+
+                    const dept = fac.department || 'Unknown';
+                    const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+                    const key = `${dept}|${facultyName.trim().toLowerCase()}`;
+                    const formRow = formDataMaps[desig][key];
+
+                    let percentage = 0;
+                    let verificationStatus = 'Not Submitted';
+
+                    if (formRow) {
+                      let completedCount = 0;
+                      for (let i = 1; i <= statusCount; i++) {
+                        const status = (formRow[`Status_${i}`] || '').toString().toLowerCase();
+                        if (status === 'completed' || status === 'completed and updated') {
+                          completedCount++;
+                        }
+                      }
+                      percentage = Math.round((completedCount / statusCount) * 100);
+                      verificationStatus = 'Submitted';
+                    }
+
+                    const rowData = [dept, desig, facultyName, `${percentage}%`, verificationStatus];
+                    for (let i = 1; i <= statusCount; i++) {
+                      rowData.push(formRow ? (formRow[`Status_${i}`] || '-') : '-');
+                    }
+                    rows.push(rowData);
+                  });
+
+                  if (rows.length > 1) {
+                    const ws = XLSX.utils.aoa_to_sheet(rows);
+                    XLSX.utils.book_append_sheet(wb, ws, `${desigKey}_All`);
+                  }
+                });
+
+                let filename = 'Yearly_Mandatory_Scope_AllDepts';
+                if (selectedMonth) filename += `_${selectedMonth}`;
+                filename += '.xlsx';
+                XLSX.writeFile(wb, filename);
+
+              } catch (error) {
+                console.error('Export error:', error);
+                alert('Failed to export data. Please try again.');
+              } finally {
+                const overlay = document.getElementById('exportLoadingOverlay');
+                if (overlay) overlay.remove();
+              }
+            }
+
+            // Attach export button listeners after tables are rendered
+            function attachExportButtons() {
+              setTimeout(() => {
+                const dashboardTable = document.querySelector('#dashboardTableContainer table');
+                if (dashboardTable) {
+                  const exportBtn = document.getElementById('exportDashboardTableBtn');
+                  if (exportBtn) exportBtn.onclick = () => {
+                    const modal = document.getElementById('exportScopeModal');
+                    if (modal) return modal.classList.remove('hidden');
+                    let tries = 0;
+                    const ti = setInterval(() => {
+                      const m = document.getElementById('exportScopeModal');
+                      if (m) { m.classList.remove('hidden'); clearInterval(ti); }
+                      if (++tries > 10) clearInterval(ti);
+                    }, 300);
+                  };
+
+                  setTimeout(() => {
+                    const currentBtn = document.getElementById('exportCurrentDeptBtn');
+                    const allBtn = document.getElementById('exportAllDeptBtn');
+                    if (currentBtn) currentBtn.onclick = exportYearlyCurrentDepartment;
+                    if (allBtn) allBtn.onclick = exportYearlyAllDepartments;
+                  }, 400);
                 }
-                return false;
-              });
+              }, 300);
             }
-            
-            if (matchingVerify) {
-              const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
-              verificationStatus = `Verified (${verifyDate})`;
+
+            if (false) {
+              let matchingReject = rejectDataMap.find(v => v.input_id === formRow.input_id);
+              if (!matchingReject) {
+                matchingReject = rejectDataMap.find(v => {
+                  if (v.table_name && v.department === dept) {
+                    const tableNameLower = v.table_name.toLowerCase();
+                    const expectedLower = expectedTableName.toLowerCase();
+                    const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
+                    return (tableNameLower === expectedLower || 
+                            (tableNameLower.includes(desig.toLowerCase() + '_sh') && tableNameLower.includes('yearly'))) && 
+                           nameMatch;
+                  }
+                  return false;
+                });
+              }
+
+              if (matchingReject) {
+                verificationStatus = 'Rejected';
+              } else {
+                let matchingVerify = verifyDataMap.find(v => {
+                  if (v.input_id === formRow.input_id) {
+                    if (v.table_name) {
+                      const tableNameLower = v.table_name.toLowerCase();
+                      const expectedLower = expectedTableName.toLowerCase();
+                      return tableNameLower === expectedLower || 
+                             (tableNameLower.includes(desig.toLowerCase() + '_sh') && tableNameLower.includes('yearly'));
+                    }
+                    return true;
+                  }
+                  return false;
+                });
+
+                if (!matchingVerify) {
+                  matchingVerify = verifyDataMap.find(v => {
+                    if (v.table_name && v.department === dept) {
+                      const tableNameLower = v.table_name.toLowerCase();
+                      const expectedLower = expectedTableName.toLowerCase();
+                      const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
+                      return (tableNameLower === expectedLower || 
+                              (tableNameLower.includes(desig.toLowerCase() + '_sh') && tableNameLower.includes('yearly'))) && 
+                             nameMatch;
+                    }
+                    return false;
+                  });
+                }
+
+                verificationStatus = matchingVerify ? 'Verified' : 'Not Verified';
+              }
             } else {
-              verificationStatus = 'Pending Verification';
+              verificationStatus = 'Not Submitted';
             }
-          }
-        }
-        rowData.push(verificationStatus);
-        
-        // Add status columns
-        for (let i = 1; i <= 8; i++) {
-          if (i <= statusCount) {
-            rowData.push(formRow[`Status_${i}`] || '-');
+            rowData.push(verificationStatus);
           } else {
-            rowData.push('-');
+            rowData.push('0%');
+            rowData.push('Not Submitted');
           }
+
+          for (let i = 1; i <= statusCount; i++) {
+            rowData.push(formRow ? (formRow[`Status_${i}`] || '-') : '-');
+          }
+
+          rows.push(rowData);
+            }
+        });
+
+        if (rows.length > 1) {
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          XLSX.utils.book_append_sheet(wb, ws, `${desigKey}_All`);
         }
-      } else {
-        // Faculty has NOT submitted form - show 0% and empty columns
-        rowData.push('0%');
-        rowData.push('Not Submitted');
-        for (let i = 1; i <= 8; i++) {
-          rowData.push('-');
-        }
-      }
-      
-      allRows.push(rowData);
+      });
     });
-    
-    // Sort by department, then designation, then faculty name
-    const dataRows = allRows.slice(1);
-    dataRows.sort((a, b) => {
-      if (a[0] !== b[0]) return a[0].localeCompare(b[0]);
-      if (a[1] !== b[1]) return a[1].localeCompare(b[1]);
-      return a[2].localeCompare(b[2]);
-    });
-    
-    // Create workbook and export
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'All Departments');
-    XLSX.writeFile(wb, `IQAC_Dashboard_Yearly_SH_All_Departments.xlsx`);
-    
-  } catch (error) {
+      // Build filename
+      let filename = 'Yearly_Mandatory_Scope_AllDepts';
+      if (selectedMonth) filename += `_${selectedMonth}`;
+      filename += '.xlsx';
+        XLSX.writeFile(wb, filename);
+      } catch (error) {
     console.error('Export error:', error);
     alert('Failed to export data. Please try again.');
   } finally {
@@ -994,7 +818,14 @@ function attachExportButtons() {
     const dashboardTable = document.querySelector('#dashboardTableContainer table');
     if (dashboardTable) {
       document.getElementById('exportDashboardTableBtn').onclick = () => {
-        openExportScopeModal();
+        const modal = document.getElementById('exportScopeModal');
+        if (modal) { modal.classList.remove('hidden'); return; }
+        let tries = 0;
+        const ti = setInterval(() => {
+          const m = document.getElementById('exportScopeModal');
+          if (m) { m.classList.remove('hidden'); clearInterval(ti); }
+          if (++tries > 10) clearInterval(ti);
+        }, 300);
       };
       
       // Attach modal button logic
@@ -1002,9 +833,9 @@ function attachExportButtons() {
         const currentBtn = document.getElementById('exportCurrentDeptBtn');
         const allBtn = document.getElementById('exportAllDeptBtn');
         if (currentBtn && allBtn) {
-          currentBtn.onclick = exportYearlyCurrentDepartment;
-          allBtn.onclick = exportYearlyAllDepartments;
-        }
+            currentBtn.onclick = safeCallByName('exportYearlyCurrentDepartment');
+            allBtn.onclick = safeCallByName('exportYearlyAllDepartments');
+          }
       }, 600);
     }
     
@@ -1455,7 +1286,106 @@ function attachExportButtons() {
     }
   </script>
   <script>
-    const supabaseClient = window.supabase.createClient(
+    // Core Scope modal handlers and Excel exporter
+    function openExportCoreScopeModal() {
+      const m = document.getElementById('exportCoreScopeModal');
+      if (m) m.classList.remove('hidden');
+    }
+    function closeExportCoreScopeModal() {
+      const m = document.getElementById('exportCoreScopeModal');
+      if (m) m.classList.add('hidden');
+    }
+    // Expose on window for safeCallByName usage
+    window.openExportCoreScopeModal = openExportCoreScopeModal;
+    window.closeExportCoreScopeModal = closeExportCoreScopeModal;
+
+    async function exportCoreScopeTableToExcel(mode) {
+      console.group('exportCoreScopeTableToExcel');
+      console.log('invoked with mode=', mode,
+        'dept=', document.getElementById('coreScopeDepartmentFilter')?.value,
+        'month=', document.getElementById('coreScopeMonthFilter')?.value,
+        'designation=', document.getElementById('coreScopeDesignationFilter')?.value);
+      debugger;
+      try {
+        closeExportCoreScopeModal();
+        // show overlay
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'exportLoadingOverlay';
+        loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+        loadingDiv.innerHTML = `<div style="background:white;padding:24px 36px;border-radius:12px;box-shadow:0 6px 28px rgba(0,0,0,0.18);font-weight:600;color:#374151;">Preparing Core Scope export...</div>`;
+        document.body.appendChild(loadingDiv);
+
+        const container = document.getElementById('coreScopeTableContainer');
+        const tables = container ? Array.from(container.querySelectorAll('table')) : [];
+        const wb = XLSX.utils.book_new();
+
+        if (tables.length > 0) {
+          tables.forEach((table, idx) => {
+            try {
+              const ws = XLSX.utils.table_to_sheet(table);
+              let name = table.getAttribute('data-sheet-name') || table.id || `CoreScope_${idx+1}`;
+              // Excel sheet names max 31 chars
+              name = name.substring(0, 31);
+              XLSX.utils.book_append_sheet(wb, ws, name);
+            } catch (e) {
+              console.warn('Failed to convert table to sheet', e);
+            }
+          });
+        } else {
+          // Fallback: fetch Core_scope_SH rows from Supabase
+          const month = document.getElementById('coreScopeMonthFilter')?.value || 'January';
+          let query = supabaseClient.from('Core_scope_SH').select('*').eq('Month', month);
+          const dept = document.getElementById('coreScopeDepartmentFilter')?.value;
+          if (dept && dept !== 'All') query = query.eq('Department', dept);
+          const { data, error } = await query;
+          if (error) throw error;
+          if (!data || data.length === 0) {
+            alert('No Core Scope data available to export for selected filters.');
+            return;
+          }
+          // Build worksheet from fetched rows
+          const headers = Object.keys(data[0]).filter(k => k !== 'id');
+          const rows = [headers];
+          data.forEach(r => rows.push(headers.map(h => (r[h] === null || r[h] === undefined) ? '' : r[h])));
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          XLSX.utils.book_append_sheet(wb, ws, 'CoreScope');
+        }
+
+        let filename = 'CoreScope_Monthly';
+        const selMonth = document.getElementById('coreScopeMonthFilter')?.value;
+        if (selMonth) filename += `_${selMonth}`;
+        const selDept = document.getElementById('coreScopeDepartmentFilter')?.value;
+        if (selDept && selDept !== 'All') filename += `_${selDept.replace(/\s+/g, '_')}`;
+        filename += '.xlsx';
+
+        XLSX.writeFile(wb, filename);
+      } catch (err) {
+        console.error('CoreScope export failed', err);
+        alert('Failed to export Core Scope table. See console for details.');
+      } finally {
+        const overlay = document.getElementById('exportLoadingOverlay');
+        if (overlay) overlay.remove();
+      }
+    }
+      window.exportCoreScopeTableToExcel = exportCoreScopeTableToExcel;
+
+    // Diagnostic: confirm button exists and log handler status
+    setTimeout(() => {
+      try {
+        const btn = document.getElementById('exportCoreScopeTableBtn');
+        console.log('DIAG: exportCoreScopeTableBtn found:', !!btn);
+        console.log('DIAG: openExportCoreScopeModal typeof:', typeof window.openExportCoreScopeModal);
+        console.log('DIAG: exportCoreScopeTableToExcel typeof:', typeof window.exportCoreScopeTableToExcel);
+        if (btn) {
+          console.log('DIAG: current onclick property:', btn.onclick);
+          btn.addEventListener('click', e => {
+            console.log('DIAG: exportCoreScopeTableBtn click event reached listener', e);
+          });
+        }
+      } catch (e) { console.error('DIAG error', e); }
+    }, 500);
+
+      const supabaseClient = window.supabase.createClient(
       "https://cbhodgwaazmjszkujrti.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
     );
@@ -1504,6 +1434,9 @@ function attachExportButtons() {
     });
     
     async function loadCoreScopeTable() {
+      console.group('loadCoreScopeTable');
+      console.log('selectedCoreScopeDepartment=', selectedCoreScopeDepartment, 'selectedCoreScopeDesignation=', selectedCoreScopeDesignation, 'selectedCoreScopeMonth=', window.selectedCoreScopeMonth || document.getElementById('coreScopeMonthFilter')?.value);
+      debugger;
       if (!selectedCoreScopeDepartment) {
         document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500">No department selected.</div>';
         return;
@@ -3387,6 +3320,188 @@ function attachExportButtons() {
   // Department portfolios table removed for S&H dashboard
   // Load consolidated summary table
   loadConsolidatedSummaryTable();
+  </script>
+  <script>
+    // Diagnostic helpers to surface why exports may not run in the browser
+    (function(){
+      const report = () => {
+        console.group('IQAC Export Diagnostics');
+        console.log('openExportScopeModal:', typeof window.openExportScopeModal);
+        console.log('closeExportScopeModal:', typeof window.closeExportScopeModal);
+        console.log('exportYearlyCurrentDepartment:', typeof window.exportYearlyCurrentDepartment);
+        console.log('exportYearlyAllDepartments:', typeof window.exportYearlyAllDepartments);
+        console.log('attachExportButtons:', typeof window.attachExportButtons);
+        console.groupEnd();
+      };
+
+      // Run after small delay so other scripts load
+      setTimeout(() => {
+        try { report(); } catch(e) { console.error('Diagnostic report failed', e); }
+
+        // Ensure attachExportButtons is invoked to wire handlers
+        try { if (typeof window.attachExportButtons === 'function') window.attachExportButtons(); } catch(e){ console.error('attachExportButtons() threw', e); }
+
+        // Add safe click wrappers to log runtime errors
+        const safeInvoke = (name, args) => {
+          try {
+            const fn = window[name];
+            if (typeof fn === 'function') return fn.apply(window, args || []);
+            console.error('Missing function:', name);
+            alert('Missing handler: ' + name);
+          } catch (err) {
+            console.error('Error invoking', name, err);
+            alert('Error invoking ' + name + ': ' + (err && err.message));
+          }
+        };
+
+        const cur = document.getElementById('exportCurrentDeptBtn');
+        const all = document.getElementById('exportAllDeptBtn');
+        if (cur) cur.addEventListener('click', () => { console.log('Clicked exportCurrentDeptBtn'); safeInvoke('exportYearlyCurrentDepartment'); });
+        if (all) all.addEventListener('click', () => { console.log('Clicked exportAllDeptBtn'); safeInvoke('exportYearlyAllDepartments'); });
+
+        const dashboardBtn = document.getElementById('exportDashboardTableBtn');
+        if (dashboardBtn) dashboardBtn.addEventListener('click', () => console.log('Clicked exportDashboardTableBtn'));
+      }, 800);
+    })();
+  </script>
+  <script>
+    // Ensure global modal open/close functions exist (safe, idempotent)
+    window.openExportScopeModal = window.openExportScopeModal || function() {
+      const m = document.getElementById('exportScopeModal');
+      if (m) m.classList.remove('hidden');
+    };
+    window.closeExportScopeModal = window.closeExportScopeModal || function() {
+      const m = document.getElementById('exportScopeModal');
+      if (m) m.classList.add('hidden');
+    };
+
+    // Simple table-based exporter that reads the rendered table and writes XLSX.
+    window.exportYearlyCurrentDepartment = window.exportYearlyCurrentDepartment || function() {
+      try {
+        const tables = Array.from(document.querySelectorAll('#dashboardTableContainer table'));
+        if (!tables || tables.length === 0) { alert('No dashboard table found to export'); console.error('No dashboard table'); return; }
+        const selectedDept = (document.getElementById('departmentFilter')?.value || 'All').trim();
+        const month = document.getElementById('yearlyMonthFilter')?.value || '';
+
+        // Collect headers from the first table (they are identical across tables)
+        const headers = Array.from(tables[0].querySelectorAll('thead th')).map(t => t.innerText.trim());
+        // Collect all data rows from all tables
+        const dataRows = [];
+        tables.forEach(tbl => {
+          Array.from(tbl.querySelectorAll('tbody tr')).forEach(tr => {
+            const cells = Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim());
+            if (!cells || cells.length === 0) return;
+            if (selectedDept !== 'All' && cells[0] !== selectedDept) return;
+            dataRows.push(cells);
+          });
+        });
+
+        const wb = XLSX.utils.book_new();
+        ['Prof','ASP','AP'].forEach(desig => {
+          const filtered = dataRows.filter(cells => {
+            if (!cells || cells.length === 0) return false;
+            if (selectedDept !== 'All' && cells[0] !== selectedDept) return false;
+            const d = (cells[1] || '').toString().trim().toUpperCase();
+            if (desig === 'Prof') return d.includes('PROF');
+            if (desig === 'ASP') return d === 'ASP' || d.includes('ASSOCIATE');
+            if (desig === 'AP') return d === 'AP' || d.includes('ASSISTANT');
+            return false;
+          });
+          if (filtered.length) {
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...filtered]);
+            XLSX.utils.book_append_sheet(wb, ws, desig);
+          }
+        });
+
+        if (!wb.SheetNames || wb.SheetNames.length === 0) { alert('No rows found for selected department'); return; }
+        const filename = `Yearly_Mandatory_Scope_${selectedDept}${month ? '_' + month : ''}.xlsx`;
+        XLSX.writeFile(wb, filename);
+        window.closeExportScopeModal();
+      } catch (e) { console.error('exportYearlyCurrentDepartment failed', e); alert('Export failed: ' + (e && e.message)); }
+    };
+
+    window.exportYearlyAllDepartments = window.exportYearlyAllDepartments || function() {
+      try {
+        const tbl = document.querySelector('#dashboardTableContainer table');
+        if (!tbl) { alert('No dashboard table found to export'); console.error('No dashboard table'); return; }
+        const month = document.getElementById('yearlyMonthFilter')?.value || '';
+
+        const tables = Array.from(document.querySelectorAll('#dashboardTableContainer table'));
+        if (!tables || tables.length === 0) { alert('No dashboard table found to export'); console.error('No dashboard table'); return; }
+        // headers from first table
+        const headers = Array.from(tables[0].querySelectorAll('thead th')).map(t => t.innerText.trim());
+        const dataRows = [];
+        tables.forEach(tbl => {
+          Array.from(tbl.querySelectorAll('tbody tr')).forEach(tr => {
+            const cells = Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim());
+            if (!cells || cells.length === 0) return;
+            dataRows.push(cells);
+          });
+        });
+
+        const wb = XLSX.utils.book_new();
+        ['Prof','ASP','AP'].forEach(desig => {
+          const filtered = dataRows.filter(cells => {
+            if (!cells || cells.length === 0) return false;
+            const d = (cells[1] || '').toString().trim().toUpperCase();
+            if (desig === 'Prof') return d.includes('PROF');
+            if (desig === 'ASP') return d === 'ASP' || d.includes('ASSOCIATE');
+            if (desig === 'AP') return d === 'AP' || d.includes('ASSISTANT');
+            return false;
+          });
+          if (filtered.length) {
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...filtered]);
+            XLSX.utils.book_append_sheet(wb, ws, desig);
+          }
+        });
+
+        if (!wb.SheetNames || wb.SheetNames.length === 0) { alert('No rows found to export'); return; }
+        const filename = `Yearly_Mandatory_Scope_All${month ? '_' + month : ''}.xlsx`;
+        XLSX.writeFile(wb, filename);
+        window.closeExportScopeModal();
+      } catch (e) { console.error('exportYearlyAllDepartments failed', e); alert('Export failed: ' + (e && e.message)); }
+    };
+    // Core Scope modal open/close and exporter
+    window.openExportCoreScopeModal = window.openExportCoreScopeModal || function() {
+      const m = document.getElementById('exportCoreScopeModal'); if (m) m.classList.remove('hidden');
+    };
+    window.closeExportCoreScopeModal = window.closeExportCoreScopeModal || function() {
+      const m = document.getElementById('exportCoreScopeModal'); if (m) m.classList.add('hidden');
+    };
+
+    window.exportCoreScopeTableToExcel = window.exportCoreScopeTableToExcel || function(mode) {
+      try {
+        const tables = Array.from(document.querySelectorAll('#coreScopeTableContainer table'));
+        if (!tables || tables.length === 0) { alert('No core scope table found to export'); console.error('No core scope table'); return; }
+        const month = document.getElementById('coreScopeMonthFilter')?.value || '';
+        const dept = document.getElementById('coreScopeDepartmentFilter')?.value || 'All';
+        const headers = Array.from(tables[0].querySelectorAll('thead th')).map(t => t.innerText.trim());
+        const dataRows = [];
+        tables.forEach(tbl => Array.from(tbl.querySelectorAll('tbody tr')).forEach(tr => dataRows.push(Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim()))));
+
+        const wb = XLSX.utils.book_new();
+        ['Prof','ASP','AP'].forEach(desig => {
+          const filtered = dataRows.filter(cells => {
+            if (!cells || cells.length === 0) return false;
+            if (dept !== 'All' && cells[0] !== dept) return false;
+            const d = (cells[1] || '').toString().trim().toUpperCase();
+            if (desig === 'Prof') return d.includes('PROF');
+            if (desig === 'ASP') return d === 'ASP' || d.includes('ASSOCIATE');
+            if (desig === 'AP') return d === 'AP' || d.includes('ASSISTANT');
+            return false;
+          });
+          if (filtered.length) {
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...filtered]);
+            XLSX.utils.book_append_sheet(wb, ws, desig);
+          }
+        });
+
+        if (!wb.SheetNames || wb.SheetNames.length === 0) { alert('No rows found for export'); return; }
+        const filename = `CoreScope_${mode || 'current'}_${dept}${month ? '_' + month : ''}.xlsx`;
+        XLSX.writeFile(wb, filename);
+        window.closeExportCoreScopeModal();
+      } catch (e) { console.error('exportCoreScopeTableToExcel failed', e); alert('Export failed: ' + (e && e.message)); }
+    };
   </script>
   <footer class="text-center py-4 mt-8">
     <p class="text-sm">
