@@ -253,176 +253,64 @@
         </div>
 
       <script>
-        // Export yearly for ALL departments (S&H rules AP=5, ASP/Prof=6)
-      async function exportYearlyAllDepartments() {
-        // Show loading overlay
-        let loadingDiv = document.createElement('div');
-        loadingDiv.id = 'exportLoadingOverlay';
-        loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
-        loadingDiv.innerHTML = `<div style="background:white;padding:32px 48px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;align-items:center;gap:16px;">
-          <svg class='animate-spin' style='height:48px;width:48px;color:#7c3aed;' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
-            <circle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'></circle>
-            <path class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'></path>
-          </svg>
-          <div style='font-size:18px;color:#7c3aed;font-weight:600;'>Exporting all departments, please wait...</div>
-        </div>`;
-        document.body.appendChild(loadingDiv);
-
-        try {
-          const monthFilter = document.getElementById('yearlyMonthFilter');
-          const selectedMonth = monthFilter ? monthFilter.value : 'January';
-
-          const [facultyRes, apRes, aspRes, profRes] = await Promise.all([
-            supabaseClient.from('Faculty').select('*'),
-            supabaseClient.from('AP_SH_Yearly').select('*').eq('Month', selectedMonth),
-            supabaseClient.from('ASP_SH_Yearly').select('*').eq('Month', selectedMonth),
-            supabaseClient.from('Prof_SH_Yearly').select('*').eq('Month', selectedMonth)
-          ]);
-
-          const allFaculty = facultyRes.data || [];
-
-          const particularsMap = {
-            AP: [
-              'Present at Conferences.',
-              'Attend FDPs / workshop/Seminars',
-              'Engage in extension activities, and social outreach programs.',
-              'Membership in professional body',
-              'No of Proposals submitted in Manthan Portal'
-            ],
-            ASP: [
-              'Present at Conferences.',
-              'Attend FDPs / workshop/Seminars',
-              'Engage in extension activities, and social outreach programs.',
-              'Membership in professional body',
-              'No of Proposals submitted in Manthan Portal'
-            ],
-            Prof: [
-              'Present at Conferences.',
-              'Attend FDPs / workshop/Seminars',
-              'Engage in extension activities, and social outreach programs.',
-              'Membership in professional body',
-              'No of Proposals submitted in Manthan Portal'
-            ]
-          };
-
-          const formDataMaps = { AP: {}, ASP: {}, Prof: {} };
-          [
-            { designation: 'AP', data: apRes.data || [] },
-            { designation: 'ASP', data: aspRes.data || [] },
-            { designation: 'Prof', data: profRes.data || [] }
-          ].forEach(({ designation, data }) => {
-            const grouped = {};
-            data.forEach(row => {
-              const dept = (row['Department'] || '').toString().trim();
-              const facultyName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
-              if (!dept || !facultyName) return;
-              const key = `${dept}|${facultyName}`;
-              if (!grouped[key]) grouped[key] = [];
-              grouped[key].push(row);
-            });
-            Object.keys(grouped).forEach(key => {
-              const rows = grouped[key].sort((a, b) => (b.input_id || b.id || 0) - (a.input_id || a.id || 0));
-              formDataMaps[designation][key] = rows[0];
-            });
-          });
-
-          const wb = XLSX.utils.book_new();
-          ['AP','ASP','Prof'].forEach(desigKey => {
-            const statusCount = desigKey === 'AP' ? 5 : 6;
-            const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', 'Verification Status', ...particularsMap[desigKey]];
-            const rows = [headers];
-
-            allFaculty.forEach(fac => {
-              const designation = (fac.Designation || '').toUpperCase();
-              let desig = '';
-              if (designation === 'AP' || designation === 'ASSISTANT PROFESSOR') desig = 'AP';
-              else if (designation === 'ASP' || designation === 'ASSOCIATE PROFESSOR') desig = 'ASP';
-              else if (designation === 'PROF' || designation === 'PROFESSOR') desig = 'Prof';
-              else return;
-              if (desig !== desigKey) return;
-
-              const dept = fac.department || 'Unknown';
-              const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
-              const key = `${dept}|${facultyName.trim().toLowerCase()}`;
-              const formRow = formDataMaps[desig][key];
-
-              let percentage = 0;
-              let verificationStatus = 'Not Submitted';
-
-              if (formRow) {
-                let completedCount = 0;
-                for (let i = 1; i <= statusCount; i++) {
-                  const status = (formRow[`Status_${i}`] || '').toString().toLowerCase();
-                  if (status === 'completed' || status === 'completed and updated') {
-                    completedCount++;
-                  }
-                }
-                percentage = Math.round((completedCount / statusCount) * 100);
-                verificationStatus = 'Submitted';
-              }
-
-              const rowData = [dept, desig, facultyName, `${percentage}%`, verificationStatus];
-              for (let i = 1; i <= statusCount; i++) {
-                rowData.push(formRow ? (formRow[`Status_${i}`] || '-') : '-');
-              }
-              rows.push(rowData);
-            });
-
-            if (rows.length > 1) {
-              const ws = XLSX.utils.aoa_to_sheet(rows);
-              XLSX.utils.book_append_sheet(wb, ws, `${desigKey}_All`);
-            }
-          });
-
-          let filename = 'Yearly_Mandatory_Scope_AllDepts';
-          if (selectedMonth) filename += `_${selectedMonth}`;
-          filename += '.xlsx';
-          XLSX.writeFile(wb, filename);
-
-        } catch (error) {
-          console.error('Export error:', error);
-          alert('Failed to export data. Please try again.');
-        } finally {
-          const overlay = document.getElementById('exportLoadingOverlay');
-          if (overlay) overlay.remove();
-        }
-  }
-}
-
-// Attach export button listeners for core scope table
-setTimeout(() => {
-  const exportBtn = document.getElementById('exportCoreScopeTableBtn');
-  if (exportBtn) {
-    exportBtn.onclick = function(evt) { console.log('exportCoreScopeTableBtn clicked', evt); try { return safeCallByName('openExportCoreScopeModal')(); } catch (e) { console.error('openExportCoreScopeModal error', e); } };
-    setTimeout(() => {
-      const currentBtn = document.getElementById('exportCoreScopeCurrentDeptBtn');
-      const allBtn = document.getElementById('exportCoreScopeAllDeptBtn');
-      if (currentBtn) {
-        currentBtn.addEventListener('click', function() {
-          const fn = window.exportCoreScopeTableToExcel;
-          if (typeof fn === 'function') {
-            console.log('DIAG: exportCoreScopeTableToExcel invoked via currentBtn listener');
-            try { fn('current'); } catch (e) { console.error('exportCoreScopeTableToExcel error', e); alert('Export failed: ' + (e && e.message)); }
-          } else {
-            alert('Handler not ready: exportCoreScopeTableToExcel');
+        // Replaced export module: single clean exporter and button attachments
+        (function(){
+          function getValue(id, fallback=''){
+            return document.getElementById(id)?.value || fallback;
           }
-        });
-      }
-      if (allBtn) {
-        allBtn.addEventListener('click', function() {
-          const fn = window.exportCoreScopeTableToExcel;
-          if (typeof fn === 'function') {
-            console.log('DIAG: exportCoreScopeTableToExcel invoked via allBtn listener');
-            try { fn('all'); } catch (e) { console.error('exportCoreScopeTableToExcel error', e); alert('Export failed: ' + (e && e.message)); }
-          } else {
-            alert('Handler not ready: exportCoreScopeTableToExcel');
+
+          function exportTables(containerSelector, baseName){
+            try{
+              const container = document.querySelector(containerSelector);
+              const tables = container ? Array.from(container.querySelectorAll('table')) : [];
+              if (!tables.length) return false;
+              const wb = XLSX.utils.book_new();
+              tables.forEach((t,i)=>{
+                try{ const ws = XLSX.utils.table_to_sheet(t); XLSX.utils.book_append_sheet(wb, ws, (t.getAttribute('data-sheet-name')||`${baseName}_${i+1}`).substring(0,31)); }catch(e){console.warn('sheet convert',e)}
+              });
+              const filename = `${baseName}.xlsx`;
+              XLSX.writeFile(wb, filename);
+              return true;
+            }catch(e){console.error('exportTables error',e); alert('Export failed: '+(e&&e.message)); return false}
           }
-        });
-      }
-    }, 600);
-  }
-}, 800);
-</script>
+
+          async function fetchAndExportCoreScope(month, dept, filename){
+            try{
+              let q = supabaseClient.from('Core_scope_SH').select('*').eq('Month', month);
+              if (dept && dept !== 'All') q = q.eq('Department', dept);
+              const { data, error } = await q;
+              if (error) throw error;
+              if (!data || !data.length) { alert('No Core Scope data'); return; }
+              const hdrs = Object.keys(data[0]).filter(k=>k!=='id');
+              const rows = [hdrs]; data.forEach(r=>rows.push(hdrs.map(h=>r[h]??'')));
+              const ws = XLSX.utils.aoa_to_sheet(rows); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'CoreScope'); XLSX.writeFile(wb, filename+'.xlsx');
+            }catch(e){console.error('fetchAndExportCoreScope',e); alert('Export failed');}
+          }
+
+          window.exportYearlyCurrentDepartment = function(){ const month=getValue('yearlyMonthFilter','January'); const dept=getValue('departmentFilter','All'); const name=`Yearly_Dashboard_${month}_${dept}`.replace(/\s+/g,'_'); if(!exportTables('#dashboardTableContainer',name)) alert('No dashboard table found for export'); };
+          window.exportYearlyAllDepartments = function(){ const month=getValue('yearlyMonthFilter','January'); const name=`Yearly_Dashboard_All_${month}`.replace(/\s+/g,'_'); if(!exportTables('#dashboardTableContainer',name)) alert('No dashboard table found for export'); };
+
+          window.exportCoreScopeTableToExcel = async function(mode){ const month=getValue('coreScopeMonthFilter','January'); const dept=getValue('coreScopeDepartmentFilter','All'); const base=`CoreScope_${mode||'current'}_${month}${dept&&dept!=='All'? '_'+dept.replace(/\s+/g,'_'):''}`; if(!exportTables('#coreScopeTableContainer',base)) await fetchAndExportCoreScope(month, mode==='current'?dept:null, base); };
+
+          window.openExportScopeModal = function(){ const m=document.getElementById('exportScopeModal'); if(m) m.classList.remove('hidden'); };
+          window.closeExportScopeModal = function(){ const m=document.getElementById('exportScopeModal'); if(m) m.classList.add('hidden'); };
+
+          window.openExportCoreScopeModal = function(){ const m=document.getElementById('exportCoreScopeModal'); if(m) m.classList.remove('hidden'); };
+          window.closeExportCoreScopeModal = function(){ const m=document.getElementById('exportCoreScopeModal'); if(m) m.classList.add('hidden'); };
+
+          function attach(){
+            const dbBtn=document.getElementById('exportDashboardTableBtn'); if(dbBtn) dbBtn.onclick=()=>{ const m=document.getElementById('exportScopeModal'); if(m) m.classList.remove('hidden'); };
+            const cur=document.getElementById('exportCurrentDeptBtn'); if(cur) cur.onclick=()=>window.exportYearlyCurrentDepartment();
+            const all=document.getElementById('exportAllDeptBtn'); if(all) all.onclick=()=>window.exportYearlyAllDepartments();
+            const core=document.getElementById('exportCoreScopeTableBtn'); if(core) core.onclick=()=>{ const m=document.getElementById('exportCoreScopeModal'); if(m) m.classList.remove('hidden'); };
+            const coreCur=document.getElementById('exportCoreScopeCurrentDeptBtn'); if(coreCur) coreCur.onclick=()=>window.exportCoreScopeTableToExcel('current');
+            const coreAll=document.getElementById('exportCoreScopeAllDeptBtn'); if(coreAll) coreAll.onclick=()=>window.exportCoreScopeTableToExcel('all');
+          }
+          setTimeout(attach, 400);
+          window.attachExportButtons = attach;
+          console.log('IQAC Export Diagnostics - clean exporter attached');
+        })();
+      </script>
 <script>
 // Export Scope Modal logic
 function openExportScopeModal() {
@@ -1305,7 +1193,6 @@ function attachExportButtons() {
         'dept=', document.getElementById('coreScopeDepartmentFilter')?.value,
         'month=', document.getElementById('coreScopeMonthFilter')?.value,
         'designation=', document.getElementById('coreScopeDesignationFilter')?.value);
-      debugger;
       try {
         closeExportCoreScopeModal();
         // show overlay
@@ -1317,6 +1204,7 @@ function attachExportButtons() {
 
         const container = document.getElementById('coreScopeTableContainer');
         const tables = container ? Array.from(container.querySelectorAll('table')) : [];
+        console.log('DIAG: coreScope export - found tables count =', tables.length);
         const wb = XLSX.utils.book_new();
 
         if (tables.length > 0) {
@@ -1358,7 +1246,9 @@ function attachExportButtons() {
         if (selDept && selDept !== 'All') filename += `_${selDept.replace(/\s+/g, '_')}`;
         filename += '.xlsx';
 
+        console.log('DIAG: coreScope export - writing file:', filename, 'sheets:', Object.keys(wb.Sheets || {}));
         XLSX.writeFile(wb, filename);
+        console.log('DIAG: coreScope export - writeFile completed');
       } catch (err) {
         console.error('CoreScope export failed', err);
         alert('Failed to export Core Scope table. See console for details.');
