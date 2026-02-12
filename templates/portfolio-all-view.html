@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Portfolio All Submissions View</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script src="../static/javascript/form-modal-mapper.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <div class="w-full bg-purple-800 py-4 flex items-center">
+        <img src="https://www.pmctech.org/images/gallery/logo1.jpg" alt="PMC Tech Logo" class="h-14 ml-8" style="max-height:56px;" />
+        <h1 class="text-white text-2xl font-bold ml-8">Portfolio All Submissions</h1>
+    </div>
+    <div class="flex-1 flex flex-col items-center justify-center py-8 px-2">
+        <div class="w-full max-w-7xl mx-auto bg-white rounded-2xl card-shadow border border-purple-300 overflow-x-auto p-8 mb-12">
+            <!-- Loading indicator -->
+            <div id="loading-indicator" class="flex flex-col items-center justify-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-800 mb-4"></div>
+                <p class="text-purple-800 font-semibold text-lg">Loading submissions...</p>
+            </div>
+            <!-- Month filter dropdown -->
+            <div id="filter-section" class="mb-4 flex flex-wrap items-center gap-4 hidden">
+                <label for="month-filter" class="font-semibold text-purple-800">Filter by Month:</label>
+                <select id="month-filter" class="border border-purple-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <option value="">All Months</option>
+                </select>
+                <label for="percent-filter" class="ml-4 font-semibold text-purple-800">Filter by %:</label>
+                <select id="percent-filter" class="border border-purple-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <option value="">All</option>
+                    <option value="10">10%+</option>
+                    <option value="20">20%+</option>
+                    <option value="30">30%+</option>
+                    <option value="40">40%+</option>
+                    <option value="50">50%+</option>
+                    <option value="60">60%+</option>
+                    <option value="70">70%+</option>
+                    <option value="80">80%+</option>
+                    <option value="90">90%+</option>
+                    <option value="100">100%</option>
+                </select>
+                <button id="export-excel-btn" class="ml-6 bg-green-500 text-white px-4 py-1 rounded font-semibold hover:bg-green-600 transition">Export to Excel</button>
+            </div>
+            <table id="data-table" class="w-full text-sm table-fixed hidden">
+                <thead class="bg-orange-400">
+                    <tr>
+                        <th class="border px-2 py-2 font-bold text-white">Form</th>
+                        <th class="border px-2 py-2 font-bold text-white">Portfolio Member Name</th>
+                        <th class="border px-2 py-2 font-bold text-white">Month</th>
+                        <th class="border px-2 py-2 font-bold text-white">%</th>
+                        <th class="border px-2 py-2 font-bold text-white">View</th>
+                    </tr>
+                </thead>
+                <tbody id="portfolio-all-table-body">
+                    <!-- JS will render all rows here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Modal container -->
+    <div id="form-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-8 relative overflow-y-auto" style="max-height:90vh;">
+            <button id="close-modal" class="absolute top-4 right-4 text-gray-500 hover:text-purple-700 text-2xl font-bold">&times;</button>
+            <div id="form-modal-content" class="overflow-x-auto"></div>
+        </div>
+    </div>
+    <script>
+    // Supabase setup
+    const supabaseClient = window.supabase.createClient(
+        "https://cbhodgwaazmjszkujrti.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+    // Table mapping for all 17 forms
+    const formTableMap = [
+        { name: "Director – Students welfare & Admission", table: "Institution-form1-monthly" },
+        { name: "Head - HR", table: "Institution-form2" },
+        { name: "Principal", table: "Institution-form3-monthly" },
+        { name: "Dean - IQAC", table: "Institution-form4-monthly" },
+        { name: "Director - Academics", table: "Institution-form5" },
+        { name: "Controller of Examinations", table: "Institution-form6-monthly" },
+        { name: "Executive Dean – International Affairs", table: "Institution-form7-monthly" },
+        { name: "Head - Placements", table: "Institution-form8" },
+        { name: "Placement Officer", table: "Institution-form9" },
+        { name: "Head – Training", table: "Institution-form10" },
+        { name: "Training Officer", table: "Institution-form11" },
+        { name: "Head - RISE", table: "Institution-form12" },
+        { name: "IT Infra – Coordinator", table: "Institution-form13-monthly" },
+        { name: "Website – Coordinator", table: "Institution-form14-monthly" },
+        { name: "ERP Coordinator", table: "Institution-form15" },
+        { name: "Public Relations Officer", table: "Institution-form16" },
+        { name: "Logistics Coordinator", table: "Institution-form17" }
+    ];
+    // Store all rows for filtering
+    let allFormRows = [];
+    let allMonths = new Set();
+
+    async function fetchAllPortfolioSubmissions() {
+        const tbody = document.getElementById('portfolio-all-table-body');
+        tbody.innerHTML = '';
+        allFormRows = [];
+        allMonths = new Set();
+        for (const form of formTableMap) {
+            let rows = [];
+            let errorMsg = '';
+            try {
+                // Try ordering by input_id first, fall back to created_at or no ordering
+                let result = await supabaseClient
+                    .from(form.table)
+                    .select('*')
+                    .order('input_id', { ascending: false });
+                
+                // If input_id ordering fails, try without ordering
+                if (result.error && result.error.message.includes('input_id')) {
+                    result = await supabaseClient
+                        .from(form.table)
+                        .select('*');
+                }
+                
+                const { data, error } = result;
+                if (error) {
+                    errorMsg = error.message;
+                    console.error(`Error fetching ${form.table}:`, error.message);
+                }
+                if (data && data.length > 0) {
+                    rows = data;
+                    console.log(`Loaded ${data.length} rows from ${form.table}`);
+                } else {
+                    console.log(`No data found in ${form.table}`);
+                }
+            } catch (err) {
+                errorMsg = err.message;
+                console.error(`Exception fetching ${form.table}:`, err);
+                rows = [];
+            }
+            if (rows.length > 0) {
+                rows.forEach((row, idx) => {
+                    const memberName = row["Portfolio Member Name:"] || row["Portfolio Member Name"] || '';
+                    const month = row["Month:"] || row["Month"] || row["month"] || '';
+                    row.table = form.table;
+                    row.formName = form.name;
+                    allFormRows.push({ form, row, memberName, month, isLatest: idx === 0 });
+                    if (month) allMonths.add(month);
+                });
+            } else {
+                // No data for this form
+                allFormRows.push({ form, row: null, memberName: '', month: '', errorMsg, isLatest: true });
+            }
+        }
+        // Hide loading indicator and show content
+        document.getElementById('loading-indicator').classList.add('hidden');
+        document.getElementById('filter-section').classList.remove('hidden');
+        document.getElementById('data-table').classList.remove('hidden');
+        
+        renderMonthDropdown();
+        renderPortfolioTable();
+    }
+
+    function renderMonthDropdown() {
+        const monthFilter = document.getElementById('month-filter');
+        // Remove all except first option
+        while (monthFilter.options.length > 1) monthFilter.remove(1);
+        Array.from(allMonths).sort().forEach(month => {
+            const opt = document.createElement('option');
+            opt.value = month;
+            opt.textContent = month;
+            monthFilter.appendChild(opt);
+        });
+    }
+
+    function calculateCompletionPercentage(latestRow) {
+        let completedCount = 0;
+        // Dynamically count actual Status fields (Institution forms have varying counts)
+        const statusKeys = Object.keys(latestRow).filter(k => k.startsWith('Status_'));
+        const totalCount = statusKeys.length;
+        for (const key of statusKeys) {
+            const value = (latestRow[key] || '').toString().trim().toLowerCase();
+            if (value === 'completed' || value === 'completed and updated') {
+                completedCount++;
+            }
+            // All statuses (including 'Not Applicable', null, empty) are included in denominator
+        }
+        return totalCount > 0 ? ((completedCount / totalCount) * 100).toFixed(2) : 'N/A';
+    }
+
+    function renderPortfolioTable() {
+        const tbody = document.getElementById('portfolio-all-table-body');
+        tbody.innerHTML = '';
+        const selectedMonth = document.getElementById('month-filter').value;
+        const selectedPercent = document.getElementById('percent-filter').value;
+        // Group rows by form
+        const grouped = {};
+        for (const entry of allFormRows) {
+            if (!grouped[entry.form.name]) grouped[entry.form.name] = [];
+            grouped[entry.form.name].push(entry);
+        }
+        // For each form, show only the latest matching row
+        for (const formName in grouped) {
+            const rows = grouped[formName];
+            let latestMatchingRow = null;
+            
+            // Find the latest row that matches filters
+            for (const entry of rows) {
+                const { form, row, memberName, month, errorMsg } = entry;
+                
+                if (!row) {
+                    // Skip null rows when looking for matches
+                    continue;
+                }
+                
+                const percentage = calculateCompletionPercentage(row);
+                
+                // Check if this row matches filters
+                let monthMatch = !selectedMonth || month === selectedMonth;
+                let percentMatch = !selectedPercent || (percentage && percentage !== 'N/A' && parseFloat(percentage) >= parseFloat(selectedPercent));
+                
+                if (monthMatch && percentMatch) {
+                    // This is the first (latest) matching row
+                    latestMatchingRow = entry;
+                    break;
+                }
+            }
+            
+            // Display the latest matching row or show "no data"
+            if (latestMatchingRow) {
+                const { form, row, memberName, month } = latestMatchingRow;
+                const percentage = calculateCompletionPercentage(row);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="border px-2 py-2">${form.name}</td>
+                    <td class="border px-2 py-2">${memberName}</td>
+                    <td class="border px-2 py-2">${month}</td>
+                    <td class="border px-2 py-2 text-center">${percentage}%</td>
+                    <td class="border px-2 py-2 text-center">
+                        <button class="bg-purple-800 text-white px-4 py-1 rounded view-btn" data-form="${form.name}" data-table="${form.table}" data-row='${JSON.stringify(row)}'>View</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            } else if (rows.length > 0 && !rows[0].row) {
+                // No data exists for this form at all
+                const form = rows[0].form;
+                const errorMsg = rows[0].errorMsg || '';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="border px-2 py-2">${form.name}</td>
+                    <td class="border px-2 py-2 text-gray-400 italic" colspan="3">No data available</td>
+                    <td class="border px-2 py-2 text-red-500 text-xs">${errorMsg ? 'Error: ' + errorMsg : ''}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+            // If filters are applied and no match found, don't show anything for this form
+        }
+    }
+
+    // Export to Excel logic
+    document.getElementById('export-excel-btn').addEventListener('click', function() {
+        const selectedMonth = document.getElementById('month-filter').value;
+        const selectedPercent = document.getElementById('percent-filter').value;
+        let rows = [];
+        // Table headers (excluding View)
+        rows.push(['Form', 'Portfolio Member Name', 'Month', '%']);
+        
+        // Group by form and get latest matching row per form
+        const grouped = {};
+        for (const entry of allFormRows) {
+            if (!grouped[entry.form.name]) grouped[entry.form.name] = [];
+            grouped[entry.form.name].push(entry);
+        }
+        
+        for (const formName in grouped) {
+            const entries = grouped[formName];
+            let latestMatchingRow = null;
+            
+            // Find the latest row that matches filters
+            for (const entry of entries) {
+                const { form, row, memberName, month } = entry;
+                
+                if (!row) continue;
+                
+                const percentage = calculateCompletionPercentage(row);
+                
+                // Check if this row matches filters
+                let monthMatch = !selectedMonth || month === selectedMonth;
+                let percentMatch = !selectedPercent || (percentage && percentage !== 'N/A' && parseFloat(percentage) >= parseFloat(selectedPercent));
+                
+                if (monthMatch && percentMatch) {
+                    latestMatchingRow = entry;
+                    break;
+                }
+            }
+            
+            // Add the latest matching row to export
+            if (latestMatchingRow) {
+                const { form, memberName, month } = latestMatchingRow;
+                const percentage = calculateCompletionPercentage(latestMatchingRow.row);
+                rows.push([form.name, memberName, month, percentage + '%']);
+            } else if (entries.length > 0 && !entries[0].row) {
+                // No data exists for this form at all
+                rows.push([entries[0].form.name, 'No data available', '', 'N/A']);
+            }
+            // If filters applied and no match, don't include this form in export
+        }
+        // Convert to CSV
+        let csvContent = '';
+        rows.forEach(row => {
+            csvContent += row.map(cell => '"' + (cell || '').replace(/"/g, '""') + '"').join(',') + '\n';
+        });
+        // Download as .csv (Excel can open CSV)
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'portfolio-submissions.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('month-filter').addEventListener('change', renderPortfolioTable);
+    document.getElementById('percent-filter').addEventListener('change', renderPortfolioTable);
+    fetchAllPortfolioSubmissions();
+
+    // ...existing code...
+    // Modal logic using form-modal-mapper.js
+    window.showFormModal = function(row, details) {
+        let html = '';
+        if (window.getFormModalContent) {
+            html = window.getFormModalContent(row, details);
+        } else {
+            html = '<pre>' + JSON.stringify(details, null, 2) + '</pre>';
+        }
+        document.getElementById('form-modal-content').innerHTML = `<div class='p-2'>${html}</div>`;
+        document.getElementById('form-modal').classList.remove('hidden');
+    };
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('view-btn')) {
+            const rowData = e.target.getAttribute('data-row');
+            const tableName = e.target.getAttribute('data-table');
+            if (rowData) {
+                const details = JSON.parse(rowData);
+                window.showFormModal({ table: tableName }, details);
+            } else {
+                alert('No data available to view.');
+            }
+        }
+        if (e.target.id === 'close-modal' || (e.target.id === 'form-modal' && e.target === document.getElementById('form-modal'))) {
+            document.getElementById('form-modal').classList.add('hidden');
+            document.getElementById('form-modal-content').innerHTML = '';
+        }
+    });
+    </script>
+    <footer class="text-center py-4 mt-8">
+    <p class="text-sm">
+      &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline">PMC TECH</a><br>
+      <p class="text-xs opacity-80 flex items-center justify-center gap-2">
+                        Powered by 
+                        <a href="https://zeonytechnologies.com" target="_blank" rel="noopener noreferrer" class="inline-block hover:opacity-100 transition-all duration-300 hover:scale-105">
+                            <img src="../static/img/zeony logo.png" alt="Zeony Technologies" class="h-12 w-22 py-2 object-contain"/>
+                        </a><p class="text-xs opacity-80">A Student driven Software!</p>
+    </p>
+  </footer>
+</body>
+</html>

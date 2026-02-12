@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Reports Dashboard - IQAC PMC Tech</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pmcPurple: "#6a2c91",
+                        pmcPurpleDark: "#501e73",
+                        pmcBg: "#f6f4f8",
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+        }
+    </style>
+</head>
+<body class="bg-pmcBg min-h-screen">
+    <!-- Navigation -->
+    <header class="bg-pmcPurple text-white w-full no-print">
+        <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+            <div class="flex items-center">
+                <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 rounded shadow bg-white p-1" />
+            </div>
+            <h1 class="text-xl font-bold">Daily Reports Dashboard</h1>
+            <nav class="flex gap-4 text-base font-medium items-center">
+                <a href="iqac.html" class="hover:underline">← Back to IQAC</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto py-6 px-4">
+        <!-- Filters -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6 no-print">
+            <h2 class="text-lg font-bold text-pmcPurple mb-4">
+                <i class="fas fa-filter mr-2"></i>Filter Reports
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                    <select id="filterDepartment" onchange="loadReports()" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pmcPurple">
+                        <option value="">All Departments</option>
+                        <option value="AERO">AERO</option>
+                        <option value="AIDS">AIDS</option>
+                        <option value="AIML">AIML</option>
+                        <option value="CHEM">CHEM</option>
+                        <option value="CIVIL">CIVIL</option>
+                        <option value="CSBS">CSBS</option>
+                        <option value="CSE">CSE</option>
+                        <option value="ECE">ECE</option>
+                        <option value="EEE">EEE</option>
+                        <option value="IT">IT</option>
+                        <option value="MBA">MBA</option>
+                        <option value="MCO">MCO</option>
+                        <option value="MCA">MCA</option>
+                        <option value="MECH">MECH</option>
+                        <option value="S&H V1">S&H V1</option>
+                        <option value="S&H V2">S&H V2</option>
+                        <option value="S&H V3">S&H V3</option>
+                        <option value="S&H V4">S&H V4</option>
+                        <option value="S&H V5">S&H V5</option>
+                        <option value="S&H V6">S&H V6</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date From</label>
+                    <input type="date" id="filterDateFrom" onchange="loadReports()" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pmcPurple" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
+                    <input type="date" id="filterDateTo" onchange="loadReports()" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pmcPurple" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <select id="filterCategory" onchange="loadReports()" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pmcPurple">
+                        <option value="">All Categories</option>
+                        <option value="attendance">1. Attendance</option>
+                        <option value="academics">2. Academics</option>
+                        <option value="activities">3. Activities</option>
+                        <option value="achievements">4. Achievements</option>
+                        <option value="disciplinary">5. Disciplinary</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end mt-4">
+                <button onclick="exportReportsPdf()" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition mr-2">
+                    <i class="fas fa-file-pdf mr-2"></i>Export PDF
+                </button>
+                <button onclick="exportAllReports()" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition mr-2">
+                    <i class="fas fa-download mr-2"></i>Export All
+                </button>
+                <button onclick="loadReports()" class="bg-pmcPurple hover:bg-pmcPurpleDark text-white font-semibold px-4 py-2 rounded-lg shadow transition">
+                    <i class="fas fa-sync-alt mr-2"></i>Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Category Tabs -->
+        <div class="flex flex-wrap gap-2 mb-4 no-print">
+            <button onclick="showCategory('all')" class="category-tab active px-4 py-2 rounded-lg font-medium transition" data-tab="all">
+                All Reports
+            </button>
+            <button onclick="showCategory('attendance')" class="category-tab px-4 py-2 rounded-lg font-medium transition bg-purple-100 text-purple-700" data-tab="attendance">
+                <i class="fas fa-users mr-1"></i>Attendance
+            </button>
+            <button onclick="showCategory('academics')" class="category-tab px-4 py-2 rounded-lg font-medium transition bg-blue-100 text-blue-700" data-tab="academics">
+                <i class="fas fa-book mr-1"></i>Academics
+            </button>
+            <button onclick="showCategory('activities')" class="category-tab px-4 py-2 rounded-lg font-medium transition bg-green-100 text-green-700" data-tab="activities">
+                <i class="fas fa-star mr-1"></i>Activities
+            </button>
+            <button onclick="showCategory('achievements')" class="category-tab px-4 py-2 rounded-lg font-medium transition bg-yellow-100 text-yellow-700" data-tab="achievements">
+                <i class="fas fa-trophy mr-1"></i>Achievements
+            </button>
+            <button onclick="showCategory('disciplinary')" class="category-tab px-4 py-2 rounded-lg font-medium transition bg-red-100 text-red-700" data-tab="disciplinary">
+                <i class="fas fa-exclamation-triangle mr-1"></i>Disciplinary
+            </button>
+        </div>
+
+        <!-- Reports Container -->
+        <div id="reportsContainer" class="space-y-4">
+            <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+                <p>Loading reports...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Detail Modal -->
+    <div id="reportModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 relative">
+            <button onclick="closeReportModal()" class="absolute top-3 right-3 text-gray-400 hover:text-pmcPurple text-2xl font-bold">&times;</button>
+            <div id="reportModalContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="flex justify-end gap-3 mt-6 no-print">
+                <button onclick="printReport()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition">
+                    <i class="fas fa-print mr-2"></i>Print
+                </button>
+                <button onclick="downloadReportAsImage()" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition">
+                    <i class="fas fa-image mr-2"></i>Download Image
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- html2canvas for image download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- html2pdf for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script>
+        const supabase = window.supabase.createClient(
+            "https://cbhodgwaazmjszkujrti.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+        );
+
+        let allReports = [];
+        let currentCategory = 'all';
+        let currentReport = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default date range (last 7 days)
+            const today = new Date();
+            const weekAgo = new Date(today);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            
+            document.getElementById('filterDateTo').value = today.toISOString().split('T')[0];
+            document.getElementById('filterDateFrom').value = weekAgo.toISOString().split('T')[0];
+            
+            loadReports();
+        });
+
+        async function loadReports() {
+            const container = document.getElementById('reportsContainer');
+            container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-spinner fa-spin text-4xl mb-4"></i><p>Loading reports...</p></div>';
+
+            const department = document.getElementById('filterDepartment').value;
+            const dateFrom = document.getElementById('filterDateFrom').value;
+            const dateTo = document.getElementById('filterDateTo').value;
+            const category = document.getElementById('filterCategory').value;
+
+            allReports = [];
+
+            try {
+                // Load all categories or specific one
+                const categoriesToLoad = category ? [category] : ['attendance', 'academics', 'activities', 'achievements', 'disciplinary'];
+
+                for (const cat of categoriesToLoad) {
+                    const tableName = getTableName(cat);
+                    let query = supabase.from(tableName).select('*').order('report_date', { ascending: false });
+                    
+                    // IMPORTANT: Only show verified reports
+                    query = query.eq('verification_status', 'verified');
+                    
+                    if (department) query = query.eq('department', department);
+                    if (dateFrom) query = query.gte('report_date', dateFrom);
+                    if (dateTo) query = query.lte('report_date', dateTo);
+
+                    const { data, error } = await query;
+                    
+                    if (!error && data) {
+                        data.forEach(report => {
+                            report._category = cat;
+                            allReports.push(report);
+                        });
+                    }
+                }
+
+                // Sort by date descending
+                allReports.sort((a, b) => new Date(b.report_date) - new Date(a.report_date));
+
+                displayReports();
+            } catch (err) {
+                container.innerHTML = `<div class="text-center py-8 text-red-500"><i class="fas fa-exclamation-circle text-4xl mb-4"></i><p>Error loading reports: ${err.message}</p></div>`;
+            }
+        }
+
+        function getTableName(category) {
+            const tables = {
+                'attendance': 'daily_reports',
+                'academics': 'academic_reports',
+                'activities': 'activity_reports',
+                'achievements': 'achievement_reports',
+                'disciplinary': 'disciplinary_reports'
+            };
+            return tables[category];
+        }
+
+        function getCategoryColor(category) {
+            const colors = {
+                'attendance': 'bg-purple-100 text-purple-700 border-purple-300',
+                'academics': 'bg-blue-100 text-blue-700 border-blue-300',
+                'activities': 'bg-green-100 text-green-700 border-green-300',
+                'achievements': 'bg-yellow-100 text-yellow-700 border-yellow-300',
+                'disciplinary': 'bg-red-100 text-red-700 border-red-300'
+            };
+            return colors[category];
+        }
+
+        function getCategoryIcon(category) {
+            const icons = {
+                'attendance': 'fas fa-users',
+                'academics': 'fas fa-book',
+                'activities': 'fas fa-star',
+                'achievements': 'fas fa-trophy',
+                'disciplinary': 'fas fa-exclamation-triangle'
+            };
+            return icons[category];
+        }
+
+        function getCategoryLabel(category) {
+            const labels = {
+                'attendance': 'Attendance',
+                'academics': 'Academics',
+                'activities': 'Activities',
+                'achievements': 'Achievements',
+                'disciplinary': 'Disciplinary'
+            };
+            return labels[category];
+        }
+
+        function showCategory(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.remove('bg-pmcPurple', 'text-white');
+                if (tab.dataset.tab === cat) {
+                    tab.classList.add('bg-pmcPurple', 'text-white');
+                }
+            });
+            displayReports();
+        }
+
+        function displayReports() {
+            const container = document.getElementById('reportsContainer');
+            
+            let filteredReports = allReports;
+            if (currentCategory !== 'all') {
+                filteredReports = allReports.filter(r => r._category === currentCategory);
+            }
+
+            if (filteredReports.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-500"><i class="fas fa-inbox text-4xl mb-4"></i><p>No reports found for the selected filters.</p></div>';
+                return;
+            }
+
+            let html = '';
+            filteredReports.forEach(report => {
+                const colorClass = getCategoryColor(report._category);
+                const icon = getCategoryIcon(report._category);
+                const label = getCategoryLabel(report._category);
+                const date = new Date(report.report_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+                html += `
+                    <div class="bg-white rounded-xl shadow p-4 hover:shadow-lg transition cursor-pointer border-l-4 ${colorClass}" onclick="viewReport('${report._category}', ${report.id})">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full ${colorClass} flex items-center justify-center">
+                                    <i class="${icon}"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-800">${report.department}</h3>
+                                    <p class="text-sm text-gray-500">${label} Report • ${date}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-500">${report.hod_name || 'N/A'}</span>
+                                <i class="fas fa-chevron-right text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        async function viewReport(category, id) {
+            const tableName = getTableName(category);
+            const { data, error } = await supabase.from(tableName).select('*').eq('id', id).single();
+
+            if (error || !data) {
+                alert('Failed to load report details');
+                return;
+            }
+
+            currentReport = { ...data, _category: category };
+            
+            let content = `
+                <div style="background: white; padding: 24px; border-radius: 12px; font-family: Arial, sans-serif;">
+                    <!-- Header with Logo -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #6a2c91; padding-bottom: 16px; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <img src="/static/img/pmc.jpg" alt="PMC Tech" style="height: 55px; width: auto; border-radius: 4px;" onerror="this.src='https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3'; this.style.height='50px';" />
+                            <div>
+                                <h1 style="font-size: 22px; font-weight: bold; color: #6a2c91; margin: 0;">PMC TECH</h1>
+                                <p style="font-size: 10px; color: #666; margin: 2px 0 0 0; letter-spacing: 1px;">INSPIRE TO INNOVATE</p>
+                            </div>
+                        </div>
+                        <div style="text-align: right; background: linear-gradient(135deg, #6a2c91, #8b4db8); color: white; padding: 12px 20px; border-radius: 8px;">
+                            <h2 style="font-size: 16px; font-weight: bold; margin: 0;">${getCategoryLabel(category)} Report</h2>
+                            <p style="font-size: 11px; margin: 4px 0 0 0; opacity: 0.9;">Daily Department Report</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Report Info -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; background: linear-gradient(135deg, #f8f5fa, #ede7f2); padding: 16px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="text-align: center;">
+                            <p style="font-size: 10px; color: #888; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Department</p>
+                            <p style="font-size: 18px; font-weight: bold; color: #6a2c91; margin: 6px 0 0 0;">${data.department}</p>
+                        </div>
+                        <div style="text-align: center; border-left: 2px solid #ddd; border-right: 2px solid #ddd;">
+                            <p style="font-size: 10px; color: #888; margin: 0; text-transform: uppercase; letter-spacing: 1px;">HOD / Incharge</p>
+                            <p style="font-size: 18px; font-weight: bold; color: #333; margin: 6px 0 0 0;">${data.hod_name || 'N/A'}</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <p style="font-size: 10px; color: #888; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Report Date</p>
+                            <p style="font-size: 18px; font-weight: bold; color: #333; margin: 6px 0 0 0;">${new Date(data.report_date).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Section -->
+                    <div style="padding: 4px 0;">
+            `;
+
+            // Render category-specific content
+            if (category === 'attendance') {
+                content += renderAttendanceReport(data);
+            } else if (category === 'academics') {
+                content += renderAcademicsReport(data);
+            } else if (category === 'activities') {
+                content += renderActivitiesReport(data);
+            } else if (category === 'achievements') {
+                content += renderAchievementsReport(data);
+            } else if (category === 'disciplinary') {
+                content += renderDisciplinaryReport(data);
+            }
+
+            // Close the wrapper div and add footer
+            content += `
+                    </div>
+                    <!-- Footer -->
+                    <div style="margin-top: 24px; padding: 16px; background: linear-gradient(135deg, #f8f5fa, #ede7f2); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <img src="/static/img/pmc.jpg" alt="PMC" style="height: 30px; width: auto; border-radius: 4px;" onerror="this.style.display='none';" />
+                            <p style="font-size: 11px; color: #6a2c91; margin: 0; font-weight: bold;">© PMC TECH - Daily Reporting System</p>
+                        </div>
+                        <p style="font-size: 10px; color: #888; margin: 0;">Generated on: ${new Date().toLocaleString('en-IN')}</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('reportModalContent').innerHTML = content;
+            document.getElementById('reportModal').classList.remove('hidden');
+        }
+
+        function renderAttendanceReport(data) {
+            let html = '<h3 style="font-size: 16px; font-weight: bold; color: #6a2c91; margin: 0 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid #e9d5f5;">📊 Student Attendance</h3>';
+            
+            if (data.student_attendance && Array.isArray(data.student_attendance)) {
+                html += `<table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px;">
+                    <thead><tr style="background: linear-gradient(135deg, #6a2c91, #8b4db8); color: white;">
+                        <th style="border: 1px solid #ddd; padding: 10px;">Class</th>
+                        <th style="border: 1px solid #ddd; padding: 10px;">Total</th>
+                        <th style="border: 1px solid #ddd; padding: 10px;">Present</th>
+                        <th style="border: 1px solid #ddd; padding: 10px;">OD</th>
+                        <th style="border: 1px solid #ddd; padding: 10px;">Leave</th>
+                        <th style="border: 1px solid #ddd; padding: 10px;">Absent</th>
+                        <th style="border: 1px solid #ddd; padding: 10px;">%</th>
+                    </tr></thead><tbody>`;
+                data.student_attendance.forEach((s, i) => {
+                    const bgColor = i % 2 === 0 ? '#fff' : '#f9f5fc';
+                    html += `<tr style="background: ${bgColor};">
+                        <td style="border: 1px solid #ddd; padding: 8px;">${s.class_section || ''}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${s.total_students || 0}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #28a745;">${s.students_present || 0}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #17a2b8;">${s.students_od || 0}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #ffc107;">${s.students_leave || 0}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #dc3545;">${s.students_absent || 0}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold; color: #6a2c91;">${s.attendance_percent || '0%'}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+            }
+
+            html += '<h3 style="font-size: 16px; font-weight: bold; color: #6a2c91; margin: 20px 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid #e9d5f5;">👨‍🏫 Faculty Attendance</h3>';
+            html += `<table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <tr style="background: #f9f5fc;"><td style="border: 1px solid #ddd; padding: 10px; font-weight: 600; width: 50%;">Total Faculty</td><td style="border: 1px solid #ddd; padding: 10px; font-weight: bold;">${data.total_faculty || 0}</td></tr>
+                <tr><td style="border: 1px solid #ddd; padding: 10px; font-weight: 600;">Present</td><td style="border: 1px solid #ddd; padding: 10px; color: #28a745; font-weight: bold;">${data.faculty_present || 0}</td></tr>
+                <tr style="background: #f9f5fc;"><td style="border: 1px solid #ddd; padding: 10px; font-weight: 600;">On OD</td><td style="border: 1px solid #ddd; padding: 10px; color: #17a2b8;">${data.faculty_od || '-'}</td></tr>
+                <tr><td style="border: 1px solid #ddd; padding: 10px; font-weight: 600;">On Leave</td><td style="border: 1px solid #ddd; padding: 10px; color: #ffc107;">${data.faculty_leave || '-'}</td></tr>
+                <tr style="background: #f9f5fc;"><td style="border: 1px solid #ddd; padding: 10px; font-weight: 600;">Absent</td><td style="border: 1px solid #ddd; padding: 10px; color: #dc3545;">${data.faculty_absent || '-'}</td></tr>
+            </table>`;
+
+            return html;
+        }
+
+        function renderAcademicsReport(data) {
+            let html = '';
+            if (data.academics && Array.isArray(data.academics)) {
+                data.academics.forEach(ac => {
+                    html += `<h3 style="font-size: 15px; font-weight: bold; color: #6a2c91; margin: 16px 0 10px 0; padding: 8px; background: #f8f5fa; border-left: 4px solid #6a2c91; border-radius: 4px;">📚 ${ac.class_section || (ac.year + ' / ' + (ac.class_name || '') + ' / ' + ac.section)}</h3>`;
+                    html += `<table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px;">
+                        <thead><tr style="background: linear-gradient(135deg, #2563eb, #3b82f6); color: white;">
+                            <th style="border: 1px solid #ddd; padding: 10px; width: 60px;">Hour</th>
+                            <th style="border: 1px solid #ddd; padding: 10px;">Subject</th>
+                            <th style="border: 1px solid #ddd; padding: 10px;">Faculty</th>
+                            <th style="border: 1px solid #ddd; padding: 10px;">Topics Covered</th>
+                            <th style="border: 1px solid #ddd; padding: 10px;">Teaching Aid</th>
+                        </tr></thead><tbody>`;
+                    if (ac.timetable && Array.isArray(ac.timetable)) {
+                        ac.timetable.forEach((t, i) => {
+                            const bgColor = i % 2 === 0 ? '#fff' : '#f0f7ff';
+                            html += `<tr style="background: ${bgColor};">
+                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold; color: #2563eb;">${t.hour || i + 1}</td>
+                                <td style="border: 1px solid #ddd; padding: 8px;">${t.subject || '-'}</td>
+                                <td style="border: 1px solid #ddd; padding: 8px;">${t.faculty_name || '-'}</td>
+                                <td style="border: 1px solid #ddd; padding: 8px;">${t.topics_covered || '-'}</td>
+                                <td style="border: 1px solid #ddd; padding: 8px;">${t.teaching_aid || '-'}</td>
+                            </tr>`;
+                        });
+                    }
+                    html += '</tbody></table>';
+                });
+            }
+            return html || '<p style="color: #888; padding: 16px; text-align: center;">No academics data available.</p>';
+        }
+
+        function renderActivitiesReport(data) {
+            let html = '<h3 style="font-size: 16px; font-weight: bold; color: #16a34a; margin: 0 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid #bbf7d0;">⭐ Activities Conducted</h3>';
+            if (data.activities && Array.isArray(data.activities)) {
+                html += `<table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead><tr style="background: linear-gradient(135deg, #16a34a, #22c55e); color: white;">
+                        <th style="border: 1px solid #ddd; padding: 10px; width: 60px;">S.No</th>
+                        <th style="border: 1px solid #ddd; padding: 10px;">Details</th>
+                        <th style="border: 1px solid #ddd; padding: 10px;">Outcome</th>
+                    </tr></thead><tbody>`;
+                data.activities.forEach((a, i) => {
+                    const bgColor = i % 2 === 0 ? '#fff' : '#f0fdf4';
+                    html += `<tr style="background: ${bgColor};">
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold; color: #16a34a;">${a.sno || i + 1}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${a.details || '-'}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${a.outcome || '-'}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            return html || '<p style="color: #888; padding: 16px; text-align: center;">No activities data available.</p>';
+        }
+
+        function renderAchievementsReport(data) {
+            let html = '<h3 style="font-size: 16px; font-weight: bold; color: #ca8a04; margin: 0 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid #fef08a;">🏆 Achievements / Positive Things / Challenges</h3>';
+            if (data.achievements && Array.isArray(data.achievements)) {
+                html += `<table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead><tr style="background: linear-gradient(135deg, #ca8a04, #eab308); color: white;">
+                        <th style="border: 1px solid #ddd; padding: 10px; width: 60px;">S.No</th>
+                        <th style="border: 1px solid #ddd; padding: 10px;">Details</th>
+                    </tr></thead><tbody>`;
+                data.achievements.forEach((a, i) => {
+                    const bgColor = i % 2 === 0 ? '#fff' : '#fefce8';
+                    html += `<tr style="background: ${bgColor};">
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold; color: #ca8a04;">${a.sno || i + 1}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${a.details || '-'}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            return html || '<p style="color: #888; padding: 16px; text-align: center;">No achievements data available.</p>';
+        }
+
+        function renderDisciplinaryReport(data) {
+            if (data.no_disciplinary) {
+                return '<div style="background: #dcfce7; color: #16a34a; padding: 20px; border-radius: 8px; text-align: center; font-size: 15px;"><span style="font-size: 24px;">✅</span><br><strong>No disciplinary actions reported for this day.</strong></div>';
+            }
+            
+            let html = '<h3 style="font-size: 16px; font-weight: bold; color: #dc2626; margin: 0 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid #fecaca;">⚠️ Disciplinary Actions</h3>';
+            if (data.disciplinary_actions && Array.isArray(data.disciplinary_actions)) {
+                html += `<table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead><tr style="background: linear-gradient(135deg, #dc2626, #ef4444); color: white;">
+                        <th style="border: 1px solid #ddd; padding: 10px; width: 60px;">S.No</th>
+                        <th style="border: 1px solid #ddd; padding: 10px;">Details</th>
+                    </tr></thead><tbody>`;
+                data.disciplinary_actions.forEach((a, i) => {
+                    const bgColor = i % 2 === 0 ? '#fff' : '#fef2f2';
+                    html += `<tr style="background: ${bgColor};">
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center; font-weight: bold; color: #dc2626;">${a.sno || i + 1}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${a.details || '-'}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            return html || '<p style="color: #888; padding: 16px; text-align: center;">No disciplinary actions recorded.</p>';
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.add('hidden');
+            currentReport = null;
+        }
+
+        function printReport() {
+            window.print();
+        }
+
+        async function downloadReportAsImage() {
+            if (!currentReport) return;
+            
+            const contentElement = document.getElementById('reportModalContent');
+            const date = new Date(currentReport.report_date).toISOString().split('T')[0];
+            const filename = `${currentReport.department}_${getCategoryLabel(currentReport._category)}_${date}.png`;
+            
+            // Show loading state
+            const downloadBtn = event.target.closest('button');
+            const originalText = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+            downloadBtn.disabled = true;
+            
+            try {
+                const canvas = await html2canvas(contentElement, {
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    useCORS: true,
+                    logging: false
+                });
+                
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } catch (err) {
+                alert('Failed to generate image. Please try again.');
+                console.error(err);
+            } finally {
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.disabled = false;
+            }
+        }
+
+        function exportAllReports() {
+            if (allReports.length === 0) {
+                alert('No reports to export');
+                return;
+            }
+            
+            let csvContent = 'Department,Category,HOD Name,Report Date,Created At\n';
+            allReports.forEach(r => {
+                csvContent += `"${r.department}","${getCategoryLabel(r._category)}","${r.hod_name || ''}","${r.report_date}","${r.created_at || ''}"\n`;
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `daily_reports_export_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        async function exportReportsPdf() {
+            const exportBtn = event?.target?.closest('button');
+            const originalText = exportBtn ? exportBtn.innerHTML : '';
+            if (exportBtn) {
+                exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating PDF...';
+                exportBtn.disabled = true;
+            }
+
+            try {
+                if (typeof html2pdf === 'undefined') {
+                    alert('PDF library not loaded. Please refresh and try again.');
+                    return;
+                }
+
+                const dropdownCategory = document.getElementById('filterCategory')?.value || '';
+                const selectedCategory = dropdownCategory || currentCategory;
+                const selectedDepartment = document.getElementById('filterDepartment')?.value || '';
+
+                if (!selectedCategory || selectedCategory === '') {
+                    alert('Please select a category to export.');
+                    return;
+                }
+
+                if (!selectedDepartment || selectedDepartment === '') {
+                    alert('Please select a department to export.');
+                    return;
+                }
+
+                const filteredReports = allReports.filter(r => r._category === selectedCategory && r.department === selectedDepartment);
+
+                if (filteredReports.length === 0) {
+                    alert('No reports to export for the selected filters.');
+                    return;
+                }
+
+                const hodName = filteredReports[0]?.hod_name || '________________';
+                const department = selectedDepartment;
+                const exportDate = new Date().toLocaleDateString('en-IN');
+
+                const buildSection = (label, rowsHtml) => `
+                    <div style="margin-top: 8px; margin-bottom: 4px;">
+                        <div style="font-weight: 700; margin-bottom: 4px; font-size: 11px;">${label}</div>
+                        ${rowsHtml}
+                    </div>
+                `;
+
+                const renderAttendance = (report) => {
+                    const attendanceRows = (report.student_attendance || []).map(row => `
+                        <tr>
+                            <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.class_section || row.class_name || '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.total_students ?? '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.students_present ?? '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.students_od ?? '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.students_leave ?? '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.students_absent ?? '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.attendance_percent || '-'}</td>
+                        </tr>
+                    `).join('') || `
+                        <tr><td colspan="7" style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">-</td></tr>
+                    `;
+
+                    const facultyRow = `
+                        <tr>
+                            <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${report.faculty_od || '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${report.faculty_leave || '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${report.faculty_absent || '-'}</td>
+                        </tr>
+                    `;
+
+                    return `
+                        ${buildSection('Category: 1 Attendance', '')}
+                        <div style="border: 1px solid #333; padding: 3px; font-weight: 700; font-size: 10px;">Students Attendance</div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Year / Class / Section</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Total Students</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">No of Students Present</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">No of Students on OD</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">No of Students on Leave</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">No of Students Absent</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Attendance %</th>
+                                </tr>
+                            </thead>
+                            <tbody>${attendanceRows}</tbody>
+                        </table>
+                        <div style="margin-top: 4px; border: 1px solid #333; padding: 3px; font-weight: 700; font-size: 10px;">Faculty Attendance</div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Name of the Faculty on OD</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Name of the Faculty on Leave</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Name of the Faculty on Absent</th>
+                                </tr>
+                            </thead>
+                            <tbody>${facultyRow}</tbody>
+                        </table>
+                    `;
+                };
+
+                const renderAcademics = (report) => {
+                    const items = (report.academics || []).map(entry => {
+                        const classTitle = entry.class_section || `${entry.year || ''} ${entry.class_name || ''} ${entry.section || ''}`.trim() || '-';
+                        const rows = (entry.timetable || []).map((row, i) => `
+                            <tr>
+                                <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.hour ?? i + 1}</td>
+                                <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.subject || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.faculty_name || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.topics_covered || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.teaching_aid || '-'}</td>
+                            </tr>
+                        `).join('') || `
+                            <tr><td colspan="5" style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">-</td></tr>
+                        `;
+
+                        return `
+                            <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 4px;">
+                                <thead>
+                                    <tr>
+                                        <th colspan="5" style="border: 1px solid #333; padding: 3px; text-align: center; font-weight: 700; font-size: 10px;">${classTitle}</th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Hour</th>
+                                        <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Subject Name</th>
+                                        <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Faculty Name</th>
+                                        <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Topics Covered</th>
+                                        <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Teaching Aid / Pedagogy used</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        `;
+                    }).join('') || '<div style="font-size: 10px; color: #333;">-</div>';
+
+                    return `${buildSection('Category: 2 Academics', items)}`;
+                };
+
+                const renderActivities = (report) => {
+                    const rows = (report.activities || []).map((row, i) => `
+                        <tr>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.sno ?? i + 1}</td>
+                            <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.details || '-'}</td>
+                            <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.outcome || '-'}</td>
+                        </tr>
+                    `).join('') || `
+                        <tr><td colspan="3" style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">-</td></tr>
+                    `;
+
+                    return `
+                        ${buildSection('Category: 3 Other Activities Conducted in the Department (If any)', '')}
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">S.No</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Details of R&D / Prof. Body / MOU Initiatives / Industry Interaction / Co-curricular / Extra Curricular Activities / Industry Visit / Training / Placement / Project Review / TEC / ERP / FDP / Club / Association / IIC / AICTE Idea Lab / Internship / Audits / Class Committee Meeting / Exam Cell Works / Feedback / Alumni / DAAC / PAC / BOS / Dept. Meetings / NPTEL / Mentoring / Lab Upgradation / Extension / Wellness / Value Added Courses / TSD / IL / Other Activities conducted in the Dept.</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Outcome of the Activity</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    `;
+                };
+
+                const renderAchievements = (report) => {
+                    const rows = (report.achievements || []).map((row, i) => `
+                        <tr>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.sno ?? i + 1}</td>
+                            <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.details || '-'}</td>
+                        </tr>
+                    `).join('') || `
+                        <tr><td colspan="2" style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">-</td></tr>
+                    `;
+
+                    return `
+                        ${buildSection('Category: 4 Positive things happened / Achievements / Challenges Faced on the Day', '')}
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">S.No</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    `;
+                };
+
+                const renderDisciplinary = (report) => {
+                    if (report.no_disciplinary) {
+                        return `${buildSection('Category: 5 Students Disciplinary Actions (if any)', '<div style="font-size: 10px;">No disciplinary actions reported.</div>')}`;
+                    }
+
+                    const rows = (report.disciplinary_actions || []).map((row, i) => `
+                        <tr>
+                            <td style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">${row.sno ?? i + 1}</td>
+                            <td style="border: 1px solid #333; padding: 3px; font-size: 10px;">${row.details || '-'}</td>
+                        </tr>
+                    `).join('') || `
+                        <tr><td colspan="2" style="border: 1px solid #333; padding: 3px; text-align: center; font-size: 10px;">-</td></tr>
+                    `;
+
+                    return `
+                        ${buildSection('Category: 5 Students Disciplinary Actions (if any)', '')}
+                        <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">S.No</th>
+                                    <th style="border: 1px solid #333; padding: 3px; font-size: 9px;">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    `;
+                };
+
+                const sectionMap = {
+                    attendance: renderAttendance,
+                    academics: renderAcademics,
+                    activities: renderActivities,
+                    achievements: renderAchievements,
+                    disciplinary: renderDisciplinary
+                };
+
+                const grouped = filteredReports.reduce((acc, r) => {
+                    if (!acc[r._category]) acc[r._category] = [];
+                    acc[r._category].push(r);
+                    return acc;
+                }, {});
+
+                const sectionsHtml = grouped[selectedCategory]
+                    ? grouped[selectedCategory].map(report => sectionMap[selectedCategory]?.(report) || '').join('')
+                    : '';
+
+                const templateHtml = `
+                    <div style="font-family: 'Times New Roman', serif; color: #111; font-size: 11px;">
+                        <table style="width: 100%; border: 1px solid #333; border-collapse: collapse; margin-bottom: 10px;">
+                            <tr>
+                                <td style="border: 1px solid #333; padding: 6px; vertical-align: top;">
+                                    <div style="font-weight: 700; font-size: 13px;">Departments Daily Reporting Format</div>
+                                    <div style="font-size: 10px; margin-top: 2px;">Academic Year: 2025-26 Even Semester</div>
+                                    <div style="margin-top: 6px; font-size: 10px;">Department of&nbsp; <span style="display: inline-block; min-width: 150px; border-bottom: 1px solid #333;">${department || ''}</span></div>
+                                    <div style="margin-top: 4px; font-size: 10px;">Name of the HOD:&nbsp; <span style="display: inline-block; min-width: 150px; border-bottom: 1px solid #333;">${hodName}</span></div>
+                                    <div style="margin-top: 4px; font-size: 10px;">Date:&nbsp; <span style="display: inline-block; min-width: 100px; border-bottom: 1px solid #333;">${exportDate}</span></div>
+                                </td>
+                                <td style="border: 1px solid #333; padding: 6px; width: 32%; text-align: center;">
+                                    <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC" style="height: 50px;" />
+                                    <div style="font-size: 9px; margin-top: 2px;">Autonomous Institution</div>
+                                    <div style="font-size: 9px;">NAAC | NBA | ISO 9001:2015</div>
+                                    <div style="font-size: 9px;">PMC/IQAC/DR/Form-1</div>
+                                </td>
+                            </tr>
+                        </table>
+                        ${sectionsHtml}
+                    </div>
+                `;
+
+                const wrapper = document.createElement('div');
+                wrapper.style.padding = '10px';
+                wrapper.style.background = '#ffffff';
+                wrapper.style.fontSize = '11px';
+                wrapper.style.lineHeight = '1.2';
+                wrapper.innerHTML = templateHtml;
+
+                const filename = `${department}_reports_${new Date().toISOString().split('T')[0]}.pdf`;
+
+                await html2pdf().from(wrapper).set({
+                    margin: [6, 6, 6, 6],
+                    filename,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 1.5, useCORS: true, logging: false, allowTaint: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                }).save();
+            } catch (err) {
+                alert('Failed to export PDF. Please try again.');
+                console.error(err);
+            } finally {
+                if (exportBtn) {
+                    exportBtn.innerHTML = originalText;
+                    exportBtn.disabled = false;
+                }
+            }
+        }
+
+        // Close modal on outside click
+        document.getElementById('reportModal').addEventListener('click', function(e) {
+            if (e.target === this) closeReportModal();
+        });
+    </script>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-8 no-print">
+        <p class="text-sm">
+            &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline">PMC TECH</a><br>
+            <span class="text-xs opacity-80">A Student driven Software!</span>
+        </p>
+    </footer>
+</body>
+</html>

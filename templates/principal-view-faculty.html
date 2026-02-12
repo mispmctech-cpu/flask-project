@@ -1,0 +1,1753 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Faculty Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../static/javascript/form-modal-mapper.js"></script>
+  <script src="../static/javascript/workdone-table.js"></script>
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    .star-rating {
+      font-size: 18px;
+      color: #FFD700;
+      white-space: nowrap;
+    }
+    .star-rating .shining {
+      animation: shine 1.5s infinite;
+      font-size: 20px;
+      display: inline-block;
+    }
+    @keyframes shine {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.2); }
+    }
+    .rating-excellent { color: #10b981; font-weight: 600; }
+    .rating-good { color: #3b82f6; font-weight: 600; }
+    .rating-average { color: #f59e0b; font-weight: 600; }
+    .rating-poor { color: #ef4444; font-weight: 600; }
+    /* Hide delete buttons in iqac-principal-view-faculty.html */
+    button[onclick*="Delete"] {
+      display: none !important;
+    }
+    button[onclick*="deleteWorkdoneRow"] {
+      display: none !important;
+    }
+    /* Hide the table cell containing delete buttons */
+    td:has(button[onclick*="Delete"]),
+    td:has(button[onclick*="deleteWorkdoneRow"]) {
+      display: none !important;
+    }
+    /* Hide table header for delete column if present */
+    th:empty {
+      display: none !important;
+    }
+  </style>
+  </head>
+  <body class="bg-pmcBg min-h-screen">
+    <header class="bg-purple-700 text-white w-full">
+      <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <!-- Logo -->
+        <div class="flex items-center">
+          <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 rounded shadow bg-white p-1" />
+        </div>
+        <!-- Hamburger menu button (mobile only) -->
+        <button id="menuBtn" class="sm:hidden ml-2 p-2 rounded focus:outline-none focus:ring-2 focus:ring-white" aria-label="Open Menu">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+        <!-- Nav links -->
+        <nav id="mainNav" class="hidden sm:flex gap-6 text-sm font-medium items-center">
+          <a href="principal-viewdept.html" class="opacity-90 hover:opacity-100">Back</a>
+          <span class="underline decoration-2 underline-offset-4">Faculty Profile</span>
+          <button onclick="window.location.href='/logout'" aria-label="Logout" class="ml-4 focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-white hover:text-red-400 transition">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+            </svg>
+          </button>
+        </nav>
+      </div>
+      <!-- Mobile nav links -->
+      <div id="mobileNav" class="sm:hidden hidden px-4 pb-4">
+        <nav class="flex flex-col gap-3 text-sm font-medium bg-purple-700 rounded shadow">
+          <a href="principal-viewdept.html" class="opacity-90 hover:opacity-100 py-2">Back</a>
+          <span class="underline decoration-2 underline-offset-4 py-2">Faculty Profile</span>
+          <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none py-2 text-left">
+            <span class="inline-flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-white hover:text-red-400 transition">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+              </svg>
+              Logout
+            </span>
+          </button>
+        </nav>
+      </div>
+      <script>
+        // Toggle mobile nav
+        document.addEventListener('DOMContentLoaded', function() {
+          const menuBtn = document.getElementById('menuBtn');
+          const mobileNav = document.getElementById('mobileNav');
+          menuBtn.addEventListener('click', function() {
+            mobileNav.classList.toggle('hidden');
+          });
+        });
+      </script>
+    </header>
+    <main class="max-w-6xl mx-auto px-4 py-8">
+      
+      <!-- Previous Month Performance Rating -->
+      <section id="previousMonthRating" class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg card-shadow p-4 mb-4 border border-purple-200">
+        <div id="previousMonthRatingContent" class="text-center py-2">
+          <div class="text-gray-500 text-sm">Loading rating data...</div>
+        </div>
+      </section>
+      
+      <section class="bg-white rounded-xl card-shadow p-6 mb-8">
+        <div class="flex flex-col md:flex-row items-start gap-8">
+          <div class="flex-shrink-0 text-center w-full md:w-auto">
+            <div class="relative inline-block">
+              <img
+                id="facultyImage"
+                class="w-40 h-40 object-cover shadow border-4 border-pmcPurple mx-auto"
+                style="border-radius: 16px"
+                src=""
+                alt="Faculty Image"
+              />
+            </div>
+          </div>
+          <div class="flex-1 w-full">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="text-sm font-medium text-gray-600"
+                  >Employee ID</label
+                >
+                <div
+                  id="facultyEmployeeID"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-pmcPurple"
+                ></div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Name</label>
+                <div
+                  id="facultyName"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-lg font-bold text-pmcPurple"
+                ></div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600"
+                  >Department</label
+                >
+                <div
+                  id="facultyDepartment"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-pmcPurple"
+                ></div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600"
+                  >Email ID</label
+                >
+                <div
+                  id="facultyEmail"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600"
+                ></div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600"
+                  >Mobile Number</label
+                >
+                <div
+                  id="facultyNumber"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600"
+                ></div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600"
+                  >Designation</label
+                >
+                <div
+                  id="facultyDesignation"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-pmcPurpleDark font-semibold"
+                ></div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600"
+                  >Username</label
+                >
+                <div
+                  id="facultyUsername"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600"
+                ></div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600">Salary</label>
+                <div
+                  id="facultySalary"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600"
+                ></div>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-600"
+                  >Experience</label
+                >
+                <div
+                  id="facultyExperience"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600"
+                ></div>
+              </div>
+              <div class="md:col-span-2">
+                <label class="text-sm font-medium text-gray-600"
+                  >Qualification</label
+                >
+                <div
+                  id="facultyQualification"
+                  class="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- SEM, SUBJECT, CLASS Table -->
+        <div class="mt-8 hidden">
+          <label class="text-base font-bold text-gray-700 uppercase tracking-wide block mb-1">SUBJECT ALLOTTED</label>
+          <div id="facultySemSubjectClassTable" class="mt-1"></div>
+        </div>
+        
+        <!-- Timetable Section -->
+        <div class="mt-8">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-2 rounded-lg shadow-md">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Timetable</h2>
+          </div>
+          
+          <!-- Timetable Display -->
+          <div id="timetableDisplay" class="mb-6"></div>
+          
+          <!-- Timetable Summary -->
+          <div id="timetableSummary"></div>
+        </div>
+        
+        <!-- Faculty Mandatory Scope - Yearly -->
+        <div class="mt-8">
+          <label class="text-base font-bold text-purple-700 uppercase tracking-wide block mb-1">Faculty Mandatory Scope - Yearly</label>
+          <div id="facultyYearlyTableContainer" class="mt-1"></div>
+        </div>
+        
+        <!-- Faculty Core Scope - Monthly -->
+        <div class="mt-8">
+          <label class="text-base font-bold text-blue-700 uppercase tracking-wide block mb-1">Faculty Core Scope - Monthly</label>
+          <button id="toggleCoreScopeRowsBtn" class="mb-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded font-semibold text-sm">Show All Rows</button>
+          <div id="facultyCoreScopeTableContainer" class="mt-1"></div>
+        </div>
+        
+        <!-- Modal for viewing original responsibilities data -->
+        <div id="viewResponsibilitiesModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+          <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeResponsibilitiesModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+            <div id="viewResponsibilitiesModalContent"></div>
+          </div>
+        </div>
+        
+        <!-- Consolidated Summary Table -->
+        <div class="mt-8">
+          <h3 class="text-base font-bold text-purple-700 uppercase tracking-wide block mb-3">Consolidated Performance Summary</h3>
+          <div class="mb-4 flex flex-wrap gap-4 items-center">
+            <label for="facultySummaryMonthFilter" class="font-medium text-purple-700">Month:</label>
+            <select id="facultySummaryMonthFilter" class="p-2 border rounded">
+              <option value="January">January</option>
+              <option value="February">February</option>
+              <option value="March">March</option>
+              <option value="April">April</option>
+              <option value="May">May</option>
+              <option value="June">June</option>
+              <option value="July">July</option>
+              <option value="August">August</option>
+              <option value="September">September</option>
+              <option value="October">October</option>
+              <option value="November">November</option>
+              <option value="December">December</option>
+            </select>
+            <button onclick="exportFacultySummaryToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-semibold text-sm">
+              📊 Export to Excel
+            </button>
+          </div>
+          <div id="facultyConsolidatedSummaryContainer" class="overflow-x-auto"></div>
+        </div>
+      </div>
+      </section>
+      <section class="card-shadow rounded-xl overflow-hidden mb-8">
+        <div class="bg-white p-4">
+          <div class="mb-6">
+            <h2 class="text-lg font-bold text-pmcPurple mb-2">
+              DEPARTMENT PORTFOLIO
+            </h2>
+            <table class="min-w-full text-sm">
+              <thead class="bg-purple-700">
+                <tr class="text-left text-white">
+                  <th class="p-4 w-16">S.No</th>
+                  <th class="p-4">Role Name</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y" id="facultyFormsDept"></tbody>
+            </table>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-pmcPurple mb-2">
+              FACULTY CORE SCOPE
+            </h2>
+            <table class="min-w-full text-sm">
+              <thead class="bg-purple-700">
+                <tr class="text-left text-white">
+                  <th class="p-4 w-16">S.No</th>
+                  <th class="p-4">Form Name</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y" id="facultyFormsCore"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <!-- Workdone Section -->
+      <section class="card-shadow rounded-xl overflow-hidden">
+        <div class="bg-white p-4">
+          <h2 class="text-lg font-bold text-pmcPurple mb-4 uppercase">WORKDONE</h2>
+          <!-- Search input for workdone -->
+          <div class="mb-4">
+            <input id="workdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-purple-700" placeholder="Search by Portfolio or Member" oninput="window._currentWorkdoneTable.filterWorkdoneTable()" />
+          </div>
+          <div class="overflow-x-auto">
+              <table class="min-w-full bg-white shadow text-sm border border-gray-300">
+                <thead class="bg-gradient-to-r from-purple-700 to-purple-500 text-white">
+                  <tr>
+                    <th class="p-3 border-b border-gray-300">Department</th>
+                    <th class="p-3 border-b border-gray-300">Portfolio Name</th>
+                    <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
+                    <th class="p-3 border-b border-gray-300">Submission Date</th>
+                    <th class="p-3 border-b border-gray-300">Verification</th>
+                    <th class="p-3 border-b border-gray-300 text-center">View</th>
+                  </tr>
+                </thead>
+                <tbody id="facultyWorkdoneTable" class="divide-y divide-gray-200"></tbody>
+              </table>
+          </div>
+          <!-- Pagination Container for Workdone -->
+          <div class="flex justify-center items-center mt-4" id="workdonePagination"></div>
+          <div
+            id="workdoneErrorBox"
+            class="hidden mt-4 p-3 rounded bg-red-100 text-red-700 font-semibold"
+          ></div>
+          <div
+            id="workdoneLoadingBox"
+            class="mt-4 p-3 rounded bg-blue-100 text-blue-800 font-semibold"
+            style="display: none"
+          >
+            Loading workdone data, please wait...
+          </div>
+        </div>
+      </section>
+    </main>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script>
+      // Hide/unhide salary and sensitive details based on admin setting
+      function updateSensitiveDetailsVisibility() {
+        const show = localStorage.getItem('showFacultySensitiveDetails') === 'true';
+        const salaryField = document.getElementById('facultySalary');
+        if (salaryField) {
+          salaryField.parentElement.style.display = show ? '' : 'none';
+        }
+      }
+      document.addEventListener('DOMContentLoaded', updateSensitiveDetailsVisibility);
+      window.addEventListener('storage', updateSensitiveDetailsVisibility);
+    </script>
+    <script>
+      // Get email from query param
+      function getQueryParam(name) {
+        const url = new URL(window.location.href);
+        return url.searchParams.get(name);
+      }
+      const email = getQueryParam("email");
+      const supabaseClient = window.supabase.createClient(
+        "https://cbhodgwaazmjszkujrti.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+      );
+      async function loadFacultyProfile() {
+        if (!email) {
+          document.body.innerHTML =
+            '<div class="text-center mt-20 text-red-500">No faculty selected.</div>';
+          return;
+        }
+        const { data, error } = await supabaseClient
+          .from("Faculty")
+          .select("*")
+          .eq("email", email)
+          .single();
+        if (error || !data) {
+          document.body.innerHTML =
+            '<div class="text-center mt-20 text-red-500">Faculty not found.</div>';
+          return;
+        }
+          
+        // --- Begin: Consolidated Summary Table ---
+        (function() {
+          let selectedFacultySummaryMonth = 'January';
+
+          // Function to calculate faculty rating based on performance
+          function calculateFacultyRating(coreScopePercent, yearlyPercent, deptPortfolio1, deptPortfolio2, instPortfolio1, instPortfolio2) {
+            let validScores = [];
+            
+            // Helper function to parse percentage
+            const parsePercent = (val, isMandatory = false) => {
+              // If mandatory and not filled, treat as 0
+              if (isMandatory && (!val || val === '-' || val === 'N/A')) return 0;
+              // If not allocated (shown as '-'), return null to skip
+              if (!val || val === '-' || val === 'N/A') return null;
+              const num = parseFloat(val.toString().replace('%', ''));
+              return isNaN(num) ? (isMandatory ? 0 : null) : num;
+            };
+            
+            // Mandatory scope - only Core Scope Monthly (0 if not filled)
+            validScores.push(parsePercent(coreScopePercent, true));
+            
+            // Optional scopes - Yearly and portfolios (only include if allocated)
+            [yearlyPercent, deptPortfolio1, deptPortfolio2, instPortfolio1, instPortfolio2].forEach(score => {
+              const parsed = parsePercent(score, false);
+              if (parsed !== null) validScores.push(parsed);
+            });
+            
+            // Calculate average
+            let average = validScores.length > 0 
+              ? validScores.reduce((a, b) => a + b, 0) / validScores.length 
+              : 0;
+            
+            // Determine stars and color
+            let stars = '';
+            let starCount = 0;
+            let colorClass = '';
+            
+            if (average >= 91) {
+              stars = '★★★★★<span class="shining">✨</span>';
+              starCount = 5;
+              colorClass = 'rating-excellent';
+            } else if (average >= 81) {
+              stars = '★★★★★';
+              starCount = 5;
+              colorClass = 'rating-excellent';
+            } else if (average >= 61) {
+              stars = '★★★★☆';
+              starCount = 4;
+              colorClass = 'rating-good';
+            } else if (average >= 41) {
+              stars = '★★★☆☆';
+              starCount = 3;
+              colorClass = 'rating-average';
+            } else if (average >= 21) {
+              stars = '★★☆☆☆';
+              starCount = 2;
+              colorClass = 'rating-average';
+            } else {
+              stars = '★☆☆☆☆';
+              starCount = 1;
+              colorClass = 'rating-poor';
+            }
+            
+            return {
+              average: Math.round(average),
+              stars: stars,
+              starCount: starCount,
+              colorClass: colorClass
+            };
+          }
+
+          // Institution portfolio form mappings
+          const institutionFormTableMap = [
+            { name: "Director – Students welfare & Admission", table: "Institution-form1-monthly" },
+            { name: "Head - HR", table: "Institution-form2" },
+            { name: "Principal", table: "Institution-form3-monthly" },
+            { name: "Dean - IQAC", table: "Institution-form4-monthly" },
+            { name: "Director - Academics", table: "Institution-form5" },
+            { name: "Controller of Examinations", table: "Institution-form6-monthly" },
+            { name: "Executive Dean – International Affairs", table: "Institution-form7-monthly" },
+            { name: "Head - Placements", table: "Institution-form8" },
+            { name: "Placement Officer", table: "Institution-form9" },
+            { name: "Head – Training", table: "Institution-form10" },
+            { name: "Training Officer", table: "Institution-form11" },
+            { name: "Head - RISE", table: "Institution-form12" },
+            { name: "IT Infra – Coordinator", table: "Institution-form13-monthly" },
+            { name: "Website – Coordinator", table: "Institution-form14-monthly" },
+            { name: "ERP Coordinator", table: "Institution-form15" },
+            { name: "Public Relations Officer", table: "Institution-form16" },
+            { name: "Logistics Coordinator", table: "Institution-form17" }
+          ];
+
+          // Department portfolio form mappings (8 forms)
+          const deptPortfolioFormMap = [
+            { label: "1. Training & Placement", table: 'form1-monthly', formKey: 'form1' },
+            { label: "2. Class Advisor", table: 'form2-monthly', formKey: 'form2' },
+            { label: "3. Info & Contribution", table: 'form3-monthly', formKey: 'form3' },
+            { label: "4. Outcome & Exam Cell", table: 'form4-monthly', formKey: 'form4' },
+            { label: "5. Continuous Improvement", table: 'form5-monthly', formKey: 'form5' },
+            { label: "6. T&L Process (IQAC)", table: 'form6_monthly', formKey: 'form6' },
+            { label: "7. Student Support", table: 'form7-monthly', formKey: 'form7' },
+            { label: "8. Facilities & Lab", table: 'form8-monthly', formKey: 'form8' }
+          ];
+          
+          document.getElementById('facultySummaryMonthFilter').addEventListener('change', () => {
+            selectedFacultySummaryMonth = document.getElementById('facultySummaryMonthFilter').value;
+            renderFacultyConsolidatedSummary();
+          });
+          
+          async function renderFacultyConsolidatedSummary() {
+            const container = document.getElementById("facultyConsolidatedSummaryContainer");
+            if (!container) return;
+            container.innerHTML = '<div class="text-center text-gray-500 py-4">Loading summary data...</div>';
+            
+            try {
+              const facultyName = data["Name"] || "";
+              const nameTrimmed = facultyName.toString().trim().toLowerCase();
+              const dept = data["department"] || "Unknown";
+              const designation = data["Designation"] || "N/A";
+              
+              // Normalize designation
+              const desig = designation.toUpperCase();
+              let desigDisplay = '';
+              if (desig === 'AP' || desig === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
+              else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
+              else if (desig === 'PROF' || desig === 'PROFESSOR') desigDisplay = 'Prof';
+              else {
+                container.innerHTML = '<div class="text-gray-500 text-center py-4">Summary not available for non-teaching staff.</div>';
+                return;
+              }
+              
+              // Fetch Core Scope Monthly data
+            const { data: coreScopeData } = await supabaseClient
+              .from('Core_scope')
+              .select('*')
+              .eq('Month', selectedFacultySummaryMonth)
+              .eq('Department', dept);              // Fetch Yearly Mandatory Scope data (don't filter by Month - it's stored as column data)
+              let yearlyTableName = desigDisplay === 'Prof' ? 'Prof(Yearly)' : `${desigDisplay}(Yearly)`;
+              const orderColumn = desigDisplay === 'Prof' ? 'created_at' : 'submitted_at';
+              const { data: yearlyData } = await supabaseClient
+                .from(yearlyTableName)
+                .select('*')
+                .eq('Department', dept)
+                .order(orderColumn, { ascending: false });
+              
+              // Fetch department portfolio data for all 8 forms
+              const deptPortfolioPromises = deptPortfolioFormMap.map(form => 
+                supabaseClient.from(form.table).select('*').eq('Month', selectedFacultySummaryMonth)
+              );
+              const deptPortfolioResults = await Promise.all(deptPortfolioPromises);
+              
+              // Fetch institution portfolio data for all 17 forms
+              const instPortfolioPromises = institutionFormTableMap.map(form => 
+                supabaseClient.from(form.table).select('*')
+              );
+              const instPortfolioResults = await Promise.all(instPortfolioPromises);
+              
+              // Calculate Core Scope Monthly %
+              let coreScopePercent = '-';
+              if (coreScopeData && coreScopeData.length > 0) {
+                const coreScopeRow = coreScopeData.find(r => 
+                  (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
+                );
+                if (coreScopeRow) {
+                  let completedCount = 0;
+                  const totalCount = 15; // Fixed denominator for Core Scope
+                  for (let i = 1; i <= 15; i++) {
+                    const status = (coreScopeRow[`Status_${i}`] || '').toString().toLowerCase();
+                    // Count as completed if status is "completed" or "completed and updated"
+                    if (status === 'completed' || status === 'completed and updated') {
+                      completedCount += 1;
+                    }
+                    // All statuses (including 'Not Applicable', null, empty) are included in denominator
+                  }
+                  coreScopePercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
+                }
+              }
+              
+              // Calculate Mandatory Scope Yearly %
+              let yearlyPercent = '-';
+              if (yearlyData && yearlyData.length > 0) {
+                // Find rows matching this faculty
+                const matchingRows = yearlyData.filter(r => 
+                  (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
+                );
+                
+                // Filter by selected month
+                const yearlyRow = matchingRows.find(r => r.Month === selectedFacultySummaryMonth);
+                
+                if (yearlyRow) {
+                  let completedCount = 0;
+                  // Professor has 9 particulars, others have 8
+                  let totalCount = desigDisplay === 'Prof' ? 9 : 8;
+                  let maxStatus = desigDisplay === 'Prof' ? 9 : 8;
+                  for (let i = 1; i <= maxStatus; i++) {
+                    const status = (yearlyRow[`Status_${i}`] || '').toString().toLowerCase();
+                    if (status === 'completed' || status === 'completed and updated') {
+                      completedCount++;
+                    }
+                  }
+                  yearlyPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
+                }
+              }
+              
+              // Calculate Department Portfolio Scope percentages
+              let deptPortfolio1Percent = '-';
+              let deptPortfolio2Percent = '-';
+              let deptPortfolioCount = 0;
+              
+              for (let i = 0; i < deptPortfolioFormMap.length; i++) {
+                const formMapping = deptPortfolioFormMap[i];
+                const isAssigned = data[formMapping.formKey] && data[formMapping.formKey].toString().trim().toLowerCase() === 'yes';
+                
+                if (isAssigned) {
+                  const formData = deptPortfolioResults[i].data || [];
+                  const formRow = formData.find(r => {
+                    const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || r['Portfolio Memeber Name'] || r['faculty_name'] || r['Faculty Name'] || r['Name'] || '';
+                    const rowMonth = r['Month'] || r['month'] || r['Month:'] || '';
+                    const deptMatches = (r['Department'] || r['Department:'] || '').toString().trim().toLowerCase() === dept.toString().trim().toLowerCase();
+                    return rowName.toString().trim().toLowerCase() === nameTrimmed && rowMonth === selectedFacultySummaryMonth && deptMatches;
+                  });
+                  
+                  if (formRow) {
+                    let completedCount = 0;
+                    const totalCount = 8; // Fixed denominator for Department Portfolio
+                    for (let i = 1; i <= 8; i++) {
+                      // Check both Status_i and Status-i formats (some tables use hyphens, others use underscores)
+                      const status = (formRow[`Status_${i}`] || formRow[`Status-${i}`] || '').toString().trim().toLowerCase();
+                      // Count as completed if status is "completed" or "completed and updated"
+                      if (status === 'completed' || status === 'completed and updated') {
+                        completedCount += 1;
+                      }
+                      // All statuses (including 'Not Applicable', null, empty) are included in denominator
+                    }
+                    const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
+                    
+                    if (deptPortfolioCount === 0) {
+                      deptPortfolio1Percent = percent;
+                    } else if (deptPortfolioCount === 1) {
+                      deptPortfolio2Percent = percent;
+                    }
+                    deptPortfolioCount++;
+                  }
+                }
+              }
+              
+              // Calculate Institution Portfolio percentages
+              let instPortfolio1Percent = '-';
+              let instPortfolio2Percent = '-';
+              let instPortfolioCount = 0;
+              
+              for (let i = 0; i < institutionFormTableMap.length; i++) {
+                const formMapping = institutionFormTableMap[i];
+                const formData = instPortfolioResults[i].data || [];
+                const isMonthlyForm = formMapping.table.includes('-monthly');
+                
+                // Search for faculty in this form's data - get all matching rows
+                const matchingRows = formData.filter(r => {
+                  const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || '';
+                  const rowMonth = r['Month:'] || r['Month'] || r['month'] || '';
+                  // Normalize both names by removing extra spaces
+                  const normalizedRowName = rowName.toString().trim().replace(/\s+/g, ' ').toLowerCase();
+                  const normalizedFacultyName = nameTrimmed.replace(/\s+/g, ' ');
+                  const nameMatches = normalizedRowName === normalizedFacultyName;
+                  const monthMatches = !isMonthlyForm || rowMonth.toString().trim().toLowerCase() === selectedFacultySummaryMonth.toLowerCase();
+                  return nameMatches && monthMatches;
+                });
+                
+                // Get the row with the highest input_id (most recent submission)
+                const formRow = matchingRows.length > 0 
+                  ? matchingRows.reduce((latest, current) => 
+                      (current.input_id || 0) > (latest.input_id || 0) ? current : latest
+                    )
+                  : null;
+                
+                if (formRow) {
+                  let completedCount = 0;
+                  // Dynamically count actual Status fields (Institution forms have varying counts)
+                  const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status_'));
+                  const totalCount = statusKeys.length;
+                  for (const key of statusKeys) {
+                    const value = (formRow[key] || '').toString().trim().toLowerCase();
+                    // Count as completed if status is "completed" or "completed and updated"
+                    if (value === 'completed' || value === 'completed and updated') {
+                      completedCount++;
+                    }
+                    // All statuses (including 'Not Applicable', null, empty) are included in denominator
+                  }
+                  const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
+                  
+                  if (instPortfolioCount === 0) {
+                    instPortfolio1Percent = percent;
+                  } else if (instPortfolioCount === 1) {
+                    instPortfolio2Percent = percent;
+                  }
+                  instPortfolioCount++;
+                }
+              }
+              
+              // Render table
+              let html = '<div class="overflow-auto border rounded-lg shadow-sm">';
+              html += '<table class="min-w-full text-sm bg-white"><thead class="bg-blue-700 text-white"><tr>';
+              html += '<th class="px-3 py-2">Dept</th>';
+              html += '<th class="px-3 py-2">Desig</th>';
+              html += '<th class="px-3 py-2">Faculty Name</th>';
+              html += '<th class="px-3 py-2">Faculty Core Scope Monthly</th>';
+              html += '<th class="px-3 py-2">Faculty Mandatory Scope (Yearly)</th>';
+              html += '<th class="px-3 py-2">Department Portfolio Scope-1</th>';
+              html += '<th class="px-3 py-2">Department Portfolio Scope-2</th>';
+              html += '<th class="px-3 py-2">Institution Portfolio-1</th>';
+              html += '<th class="px-3 py-2">Institution Portfolio-2</th>';
+              html += '<th class="px-3 py-2 bg-blue-700">Overall Rating</th>';
+              html += '</tr></thead><tbody>';
+              
+              html += '<tr class="hover:bg-gray-50">';
+              html += `<td class="px-2 py-2 border">${dept}</td>`;
+              html += `<td class="px-2 py-2 border text-center">${desigDisplay}</td>`;
+              html += `<td class="px-2 py-2 border">${facultyName}</td>`;
+              html += `<td class="px-2 py-2 border text-center font-semibold">${coreScopePercent}</td>`;
+              html += `<td class="px-2 py-2 border text-center font-semibold">${yearlyPercent}</td>`;
+              html += `<td class="px-2 py-2 border text-center font-semibold">${deptPortfolio1Percent}</td>`;
+              html += `<td class="px-2 py-2 border text-center font-semibold">${deptPortfolio2Percent}</td>`;
+              html += `<td class="px-2 py-2 border text-center font-semibold">${instPortfolio1Percent}</td>`;
+              html += `<td class="px-2 py-2 border text-center font-semibold">${instPortfolio2Percent}</td>`;
+              
+              // Calculate and display rating
+              const rating = calculateFacultyRating(
+                coreScopePercent, yearlyPercent,
+                deptPortfolio1Percent, deptPortfolio2Percent,
+                instPortfolio1Percent, instPortfolio2Percent
+              );
+              html += `<td class="px-2 py-2 border text-center">`;
+              html += `<div class="star-rating ${rating.colorClass}">${rating.stars}</div>`;
+              html += `<div class="text-xs mt-1 ${rating.colorClass}">${rating.average}%</div>`;
+              html += `</td>`;
+              
+              html += '</tr>';
+              
+              // Store rating for previous month display if this is previous month
+              const currentDate = new Date();
+              const currentMonth = currentDate.toLocaleString('en-US', { month: 'long' });
+              const previousMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1).toLocaleString('en-US', { month: 'long' });
+              
+              if (selectedFacultySummaryMonth === previousMonth) {
+                window._previousMonthRating = rating;
+                window._previousMonthName = previousMonth;
+                updatePreviousMonthRatingDisplay();
+              }
+              
+              html += '</tbody></table></div>';
+              container.innerHTML = html;
+              
+            } catch (error) {
+              console.error('Summary table error:', error);
+              container.innerHTML = '<div class="text-red-500 text-center py-4">Failed to load summary data.</div>';
+            }
+          }
+          
+          window.exportFacultySummaryToExcel = function() {
+            alert('Excel export feature coming soon!');
+          };
+          
+          renderFacultyConsolidatedSummary();
+        })();
+        // --- End: Consolidated Summary Table ---
+        
+        // Function to update previous month rating display
+        function updatePreviousMonthRatingDisplay() {
+          const container = document.getElementById('previousMonthRatingContent');
+          
+          if (!window._previousMonthRating || !window._previousMonthName) {
+            container.innerHTML = '<div class="text-gray-500 text-sm">No rating data available</div>';
+            return;
+          }
+          
+          const rating = window._previousMonthRating;
+          
+          // Performance message
+          let message = '';
+          if (rating.average >= 91) {
+            message = '🎉 Outstanding Performance! Keep up the excellent work!';
+          } else if (rating.average >= 81) {
+            message = '⭐ Excellent Performance! Great job!';
+          } else if (rating.average >= 61) {
+            message = '👍 Good Performance! Keep improving!';
+          } else if (rating.average >= 41) {
+            message = '📈 Average Performance. Room for improvement.';
+          } else {
+            message = '💪 Needs Improvement. Let\'s work on it!';
+          }
+          
+          let html = '<div class="flex items-center justify-center gap-4">';
+          html += `<div class="star-rating ${rating.colorClass}" style="font-size: 24px;">${rating.stars}</div>`;
+          html += `<div class="text-2xl font-bold ${rating.colorClass}">${rating.average}%</div>`;
+          html += '<div class="text-xs text-gray-600">Overall Performance Score</div>';
+          html += `<div class="text-xs font-medium ${rating.colorClass}">${message}</div>`;
+          html += '</div>';
+          
+          container.innerHTML = html;
+        }
+        
+        // Initialize previous month rating on page load
+        function initializePreviousMonthRating() {
+          const currentDate = new Date();
+          const previousMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1).toLocaleString('en-US', { month: 'long' });
+          
+          // Set the month filter to previous month and trigger load
+          setTimeout(() => {
+            const monthFilter = document.getElementById('facultySummaryMonthFilter');
+            if (monthFilter) {
+              monthFilter.value = previousMonth;
+              // Trigger change to load previous month's data
+              monthFilter.dispatchEvent(new Event('change'));
+            }
+          }, 1000);
+        }
+
+        // --- Begin: Faculty Mandatory Scope - Yearly Table ---
+        async function loadFacultyYearlyTable() {
+          const facultyName = data["Name"] || "";
+          const department = data["department"] || "";
+          const designation = (data["Designation"] || "").toUpperCase();
+          
+          // Normalize designation
+          let desig = '';
+          if (designation === 'AP' || designation === 'ASSISTANT PROFESSOR') desig = 'AP';
+          else if (designation === 'ASP' || designation === 'ASSOCIATE PROFESSOR') desig = 'ASP';
+          else if (designation === 'PROF' || designation === 'PROFESSOR') desig = 'Prof';
+          else {
+            document.getElementById('facultyYearlyTableContainer').innerHTML = '<div class="text-gray-400 p-4">No yearly scope data available for this designation.</div>';
+            return;
+          }
+          
+          // Particulars for each designation
+          const particularsMap = {
+            AP: [
+              'Book/Book Chapter with ISSN/ISBN',
+              'Publication in UGC Care Journal/Scopus/Web of Science/UGC CARE List Group-I and II/SCI',
+              'Sponsored Research Projects',
+              'Consultancy',
+              'Patents',
+              'Organizing Conference/Seminar/Webinar/Workshop/FDP',
+              'Membership in professional body'
+            ],
+            ASP: [
+              'Book/Book Chapter with ISSN/ISBN',
+              'Publication in UGC Care Journal/Scopus/Web of Science/UGC CARE List Group-I and II/SCI',
+              'Sponsored Research Projects',
+              'Consultancy',
+              'Patents',
+              'Organizing Conference/Seminar/Webinar/Workshop/FDP',
+              'Awards/Achievements/Honors',
+              'Membership in professional body'
+            ],
+            Prof: [
+              'Book/Book Chapter with ISSN/ISBN',
+              'Publication in UGC Care Journal/Scopus/Web of Science/UGC CARE List Group-I and II/SCI',
+              'Sponsored Research Projects',
+              'Consultancy',
+              'Patents',
+              'Organizing Conference/Seminar/Webinar/Workshop/FDP',
+              'Awards/Achievements/Honors',
+              'Ph.D Guided'
+            ]
+          };
+          
+          const particulars = particularsMap[desig];
+          const tableName = desig === 'Prof' ? 'Prof(Yearly)' : `${desig}(Yearly)`;
+          
+          // All months
+          const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+          
+          // Fetch ALL form data for this faculty (all months)
+          // Prof(Yearly) uses created_at, others use submitted_at
+          const orderColumn = desig === 'Prof' ? 'created_at' : 'submitted_at';
+          const { data: allFormData, error } = await supabaseClient
+            .from(tableName)
+            .select('*')
+            .eq('Department', department)
+            .order(orderColumn, { ascending: false });
+          
+          if (error) {
+            console.error('Error fetching yearly data:', error);
+            document.getElementById('facultyYearlyTableContainer').innerHTML = `<div class="text-red-600 p-4">Error loading data: ${error.message || error}</div>`;
+            return;
+          }
+          
+          // Find matching rows for this faculty
+          const facNamesLower = [facultyName, data['Portfolio Member Name'], data.email]
+            .filter(Boolean)
+            .map(n => n.toString().trim().toLowerCase());
+          
+          const matchingRows = (allFormData || []).filter(row => {
+            const rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+            return facNamesLower.includes(rowName);
+          });
+          
+          // Group by month and get latest for each month
+          const monthDataMap = {};
+          months.forEach(month => {
+            const monthRows = matchingRows.filter(r => r.Month === month);
+            if (monthRows.length > 0) {
+              monthDataMap[month] = monthRows[0]; // Latest row for this month
+            }
+          });
+          
+          // Build table HTML - Vertical particulars, Horizontal months
+          let html = '<div style="overflow-x:auto; max-height:600px; overflow-y:auto; border:1px solid #9ca3af; border-radius:8px;">';
+          html += '<table class="w-full text-sm bg-white" style="border-collapse:collapse; min-width:1400px;">';
+          html += '<thead class="bg-purple-100 text-purple-700" style="position:sticky; top:0; z-index:10;">';
+          html += '<tr>';
+          html += '<th class="px-3 py-2 border border-gray-400" style="background:#EDE9FE; position:sticky; left:0; z-index:20;">Particulars</th>';
+          
+          // Add month columns
+          for (const month of months) {
+            html += `<th class="px-3 py-2 border border-gray-400" style="background:#EDE9FE;">${month}</th>`;
+          }
+          html += '</tr></thead>';
+          html += '<tbody>';
+          
+          // Add row for each particular
+          for (let i = 0; i < particulars.length; i++) {
+            const particularIndex = i + 1;
+            html += '<tr class="hover:bg-gray-50">';
+            html += `<td class="px-3 py-2 border border-gray-400 font-semibold" style="position:sticky; left:0; background:white; z-index:5;">${particularIndex}. ${particulars[i]}</td>`;
+            
+            // Add status for each month
+            for (const month of months) {
+              const monthData = monthDataMap[month];
+              let statusVal = '<span class="text-red-600 font-bold">✗</span>'; // Default to wrong mark
+              
+              if (monthData) {
+                const status = monthData[`Status_${particularIndex}`];
+                if (status) {
+                  const statusLower = status.toString().trim().toLowerCase();
+                  if (statusLower === 'completed') {
+                    statusVal = '<span class="text-green-600 font-bold">✓</span>';
+                  } else if (statusLower === 'not applicable') {
+                    statusVal = '<span class="text-gray-400">N/A</span>';
+                  } else {
+                    // For "in progress", "yet to be completed", "not started", or any other value
+                    statusVal = '<span class="text-red-600 font-bold">✗</span>';
+                  }
+                } else {
+                  // Null or empty status
+                  statusVal = '<span class="text-red-600 font-bold">✗</span>';
+                }
+              }
+              
+              html += `<td class="px-3 py-2 border border-gray-400 text-center">${statusVal}</td>`;
+            }
+            html += '</tr>';
+          }
+          
+          // Add percentage row at the bottom
+          html += '<tr class="bg-purple-50 font-bold">';
+          html += '<td class="px-3 py-2 border border-gray-400" style="position:sticky; left:0; background:#F3E8FF; z-index:5;">Percentage</td>';
+          
+          for (const month of months) {
+            const monthData = monthDataMap[month];
+            let percentage = 0;
+            
+            if (monthData) {
+              let completedCount = 0;
+              // Professor has 9 particulars, others have 8
+              const totalCount = desig === 'Prof' ? 9 : 8;
+              const maxStatus = desig === 'Prof' ? 9 : 8;
+              
+              for (let i = 1; i <= maxStatus; i++) {
+                const status = monthData[`Status_${i}`];
+                const statusLower = status ? status.toString().trim().toLowerCase() : '';
+                
+                // Count as completed if status is "completed" or "completed and updated"
+                if (statusLower === 'completed' || statusLower === 'completed and updated') {
+                  completedCount++;
+                }
+                // All statuses (including 'Not Applicable', null, empty) are included in denominator
+              }
+              
+              percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+            }
+            
+            const percentColor = percentage === 100 ? 'text-green-600' : percentage >= 50 ? 'text-orange-600' : 'text-red-600';
+            html += `<td class="px-3 py-2 border border-gray-400 text-center ${percentColor}">${percentage}%</td>`;
+          }
+          
+          html += '</tr>';
+          
+          // Add N/A count row
+          html += '<tr class="bg-gray-100 font-semibold">';
+          html += '<td class="px-3 py-2 border border-gray-400" style="position:sticky; left:0; background:#F3F4F6; z-index:5;">Number of N/A</td>';
+          
+          for (const month of months) {
+            const monthData = monthDataMap[month];
+            let naCount = 0;
+            
+            if (monthData) {
+              for (let i = 1; i <= particulars.length; i++) {
+                const status = monthData[`Status_${i}`];
+                const statusLower = status ? status.toString().trim().toLowerCase() : '';
+                
+                if (statusLower === 'not applicable') {
+                  naCount++;
+                }
+              }
+            }
+            
+            html += `<td class="px-3 py-2 border border-gray-400 text-center text-gray-600">${naCount}</td>`;
+          }
+          
+          html += '</tr>';
+          html += '</tbody></table></div>';
+          
+          document.getElementById('facultyYearlyTableContainer').innerHTML = html;
+        }
+        
+        loadFacultyYearlyTable();
+        // --- End: Faculty Mandatory Scope - Yearly Table ---
+        
+        // --- Begin: Faculty Core Scope - Monthly Table ---
+        let showAllCoreScopeRows = false;
+        
+        document.getElementById('toggleCoreScopeRowsBtn').addEventListener('click', () => {
+          showAllCoreScopeRows = !showAllCoreScopeRows;
+          const btn = document.getElementById('toggleCoreScopeRowsBtn');
+          btn.textContent = showAllCoreScopeRows ? 'Hide Rows' : 'Show All Rows';
+          loadFacultyCoreScopeTable();
+        });
+        
+        async function loadFacultyCoreScopeTable() {
+          const container = document.getElementById('facultyCoreScopeTableContainer');
+          container.innerHTML = '<p class="text-gray-400 text-center py-4">Loading...</p>';
+          
+          const facultyName = data["Name"] || "";
+          const department = data["department"] || "";
+          const designation = (data["Designation"] || "").toUpperCase();
+          
+          // Fetch ALL Core_scope data for this department (all months)
+          const { data: allData, error } = await supabaseClient
+            .from('Core_scope')
+            .select('*')
+            .eq('Department', department)
+            .order('submitted_at', { ascending: false });
+          
+          if (error) {
+            console.error('Error fetching Core Scope data:', error);
+            container.innerHTML = `<div class="text-red-600 p-4">Error loading data: ${error.message || error}</div>`;
+            return;
+          }
+          
+          if (!allData || allData.length === 0) {
+            container.innerHTML = `<p class="text-gray-400 text-center">No Core Scope data available.</p>`;
+            return;
+          }
+          
+          // Find matching rows for this faculty
+          const facNamesLower = [facultyName, data['Portfolio Member Name'], data.email]
+            .filter(Boolean)
+            .map(n => n.toString().trim().toLowerCase());
+          
+          const matchingRows = (allData || []).filter(row => {
+            const rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+            return facNamesLower.includes(rowName);
+          });
+          
+          // Group by month and get latest row per month
+          const monthData = {};
+          const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+          
+          months.forEach(m => monthData[m] = null);
+          
+          matchingRows.forEach(row => {
+            const month = row.Month;
+            if (month && months.includes(month)) {
+              if (!monthData[month]) monthData[month] = row;
+            }
+          });
+          
+          // Core Scope particulars (15 items)
+          const particulars = [
+            'Design and deliver lectures and lab sessions',
+            'Develop course materials, lesson plans and assessments ',
+            'Incorporating innovative teaching methods including ICT tools ',
+            'Prepare Product model and instructional Chart ',
+            'Mentoring 30 students on coursework, projects and career planning.',
+            'Monitoring student attendance, performance, and well-being.',
+            'Provide remedial support and encourage participation in co-curricular and extra- curricular activities.',
+            'Maintain the Mentor book for assigned mentee.',
+            'Consolidate innovative course material & Lab manuals ',
+            'Participate in curriculum development and revision through BOS',
+            'Contribute to accreditation processes (NBA, NAAC) and quality Assurance initiatives.',
+            'Serve on academic and administrative committees.',
+            'Maintain academic records, course files and logbook and student evaluations',
+            'Assist in exam duties, QP setting, Invigilation and evaluation.',
+            'Library Utilization'
+   
+          ];
+          
+          // Build month-wise matrix table
+          let html = '<div class="overflow-x-auto">';
+          html += '<table class="w-full border border-gray-700 text-left text-xs">';
+          html += '<thead><tr class="bg-gray-800 text-white">';
+          html += '<th class="px-2 py-2 border border-gray-700 sticky left-0 bg-gray-800 z-10">Particulars</th>';
+          
+          months.forEach(month => {
+            html += `<th class="px-2 py-2 border border-gray-700 text-center">${month}</th>`;
+          });
+          
+          html += '</tr></thead>';
+          html += '<tbody>';
+          
+          // Render particular rows (hidden by default)
+          particulars.forEach((particular, idx) => {
+            const rowDisplay = showAllCoreScopeRows ? '' : 'display:none;';
+            html += `<tr class="hover:bg-gray-100 particular-row" style="${rowDisplay}">`;
+            html += `<td class="px-2 py-2 border border-gray-700 font-semibold sticky left-0 bg-white z-5">${particular}</td>`;
+            
+            months.forEach(month => {
+              const row = monthData[month];
+              let statusVal = '-';
+              
+              if (row) {
+                const statusKey = `Status_${idx + 1}`;
+                const status = row[statusKey];
+                const statusLower = (status + '').toLowerCase().trim();
+                
+                if (statusLower === 'completed') {
+                  statusVal = '<span class="text-green-600 font-bold">✓</span>';
+                } else if (statusLower === 'in progress') {
+                  statusVal = '<span class="text-orange-600 font-bold">✗</span>';
+                } else if (statusLower === 'yet to be completed') {
+                  statusVal = '<span class="text-red-600 font-bold">✗</span>';
+                } else if (statusLower === 'not applicable') {
+                  statusVal = '<span class="text-gray-400">N/A</span>';
+                } else {
+                  statusVal = '<span class="text-red-600 font-bold">✗</span>';
+                }
+              }
+              
+              html += `<td class="px-2 py-2 border border-gray-700 text-center">${statusVal}</td>`;
+            });
+            
+            html += '</tr>';
+          });
+          
+          // Calculate and render percentage row (always visible)
+          html += '<tr class="bg-blue-100 font-bold">';
+          html += '<td class="px-2 py-2 border border-gray-700 sticky left-0 bg-blue-100 z-5">Percentage</td>';
+          
+          months.forEach(month => {
+            const row = monthData[month];
+            let percentage = 0;
+            
+            if (row) {
+              let completedCount = 0;
+              const totalCount = 15; // Fixed denominator for Core Scope
+              
+              for (let i = 1; i <= 15; i++) {
+                const status = row[`Status_${i}`];
+                const statusLower = (status + '').toLowerCase().trim();
+                
+                // Count as completed if status is "completed" or "completed and updated"
+                if (statusLower === 'completed' || statusLower === 'completed and updated') {
+                  completedCount++;
+                }
+                // All statuses (including 'Not Applicable', null, empty) are included in denominator
+              }
+              
+              percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+            }
+            
+            html += `<td class="px-2 py-2 border border-gray-700 text-center">${percentage}%</td>`;
+          });
+          
+          html += '</tr>';
+          
+          // Add N/A count row (always visible)
+          html += '<tr class="bg-gray-100 font-semibold">';
+          html += '<td class="px-2 py-2 border border-gray-700 sticky left-0 bg-gray-100 z-5">Number of N/A</td>';
+          
+          months.forEach(month => {
+            const row = monthData[month];
+            let naCount = 0;
+            
+            if (row) {
+              for (let i = 1; i <= particulars.length; i++) {
+                const status = row[`Status_${i}`];
+                const statusLower = (status + '').toLowerCase().trim();
+                
+                if (statusLower === 'not applicable') {
+                  naCount++;
+                }
+              }
+            }
+            
+            html += `<td class="px-2 py-2 border border-gray-700 text-center text-gray-600">${naCount}</td>`;
+          });
+          
+          html += '</tr>';
+          html += '</tbody></table>';
+          html += '</div>';
+          
+          container.innerHTML = html;
+        }
+        
+        loadFacultyCoreScopeTable();
+        // --- End: Faculty Core Scope - Monthly Table ---
+
+        // Institution Portfolio Section: show only forms assigned to this faculty
+        let assignedFormsArr = [];
+        try {
+          if (data["assigned_forms"]) {
+            const parsed = JSON.parse(data["assigned_forms"]);
+            if (Array.isArray(parsed)) {
+              assignedFormsArr = parsed.filter(f => typeof f === 'string' && f.trim() !== '');
+            }
+          }
+        } catch (e) {}
+        let assignedFormsHtml = '';
+        if (assignedFormsArr.length > 0) {
+          assignedFormsHtml = `<div class=\"mt-8\">
+            <label class=\"text-base font-bold text-gray-700 uppercase tracking-wide block mb-1\">Institution Portfolio</label>
+            <table class=\"min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white\">
+              <thead class='bg-purple-700 text-white'>
+                <tr><th class=\"px-4 py-2\">Form Name</th><th class=\"px-4 py-2\">Faculty Name</th></tr>
+              </thead>
+              <tbody>
+                ${assignedFormsArr.map(f => `<tr><td class=\"px-4 py-2\">${f}</td><td class=\"px-4 py-2\">${data['Name'] || ''}</td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+        } else {
+          assignedFormsHtml = '<div class=\"mt-8\"><label class=\"text-base font-bold text-gray-700 uppercase tracking-wide block mb-1\">Institution Portfolio</label><div class=\"text-gray-400\">No forms assigned.</div></div>';
+        }
+        // Insert below FACULTY CORE SCOPE section
+        const facultyCoreScopeSection = document.querySelector('#facultyFormsCore');
+        if (facultyCoreScopeSection) {
+          facultyCoreScopeSection.parentElement.insertAdjacentHTML('afterend', assignedFormsHtml);
+        }
+        document.getElementById("facultyImage").src =
+          data["Upload Image"] ||
+          "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80";
+        document.getElementById("facultyEmployeeID").textContent =
+          data["EmployeeID"] || "";
+        document.getElementById("facultyName").textContent = data["Name"] || "";
+        document.getElementById("facultyDesignation").textContent =
+          data["Designation"] || "";
+        document.getElementById("facultyDepartment").textContent =
+          data["department"] || "";
+        document.getElementById("facultyEmail").textContent =
+          data["email"] || "";
+        document.getElementById("facultyNumber").textContent =
+          data["Number"] || "";
+        document.getElementById("facultyUsername").textContent =
+          data["Username"] || "";
+        document.getElementById("facultySalary").textContent =
+          data["Salary"] || "";
+        document.getElementById("facultyExperience").textContent =
+          data["Experience"] || "";
+        document.getElementById("facultyQualification").textContent =
+          data["Qualification"] || "";
+        // SEM, SUBJECT, CLASS Table
+        let semSubjectClassArr = [];
+        try {
+          semSubjectClassArr = data["SEM_SUBJECT_CLASS"]
+            ? JSON.parse(data["SEM_SUBJECT_CLASS"])
+            : [];
+        } catch (e) {}
+        let semTableHtml = "";
+        if (
+          Array.isArray(semSubjectClassArr) &&
+          semSubjectClassArr.length > 0
+        ) {
+          semTableHtml =
+            `<div class="overflow-x-auto"><table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white">
+          <thead class='bg-purple-700 text-white'>
+            <tr><th class="px-4 py-2">SEM</th><th class="px-4 py-2">SUBJECT</th><th class="px-4 py-2">CLASS</th></tr>
+          </thead>
+          <tbody>` +
+            semSubjectClassArr
+              .map(
+                (row, idx) =>
+                  `<tr class="${
+                    idx % 2 === 0 ? "bg-gray-50" : "bg-white"
+                  }"><td class="px-2 py-2">${
+                    row.sem || ""
+                  }</td><td class="px-2 py-2">${
+                    row.subject || ""
+                  }</td><td class="px-2 py-2">${row.class || ""}</td></tr>`
+              )
+              .join("") +
+            `</tbody></table></div>`;
+        } else {
+          semTableHtml = '<div class="text-gray-400">No data</div>';
+        }
+        document.getElementById("facultySemSubjectClassTable").innerHTML =
+          semTableHtml;
+        // Details Table
+        let detailsTableArr = [];
+        try {
+          detailsTableArr = data["DETAILS_TABLE"]
+            ? JSON.parse(data["DETAILS_TABLE"])
+            : [];
+        } catch (e) {}
+        // --- Begin: Compliance per SCOPE from ap/asp/prof_compliance table ---
+        async function getCoreComplianceDetails() {
+          let designation = (document.getElementById('facultyDesignation').textContent || "").toString().trim().toUpperCase();
+          let department = document.getElementById('facultyDepartment').textContent || "";
+          let email = document.getElementById('facultyEmail').textContent || "";
+          let name = document.getElementById('facultyName').textContent || "";
+          let table = null;
+          if (designation === "AP") table = "ap_compliance";
+          else if (designation === "ASP") table = "asp_compliance";
+          else if (designation === "PROF" || designation === "PROFESSOR") table = "prof_compliance";
+          if (!table) return [null, 'No compliance table for designation'];
+          const { data: complianceRows, error } = await supabaseClient
+            .from(table)
+            .select('*')
+            .eq('department', department)
+            .eq('faculty_email', email)
+            .eq('faculty_name', name)
+            .order('created_at', { ascending: false });
+          if (error || !complianceRows || complianceRows.length === 0) {
+            return [null, 'No compliance data'];
+          }
+
+          // Apply "best case scenario" logic similar to IQAC dashboard
+          if (complianceRows.length === 1) {
+            return [complianceRows[0], null];
+          }
+
+          // Create optimized compliance record using best case scenario
+          const bestComplianceRow = { ...complianceRows[0] }; // Start with latest as base
+          
+          // Check each compliance field and keep "completed" if found in any submission
+          for (let i = 1; i <= 20; i++) { // Assuming max 20 compliance fields
+            const fieldName = `compliance_${i}`;
+            let hasCompleted = false;
+            
+            // Check all submissions for this faculty
+            for (const row of complianceRows) {
+              const value = (row[fieldName] || '').toString().trim().toLowerCase();
+              if (value === 'yes' || value === 'completed') {
+                hasCompleted = true;
+                break;
+              }
+            }
+            
+            // If any submission shows completed, override with completed
+            if (hasCompleted) {
+              bestComplianceRow[fieldName] = 'completed';
+            }
+            // Otherwise keep the latest row's value
+          }
+
+          return [bestComplianceRow, null];
+        }
+
+        (async function renderDetailsTableWithCompliance() {
+          let [coreCompliance, complianceError] = await getCoreComplianceDetails();
+          let detailsTableHtml = "";
+          
+          if (Array.isArray(detailsTableArr) && detailsTableArr.length > 0) {
+            // Calculate percentage for the faculty
+            let totalMarks = 0;
+            let obtainedMarks = 0;
+            let percentageHtml = '';
+            
+            if (coreCompliance) {
+              for (let i = 0; i < detailsTableArr.length; i++) {
+                let compField = `compliance_${i + 1}`;
+                let compliance = coreCompliance[compField];
+                
+                if (compliance) {
+                  const val = compliance.trim().toLowerCase();
+                  if (val === 'completed' || val === 'yes') {
+                    obtainedMarks += 3;
+                  } else if (val === 'in progress' || val === 'inprogress') {
+                    obtainedMarks += 1;
+                  } else if (val === 'not started' || val === 'no' || val === 'incomplete') {
+                    obtainedMarks += 0;
+                  }
+                }
+                totalMarks += 3; // Each field has max 3 marks
+              }
+              
+              const percentage = totalMarks > 0 ? Math.round((obtainedMarks / totalMarks) * 100) : 0;
+              percentageHtml = `<div class="mb-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-purple-700">Faculty Compliance Score:</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-2xl font-bold text-purple-800">${percentage}%</span>
+                    <span class="text-sm text-gray-600">(${obtainedMarks}/${totalMarks})</span>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-full" style="width: ${percentage}%"></div>
+                  </div>
+                </div>
+              </div>`;
+            }
+
+            detailsTableHtml = percentageHtml +
+              `<div class="overflow-x-auto"><table class="min-w-full text-sm border rounded-lg overflow-hidden shadow-sm bg-white">
+            <thead class='bg-purple-700 text-white'>
+              <tr><th class="px-4 py-2">S. NO</th><th class="px-4 py-2">PARTICULAR</th><th class="px-4 py-2">TARGET</th><th class="px-4 py-2">TAT</th><th class="px-4 py-2">Compliance</th></tr>
+            </thead>
+            <tbody>` +
+                detailsTableArr
+                  .map(
+                    (row, idx) => {
+                      let complianceVal = '';
+                      if (coreCompliance) {
+                        let compField = `compliance_${idx + 1}`;
+                        let compliance = coreCompliance[compField];
+                        if (compliance) {
+                          const val = compliance.trim().toLowerCase();
+                          if (val === 'completed' || val === 'yes') {
+                            complianceVal = '<span class="text-green-600 font-bold">Completed</span>';
+                          } else if (val === 'in progress' || val === 'inprogress') {
+                            complianceVal = '<span class="text-orange-600 font-bold">In Progress</span>';
+                          } else if (val === 'not started' || val === 'no' || val === 'incomplete') {
+                            complianceVal = '<span class="text-red-600 font-bold">Not Started</span>';
+                          } else {
+                            complianceVal = compliance;
+                          }
+                        } else {
+                          complianceVal = '<span class="text-gray-400">-</span>';
+                        }
+                      } else if (complianceError) {
+                        complianceVal = `<span class='text-gray-400'>${complianceError}</span>`;
+                      } else {
+                        complianceVal = '<span class="text-gray-400">-</span>';
+                      }
+                      return `<tr class="${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}"><td class="px-2 py-2">${idx + 1}</td><td class="px-2 py-2">${row.particular || ""}</td><td class="px-2 py-2">${row.target || ""}</td><td class="px-2 py-2">${row.tat || ""}</td><td class="px-2 py-2">${complianceVal}</td></tr>`;
+                    }
+                  )
+                  .join("") +
+                `</tbody></table></div>`;
+          } else {
+            detailsTableHtml = '<div class="text-gray-400">No data</div>';
+          }
+          document.getElementById("facultyDetailsTable").innerHTML =
+            detailsTableHtml;
+        })();
+        // --- End: Compliance per SCOPE from ap/asp/prof_compliance table ---
+        // Forms assigned: show only 'yes' as table rows with real names and links
+        const formNames = [
+          "Students Performance in Training & Placement Member",
+          "Class Advisor",
+          "Faculty Information & Contribution Member",
+          "Course Outcome & Program Outcome Member (Exam Cell)",
+          "Continuous Improvement Member (Program Member)",
+          "Teaching & Learning Process Member (IQAC)",
+          "Student Support System Member (Discipline & Extra Curricular)",
+          "Facilities & Technical Support Member (Lab Member)",
+        ];
+        const formLinks = [
+          "faculty-form1.html",
+          "faculty-form2.html",
+          "faculty-form3.html",
+          "faculty-form4.html",
+          "faculty-form5.html",
+          "faculty-form6.html",
+          "faculty-form7.html",
+          "faculty-form8.html",
+        ];
+        let formsHtmlDept = "";
+        let formsHtmlCore = "";
+        let countDept = 1;
+        let countCore = 1;
+        for (let i = 1; i <= 8; i++) {
+          if (data[`form${i}`] && data[`form${i}`].toLowerCase() === "yes") {
+            formsHtmlDept += `<tr><td class="p-4 align-top">${countDept}</td><td class="p-4 align-top">${
+              formNames[i - 1]
+            }</td></tr>`;
+            countDept++;
+          }
+        }
+        // Add the 9th form based on Designation
+        let designation = (data["Designation"] || "")
+          .toString()
+          .trim()
+          .toUpperCase();
+        let ninthFormName = "";
+        let ninthFormLink = "";
+        if (designation === "AP") {
+          ninthFormName = "Faculty Mandatory Scope Form (AP)";
+          ninthFormLink = "form-ap.html";
+        } else if (designation === "ASP") {
+          ninthFormName = "Faculty Mandatory Scope Form (ASP)";
+          ninthFormLink = "form-asp.html";
+        } else if (designation === "PROF" || designation === "PROFESSOR") {
+          ninthFormName = "Faculty Mandatory Scope Form (Professor)";
+          ninthFormLink = "form-prof.html";
+        }
+        if (ninthFormName && ninthFormLink) {
+          formsHtmlCore += `<tr><td class="px-4 py-2">1</td><td class="px-4 py-2">${ninthFormName}</td></tr>`;
+        }
+        document.getElementById("facultyFormsDept").innerHTML =
+          formsHtmlDept ||
+          '<tr><td colspan="3" class="text-gray-400 text-center p-4">No roles assigned.</td></tr>';
+        document.getElementById("facultyFormsCore").innerHTML =
+          formsHtmlCore ||
+          '<tr><td colspan="3" class="text-gray-400 text-center p-4">No core scope form assigned.</td></tr>';
+  // Load Workdone Section using centralized JS
+  const workdoneTable = new WorkdoneTable(supabaseClient);
+  // Patch: Add submitted_at column rendering
+  workdoneTable.initWorkdoneSection(data["Name"], data["Designation"], {
+    extraColumns: [
+      {
+        header: "Submitted At",
+        key: "submitted_at",
+        render: (row) => {
+          if (!row.submitted_at) return '<span class="text-gray-400">-</span>';
+          // Format date/time if possible
+          const d = new Date(row.submitted_at);
+          if (!isNaN(d)) {
+            return d.toLocaleString();
+          }
+          return row.submitted_at;
+        }
+      }
+    ]
+  });
+        
+  // Hide delete buttons specifically for iqac-principal-view-faculty.html
+  function hideDeleteButtons() {
+    // Hide all delete buttons in workdone table
+    const deleteButtons = document.querySelectorAll('button[onclick*="deleteWorkdoneRow"]');
+    deleteButtons.forEach(btn => {
+      btn.style.display = 'none';
+      // Also hide the parent cell
+      if (btn.parentElement) {
+        btn.parentElement.style.display = 'none';
+      }
+    });
+    
+    // Hide other delete buttons
+    const otherDeleteButtons = document.querySelectorAll('button[onclick*="Delete"]');
+    otherDeleteButtons.forEach(btn => {
+      btn.style.display = 'none';
+      // Also hide the parent cell if it only contains the delete button
+      if (btn.parentElement && btn.parentElement.children.length === 1) {
+        btn.parentElement.style.display = 'none';
+      }
+    });
+  }
+  
+  // Run immediately and after table loads
+  setTimeout(hideDeleteButtons, 500);
+  setTimeout(hideDeleteButtons, 1000);
+  setTimeout(hideDeleteButtons, 2000);
+  
+  // Also observe for dynamic content changes
+  const observer = new MutationObserver(hideDeleteButtons);
+  observer.observe(document.body, { childList: true, subtree: true });
+      }
+
+      // ===== TIMETABLE DISPLAY FUNCTIONS =====
+      let currentTimetableData = { periods: [] };
+      
+      function getTimeForPeriod(period) {
+        const existing = currentTimetableData.periods.find(p => p.period === period);
+        if (existing) return existing.time || '';
+        
+        const defaultTimes = {
+          1: '9:00-10:00',
+          2: '10:00-11:00',
+          3: '11:00-12:00',
+          4: '12:00-1:00',
+          5: '2:00-3:00',
+          6: '3:00-4:00',
+          7: '4:00-5:00',
+          8: '5:00-6:00'
+        };
+        return defaultTimes[period] || '';
+      }
+      
+      function getExistingPeriodData(day, period) {
+        const existing = currentTimetableData.periods.find(p => p.day === day && p.period === period);
+        return existing || { day, period, time: '', subjectCode: '', subjectName: '', department: '', year: '', section: '' };
+      }
+      
+      function displayTimetable() {
+        const container = document.getElementById('timetableDisplay');
+        
+        if (!currentTimetableData.periods || currentTimetableData.periods.length === 0) {
+          container.innerHTML = '<div class="text-gray-400 text-center py-4 border rounded">No timetable data available.</div>';
+          return;
+        }
+        
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        let html = '<div class="overflow-x-auto border rounded-lg shadow">';
+        html += '<table class="w-full border-collapse text-sm">';
+        html += '<thead><tr class="bg-purple-600 text-white">';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Day</th>';
+        for (let period = 1; period <= 8; period++) {
+          html += `<th class="border border-gray-300 px-3 py-2 font-bold">${period}<br><span class="text-xs font-normal">${getTimeForPeriod(period)}</span></th>`;
+        }
+        html += '</tr></thead><tbody>';
+        
+        days.forEach(day => {
+          html += '<tr class="hover:bg-gray-50">';
+          html += `<td class="border border-gray-300 px-3 py-2 font-bold text-purple-700">${day}</td>`;
+          
+          for (let period = 1; period <= 8; period++) {
+            const data = getExistingPeriodData(day, period);
+            if (data.subjectCode) {
+              const classInfo = [data.department, data.year, data.section].filter(v => v).join(' - ');
+              html += `<td class="border border-gray-300 px-2 py-2">
+                <div class="text-xs">
+                  <div class="font-bold text-purple-700">${data.subjectCode}</div>
+                  <div class="text-gray-700">${data.subjectName}</div>
+                  <div class="text-gray-600 font-semibold mt-1">${classInfo}</div>
+                </div>
+              </td>`;
+            } else {
+              html += '<td class="border border-gray-300 px-2 py-2 text-center text-gray-300">-</td>';
+            }
+          }
+          
+          html += '</tr>';
+        });
+        
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+      }
+      
+      function displayTimetableSummary() {
+        const container = document.getElementById('timetableSummary');
+        
+        if (!currentTimetableData.periods || currentTimetableData.periods.length === 0) {
+          container.innerHTML = '';
+          return;
+        }
+        
+        const summary = {};
+        currentTimetableData.periods.forEach(p => {
+          const key = `${p.department} ${p.year}${p.section} - ${p.subjectCode} ${p.subjectName}`;
+          if (!summary[key]) {
+            summary[key] = {
+              department: p.department,
+              year: p.year,
+              section: p.section,
+              subjectCode: p.subjectCode,
+              subjectName: p.subjectName,
+              hours: 0
+            };
+          }
+          summary[key].hours++;
+        });
+        
+        const summaryArray = Object.values(summary).sort((a, b) => {
+          return `${a.department}${a.year}${a.section}`.localeCompare(`${b.department}${b.year}${b.section}`);
+        });
+        
+        let html = '<h3 class="text-xl font-bold text-purple-700 mb-3 mt-6">Timetable Summary</h3>';
+        html += '<div class="overflow-x-auto border rounded-lg shadow">';
+        html += '<table class="w-full border-collapse text-sm">';
+        html += '<thead><tr class="bg-blue-600 text-white">';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">S.No</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Department</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Year</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Section</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Subject Code</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Subject Name</th>';
+        html += '<th class="border border-gray-300 px-3 py-2 font-bold">Hours/Week</th>';
+        html += '</tr></thead><tbody>';
+        
+        summaryArray.forEach((item, index) => {
+          html += '<tr class="hover:bg-gray-50">';
+          html += `<td class="border border-gray-300 px-3 py-2 text-center">${index + 1}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 font-semibold">${item.department || '-'}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 text-center font-semibold">${item.year || '-'}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 text-center font-semibold">${item.section || '-'}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 font-bold text-purple-700">${item.subjectCode}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2">${item.subjectName}</td>`;
+          html += `<td class="border border-gray-300 px-3 py-2 text-center font-bold text-blue-600">${item.hours}</td>`;
+          html += '</tr>';
+        });
+        
+        const totalHours = summaryArray.reduce((sum, item) => sum + item.hours, 0);
+        html += '<tr class="bg-gray-100">';
+        html += `<td colspan="6" class="border border-gray-300 px-3 py-2 text-right font-bold">Total Hours/Week:</td>`;
+        html += `<td class="border border-gray-300 px-3 py-2 text-center font-bold text-blue-700 text-lg">${totalHours}</td>`;
+        html += '</tr>';
+        
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+      }
+      
+      async function loadTimetable() {
+        try {
+          console.log('Loading timetable for email:', email);
+          const { data, error } = await supabaseClient
+            .from('Faculty')
+            .select('timetable')
+            .eq('email', email)
+            .single();
+          
+          if (error) {
+            console.error('Supabase error:', error);
+            throw error;
+          }
+          
+          console.log('Timetable data from DB:', data);
+          
+          if (data && data.timetable) {
+            try {
+              currentTimetableData = JSON.parse(data.timetable);
+              console.log('Parsed timetable data:', currentTimetableData);
+            } catch (e) {
+              console.error('Error parsing timetable JSON:', e);
+              currentTimetableData = { periods: [] };
+            }
+          } else {
+            console.log('No timetable data found in database');
+          }
+          
+          console.log('Calling displayTimetable...');
+          displayTimetable();
+          displayTimetableSummary();
+        } catch (error) {
+          console.error('Error loading timetable:', error);
+        }
+      }
+      
+      loadTimetable();
+      // ===== END TIMETABLE DISPLAY FUNCTIONS =====
+      
+      loadFacultyProfile();
+    </script>
+
+    <!-- View Modal for Workdone Details -->
+    <div id="viewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-4xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+        <button onclick="closeViewModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <div id="viewModalContent"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-8">
+      <p class="text-sm">
+        &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline">PMC TECH</a><br>
+        <p class="text-xs opacity-80 flex items-center justify-center gap-2">
+                          Powered by 
+                          <a href="https://zeonytechnologies.com" target="_blank" rel="noopener noreferrer" class="inline-block hover:opacity-100 transition-all duration-300 hover:scale-105">
+                              <img src="static\img\zeony logo.png" alt="Zeony Technologies" class="h-12 w-22 py-2 object-contain"/>
+                          </a><p class="text-xs opacity-80">A Student driven Software!</p>
+      </p>
+    </footer>
+  </body>
+</html>
+      

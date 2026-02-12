@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workdone Validation Overview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script src="../static/javascript/form-modal-mapper.js?v=2"></script>
+  <script src="../static/javascript/workdone-table.js?v=2"></script>
+  <script src="../static/javascript/validation-scoring.js?v=2"></script>
+  <script src="../static/javascript/database-setup.js?v=2"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <header class="bg-purple-700 text-white shadow-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+      <a href="hod.html" class="flex items-center">
+        <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 mr-4 rounded shadow" />
+      </a>
+      <h1 class="text-2xl font-bold">Workdone Validation Overview</h1>
+      <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <label class="font-semibold text-gray-800">Department:</label>
+        <span id="deptDisplay" class="ml-2 font-medium text-purple-700"></span>
+      </div>
+      <div class="flex flex-col md:flex-row gap-2 md:gap-4 items-center">
+        <input id="workdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-purple-600" placeholder="Search by Portfolio or Member" oninput="filterWorkdoneTable()" />
+        <label class="font-semibold text-gray-800 ml-2">Submitted:</label>
+        <input id="pendingStartDate" type="date" class="p-2 border border-gray-300 rounded-md" onchange="filterWorkdoneTable()" />
+        <span class="mx-1">to</span>
+        <input id="pendingEndDate" type="date" class="p-2 border border-gray-300 rounded-md" onchange="filterWorkdoneTable()" />
+        <button onclick="exportWorkdoneToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export to Excel">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          Export
+        </button>
+      </div>
+    </div>
+
+    <!-- Error and Loading Messages -->
+    <div id="errorBox" class="hidden mb-4 p-3 rounded bg-red-100 text-red-700 font-semibold"></div>
+    <div id="loadingBox" class="mb-4 p-3 rounded bg-blue-100 text-blue-800 font-semibold" style="display: none;">Loading data, please wait...</div>
+
+    <!-- Pending Validation Table -->
+    <div class="bg-white rounded-lg shadow-lg mb-8">
+      <div class="bg-gradient-to-r from-purple-600 to-purple-800 text-white px-6 py-4 rounded-t-lg">
+        <h2 class="text-xl font-bold">Pending Validation</h2>
+        <p class="text-sm opacity-90">Workdone submissions awaiting validation</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-purple-100">
+            <tr>
+              <th class="px-4 py-3 border-b border-gray-300 text-left">Department</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-left">Portfolio Name</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-left">Member Name</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-center">Status Summary</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-center">Submission Date</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="workdoneTable" class="divide-y divide-gray-200"></tbody>
+        </table>
+        <div class="flex justify-center items-center py-4" id="workdonePagination"></div>
+      </div>
+    </div>
+
+    <!-- Validated Workdone Section -->
+    <div class="bg-white rounded-lg shadow-lg">
+      <div class="bg-gradient-to-r from-green-600 to-green-800 text-white px-6 py-4 rounded-t-lg">
+        <h2 class="text-xl font-bold">Validated Workdone</h2>
+        <p class="text-sm opacity-90">Completed validations with scores</p>
+      </div>
+      <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <input id="validatedWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-green-600" placeholder="Search by Portfolio or Member" oninput="filterValidatedWorkdoneTable()" />
+          <div class="flex items-center gap-2">
+            <label class="font-semibold text-gray-800">Validated:</label>
+            <input id="validatedStartDate" type="date" class="p-2 border border-gray-300 rounded-md" onchange="filterValidatedWorkdoneTable()" />
+            <span class="mx-1">to</span>
+            <input id="validatedEndDate" type="date" class="p-2 border border-gray-300 rounded-md" onchange="filterValidatedWorkdoneTable()" />
+            <button onclick="exportTableToExcel('validatedWorkdoneTable', 'Validated_Workdone')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              Export
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-green-100">
+            <tr>
+              <th class="px-4 py-3 border-b border-gray-300 text-left">Department</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-left">Portfolio Name</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-left">Member Name</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-center">Validation Score</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-center">Submission Date</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-center">Validated By</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-center">Validated At</th>
+              <th class="px-4 py-3 border-b border-gray-300 text-center">View</th>
+            </tr>
+          </thead>
+          <tbody id="validatedWorkdoneTable" class="divide-y divide-gray-200"></tbody>
+        </table>
+        <div class="flex justify-center items-center py-4" id="validatedWorkdonePagination"></div>
+      </div>
+    </div>
+
+    <!-- Validation Modal -->
+    <div id="validationModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+      <div class="bg-white rounded-lg shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="bg-gradient-to-r from-purple-600 to-purple-800 text-white px-6 py-4 flex justify-between items-center">
+          <h3 class="text-xl font-bold">Validate Workdone</h3>
+          <button onclick="window.validationScoring.closeValidationModal()" class="text-white hover:text-red-300 text-2xl font-bold">&times;</button>
+        </div>
+        <div id="validationModalContent" class="px-6 py-4 overflow-y-auto flex-1"></div>
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex gap-3 justify-end">
+          <button type="button" onclick="window.validationScoring.closeValidationModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded font-semibold">Cancel</button>
+          <button type="button" id="submitValidationBtn" onclick="window.validationScoring.submitValidation()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Submit Validation</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Details Modal -->
+    <div id="viewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-2xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white px-6 py-4 flex justify-between items-center">
+          <h3 class="text-xl font-bold">Workdone Details</h3>
+          <button onclick="closeViewModal()" class="text-white hover:text-red-300 text-2xl font-bold">&times;</button>
+        </div>
+        <div id="viewModalContent" class="px-6 py-4 overflow-y-auto flex-1 text-sm"></div>
+        <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex justify-end">
+          <button onclick="closeViewModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded font-semibold">Close</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    // Supabase client initialization
+    const supabaseClient = window.supabase.createClient(
+      "https://cbhodgwaazmjszkujrti.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+
+    let workdoneCurrentPage = 1;
+    let validatedCurrentPage = 1;
+    window._allWorkdoneRows = [];
+    window._filteredWorkdoneRows = [];
+    window._workingWorkdoneRows = [];
+    window._allValidatedRows = [];
+    window._filteredValidatedRows = [];
+    window._workingValidatedRows = [];
+
+    // Load pending workdone
+    async function loadWorkdone() {
+      const dept = localStorage.getItem('department') || localStorage.getItem('Department');
+      if (!dept) {
+        alert('Department not found. Please login again.');
+        window.location.href = 'hod.html';
+        return;
+      }
+
+      document.getElementById('deptDisplay').textContent = dept;
+      const loadingBox = document.getElementById('loadingBox');
+      if (loadingBox) loadingBox.style.display = 'block';
+
+      try {
+        const workdoneTable = new WorkdoneTable(supabaseClient, true); // true = only faculty forms
+        const rows = await workdoneTable.loadDepartmentWorkdone(dept);
+        
+        // Filter out ONLY validated and rejected records, keep PENDING VERIFICATION
+        const { data: validatedRecords } = await supabaseClient
+          .from('Hod-workdone')
+          .select('input_id, table_name')
+          .eq('department', dept);
+
+        const { data: rejectedRecords } = await supabaseClient
+          .from('Hod-workdone_reject')
+          .select('input_id, table_name')
+          .eq('department', dept);
+
+        const processedKeys = new Set(
+          (validatedRecords || []).concat(rejectedRecords || []).map(r => `${r.table_name}_${r.input_id}`)
+        );
+
+        window._allWorkdoneRows = rows.filter(row => {
+          const key = `${row.table}_${row.input_id}`;
+          // Only exclude if it has been processed (verified or rejected)
+          return !processedKeys.has(key);
+        });
+
+        window._filteredWorkdoneRows = window._allWorkdoneRows;
+        window._workingWorkdoneRows = window._allWorkdoneRows;
+        renderFilteredWorkdoneTable(1);
+      } catch (error) {
+        console.error('Error loading workdone:', error);
+        const errorBox = document.getElementById('errorBox');
+        if (errorBox) {
+          errorBox.textContent = 'Error loading workdone: ' + error.message;
+          errorBox.classList.remove('hidden');
+        }
+      } finally {
+        if (loadingBox) loadingBox.style.display = 'none';
+      }
+    }
+
+    // Load validated workdone
+    async function loadValidatedWorkdone() {
+      const dept = localStorage.getItem('department') || localStorage.getItem('Department');
+      if (!dept) return;
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('Hod-workdone')
+          .select('*')
+          .eq('department', dept)
+          .order('verified_at', { ascending: false });
+
+        if (error) throw error;
+
+        window._allValidatedRows = data || [];
+        window._filteredValidatedRows = window._allValidatedRows;
+        window._workingValidatedRows = window._allValidatedRows;
+        renderFilteredValidatedWorkdoneTable(1);
+      } catch (error) {
+        console.error('Error loading validated workdone:', error);
+      }
+    }
+
+    // Render pending workdone table
+    function renderFilteredWorkdoneTable(page = 1) {
+      workdoneCurrentPage = page;
+      const itemsPerPage = 10;
+      const rows = window._workingWorkdoneRows || [];
+      const totalItems = rows.length;
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      const startIndex = (page - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const currentPageRows = rows.slice(startIndex, endIndex);
+
+      const tbody = document.getElementById('workdoneTable');
+      if (!tbody) return;
+
+      if (!currentPageRows || currentPageRows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">No pending workdone found</td></tr>';
+        document.getElementById('workdonePagination').innerHTML = '';
+        return;
+      }
+
+      let html = '';
+      currentPageRows.forEach((row, idx) => {
+        const globalIdx = startIndex + idx;
+        const submittedDate = row.submitted_at ? new Date(row.submitted_at).toLocaleDateString() : 'N/A';
+        const statusSummary = row.status || 'Pending';
+        
+        html += `
+          <tr class="hover:bg-purple-50 transition-colors">
+            <td class="px-4 py-3 border-b">${row.department || '-'}</td>
+            <td class="px-4 py-3 border-b">${row.portfolio || '-'}</td>
+            <td class="px-4 py-3 border-b">${row.member || '-'}</td>
+            <td class="px-4 py-3 border-b text-center">
+              <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                ${statusSummary}
+              </span>
+            </td>
+            <td class="px-4 py-3 border-b text-center text-sm">${submittedDate}</td>
+            <td class="px-4 py-3 border-b text-center">
+              <button onclick="openValidationModal(${globalIdx})" class="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-all shadow-md hover:shadow-lg flex items-center gap-2 mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                View & Validate
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+      generateWorkdonePagination(page, totalPages);
+    }
+
+    // Render validated workdone table
+    function renderFilteredValidatedWorkdoneTable(page = 1) {
+      validatedCurrentPage = page;
+      const itemsPerPage = 10;
+      const rows = window._workingValidatedRows || [];
+      const totalItems = rows.length;
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      const startIndex = (page - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const currentPageRows = rows.slice(startIndex, endIndex);
+
+      const tbody = document.getElementById('validatedWorkdoneTable');
+      if (!tbody) return;
+
+      if (!currentPageRows || currentPageRows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">No validated workdone found</td></tr>';
+        document.getElementById('validatedWorkdonePagination').innerHTML = '';
+        return;
+      }
+
+      let html = '';
+      currentPageRows.forEach((row, idx) => {
+        const globalIdx = startIndex + idx;
+        const score = `${row.validated_fields || 0}/${row.total_fields || 0}`;
+        const percentage = row.validation_score ? `${row.validation_score}%` : '0%';
+        const submittedDate = row.submitted_at ? new Date(row.submitted_at).toLocaleDateString() : 'N/A';
+        const validatedDate = row.verified_at ? new Date(row.verified_at).toLocaleString() : 'N/A';
+
+        html += `
+          <tr class="hover:bg-green-50 transition-colors">
+            <td class="px-4 py-3 border-b">${row.department || '-'}</td>
+            <td class="px-4 py-3 border-b">${row.portfolio_name || '-'}</td>
+            <td class="px-4 py-3 border-b">${row.portfolio_member_name || '-'}</td>
+            <td class="px-4 py-3 border-b text-center">
+              <span class="font-bold text-xl text-green-700">${percentage}</span>
+            </td>
+            <td class="px-4 py-3 border-b text-center text-sm">${submittedDate}</td>
+            <td class="px-4 py-3 border-b text-center">${row.verified_by || '-'}</td>
+            <td class="px-4 py-3 border-b text-center text-sm">${validatedDate}</td>
+            <td class="px-4 py-3 border-b text-center">
+              <button onclick="viewValidatedDetails(${globalIdx})" class="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-all shadow-md hover:shadow-lg flex items-center gap-2 mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                View
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+      generateValidatedPagination(page, totalPages);
+    }
+
+    // Pagination for pending workdone
+    function generateWorkdonePagination(currentPage, totalPages) {
+      const container = document.getElementById('workdonePagination');
+      if (!container || totalPages <= 1) {
+        if (container) container.innerHTML = '';
+        return;
+      }
+
+      let html = '';
+      if (currentPage > 1) {
+        html += `<button onclick="renderFilteredWorkdoneTable(${currentPage - 1})" class="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 mr-2">Prev</button>`;
+      }
+
+      const maxVisible = 5;
+      let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let end = Math.min(totalPages, start + maxVisible - 1);
+      if (end - start < maxVisible - 1) start = Math.max(1, end - maxVisible + 1);
+
+      for (let i = start; i <= end; i++) {
+        const active = i === currentPage ? 'bg-purple-700 text-white' : 'bg-white text-purple-700 hover:bg-purple-100';
+        html += `<button onclick="renderFilteredWorkdoneTable(${i})" class="px-3 py-1 ${active} border border-purple-700 rounded mx-1">${i}</button>`;
+      }
+
+      if (currentPage < totalPages) {
+        html += `<button onclick="renderFilteredWorkdoneTable(${currentPage + 1})" class="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 ml-2">Next</button>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    // Pagination for validated workdone
+    function generateValidatedPagination(currentPage, totalPages) {
+      const container = document.getElementById('validatedWorkdonePagination');
+      if (!container || totalPages <= 1) {
+        if (container) container.innerHTML = '';
+        return;
+      }
+
+      let html = '';
+      if (currentPage > 1) {
+        html += `<button onclick="renderFilteredValidatedWorkdoneTable(${currentPage - 1})" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 mr-2">Prev</button>`;
+      }
+
+      const maxVisible = 5;
+      let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let end = Math.min(totalPages, start + maxVisible - 1);
+      if (end - start < maxVisible - 1) start = Math.max(1, end - maxVisible + 1);
+
+      for (let i = start; i <= end; i++) {
+        const active = i === currentPage ? 'bg-green-700 text-white' : 'bg-white text-green-700 hover:bg-green-100';
+        html += `<button onclick="renderFilteredValidatedWorkdoneTable(${i})" class="px-3 py-1 ${active} border border-green-700 rounded mx-1">${i}</button>`;
+      }
+
+      if (currentPage < totalPages) {
+        html += `<button onclick="renderFilteredValidatedWorkdoneTable(${currentPage + 1})" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 ml-2">Next</button>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    // Filter functions
+    function filterWorkdoneTable() {
+      const search = document.getElementById('workdoneSearch').value.toLowerCase();
+      const startDateInput = document.getElementById('pendingStartDate');
+      const endDateInput = document.getElementById('pendingEndDate');
+      let startDate = startDateInput && startDateInput.value ? new Date(startDateInput.value) : null;
+      let endDate = endDateInput && endDateInput.value ? new Date(endDateInput.value) : null;
+      if (endDate) endDate.setHours(23, 59, 59, 999);
+
+      window._filteredWorkdoneRows = window._allWorkdoneRows.filter(row => {
+        const portfolio = (row.portfolio || '').toLowerCase();
+        const member = (row.member || '').toLowerCase();
+        const department = (row.department || '').toLowerCase();
+        const submittedAt = row.submitted_at ? new Date(row.submitted_at) : null;
+
+        let dateMatch = true;
+        if (startDate && submittedAt) dateMatch = submittedAt >= startDate;
+        if (endDate && submittedAt) dateMatch = dateMatch && (submittedAt <= endDate);
+        if ((startDate || endDate) && !submittedAt) dateMatch = false;
+
+        return (portfolio.includes(search) || member.includes(search) || department.includes(search)) && dateMatch;
+      });
+
+      window._workingWorkdoneRows = window._filteredWorkdoneRows;
+      renderFilteredWorkdoneTable(1);
+    }
+
+    function filterValidatedWorkdoneTable() {
+      const search = document.getElementById('validatedWorkdoneSearch').value.toLowerCase();
+      const startDateInput = document.getElementById('validatedStartDate');
+      const endDateInput = document.getElementById('validatedEndDate');
+      let startDate = startDateInput && startDateInput.value ? new Date(startDateInput.value) : null;
+      let endDate = endDateInput && endDateInput.value ? new Date(endDateInput.value) : null;
+      if (endDate) endDate.setHours(23, 59, 59, 999);
+
+      window._filteredValidatedRows = window._allValidatedRows.filter(row => {
+        const portfolio = (row.portfolio_name || '').toLowerCase();
+        const member = (row.portfolio_member_name || '').toLowerCase();
+        const department = (row.department || '').toLowerCase();
+        const verifiedAt = row.verified_at ? new Date(row.verified_at) : null;
+
+        let dateMatch = true;
+        if (startDate && verifiedAt) dateMatch = verifiedAt >= startDate;
+        if (endDate && verifiedAt) dateMatch = dateMatch && (verifiedAt <= endDate);
+        if ((startDate || endDate) && !verifiedAt) dateMatch = false;
+
+        return (portfolio.includes(search) || member.includes(search) || department.includes(search)) && dateMatch;
+      });
+
+      window._workingValidatedRows = window._filteredValidatedRows;
+      renderFilteredValidatedWorkdoneTable(1);
+    }
+
+    // Open validation modal
+    function openValidationModal(idx) {
+      const row = window._workingWorkdoneRows[idx];
+      if (!row || !window.validationScoring) {
+        console.error('Row or validationScoring not found');
+        return;
+      }
+      window.validationScoring.openValidationModal(row, idx);
+    }
+
+    // View row details
+    function viewRowDetails(idx) {
+      const rows = window._workingWorkdoneRows;
+      const row = rows && rows[idx];
+      if (!row) return;
+
+      const details = row._original || row;
+      if (typeof getFormModalContent !== 'function') {
+        alert('Form modal mapper not loaded');
+        return;
+      }
+
+      let html = getFormModalContent(row, details);
+      document.getElementById('viewModalContent').innerHTML = html;
+      document.getElementById('viewModal').classList.remove('hidden');
+    }
+
+    // View validated details
+    async function viewValidatedDetails(idx) {
+      const row = window._workingValidatedRows[idx];
+      if (!row) return;
+
+      // Fetch the original data from the table
+      try {
+        const { data, error } = await supabaseClient
+          .from(row.table_name)
+          .select('*')
+          .eq('input_id', row.input_id)
+          .single();
+
+        if (error) throw error;
+
+        // Use form-modal-mapper.js to get the faculty form content
+        let facultyContent = '';
+        if (typeof getFormModalContent === 'function') {
+          const formRow = {
+            table: row.table_name,
+            portfolio: row.portfolio_name
+          };
+          facultyContent = getFormModalContent(formRow, data);
+        } else {
+          facultyContent = '<p class="text-red-500">Form modal mapper not loaded</p>';
+        }
+
+        // Add validation score section
+        const score = `${row.validated_fields || 0}/${row.total_fields || 0}`;
+        const percentage = row.validation_score ? `${row.validation_score.toFixed(1)}%` : '0%';
+        
+        let html = `
+          <div class="space-y-4">
+            <div class="bg-purple-50 p-4 rounded-lg">
+              <h4 class="font-bold text-purple-800 mb-3">Validation Score</h4>
+              <div class="grid grid-cols-4 gap-4 text-center">
+                <div>
+                  <div class="text-3xl font-bold text-purple-700">${row.validated_fields || 0}</div>
+                  <div class="text-sm text-gray-600">Validated</div>
+                </div>
+                <div>
+                  <div class="text-3xl font-bold text-gray-700">${row.total_fields || 0}</div>
+                  <div class="text-sm text-gray-600">Total</div>
+                </div>
+                <div>
+                  <div class="text-3xl font-bold text-green-700">${percentage}</div>
+                  <div class="text-sm text-gray-600">Score</div>
+                </div>
+                <div>
+                  <div class="text-lg font-semibold text-gray-800">${row.verified_by || 'N/A'}</div>
+                  <div class="text-sm text-gray-600">Validated By</div>
+                </div>
+              </div>
+            </div>
+            <div class="border-t border-gray-200 pt-4">
+              ${facultyContent}
+            </div>
+          </div>
+        `;
+
+        document.getElementById('viewModalContent').innerHTML = html;
+        document.getElementById('viewModal').classList.remove('hidden');
+      } catch (error) {
+        console.error('Error loading validated details:', error);
+        alert('Failed to load validated details');
+      }
+    }
+
+    // Close view modal
+    function closeViewModal() {
+      document.getElementById('viewModal').classList.add('hidden');
+      document.getElementById('viewModalContent').innerHTML = '';
+    }
+
+    // Export to Excel
+    function exportWorkdoneToExcel() {
+      const rows = window._workingWorkdoneRows || [];
+      if (rows.length === 0) {
+        alert('No data to export');
+        return;
+      }
+
+      const data = rows.map(row => ({
+        'Department': row.department || '',
+        'Portfolio': row.portfolio || '',
+        'Member': row.member || '',
+        'Status': row.status || '',
+        'Submission Date': row.submitted_at ? new Date(row.submitted_at).toLocaleDateString() : ''
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Pending Workdone');
+      XLSX.writeFile(workbook, `Pending_Workdone_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
+    function exportTableToExcel(tableId, filename) {
+      const rows = window._workingValidatedRows || [];
+      if (rows.length === 0) {
+        alert('No data to export');
+        return;
+      }
+
+      const data = rows.map(row => ({
+        'Department': row.department || '',
+        'Portfolio': row.portfolio_name || '',
+        'Member': row.portfolio_member_name || '',
+        'Validated Fields': row.validated_fields || 0,
+        'Total Fields': row.total_fields || 0,
+        'Score': row.validation_score ? `${row.validation_score}%` : '0%',
+        'Status': row.validation_status || '',
+        'Submission Date': row.submitted_at ? new Date(row.submitted_at).toLocaleDateString() : '',
+        'Validated By': row.verified_by || '',
+        'Validated At': row.verified_at ? new Date(row.verified_at).toLocaleString() : ''
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Validated Workdone');
+      XLSX.writeFile(workbook, `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize validation scoring after supabaseClient is ready
+      if (typeof ValidationScoring !== 'undefined' && !window.validationScoring) {
+        window.validationScoring = new ValidationScoring(supabaseClient);
+      }
+      
+      loadWorkdone();
+      loadValidatedWorkdone();
+    });
+  </script>
+
+  <!-- Footer -->
+  <footer class="text-center py-6 mt-12 bg-gray-100">
+    <div class="flex flex-col items-center gap-2">
+      <span class="text-gray-600 text-sm">&copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline hover:text-purple-700">PMC TECH</a></span>
+      <div class="flex items-center gap-2">
+        <span class="text-gray-500 text-xs">Powered by</span>
+        <a href="https://zeonytechnologies.com" target="_blank" rel="noopener noreferrer" class="inline-block hover:opacity-80 transition-all">
+          <img src="../static/img/zeony logo.png" alt="Zeony Technologies" class="h-10 object-contain"/>
+        </a>
+      </div>
+      <span class="text-gray-500 text-xs">A Student driven Software!</span>
+    </div>
+  </footer>
+</body>
+</html>

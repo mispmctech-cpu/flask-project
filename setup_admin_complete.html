@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup Admin Table</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      max-width: 800px; 
+      margin: 20px auto; 
+      padding: 20px; 
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 { color: #333; text-align: center; }
+    .step {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+    button { 
+      padding: 12px 20px; 
+      background: #007bff; 
+      color: white; 
+      border: none; 
+      border-radius: 5px; 
+      cursor: pointer;
+      font-size: 14px;
+      margin: 10px 5px;
+    }
+    button:hover { background: #0056b3; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .result { 
+      margin: 15px 0; 
+      padding: 15px; 
+      border-radius: 5px;
+    }
+    .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+    pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow: auto; font-size: 12px; }
+    .sql-code { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    .copy-btn { background: #28a745; font-size: 12px; padding: 5px 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Setup Admin Table & Account</h1>
+    
+    <div class="step">
+      <h2>Step 1: Check Current Database State</h2>
+      <p>Let's first check what tables exist and their structure.</p>
+      <button onclick="checkDatabase()">Check Database</button>
+      <div id="check-result"></div>
+    </div>
+
+    <div class="step">
+      <h2>Step 2: Create Admin Table (if needed)</h2>
+      <p>If the Admin table doesn't exist, you have two options:</p>
+      
+      <h3>Option A: Manual SQL (Recommended)</h3>
+      <div class="info">
+        <p>Copy and run this SQL in your Supabase SQL Editor:</p>
+        <div class="sql-code">
+          <pre id="sql-code">-- Create Admin Table
+CREATE TABLE IF NOT EXISTS public."Admin" (
+  id serial NOT NULL,
+  name character varying(100) NOT NULL,
+  email character varying(255) NOT NULL,
+  password character varying(255) NOT NULL,
+  role character varying(50) NULL DEFAULT 'SUPER_ADMIN'::character varying,
+  department character varying(50) NULL DEFAULT 'ADMINISTRATION'::character varying,
+  is_active boolean NULL DEFAULT true,
+  created_at timestamp without time zone NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone NULL DEFAULT CURRENT_TIMESTAMP,
+  last_login timestamp without time zone NULL,
+  CONSTRAINT Admin_pkey PRIMARY KEY (id),
+  CONSTRAINT Admin_email_key UNIQUE (email)
+);
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_admin_email ON public."Admin" USING btree (email);
+CREATE INDEX IF NOT EXISTS idx_admin_active ON public."Admin" USING btree (is_active);
+
+-- Insert default admin
+INSERT INTO public."Admin" (name, email, password, role, department, is_active)
+VALUES ('Administrator', 'admin@pmctech.org', 'admin123', 'SUPER_ADMIN', 'ADMINISTRATION', true)
+ON CONFLICT (email) DO NOTHING;</pre>
+        </div>
+        <button class="copy-btn" onclick="copySql()">Copy SQL</button>
+      </div>
+
+      <h3>Option B: Automatic Creation</h3>
+      <p><strong>Note:</strong> This might not work due to RLS policies. Use Option A if this fails.</p>
+      <button onclick="createTable()">Try Auto Create Table</button>
+      <div id="create-result"></div>
+    </div>
+
+    <div class="step">
+      <h2>Step 3: Create Admin Account</h2>
+      <div>
+        <input type="text" id="admin-name" placeholder="Admin Name" value="Administrator" style="width: 200px; padding: 8px; margin: 5px;">
+        <input type="email" id="admin-email" placeholder="Admin Email" value="admin@pmctech.org" style="width: 200px; padding: 8px; margin: 5px;">
+        <input type="password" id="admin-password" placeholder="Password" value="admin123" style="width: 200px; padding: 8px; margin: 5px;">
+        <br>
+        <button onclick="createAdmin()">Create Admin Account</button>
+      </div>
+      <div id="admin-result"></div>
+    </div>
+
+    <div class="step">
+      <h2>Step 4: Test Login</h2>
+      <div>
+        <input type="email" id="test-email" placeholder="Test Email" style="width: 200px; padding: 8px; margin: 5px;">
+        <input type="password" id="test-password" placeholder="Test Password" style="width: 200px; padding: 8px; margin: 5px;">
+        <button onclick="testLogin()">Test Login</button>
+      </div>
+      <div id="test-result"></div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://cbhodgwaazmjszkujrti.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU";
+    
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function checkDatabase() {
+      const resultDiv = document.getElementById('check-result');
+      resultDiv.innerHTML = '<div class="info">Checking database...</div>';
+      
+      try {
+        // Try different table name variations
+        const tablesToCheck = ['Admin', '"Admin"', 'admin'];
+        let results = [];
+        
+        for (const tableName of tablesToCheck) {
+          try {
+            const { data, error } = await supabaseClient
+              .from(tableName)
+              .select('*')
+              .limit(1);
+            
+            if (!error) {
+              results.push(`✅ Table '${tableName}' exists and is accessible`);
+            } else {
+              results.push(`❌ Table '${tableName}': ${error.message}`);
+            }
+          } catch (e) {
+            results.push(`❌ Table '${tableName}': ${e.message}`);
+          }
+        }
+        
+        resultDiv.innerHTML = `<div class="info"><h4>Database Check Results:</h4><pre>${results.join('\n')}</pre></div>`;
+        
+      } catch (err) {
+        resultDiv.innerHTML = `<div class="error">Error checking database: ${err.message}</div>`;
+      }
+    }
+
+    async function createTable() {
+      const resultDiv = document.getElementById('create-result');
+      resultDiv.innerHTML = '<div class="info">Attempting to create table...</div>';
+      
+      try {
+        // Try to create a simple admin table using insert (this will fail but give us info)
+        const { data, error } = await supabaseClient
+          .from('Admin')
+          .insert([{
+            name: 'Test',
+            email: 'test@test.com',
+            password: 'test123',
+            role: 'SUPER_ADMIN',
+            department: 'ADMINISTRATION',
+            is_active: true
+          }])
+          .select();
+        
+        if (error) {
+          resultDiv.innerHTML = `<div class="error">Cannot create table automatically: ${error.message}<br><br><strong>Please use Option A (Manual SQL) instead.</strong></div>`;
+        } else {
+          resultDiv.innerHTML = `<div class="success">Table seems to exist! Created test record.</div>`;
+        }
+        
+      } catch (err) {
+        resultDiv.innerHTML = `<div class="error">Cannot create table automatically: ${err.message}<br><br><strong>Please use Option A (Manual SQL) instead.</strong></div>`;
+      }
+    }
+
+    async function createAdmin() {
+      const name = document.getElementById('admin-name').value.trim();
+      const email = document.getElementById('admin-email').value.trim();
+      const password = document.getElementById('admin-password').value.trim();
+      const resultDiv = document.getElementById('admin-result');
+      
+      if (!name || !email || !password) {
+        resultDiv.innerHTML = '<div class="error">Please fill all fields</div>';
+        return;
+      }
+      
+      resultDiv.innerHTML = '<div class="info">Creating admin account...</div>';
+      
+      try {
+        const { data, error } = await supabaseClient
+          .from('Admin')
+          .insert([{
+            name: name,
+            email: email,
+            password: password,
+            role: 'SUPER_ADMIN',
+            department: 'ADMINISTRATION',
+            is_active: true
+          }])
+          .select();
+        
+        if (error) {
+          resultDiv.innerHTML = `<div class="error">Error creating admin: ${error.message}</div>`;
+        } else {
+          resultDiv.innerHTML = `<div class="success">Admin account created successfully!<br>Email: ${email}<br>Password: ${password}</div>`;
+        }
+        
+      } catch (err) {
+        resultDiv.innerHTML = `<div class="error">Error: ${err.message}</div>`;
+      }
+    }
+
+    async function testLogin() {
+      const email = document.getElementById('test-email').value.trim();
+      const password = document.getElementById('test-password').value.trim();
+      const resultDiv = document.getElementById('test-result');
+      
+      if (!email || !password) {
+        resultDiv.innerHTML = '<div class="error">Please enter email and password</div>';
+        return;
+      }
+      
+      resultDiv.innerHTML = '<div class="info">Testing login...</div>';
+      
+      try {
+        const { data, error } = await supabaseClient
+          .from('Admin')
+          .select('*')
+          .eq('email', email)
+          .eq('password', password)
+          .eq('is_active', true)
+          .maybeSingle();
+        
+        if (error) {
+          resultDiv.innerHTML = `<div class="error">Login test failed: ${error.message}</div>`;
+        } else if (!data) {
+          resultDiv.innerHTML = `<div class="error">Login failed: Invalid credentials or inactive account</div>`;
+        } else {
+          resultDiv.innerHTML = `<div class="success">Login test successful!<br>Welcome ${data.name}</div>`;
+        }
+        
+      } catch (err) {
+        resultDiv.innerHTML = `<div class="error">Error: ${err.message}</div>`;
+      }
+    }
+
+    function copySql() {
+      const sqlCode = document.getElementById('sql-code').textContent;
+      navigator.clipboard.writeText(sqlCode).then(() => {
+        alert('SQL copied to clipboard! Go to your Supabase SQL Editor and paste it.');
+      }).catch(() => {
+        alert('Could not copy to clipboard. Please select and copy the SQL manually.');
+      });
+    }
+
+    // Auto-fill test fields when admin is created
+    document.getElementById('admin-email').addEventListener('input', (e) => {
+      document.getElementById('test-email').value = e.target.value;
+    });
+    
+    document.getElementById('admin-password').addEventListener('input', (e) => {
+      document.getElementById('test-password').value = e.target.value;
+    });
+  </script>
+</body>
+</html>

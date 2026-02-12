@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <script src="https://unpkg.com/@supabase/supabase-js"></script>
+   <script>
+   // Auto-fill Portfolio Name, Portfolio Member Name, and Month from localStorage if available
+   document.addEventListener('DOMContentLoaded', function() {
+	   var portfolio = localStorage.getItem('selectedPortfolio') || '';
+	   var member = localStorage.getItem('selectedMemberName') || '';
+	   var month = localStorage.getItem('selectedMonth') || '';
+
+	   const form = document.getElementById('form16');
+	   if (form) {
+		   const portfolioField = form.querySelector('input[name="Portfolio Name:"]');
+		   if (portfolioField && portfolio) {
+			   portfolioField.value = portfolio;
+		   }
+		   const memberField = form.querySelector('input[name="Portfolio Member Name:"]');
+		   if (memberField && member) {
+			   memberField.value = member;
+		   }
+		   const monthField = form.querySelector('select[name="Month:"]');
+		   if (monthField && month) {
+			   for (var i = 0; i < monthField.options.length; i++) {
+				   if (monthField.options[i].value === month) {
+					   monthField.selectedIndex = i;
+					   break;
+				   }
+			   }
+		   }
+	   }
+   });
+   </script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>PRO : MONTHLY</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+	<!-- Font Awesome for icons -->
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+	<style>
+		body, input, select, textarea, button {
+			font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+		}
+		.card-shadow {
+			box-shadow: 0 4px 24px 0 rgba(80, 0, 120, 0.08), 0 1.5px 4px 0 rgba(80,0,120,0.04);
+		}
+		th, td {
+			font-size: 1rem;
+		}
+		input:focus, select:focus {
+			outline: none;
+			box-shadow: 0 0 0 2px #a78bfa33;
+			border-color: #a78bfa;
+		}
+		.bg-orange-400 {
+			background: linear-gradient(90deg, #f59e42 0%, #fbbf24 100%);
+		}
+		.bg-purple-800 {
+			background: linear-gradient(90deg, #6d28d9 0%, #7c3aed 100%);
+		}
+		.custom-upload {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: #ede9fe;
+			color: #6d28d9;
+			border: 1px solid #a78bfa;
+			border-radius: 0.5rem;
+			padding: 0.25rem 1rem;
+			font-weight: 500;
+			cursor: pointer;
+			transition: background 0.2s;
+		}
+		.custom-upload:hover {
+			background: #c4b5fd;
+			color: #fff;
+		}
+		.custom-upload svg {
+			margin-left: 0.5rem;
+			width: 1.1em;
+			height: 1.1em;
+		}
+		input[type="file"] {
+			display: none;
+		}
+		select {
+			background: #f3f4f6;
+		}
+		label {
+			letter-spacing: 0.01em;
+		}
+		.table-section-title {
+			font-size: 1.1rem;
+			font-weight: 700;
+			letter-spacing: 0.04em;
+			color: #fff;
+			background: linear-gradient(90deg, #f59e42 0%, #fbbf24 100%);
+			padding-left: 1rem;
+		}
+		@media (max-width: 1200px) {
+			.min-w-\[1100px\] { min-width: 900px !important; }
+		}
+		@media (max-width: 900px) {
+			th, td { font-size: 0.95rem; }
+			.min-w-\[1100px\] { min-width: 700px !important; }
+			.p-8 { padding: 1.5rem !important; }
+		}
+		@media (max-width: 600px) {
+			th, td { font-size: 0.9rem; }
+			.min-w-\[1100px\] { min-width: 100vw !important; }
+			.p-8 { padding: 0.5rem !important; }
+			.p-6, .md\:p-10 { padding: 0.5rem !important; }
+		}
+		/* Draft Popup Modal */
+		.draft-modal {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0, 0, 0, 0.5);
+			z-index: 9999;
+			align-items: center;
+			justify-content: center;
+		}
+		.draft-modal.show {
+			display: flex;
+		}
+		.draft-modal-content {
+			background: white;
+			padding: 2rem;
+			border-radius: 1rem;
+			box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+			max-width: 500px;
+			width: 90%;
+			animation: slideIn 0.3s ease-out;
+		}
+		@keyframes slideIn {
+			from {
+				transform: translateY(-50px);
+				opacity: 0;
+			}
+			to {
+				transform: translateY(0);
+				opacity: 1;
+			}
+		}
+		/* File upload preview styles */
+		.file-preview { 
+			display: flex; 
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 6px; 
+			margin-top: 8px; 
+			padding: 10px 12px; 
+			background: #f0fdf4; 
+			border: 2px solid #86efac; 
+			border-radius: 10px; 
+			font-size: 0.85rem; 
+		}
+		.file-preview .file-name { 
+			color: #166534; 
+			font-weight: 500;
+			word-break: break-all; 
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+		.file-preview .file-actions { display: flex; gap: 8px; margin-top: 4px; }
+		.file-preview .btn-view, .file-preview .btn-replace { 
+			padding: 5px 14px; 
+			border-radius: 6px; 
+			font-size: 0.8rem; 
+			font-weight: 600;
+			cursor: pointer; 
+			border: none; 
+			transition: all 0.2s; 
+		}
+		.file-preview .btn-view { background: #3b82f6; color: white; }
+		.file-preview .btn-view:hover { background: #2563eb; }
+		.file-preview .btn-replace { background: #f59e0b; color: white; }
+		.file-preview .btn-replace:hover { background: #d97706; }
+		.upload-success {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 2px;
+		}
+		.upload-success .checkmark {
+			color: #16a34a;
+			font-size: 1rem;
+		}
+	</style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col min-h-screen">
+	<div class="w-full bg-purple-800 py-4 flex items-center">
+		<img src="https://www.pmctech.org/images/gallery/logo1.jpg" alt="PMC Tech Logo" class="h-14 ml-8" style="max-height:56px;" />
+	</div>
+	<div class="flex-1 flex flex-col items-center justify-center py-8 px-2">
+		<div class="w-full max-w-7xl mx-auto bg-white rounded-2xl card-shadow border border-purple-300 overflow-x-auto p-0 mb-12">
+			<h2 class="text-center text-2xl md:text-3xl font-extrabold tracking-wide text-purple-800 py-8">PRO : MONTHLY</h2>
+			<form id="form16" class="p-6 md:p-10 space-y-10 w-full">
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-8 bg-purple-50 rounded-xl p-8 card-shadow mb-8">
+					<div>
+						<label class="block font-semibold text-purple-900 mb-1">Portfolio Name:</label>
+						<input type="text" name="Portfolio Name:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
+					</div>
+					<div>
+						<label class="block font-semibold text-purple-900 mb-1">Portfolio Person Name:</label>
+						<input type="text" name="Portfolio Member Name:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
+					</div>
+					<div>
+						<label class="block font-semibold text-purple-900 mb-1">Month:</label>
+						<select name="Month:" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400">
+							<option value="">-- Select Month --</option>
+							<option value="January">January</option>
+							<option value="February">February</option>
+							<option value="March">March</option>
+							<option value="April">April</option>
+							<option value="May">May</option>
+							<option value="June">June</option>
+							<option value="July">July</option>
+							<option value="August">August</option>
+							<option value="September">September</option>
+							<option value="October">October</option>
+							<option value="November">November</option>
+							<option value="December">December</option>
+						</select>
+					</div>
+				</div>
+				<div class="overflow-x-auto rounded-xl card-shadow border border-purple-100 bg-white w-full p-6 my-8">
+					<table class="w-full min-w-[1100px] text-xs md:text-sm table-fixed">
+						<thead class="bg-orange-400">
+						<tr>
+							<th class="border px-2 py-2 font-bold text-white">S.No</th>
+							<th class="border px-2 py-2 font-bold text-white">Name of the file</th>
+							<th class="border px-2 py-2 font-bold text-white">Status</th>
+							<th class="border px-2 py-2 font-bold text-white">Description</th>
+							<th class="border px-2 py-2 font-bold text-white">Upload the scanned  file</th>
+						</tr>
+						</thead>
+						<tbody id="form16-table-body">
+							<!-- JS will render 9 rows here -->
+						</tbody>
+					</table>
+				</div>
+				<div class="flex justify-center gap-4 mt-10">
+					<button type="button" id="saveDraftBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">
+						<i class="fas fa-save mr-2"></i>Save as Draft
+					</button>
+					<button type="submit" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">Submit</button>
+				</div>
+			</form>
+			<!-- Draft loaded banner -->
+			<div id="draftBanner" class="hidden fixed top-4 right-4 bg-blue-100 border-2 border-blue-500 text-blue-800 px-6 py-3 rounded-lg shadow-lg z-50">
+				<i class="fas fa-info-circle mr-2"></i>Draft loaded - Continue editing or submit when ready
+			</div>
+			
+			<!-- Draft Popup Modal -->
+			<div id="draftModal" class="draft-modal">
+				<div class="draft-modal-content">
+					<h2 class="text-2xl font-bold text-purple-900 mb-4">
+						<i class="fas fa-file-alt text-blue-600 mr-2"></i>Draft Found!
+					</h2>
+					<p class="text-gray-700 mb-2">You have a saved draft for this form.</p>
+					<p class="text-sm text-gray-600 mb-6">
+						<span class="font-semibold">Saved Month:</span> <span id="draftMonthInfo" class="text-blue-600"></span>
+					</p>
+					<p class="text-gray-700 mb-6">Would you like to load it and continue where you left off?</p>
+					<div class="flex gap-4 justify-end">
+						<button id="draftDeclineBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-6 rounded-lg transition-all">
+							<i class="fas fa-times mr-2"></i>Start Fresh
+						</button>
+						<button id="draftAcceptBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all">
+							<i class="fas fa-check mr-2"></i>Load Draft
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
+	// Global object to store draft file URLs
+	window.draftFileUrls = {};
+	// 24 scope labels from the image
+	const fileRows = [
+		// 1. Media Relations
+		'Build and maintain relationships with local and national media.',
+		'Draft press releases, news articles, and media kits for college events and achievements.',
+		'Coordinate press coverage for conferences, convocations, and student accomplishments.',
+		// 2. Institutional Branding
+		"Promote the college's vision, mission, and strategic initiatives.",
+		'Ensure consistency in branding across digital platforms, brochures, and advertisements.',
+		'Collaborate with design teams to produce promotional materials.',
+		// 3. Stakeholder Communication
+		'Act as a liaison between the college and external stakeholders (industry, alumni, government bodies).',
+		'Facilitate communication with parents, prospective students, and the community.',
+		'Support internal communication strategies for faculty and staff.',
+		// 4. Event Coordination
+		'Assist in organizing institutional events such as seminars, workshops, and cultural fests.',
+		'Manage invitations, media coverage, and post-event publicity.',
+		'Document and archive event highlights for institutional records.',
+		// 5. Digital Presence Management
+		'Oversee content updates on the college website and social media platforms.',
+		'Monitor online reputation and respond to queries or feedback.',
+		'Collaborate with IT and content teams to ensure timely and relevant updates.',
+		// 6. Accreditation and Ranking Support
+		'Highlight activities and achievements related to NBA, NAAC and other accreditations.',
+		'Coordinate with ranking agencies and ensure accurate representation of institutional data.',
+		'Support initiatives aligned with quality assurance and continuous improvement.',
+		// 7. Strategic Contributions
+		'Develop protocols for managing communication during emergencies or controversies.',
+		'Ensure timely dissemination of verified information to stakeholders.',
+		// 8. Alumni and Industry Engagement
+		'Support alumni relations through newsletters, reunions, and success stories.',
+		'Facilitate industry partnerships by showcasing collaborative projects and MoUs.',
+		// 9. Documentation and Reporting
+		'Maintain and report media coverage, stakeholder feedback, and outreach activities.',
+		'Prepare periodic reports for the Governing Body and Academic Council.'
+	];
+	// Render rows
+	const tbody = document.getElementById('form16-table-body');
+	fileRows.forEach((name, i) => {
+		const idx = i + 1;
+		const tr = document.createElement('tr');
+		tr.innerHTML = `
+			<td class="border px-4 py-3 text-center">${idx}</td>
+			<td class="border px-4 py-3">${name}</td>
+			<td class="border px-4 py-3"><select name="Status_${idx}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
+			<td class="border px-4 py-3"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-2 py-2" placeholder="0-200 chars" /></td>
+			<td class="border px-4 py-3">
+				<label class="custom-upload">
+					Upload
+					<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
+					<input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="file-input" data-row="${idx}" />
+				</label>
+				<span class="file-check hidden" data-row="${idx}">? Uploaded</span>
+			</td>
+		`;
+		tbody.appendChild(tr);
+	});
+	// Supabase setup
+	const supabase = window.supabase.createClient(
+		"https://cbhodgwaazmjszkujrti.supabase.co",
+		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+	);
+	async function uploadFileToStorage(file, path) {
+		if (!file) return null;
+		const { data, error } = await supabase.storage.from('institution-files16').upload(path, file, { upsert: true });
+		if (error) throw error;
+		const { data: urlData } = supabase.storage.from('institution-files16').getPublicUrl(path);
+		return urlData.publicUrl;
+	}
+	
+	// Check for draft and show popup
+	async function checkForDraft() {
+		const form = document.getElementById('form16');
+		const member = form.querySelector('input[name="Portfolio Member Name:"]').value;
+		
+		if (!member) return;
+		
+		const { data: drafts, error } = await supabase
+			.from('institution_form16_drafts')
+			.select('*')
+			.eq('Portfolio Member Name', member)
+			.order('created_at', { ascending: false })
+			.limit(1);
+		
+		if (error || !drafts || drafts.length === 0) return;
+		
+		showDraftPopup(drafts[0]);
+	}
+
+	function showDraftPopup(draft) {
+		const modal = document.getElementById('draftModal');
+		const draftMonth = draft.Month || 'Unknown';
+		document.getElementById('draftMonthInfo').textContent = draftMonth;
+		modal.classList.add('show');
+		window.pendingDraft = draft;
+	}
+
+	// Load draft data into form
+	function loadDraftData(draft) {
+		const form = document.getElementById('form16');
+		
+		if (draft.Month) {
+			const monthSelect = form.querySelector('select[name="Month:"]');
+			if (monthSelect) monthSelect.value = draft.Month;
+		}
+		
+		const draftData = draft.draft_data || {};
+		
+		for (let i = 1; i <= 24; i++) {
+			const statusSelect = form.querySelector(`select[name="Status_${i}"]`);
+			const descInput = form.querySelector(`input[name="Description_${i}"]`);
+			
+			if (statusSelect && draftData[`Status_${i}`]) {
+				statusSelect.value = draftData[`Status_${i}`];
+			}
+			if (descInput && draftData[`Description_${i}`]) {
+				descInput.value = draftData[`Description_${i}`];
+			}
+			
+			if (draftData[`Upload the scanned file_${i}`]) {
+				window.draftFileUrls[i] = draftData[`Upload the scanned file_${i}`];
+				const checkMark = document.querySelector(`.file-check[data-row="${i}"]`);
+				if (checkMark) {
+					checkMark.classList.remove('hidden');
+				}
+			}
+		}
+		
+		const banner = document.getElementById('draftBanner');
+		if (banner) {
+			banner.classList.remove('hidden');
+			setTimeout(() => banner.classList.add('hidden'), 5000);
+		}
+	}
+	
+	// Save as Draft function
+	async function saveAsDraft() {
+		const form = document.getElementById('form16');
+		const formData = new FormData(form);
+		
+		const portfolio = formData.get('Portfolio Name:');
+		const member = formData.get('Portfolio Member Name:');
+		const month = formData.get('Month:');
+		
+		if (!member || !month) {
+			alert('Please fill in Portfolio Member Name and Month to save as draft');
+			return;
+		}
+		
+		const saveDraftBtn = document.getElementById('saveDraftBtn');
+		const originalText = saveDraftBtn.innerHTML;
+		saveDraftBtn.disabled = true;
+		saveDraftBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+		
+		try {
+			const draftData = {};
+			
+			for (let i = 1; i <= 24; i++) {
+				draftData[`Status_${i}`] = formData.get(`Status_${i}`);
+				draftData[`Description_${i}`] = formData.get(`Description_${i}`);
+				
+				const checkMark = document.querySelector(`.file-check[data-row="${i}"]`);
+				const isAlreadyUploaded = checkMark && !checkMark.classList.contains('hidden');
+				
+				if (isAlreadyUploaded && window.draftFileUrls[i]) {
+					draftData[`Upload the scanned file_${i}`] = window.draftFileUrls[i];
+				} else {
+					const fileInput = document.querySelector(`input.file-input[data-row='${i}']`);
+					const file = fileInput && fileInput.files[0];
+					if (file && file.size > 0) {
+						const ts = Date.now();
+						const path = `form16_draft_${i}_${ts}_${file.name}`;
+						try {
+							draftData[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
+							window.draftFileUrls[i] = draftData[`Upload the scanned file_${i}`];
+						} catch (err) {
+							console.error(`File upload error for row ${i}:`, err);
+							draftData[`Upload the scanned file_${i}`] = null;
+						}
+					} else {
+						draftData[`Upload the scanned file_${i}`] = null;
+					}
+				}
+			}
+			
+			const { data: existing } = await supabase
+				.from('institution_form16_drafts')
+				.select('*')
+				.eq('Portfolio Member Name', member)
+				.order('created_at', { ascending: false })
+				.limit(1)
+				.single();
+			
+			if (existing) {
+				// Preserve existing file URLs if not being replaced
+				const existingData = existing.draft_data || {};
+				for (let i = 1; i <= 24; i++) {
+					const fileKey = `Upload the scanned file_${i}`;
+					if (!draftData[fileKey] && existingData[fileKey]) {
+						draftData[fileKey] = existingData[fileKey];
+						window.draftFileUrls[i] = existingData[fileKey];
+					}
+				}
+				
+				const { error } = await supabase
+					.from('institution_form16_drafts')
+					.update({
+						"Portfolio Name": portfolio,
+						"Month": month,
+						"draft_data": draftData,
+						"updated_at": new Date().toISOString()
+					})
+					.eq('id', existing.id);
+				if (error) throw error;
+			} else {
+				const { error } = await supabase
+					.from('institution_form16_drafts')
+					.insert([{
+						"Portfolio Name": portfolio,
+						"Portfolio Member Name": member,
+						"Month": month,
+						"draft_data": draftData
+					}]);
+				if (error) throw error;
+			}
+			
+			saveDraftBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Draft Saved!';
+			saveDraftBtn.className = 'bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-10 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200';
+			
+			setTimeout(() => {
+				saveDraftBtn.innerHTML = originalText;
+				saveDraftBtn.className = 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200';
+				saveDraftBtn.disabled = false;
+			}, 2000);
+			
+		} catch (err) {
+			alert('Failed to save draft: ' + err.message);
+			saveDraftBtn.innerHTML = originalText;
+			saveDraftBtn.disabled = false;
+		}
+	}
+	
+	document.getElementById('saveDraftBtn').addEventListener('click', saveAsDraft);
+	
+	// Draft popup button handlers
+	document.getElementById('draftAcceptBtn').addEventListener('click', function() {
+		document.getElementById('draftModal').classList.remove('show');
+		if (window.pendingDraft) {
+			loadDraftData(window.pendingDraft);
+			window.pendingDraft = null;
+		}
+	});
+	
+	document.getElementById('draftDeclineBtn').addEventListener('click', function() {
+		document.getElementById('draftModal').classList.remove('show');
+		window.pendingDraft = null;
+	});
+	
+	// Check for draft after auto-fill completes
+	setTimeout(() => {
+		checkForDraft();
+	}, 1000);
+
+	// Form submit
+	document.getElementById('form16').addEventListener('submit', async function(e) {
+		e.preventDefault();
+		const form = e.target;
+		const formData = new FormData(form);
+		const member = formData.get('Portfolio Member Name:');
+		const row = {
+			"Portfolio Name:": formData.get('Portfolio Name:'),
+			"Portfolio Member Name:": formData.get('Portfolio Member Name:'),
+			"Month:": formData.get('Month:'),
+		};
+		for (let i = 1; i <= 24; i++) {
+			row[`Status_${i}`] = formData.get(`Status_${i}`);
+			row[`Description_${i}`] = formData.get(`Description_${i}`);
+			const file = formData.get(`Upload the scanned file_${i}`);
+			if (file && file.size > 0) {
+				const ts = Date.now();
+				const path = `form16file${i}_${ts}_${file.name}`;
+				try {
+					row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
+				} catch (err) {
+					window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
+					return;
+				}
+			} else if (window.draftFileUrls[i]) {
+				// Use draft file URL if available
+				row[`Upload the scanned file_${i}`] = window.draftFileUrls[i];
+			} else {
+				row[`Upload the scanned file_${i}`] = null;
+			}
+		}
+		// Submit to Supabase
+		const { data, error } = await supabase.from('Institution-form16').insert([row]);
+		if (error) {
+			window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
+		} else {
+			// Delete draft after successful submission
+			if (member) {
+				await supabase.from('institution_form16_drafts').delete().eq('Portfolio Member Name', member);
+			}
+			window.location.href = 'notification.html?status=success';
+		}
+	});
+	
+	// File upload indicator
+	document.addEventListener('change', function(e) {
+		if (e.target.classList.contains('file-input')) {
+			const rowId = e.target.getAttribute('data-row');
+			const checkmark = document.querySelector(`[data-row="${rowId}"].file-check`);
+			if (checkmark && e.target.files.length > 0) {
+				checkmark.classList.remove('hidden');
+			}
+		}
+	});
+	</script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-sm">
+      &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline">PMC TECH</a><br>
+      <p class="text-xs opacity-80 flex items-center justify-center gap-2">
+                        Powered by 
+                        <a href="https://zeonytechnologies.com" target="_blank" rel="noopener noreferrer" class="inline-block hover:opacity-100 transition-all duration-300 hover:scale-105">
+                            <img src="../static/img/zeony logo.png" alt="Zeony Technologies" class="h-12 w-22 py-2 object-contain"/>
+                        </a><p class="text-xs opacity-80">A Student driven Software!</p>
+    </p>
+  </footer>
+
+<!-- Supabase JS CDN (required for month-filter.js) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+<script src="../static/javascript/month-filter.js"></script>
+    <!-- Form Access Control - checks if form is open/closed -->
+    <script src="../static/javascript/form-access-control.js"></script>
+</body>
+</html>

@@ -1,0 +1,1185 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMC Tech Faculty - Form 1</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-purple-800 text-white flex justify-between items-center px-6 py-3 shadow-md">
+        <div class="flex items-center">
+            <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3"
+                alt="PMC Logo" class="h-12 rounded shadow-md">
+        </div>
+        <div class="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-lg shadow">
+            <span class="font-bold text-lg text-purple-800">Username</span>
+            <span
+                class="user-icon flex items-center justify-center bg-purple-100 rounded-full p-1 shadow border border-purple-700">
+                <img src="/static/img/person-circle.svg" alt="person-circle" height="28" width="28"
+                    class="min-w-[28px] min-h-[28px]" />
+            </span>
+        </div>
+    </header>
+    <div class="form-container mx-auto max-w-6xl px-4 py-8">
+        <!-- Main Form -->
+        <main>
+            <div class="faculty-form-outer space-y-12">
+                <!-- Section 1 -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 mb-10">
+                    <!-- Direct DB Entry: form1-weekly (now replaces header and daily section) -->
+
+                    <section style="margin: 2rem 0;">
+                        <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">1.Teaching and Curriculum Delivery (REFER LOG BOOK THEORY & PRACTICAL CHECKLIST FOR COURSE FILE, LAB MANUAL FOR SOP)</h2>
+                        <form id="directDbForm"
+                            class="bg-white shadow-lg rounded-xl max-w-5xl mx-auto px-6 py-8 border border-purple-200 space-y-8" enctype="multipart/form-data">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div class="flex flex-col">
+                                    <label for="db-dept" class="font-semibold text-gray-700 mb-1">Department:</label>
+                                    <select id="db-dept" name="Department:" required
+                                        class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option value="AERO">AERO</option>
+                                        <option value="AIDS">AIDS</option>
+                                        <option value="AIML">AIML</option>
+                                        <option value="CHEM">CHEM</option>
+                                        <option value="CIVIL">CIVIL</option>
+                                        <option value="CSBS">CSBS</option>
+                                        <option value="CSE">CSE</option>
+                                        <option value="ECE">ECE</option>
+                                        <option value="EEE">EEE</option>
+                                        <option value="IT">IT</option>
+                                        <option value="MCO">MCO</option>
+                                        <option value="MECH">MECH</option>
+                                        <option value="MBA">MBA</option>
+                                        <option value="MCA">MCA</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="db-portfolio" class="font-semibold text-gray-700 mb-1">Portfolio
+                                        Name:</label>
+                                    <input id="db-portfolio" name="Portfolio Name:" required
+                                        class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="db-member" class="font-semibold text-gray-700 mb-1">Portfolio Member
+                                        Name:</label>
+                                    <input id="db-member" name="Portfolio Member Name"
+                                        class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="db-month" class="font-semibold text-gray-700 mb-1">Month:</label>
+                                    <select id="db-month" name="Month:" required
+                                        class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option value="January">January</option>
+                                        <option value="February">February</option>
+                                        <option value="March">March</option>
+                                        <option value="April">April</option>
+                                        <option value="May">May</option>
+                                        <option value="June">June</option>
+                                        <option value="July">July</option>
+                                        <option value="August">August</option>
+                                        <option value="September">September</option>
+                                        <option value="October">October</option>
+                                        <option value="November">November</option>
+                                        <option value="December">December</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="db-weekno" class="font-semibold text-gray-700 mb-1">Week no:</label>
+                                    <input id="db-weekno" name="Week no" type="number"
+                                        class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="db-weekstart" class="font-semibold text-gray-700 mb-1">Week Starting
+                                        Date:</label>
+                                    <input id="db-weekstart" name="Week Starting Date" type="date"
+                                        class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="db-weekend" class="font-semibold text-gray-700 mb-1">Week Ending
+                                        Date:</label>
+                                    <input id="db-weekend" name="Week Ending Date" type="date"
+                                        class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2" />
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    a.Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="db-status1" class="font-semibold text-gray-700 mb-1">Status_1:</label>
+                                    <select id="db-status1" name="Status_1"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="db-desc1" class="font-semibold text-gray-700 mb-1">Description_1:</label>
+                                    <input id="db-desc1" name="Description_1"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="fd-upload1" class="font-semibold text-gray-700 mb-1">Upload The Scanned
+                                        File_1:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input id="fd-upload1" name="Upload The Scanned File_1" type="file"
+                                                class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    b.Develop course materials, lesson plans, and assessments aligned with
+                                    outcome-based education (OBE) for the subjects assigned.
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="db-status2" class="font-semibold text-gray-700 mb-1">Status_2:</label>
+                                    <select id="db-status2" name="Status_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="db-desc2" class="font-semibold text-gray-700 mb-1">Description_2:</label>
+                                    <input id="db-desc2" name="Description_2" placeholder="0-200"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="fd-upload2" class="font-semibold text-gray-700 mb-1">Upload The Scanned
+                                        File_2:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input id="fd-upload2" name="Upload The Scanned File_2" type="file"
+                                                class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    c.Incorporate innovative teaching methods, including ICT tools and
+                                    Experiential learning.</div>
+                                <div class="flex flex-col">
+                                    <label for="db-status3" class="font-semibold text-gray-700 mb-1">Status_3:</label>
+                                    <select id="db-status3" name="Status_3"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="db-desc3" class="font-semibold text-gray-700 mb-1">Description_3:</label>
+                                    <input id="db-desc3" name="Description_3" placeholder="0-200"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="db-upload3" class="font-semibold text-gray-700 mb-1">Upload the scanned
+                                        file_3:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input id="db-upload3" name="Upload the scanned file_3" type="file"
+                                                class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    d.Prepare Product model and instructional Chart for the assigned subject.</div>
+                                <div class="flex flex-col">
+                                    <label for="db-status4" class="font-semibold text-gray-700 mb-1">Status_4:</label>
+                                    <select id="db-status4" name="Status_4"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="db-desc4" class="font-semibold text-gray-700 mb-1">Description_4:</label>
+                                    <input id="db-desc4" name="Description_4" placeholder="0-200"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="db-upload4" class="font-semibold text-gray-700 mb-1">Upload the scanned
+                                        file_4:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input id="db-upload4" name="Upload the scanned file_4" type="file"
+                                                class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+                <!-- Section 2 (keep only one instance of Student Mentorship and Support) -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 mb-10">
+                    <!-- Direct DB Entry: form1-once in 15 days -->
+                    <section style="margin: 2rem 0;">
+                        <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">2 Student Mentorship and Support</h2>
+                        <form id="fifteenDaysForm"
+                            class="bg-white shadow-lg rounded-xl max-w-5xl mx-auto px-6 py-8 border border-purple-200 space-y-8">
+                            <!-- Removed duplicate department, portfolio, member, month fields from this section. Only week/date fields remain if needed. -->
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    a.Act as academic mentors and guide 30 students on coursework,projects, and career planning.
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="fd-status1" class="font-semibold text-gray-700 mb-1">Status_1:</label>
+                                    <select id="fd-status1" name="Status_1"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="fd-desc1"
+                                        class="font-semibold text-gray-700 mb-1">Description_1:</label>
+                                    <input id="fd-desc1" name="Description_1"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="fd-upload1" class="font-semibold text-gray-700 mb-1">Upload the scanned
+                                        file_1:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input id="fd-upload1" name="Upload the scanned file_1" type="file"
+                                                class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    b.Monitor student attendance, performance, and well-being.
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="fd-status2" class="font-semibold text-gray-700 mb-1">Status_2:</label>
+                                    <select id="fd-status2" name="Status_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="fd-desc2"
+                                        class="font-semibold text-gray-700 mb-1">Description_2:</label>
+                                    <input id="fd-desc2" name="Description_2" placeholder="0-200"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="fd-upload2" class="font-semibold text-gray-700 mb-1">Upload the scanned
+                                        file_2:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input id="fd-upload2" name="Upload the scanned file_2" type="file"
+                                                class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    c.Provide remedial support and encourage participation in co-curricular andextra- curricular activities.
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="fd-status3" class="font-semibold text-gray-700 mb-1">Status_3:</label>
+                                    <select id="fd-status3" name="Status_3"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="fd-desc3" class="font-semibold text-gray-700 mb-1">Description_3:</label>
+                                    <input id="fd-desc3" name="Description_3" placeholder="0-200"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="fd-upload3" class="font-semibold text-gray-700 mb-1">Upload the scanned
+                                        file_3:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input id="fd-upload3" name="Upload the scanned file_3" type="file"
+                                                class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    d.Maintain the Mentor book for assigned mentee
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="fd-status4" class="font-semibold text-gray-700 mb-1">Status_4:</label>
+                                    <select id="fd-status4" name="Status_4"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="fd-desc4" class="font-semibold text-gray-700 mb-1">Description_4:</label>
+                                    <input id="fd-desc4" name="Description_4" placeholder="0-200"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="fd-upload4" class="font-semibold text-gray-700 mb-1">Upload the scanned
+                                        file_4:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input id="fd-upload4" name="Upload the scanned file_4" type="file"
+                                                class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+                <!-- Section 3 -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 mb-10">
+                    <!-- Direct DB Entry: form1 - once in a year -->
+                    <section style="margin: 2rem 0;">
+                        <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">3 Research and Development (Review by monthly)</h2>
+                        <form id="onceYearForm1"
+                            class="bg-white shadow-lg rounded-xl max-w-5xl mx-auto px-6 py-8 border border-purple-200 space-y-8">
+                            <!-- Removed duplicate department, portfolio, member, month fields from this section. Only week/date fields remain if needed. -->
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    a.Publish	in	peer-reviewed	journals</div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Status_1:</label>
+                                    <select name="Status_1"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Description_1:</label>
+                                    <input name="Description_1"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Upload Scanned File_1:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input name="file1" type="file" class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    b. Apply for research grants</div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Status_2:</label>
+                                    <select name="Status_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Description_2:</label>
+                                    <input name="Description_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Upload Scanned File_2:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input name="file2" type="file" class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    c.Guide student research and final-year projects.</div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Status_3:</label>
+                                    <select name="Status_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Description_3:</label>
+                                    <input name="Description_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Upload Scanned File_3:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input name="file2" type="file" class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    d.Prepare Product model and instructional Chart for the assigned subject.</div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Status_4:</label>
+                                    <select name="Status_4"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Description_4:</label>
+                                    <input name="Description_4" placeholder="0-200"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Upload the scanned
+                                        file_4:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input name="file2" type="file" class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+                <!-- Section 4 -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 mb-10">
+                    <!-- Direct DB Entry: form1 - once in a year -->
+                    <section style="margin: 2rem 0;">
+                        <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">4 Institutional Development</h2>
+                        <form id="onceYearForm1"
+                            class="bg-white shadow-lg rounded-xl max-w-5xl mx-auto px-6 py-8 border border-purple-200 space-y-8">
+                            <!-- Removed duplicate department, portfolio, member, month fields from this section. Only week/date fields remain if needed. -->
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    a.Participate in curriculum development and revision through Boards of Studies</div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Status_1:</label>
+                                    <select name="Status_1"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Description_1:</label>
+                                    <input name="Description_1"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Upload Scanned File_1:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input name="file1" type="file" class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    b. Contribute to accreditation processes (NBA, NAAC) and quality
+                                    Assurance initiatives
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Status_2:</label>
+                                    <select name="Status_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Description_2:</label>
+                                    <input name="Description_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Upload Scanned File_2:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input name="file2" type="file" class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    c.Serve on academic and administrative committees.</div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Status_3:</label>
+                                    <select name="Status_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Description_3:</label>
+                                    <input name="Description_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Upload Scanned File_3:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input name="file2" type="file" class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    d.Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.</div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Status_4:</label>
+                                    <select name="Status_4"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Description_4:</label>
+                                    <input name="Description_4" placeholder="0-200"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Upload the scanned
+                                        file_4:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input name="file2" type="file" class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+                <!-- Section 5 -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 mb-10">
+                    <!-- Direct DB Entry: form1 - once in a year -->
+                    <section style="margin: 2rem 0;">
+                        <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">5 Professional Development (Review by monthly)</h2>
+                        <form id="form5"
+                            class="bg-white shadow-lg rounded-xl max-w-5xl mx-auto px-6 py-8 border border-purple-200 space-y-8">
+                            <!-- ...status/desc/file blocks only, no department/portfolio fields... -->
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    a.Organize FDP/ workshops/ seminar.</div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Status_1:</label>
+                                    <select name="Status_1"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Description_1:</label>
+                                    <input name="Description_1"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Upload Scanned File_1:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input name="file1" type="file" class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    b. NPTEL/MOOC and certifications, and memberships in professional bodies.
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Status_2:</label>
+                                    <select name="Status_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Description_2:</label>
+                                    <input name="Description_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Upload Scanned File_2:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input name="file2" type="file" class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="hidden"></button>
+                        </form>
+                    </section>
+                </div>
+                <!-- Section 6 -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 mb-10">
+                    <!-- Direct DB Entry: form1 - once in a year -->
+                    <section style="margin: 2rem 0;">
+                        <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">6 Community and Industry Engagement</h2>
+                        <form id="onceYearForm1"
+                            class="bg-white shadow-lg rounded-xl max-w-5xl mx-auto px-6 py-8 border border-purple-200 space-y-8">
+                            <!-- Removed duplicate department, portfolio, member, month fields from this section. Only week/date fields remain if needed. -->
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    a.Facilitate industry-institute interaction through guest lectures,Internships
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="fd-status1" class="font-semibold text-gray-700 mb-1">Status_1:</label>
+                                    <select id="fd-status1" name="Status_1"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label for="fd-desc1"
+                                        class="font-semibold text-gray-700 mb-1">Description_1:</label>
+                                    <input id="fd-desc1" name="Description_1"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Upload Scanned File_1:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input name="file1" type="file" class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    b.Engage in consultancy </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Status_2:</label>
+                                    <select name="Status_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Description_2:</label>
+                                    <input name="Description_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Upload Scanned File_2:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input name="file2" type="file" class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit"
+                                class="hidden"></button>
+                        </form>
+                    </section>
+                </div>
+                <!-- Section 7 -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 mb-10">
+                    <!-- Direct DB Entry: form1 - once in a year -->
+                    <section style="margin: 2rem 0;">
+                        <h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">7 Administrative Duties</h2>
+                        <form id="form7"
+                            class="bg-white shadow-lg rounded-xl max-w-5xl mx-auto px-6 py-8 border border-purple-200 space-y-8">
+                            <!-- ...status/desc/file blocks only, no department/portfolio fields... -->
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    a.Maintain academic records, course files, Log Book and student evaluations.
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Status_1:</label>
+                                    <select name="Status_1"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Description_1:</label>
+                                    <input name="Description_1"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Upload Scanned File_1:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input name="file1" type="file" class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    b.Assist in examination duties, including question paper setting,invigilation, and evaluation.
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Status_2:</label>
+                                    <select name="Status_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Description_2:</label>
+                                    <input name="Description_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Upload Scanned File_2:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input name="file2" type="file" class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full border-t border-gray-200 my-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div
+                                    class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+                                    c.Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.</div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Status_3:</label>
+                                    <select name="Status_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+                                        <option value="" disabled selected>Select</option>
+                                        <option>Completed and Updated</option>
+                                        <option>Yet to be Completed</option>
+                                        <option>Under Process</option>
+                                        <option>Not Applicable</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Description_3:</label>
+                                    <input name="Description_2"
+                                        class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+                                </div>
+                                <div class="flex flex-col">
+                                    <label class="font-semibold text-gray-700 mb-1">Upload Scanned File_3:</label>
+                                    <div class="flex items-center gap-2 w-full">
+                                        <label
+                                            class="flex items-center gap-2 cursor-pointer bg-white hover:bg-gray-100 px-3 py-2 rounded-lg border border-gray-300 transition font-medium text-gray-700">
+                                            <span class="inline-flex items-center gap-1">Upload <img
+                                                    src="/static/img/upload.svg" alt="upload" height="20" width="24"
+                                                    class="inline-block align-middle" /></span>
+                                            <input name="file2" type="file" class="ml-2 hidden" />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <!-- Global Submit Button -->
+        <div class="flex justify-center my-12">
+            <button
+                type="button"
+                id="global-submit-btn"
+                class="bg-purple-800 hover:bg-purple-600 text-white font-bold py-3 px-10 rounded-xl shadow-lg text-lg tracking-wide transition-all duration-200"
+            >
+                Submit
+            </button>
+        </div>
+    </div>
+
+    <script>
+    // Global submit button logic: submits the first form (directDbForm)
+    document.addEventListener('DOMContentLoaded', function () {
+        var globalBtn = document.getElementById('global-submit-btn');
+        var mainForm = document.getElementById('directDbForm');
+        if (globalBtn && mainForm) {
+            globalBtn.addEventListener('click', function () {
+                mainForm.requestSubmit();
+            });
+        }
+    });
+    </script>
+
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script>
+    // All logic after DOMContentLoaded and after Supabase script is loaded
+    window.addEventListener('DOMContentLoaded', function () {
+        if (window.supabase) {
+            const supabaseClient = window.supabase.createClient(
+                "https://cbhodgwaazmjszkujrti.supabase.co",
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+            );
+            // --- AP FORM LOGIC ---
+            const apForm = document.getElementById('directDbForm');
+            if (apForm) {
+                apForm.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    const form = e.target;
+                    async function uploadFileToStorage(file, path) {
+                        if (!file) return null;
+                        const bucket = 'Ap';
+                        // Upload file to Supabase Storage
+                        const { data, error } = await supabaseClient.storage.from(bucket).upload(path, file, { upsert: true, contentType: file.type });
+                        if (error) {
+                            window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
+                            throw error;
+                        }
+                        // Get public URL for the uploaded file
+                        const { data: publicUrlData, error: urlError } = supabaseClient.storage.from(bucket).getPublicUrl(path);
+                        if (urlError) {
+                            window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(urlError.message);
+                            throw urlError;
+                        }
+                        return publicUrlData?.publicUrl || publicUrlData;
+                    }
+
+                    const ts = Date.now();
+                    // Prepare up to 21 status/desc/file blocks (as per schema)
+                    let fileUrls = {};
+                    try {
+                        for (let i = 1; i <= 21; i++) {
+                            // Try all possible file input name patterns for each document
+                            const inputNames = [
+                                `db-upload${i}`,
+                                `fd-upload${i}`,
+                                `Upload The Scanned File_${i}`,
+                                `Upload the scanned file_${i}`,
+                                `Upload Scanned File_${i}`,
+                                `Upload scanned file_${i}`
+                            ];
+                            let fileInput = null;
+                            for (const name of inputNames) {
+                                fileInput = form.querySelector(`input[name='${name}']`);
+                                if (fileInput && fileInput.files && fileInput.files[0]) break;
+                            }
+                            if (fileInput && fileInput.files && fileInput.files[0]) {
+                                try {
+                                    const uploadedUrl = await uploadFileToStorage(fileInput.files[0], `file${i}/${ts}_${fileInput.files[0].name}`);
+                                    let decodedUrl = uploadedUrl ? decodeURIComponent(uploadedUrl) : null;
+                                    fileUrls[`file${i}`] = decodedUrl;
+                                } catch (err) {
+                                    fileUrls[`file${i}`] = null;
+                                    window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent('File upload error for file ' + i + ': ' + (err.message || err));
+                                    return;
+                                }
+                            } else {
+                                fileUrls[`file${i}`] = null;
+                            }
+                        }
+                    } catch (uploadErr) {
+                        window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(uploadErr.message || 'File upload error');
+                        return;
+                    }
+
+                    // Build row for AP table
+                    const row = {
+                        "Department": form["Department:"].value || null,
+                        "Portfolio Name": form["Portfolio Name:"].value || null,
+                        "Portfolio Member Name": form["Portfolio Member Name"]?.value || null,
+                        "Month": form["Month:"].value || null,
+                        "Week no": form["Week no"]?.value || null,
+                        "Week Starting Date": form["Week Starting Date"]?.value || null,
+                        "Week Ending Date": form["Week Ending Date"]?.value || null,
+                    };
+                    // Status/Description/Upload fields (all use _ and 'Upload The Scanned File_X')
+                    for (let i = 1; i <= 21; i++) {
+                        row[`Status_${i}`] = form[`Status_${i}`]?.value || null;
+                        row[`Description_${i}`] = form[`Description_${i}`]?.value || null;
+                        row[`Upload The Scanned File_${i}`] = fileUrls[`file${i}`];
+                    }
+                    const { data, error } = await supabaseClient
+                        .from('AP')
+                        .insert([row]);
+                    if (error) {
+                        window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(error.message);
+                    } else {
+                        window.location.href = 'notification.html?status=success';
+                        form.reset();
+                    }
+                });
+            }
+        } else {
+            console.error('Supabase script not loaded!');
+        }
+    });
+    </script>
+      
+<!-- Navigation Buttons -->
+<div class="fixed bottom-6 right-6 flex gap-3 z-50">
+    <button onclick="history.back()" aria-label="Back"
+        class="bg-pmcPurple hover:bg-pmcPurpleDark text-white rounded-full shadow-lg p-3 flex items-center justify-center text-2xl transition">
+        &#8592;
+    </button>
+    <button onclick="history.forward()" aria-label="Forward"
+        class="bg-pmcPurple hover:bg-pmcPurpleDark text-white rounded-full shadow-lg p-3 flex items-center justify-center text-2xl transition">
+        &#8594;
+    </button>
+</div>
+
+<script>
+// Prefill Department and Portfolio Name from localStorage
+window.addEventListener('DOMContentLoaded', function () {
+    // Department
+    var dept = localStorage.getItem('selectedDept');
+    if (dept) {
+        var deptSelect = document.getElementById('db-dept');
+        if (deptSelect) {
+            for (var i = 0; i < deptSelect.options.length; i++) {
+                if (deptSelect.options[i].value === dept) {
+                    deptSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+    // Portfolio Name
+    var portfolio = localStorage.getItem('selectedPortfolio');
+    if (portfolio) {
+        var portfolioInput = document.getElementById('db-portfolio');
+        if (portfolioInput) {
+            portfolioInput.value = portfolio;
+        }
+    }
+});
+</script>
+<script src="/javascript/faculty-form.js"></script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <p class="text-sm">
+      &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline">PMC TECH</a><br>
+      <p class="text-xs opacity-80 flex items-center justify-center gap-2">
+                        Powered by 
+                        <a href="https://zeonytechnologies.com" target="_blank" rel="noopener noreferrer" class="inline-block hover:opacity-100 transition-all duration-300 hover:scale-105">
+                            <img src="../static/img/zeony logo.png" alt="Zeony Technologies" class="h-12 w-22 py-2 object-contain"/>
+                        </a><p class="text-xs opacity-80">A Student driven Software!</p>
+    </p>
+  </footer>
+
+
+</body>
+
+</html>

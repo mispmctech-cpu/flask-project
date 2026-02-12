@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Core Scope - ASP Form (Yearly) - S&H</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        th, td {
+            font-size: 1rem;
+        }
+        input:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #a78bfa33;
+            border-color: #a78bfa;
+        }
+        .bg-purple-800 {
+            background: linear-gradient(90deg, #6d28d9 0%, #7c3aed 100%);
+        }
+        input[type="file"]::-webkit-file-upload-button {
+            background: #ede9fe;
+            color: #6d28d9;
+            border: 1px solid #a78bfa;
+            border-radius: 0.5rem;
+            padding: 0.25rem 1rem;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        input[type="file"]::-webkit-file-upload-button:hover {
+            background: #c4b5fd;
+            color: #fff;
+        }
+        input[type="file"]::file-selector-button {
+            background: #ede9fe;
+            color: #6d28d9;
+            border: 1px solid #a78bfa;
+            border-radius: 0.5rem;
+            padding: 0.25rem 1rem;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        input[type="file"]::file-selector-button:hover {
+            background: #c4b5fd;
+            color: #fff;
+        }
+        select {
+            background: #f3f4f6;
+        }
+        /* Draft Popup Modal */
+        .draft-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .draft-modal.show {
+            display: flex;
+        }
+        .draft-modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <div class="flex-1 flex items-center justify-center py-8 px-2">
+        <div class="w-full max-w-6xl mx-auto bg-white rounded-2xl shadow-2xl p-0 border border-purple-300 overflow-x-auto">
+            <div class="bg-purple-800 py-8 px-6 text-white text-center w-full rounded-t-2xl">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2R7bHsdVlhJda1oUOZ1NPc7lvacTuGPvHgg&s" alt="" class="h-16 mb-2" style="max-height:64px; float: left;" />
+                <h1 class="text-2xl md:text-4xl font-extrabold tracking-wide mb-2 drop-shadow">Associate Professor: Faculty Mandatory Scope (Yearly) - S&H</h1>
+                <p class="text-lg opacity-90">in Research, Innovations and Extension activity/ Faculty Contributions</p>
+            </div>
+            <form id="aspYearlyFormSH" class="p-6 md:p-10 space-y-10 w-full">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 bg-purple-50 rounded-xl p-8 card-shadow mb-8">
+                    <div>
+                        <label class="block font-semibold text-purple-900 mb-1">Department:</label>
+                        <input type="text" name="Department" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-purple-900 mb-1">Portfolio Name:</label>
+                        <input type="text" name="Portfolio Name" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-purple-900 mb-1">Portfolio Member Name:</label>
+                        <input type="text" name="Portfolio Member Name" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400" />
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-purple-900 mb-1">Month:</label>
+                        <select name="Month" required class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-400">
+                            <option value="">Select Month</option>
+                            <option value="January">January</option>
+                            <option value="February">February</option>
+                            <option value="March">March</option>
+                            <option value="April">April</option>
+                            <option value="May">May</option>
+                            <option value="June">June</option>
+                            <option value="July">July</option>
+                            <option value="August">August</option>
+                            <option value="September">September</option>
+                            <option value="October">October</option>
+                            <option value="November">November</option>
+                            <option value="December">December</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="overflow-x-auto rounded-xl card-shadow border border-purple-100 bg-white w-full p-4">
+                    <table class="w-full min-w-[1200px] text-xs md:text-sm table-fixed">
+                        <colgroup>
+                            <col style="width: 5%">
+                            <col style="width: 35%">
+                            <col style="width: 12%">
+                            <col style="width: 12%">
+                            <col style="width: 12%">
+                            <col style="width: 12%">
+                            <col style="width: 12%">
+                        </colgroup>
+                        <thead class="bg-yellow-400">
+                            <tr>
+                                <th class="border px-2 py-2 font-bold text-gray-800">S.NO</th>
+                                <th class="border px-2 py-2 font-bold text-gray-800">PARTICULAR</th>
+                                <th class="border px-2 py-2 font-bold text-gray-800">TARGET</th>
+                                <th class="border px-2 py-2 font-bold text-gray-800">TAT</th>
+                                <th class="border px-2 py-2 font-bold text-gray-800">Compliance</th>
+                                <th class="border px-2 py-2 font-bold text-gray-800">Description</th>
+                                <th class="border px-2 py-2 font-bold text-gray-800">Upload</th>
+                            </tr>
+                        </thead>
+                        <tbody id="asp-yearly-table-body-sh">
+                            <!-- JS will render 6 rows here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="flex justify-center gap-4 mt-10">
+                    <button type="button" id="saveDraftBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200">
+                        <i class="fas fa-save mr-2"></i>Save as Draft
+                    </button>
+                    <button type="submit" id="submitBtn" class="bg-purple-800 hover:bg-purple-700 text-white font-bold py-3 px-12 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="submitText">Submit</span>
+                        <i id="submitSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                    </button>
+                </div>
+            </form>
+            <!-- Draft loaded banner -->
+            <div id="draftBanner" class="hidden fixed top-4 right-4 bg-blue-100 border-2 border-blue-500 text-blue-800 px-6 py-3 rounded-lg shadow-lg z-50">
+                <i class="fas fa-info-circle mr-2"></i>Draft loaded - Continue editing or submit when ready
+            </div>
+            
+            <!-- Draft Popup Modal -->
+            <div id="draftModal" class="draft-modal">
+                <div class="draft-modal-content">
+                    <h2 class="text-2xl font-bold text-purple-900 mb-4">
+                        <i class="fas fa-file-alt text-blue-600 mr-2"></i>Draft Found!
+                    </h2>
+                    <p class="text-gray-700 mb-2">You have a saved draft for this form.</p>
+                    <p class="text-sm text-gray-600 mb-6">
+                        <span class="font-semibold">Saved Month:</span> <span id="draftMonthInfo" class="text-blue-600"></span>
+                    </p>
+                    <p class="text-gray-700 mb-6">Would you like to load it and continue where you left off?</p>
+                    <div class="flex gap-4 justify-end">
+                        <button id="draftDeclineBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-6 rounded-lg transition-all">
+                            <i class="fas fa-times mr-2"></i>Start Fresh
+                        </button>
+                        <button id="draftAcceptBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all">
+                            <i class="fas fa-check mr-2"></i>Load Draft
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Supabase JS CDN (load before using it) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script>
+    // Global object to store draft file URLs
+    window.draftFileUrls = {};
+    
+    // Autofetch using localStorage
+    document.addEventListener('DOMContentLoaded', function() {
+        var dept = localStorage.getItem('department') || '';
+        var portfolio = localStorage.getItem('selectedPortfolio') || '';
+        var member = localStorage.getItem('selectedMemberName') || '';
+        const form = document.getElementById('aspYearlyFormSH');
+        if (form) {
+            const deptField = form.querySelector('input[name="Department"]');
+            if (deptField && dept) {
+                deptField.value = dept;
+            }
+            const portfolioField = form.querySelector('input[name="Portfolio Name"]');
+            if (portfolioField && portfolio) {
+                portfolioField.value = portfolio;
+            }
+            const memberField = form.querySelector('input[name="Portfolio Member Name"]');
+            if (memberField && member) {
+                memberField.value = member;
+            }
+            // Set Month to current month
+            const monthField = form.querySelector('select[name="Month"]');
+            if (monthField) {
+                const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+                monthField.value = currentMonth;
+            }
+        }
+    });
+
+    // Table data for ASP Yearly S&H (excluding rows 3, 5, 6)
+    // Original: 1, 2, 3, 4, 5, 6, 7, 8, 9
+    // Exclude: 3, 5, 6 (indices 2, 4, 5)
+    // Keep: 1, 2, 4, 7, 8, 9 (indices 0, 1, 3, 6, 7, 8)
+    const allTableData = [
+        { 
+            particular: 'Publish in peer-reviewed journals',
+            target: '1/Year',
+            tat: '31st May'
+        },
+        { 
+            particular: 'Apply for research grants',
+            target: '1/per',
+            tat: '31st May'
+        },
+        { 
+            particular: 'Guide student research and final-year projects.',
+            target: '2 Batch/Year',
+            tat: '31st May'
+        },
+        { 
+            particular: 'Organize FDPs / workshop/Seminars',
+            target: '1/Year',
+            tat: '31st May'
+        },
+        { 
+            particular: 'NPTEL/ MOOC certifications',
+            target: '1/Sem',
+            tat: '31st DEC/ 31st May'
+        },
+        { 
+            particular: 'Facilitate industry-institute interaction through guest lectures, Internships.',
+            target: '1/SEM',
+            tat: '31st DEC/ 31st May'
+        },
+        { 
+            particular: 'Engage in Consultancy.',
+            target: '1 / YEAR',
+            tat: '31st May'
+        },
+        { 
+            particular: 'Membership in professional body',
+            target: 'As Required',
+            tat: '31st May'
+        },
+        { 
+            particular: 'No of Proposals submitted in Manthan Portal',
+            target: '1 per Sem',
+            tat: ''
+        }
+    ];
+    
+    // Filter out rows 3, 5, 6 (indices 2, 4, 5)
+    const tableData = allTableData.filter((row, index) => index !== 2 && index !== 4 && index !== 5);
+
+    // Render table rows
+    const tbody = document.getElementById('asp-yearly-table-body-sh');
+    tableData.forEach((row, i) => {
+        const idx = i + 1;
+        const tr = document.createElement('tr');
+        
+        tr.innerHTML = `
+            <td class="border px-2 py-1 text-center font-semibold">${idx}</td>
+            <td class="border px-2 py-1">${row.particular}</td>
+            <td class="border px-2 py-1 text-center">${row.target}</td>
+            <td class="border px-2 py-1 text-center">${row.tat}</td>
+            <td class="border px-2 py-1">
+                <select name="Status_${idx}" class="w-full border rounded px-1 py-1">
+                    <option value="">Select</option>
+                    <option>Completed</option>
+                    <option>In Progress</option>
+                    <option>Not Started</option>
+                    <option>Not Applicable</option>
+                </select>
+            </td>
+            <td class="border px-2 py-1">
+                <input type="text" name="Description_${idx}" maxlength="500" class="w-full border rounded px-1 py-1" placeholder="Enter description..." />
+            </td>
+            <td class="border px-2 py-1">
+                <button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
+                <span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">✓</span>
+                <input type="file" name="Upload The Scanned File_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // Supabase setup
+    const supabase = window.supabase.createClient(
+        "https://cbhodgwaazmjszkujrti.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+
+    async function uploadFileToStorage(file, path, bucket, uploadBtn) {
+        if (!file) return null;
+        const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+        if (error) throw error;
+        // Get public URL
+        const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
+        // Change the upload button to 'Uploaded' after successful upload
+        if (uploadBtn) {
+            const row = uploadBtn.getAttribute('data-row');
+            const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
+            
+            uploadBtn.textContent = 'Uploaded';
+            uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
+            uploadBtn.disabled = true;
+            
+            // Store the uploaded file URL for later use during submission
+            if (row) {
+                window.draftFileUrls[row] = urlData.publicUrl;
+            }
+            
+            // Show checkmark
+            if (checkMark) {
+                checkMark.classList.remove('hidden');
+            }
+        }
+        return urlData.publicUrl;
+    }
+
+    // Handle upload button click
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('upload-btn')) {
+            const row = e.target.getAttribute('data-row');
+            const fileInput = document.querySelector(`input.file-input-row[data-row='${row}']`);
+            if (fileInput) fileInput.click();
+        }
+    });
+
+    // Handle file selection and upload
+    document.addEventListener('change', async function(e) {
+        if (e.target && e.target.classList.contains('file-input-row')) {
+            const row = e.target.getAttribute('data-row');
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const uploadBtn = document.querySelector(`button.upload-btn[data-row='${row}']`);
+            const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
+            
+            // Set uploading state
+            uploadBtn.textContent = 'Uploading...';
+            uploadBtn.className = 'bg-yellow-200 text-yellow-800 font-semibold px-3 py-1 rounded w-full';
+            uploadBtn.disabled = true;
+            
+            const bucket = 'Asp_SH_files';
+            const path = `aspyearlysh_${row}_${Date.now()}_${file.name}`;
+            
+            try {
+                await uploadFileToStorage(file, path, bucket, uploadBtn);
+                
+                // Success state
+                uploadBtn.textContent = 'Uploaded';
+                uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
+                if (checkMark) {
+                    checkMark.classList.remove('hidden');
+                }
+            } catch (err) {
+                // Error state
+                uploadBtn.textContent = 'Upload Failed';
+                uploadBtn.className = 'bg-red-200 text-red-800 font-semibold px-3 py-1 rounded w-full';
+                uploadBtn.disabled = false;
+                
+                // Hide checkmark on error
+                if (checkMark) {
+                    checkMark.classList.add('hidden');
+                }
+                
+                alert('File upload failed for row ' + row + ': ' + err.message);
+                
+                // Reset to original state after 3 seconds
+                setTimeout(() => {
+                    uploadBtn.textContent = 'Upload';
+                    uploadBtn.className = 'upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full';
+                }, 3000);
+            }
+        }
+    });
+
+    // Check for draft and show popup
+    async function checkForDraft() {
+        const form = document.getElementById('aspYearlyFormSH');
+        const dept = form.querySelector('input[name="Department"]').value;
+        const member = form.querySelector('input[name="Portfolio Member Name"]').value;
+        
+        if (!dept || !member) return;
+        
+        const { data: drafts, error } = await supabase
+            .from('ASP_SH_Yearly_drafts')
+            .select('*')
+            .eq('Department', dept)
+            .eq('Portfolio Member Name', member)
+            .order('created_at', { ascending: false })
+            .limit(1);
+        
+        if (error || !drafts || drafts.length === 0) return;
+        
+        // Show popup asking if user wants to use draft
+        showDraftPopup(drafts[0]);
+    }
+
+    function showDraftPopup(draft) {
+        const modal = document.getElementById('draftModal');
+        const draftMonth = draft.Month || 'Unknown';
+        document.getElementById('draftMonthInfo').textContent = draftMonth;
+        modal.classList.add('show');
+        
+        // Store draft for later use
+        window.pendingDraft = draft;
+    }
+
+    // Load draft data into form
+    function loadDraftData(draft) {
+        const form = document.getElementById('aspYearlyFormSH');
+        
+        // Populate month if saved
+        if (draft.Month) {
+            const monthSelect = form.querySelector('select[name="Month"]');
+            if (monthSelect) monthSelect.value = draft.Month;
+        }
+        
+        const numRows = tableData.length;
+        for (let i = 1; i <= numRows; i++) {
+            const statusSelect = form.querySelector(`select[name="Status_${i}"]`);
+            const descInput = form.querySelector(`input[name="Description_${i}"]`);
+            
+            if (statusSelect && draft[`Status_${i}`]) {
+                statusSelect.value = draft[`Status_${i}`];
+            }
+            if (descInput && draft[`Description_${i}`]) {
+                descInput.value = draft[`Description_${i}`];
+            }
+            
+            if (draft[`Upload The Scanned File_${i}`]) {
+                // Store draft file URL for later use during submission
+                window.draftFileUrls[i] = draft[`Upload The Scanned File_${i}`];
+                
+                const uploadBtn = document.querySelector(`button.upload-btn[data-row="${i}"]`);
+                const checkMark = document.querySelector(`.file-check[data-row="${i}"]`);
+                if (uploadBtn) {
+                    uploadBtn.textContent = 'Uploaded';
+                    uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
+                    uploadBtn.disabled = true;
+                }
+                if (checkMark) {
+                    checkMark.classList.remove('hidden');
+                }
+            }
+        }
+        
+        const banner = document.getElementById('draftBanner');
+        if (banner) {
+            banner.classList.remove('hidden');
+            setTimeout(() => banner.classList.add('hidden'), 5000);
+        }
+    }
+    
+    // Save as Draft function
+    async function saveAsDraft() {
+        const form = document.getElementById('aspYearlyFormSH');
+        const formData = new FormData(form);
+        
+        const dept = formData.get('Department');
+        const portfolio = formData.get('Portfolio Name');
+        const member = formData.get('Portfolio Member Name');
+        const month = formData.get('Month');
+        
+        if (!dept || !member || !month) {
+            alert('Please fill in Department, Portfolio Member Name, and Month to save as draft');
+            return;
+        }
+        
+        const saveDraftBtn = document.getElementById('saveDraftBtn');
+        const originalText = saveDraftBtn.innerHTML;
+        saveDraftBtn.disabled = true;
+        saveDraftBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+        
+        try {
+            const draftData = {
+                "Department": dept,
+                "Portfolio Name": portfolio,
+                "Portfolio Member Name": member,
+                "Month": month
+            };
+            
+            const numRows = tableData.length;
+            for (let i = 1; i <= numRows; i++) {
+                draftData[`Status_${i}`] = formData.get(`Status_${i}`);
+                draftData[`Description_${i}`] = formData.get(`Description_${i}`);
+                
+                const uploadBtn = document.querySelector(`button.upload-btn[data-row='${i}']`);
+                const isAlreadyUploaded = uploadBtn && uploadBtn.textContent.trim() === 'Uploaded';
+                
+                if (isAlreadyUploaded) {
+                    draftData[`Upload The Scanned File_${i}`] = null;
+                } else {
+                    const fileInput = document.querySelector(`input.file-input-row[data-row='${i}']`);
+                    const file = fileInput && fileInput.files[0];
+                    if (file && file.size > 0) {
+                        const ts = Date.now();
+                        const path = `aspyearlysh_draft_${i}_${ts}_${file.name}`;
+                        try {
+                            draftData[`Upload The Scanned File_${i}`] = await uploadFileToStorage(file, path, 'Asp_SH_files', uploadBtn);
+                        } catch (err) {
+                            console.error(`File upload error for row ${i}:`, err);
+                            draftData[`Upload The Scanned File_${i}`] = null;
+                        }
+                    } else {
+                        draftData[`Upload The Scanned File_${i}`] = null;
+                    }
+                }
+            }
+            
+            const { data: existing, error: selectError } = await supabase
+                .from('ASP_SH_Yearly_drafts')
+                .select('*')
+                .eq('Department', dept)
+                .eq('Portfolio Member Name', member)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+            
+            if (existing) {
+                for (let i = 1; i <= numRows; i++) {
+                    const fileKey = `Upload The Scanned File_${i}`;
+                    if (!draftData[fileKey] && existing[fileKey]) {
+                        draftData[fileKey] = existing[fileKey];
+                    }
+                }
+                
+                const { error } = await supabase
+                    .from('ASP_SH_Yearly_drafts')
+                    .update(draftData)
+                    .eq('id', existing.id);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from('ASP_SH_Yearly_drafts')
+                    .insert([draftData]);
+                if (error) throw error;
+            }
+            
+            saveDraftBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Draft Saved!';
+            saveDraftBtn.className = 'bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-10 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200';
+            
+            setTimeout(() => {
+                saveDraftBtn.innerHTML = originalText;
+                saveDraftBtn.className = 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-2xl shadow-xl text-xl tracking-wide transition-all duration-200';
+                saveDraftBtn.disabled = false;
+            }, 2000);
+            
+        } catch (err) {
+            alert('Failed to save draft: ' + err.message);
+            saveDraftBtn.innerHTML = originalText;
+            saveDraftBtn.disabled = false;
+        }
+    }
+    
+    document.getElementById('saveDraftBtn').addEventListener('click', saveAsDraft);
+    
+    // Draft popup button handlers
+    document.getElementById('draftAcceptBtn').addEventListener('click', function() {
+        document.getElementById('draftModal').classList.remove('show');
+        if (window.pendingDraft) {
+            loadDraftData(window.pendingDraft);
+            window.pendingDraft = null;
+        }
+    });
+    
+    document.getElementById('draftDeclineBtn').addEventListener('click', function() {
+        document.getElementById('draftModal').classList.remove('show');
+        window.pendingDraft = null;
+    });
+    
+    // Check for draft after auto-fill completes
+    setTimeout(() => {
+        const form = document.getElementById('aspYearlyFormSH');
+        const dept = form.querySelector('input[name="Department"]').value;
+        const member = form.querySelector('input[name="Portfolio Member Name"]').value;
+        if (dept && member) {
+            checkForDraft();
+        }
+    }, 1000);
+
+    // Form submission
+    document.getElementById('aspYearlyFormSH').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Get submit button and elements for loading state
+        const submitBtn = document.getElementById('submitBtn');
+        const submitText = document.getElementById('submitText');
+        const submitSpinner = document.getElementById('submitSpinner');
+        
+        // Set loading state
+        submitBtn.disabled = true;
+        submitText.textContent = 'Submitting...';
+        submitSpinner.classList.remove('hidden');
+        submitBtn.classList.add('opacity-75');
+        
+        try {
+            // Save autofetch values to localStorage for next time
+            try {
+                var autofetchForm = e.target;
+                var dept = autofetchForm.querySelector('input[name="Department"]').value || '';
+                var portfolio = autofetchForm.querySelector('input[name="Portfolio Name"]').value || '';
+                var member = autofetchForm.querySelector('input[name="Portfolio Member Name"]').value || '';
+                localStorage.setItem('department', dept);
+                localStorage.setItem('selectedPortfolio', portfolio);
+                localStorage.setItem('selectedMemberName', member);
+            } catch (err) { /* ignore */ }
+
+            const form = e.target;
+            const formData = new FormData(form);
+            
+            // Build the data object matching the ASP_SH_Yearly schema
+            const dataRow = {
+                "Department": formData.get('Department'),
+                "Portfolio Name": formData.get('Portfolio Name'),
+                "Portfolio Member Name": formData.get('Portfolio Member Name'),
+                "Month": formData.get('Month')
+            };
+
+            // Process all rows
+            const numRows = tableData.length;
+            for (let i = 1; i <= numRows; i++) {
+                dataRow[`Status_${i}`] = formData.get(`Status_${i}`) || null;
+                dataRow[`Description_${i}`] = formData.get(`Description_${i}`) || null;
+                
+                // Get the file input for this row
+                const fileInput = document.querySelector(`input.file-input-row[data-row='${i}']`);
+                const file = fileInput && fileInput.files[0];
+                if (file && file.size > 0) {
+                    // Update submit button text to show file upload progress
+                    submitText.textContent = `Uploading file ${i}...`;
+                    
+                    const ts = Date.now();
+                    const path = `aspyearlysh_${i}_${ts}_${file.name}`;
+                    try {
+                        dataRow[`Upload The Scanned File_${i}`] = await uploadFileToStorage(file, path, 'Asp_SH_files');
+                    } catch (err) {
+                        // Reset button state on error
+                        submitBtn.disabled = false;
+                        submitText.textContent = 'Submit';
+                        submitSpinner.classList.add('hidden');
+                        submitBtn.classList.remove('opacity-75');
+                        
+                        window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
+                        return;
+                    }
+                } else {
+                    // Check if there's a draft file URL for this row
+                    dataRow[`Upload The Scanned File_${i}`] = window.draftFileUrls[i] || null;
+                }
+            }
+
+            // Update submit button text for database submission
+            submitText.textContent = 'Saving data...';
+
+            // Submit to Supabase
+            const { data, error } = await supabase.from('ASP_SH_Yearly').insert([dataRow]);
+            if (error) {
+                // Reset button state on error
+                submitBtn.disabled = false;
+                submitText.textContent = 'Submit';
+                submitSpinner.classList.add('hidden');
+                submitBtn.classList.remove('opacity-75');
+                
+                window.location.href = `notification.html?status=error&msg=${encodeURIComponent(error.message)}`;
+                return;
+            }
+
+            // Delete draft after successful submission
+            try {
+                await supabase
+                    .from('ASP_SH_Yearly_drafts')
+                    .delete()
+                    .eq('Department', dataRow.Department)
+                    .eq('Portfolio Member Name', dataRow['Portfolio Member Name']);
+            } catch (err) {
+                console.log('Draft deletion failed:', err);
+            }
+
+            // Success - show completion message briefly before redirect
+            submitText.textContent = 'Success!';
+            submitSpinner.classList.add('hidden');
+            submitBtn.classList.remove('bg-purple-800', 'hover:bg-purple-700');
+            submitBtn.classList.add('bg-green-600');
+            
+            // Wait a moment then redirect
+            setTimeout(() => {
+                window.location.href = 'notification.html?status=success';
+            }, 1000);
+            
+        } catch (error) {
+            // Reset button state on unexpected error
+            submitBtn.disabled = false;
+            submitText.textContent = 'Submit';
+            submitSpinner.classList.add('hidden');
+            submitBtn.classList.remove('opacity-75');
+            
+            window.location.href = `notification.html?status=error&msg=${encodeURIComponent('Unexpected error: ' + error.message)}`;
+        }
+    });
+    </script>
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-8">
+        <p class="text-sm">
+            &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline">PMC TECH</a><br>
+            <p class="text-xs opacity-80 flex items-center justify-center gap-2">
+                Powered by 
+                <a href="https://zeonytechnologies.com" target="_blank" rel="noopener noreferrer" class="inline-block hover:opacity-100 transition-all duration-300 hover:scale-105">
+                    <img src="../static/img/zeony logo.png" alt="Zeony Technologies" class="h-12 w-22 py-2 object-contain"/>
+                </a>
+            </p>
+            <p class="text-xs opacity-80">A Student driven Software!</p>
+        </p>
+    </footer>
+
+    <!-- Month filter script for admin-controlled month disabling -->
+    <script src="../static/javascript/month-filter.js"></script>
+
+    <!-- Form Access Control - checks if form is open/closed -->
+    <script src="../static/javascript/form-access-control.js"></script>
+</body>
+</html>
+
