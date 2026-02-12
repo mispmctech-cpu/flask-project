@@ -3144,19 +3144,27 @@ function attachExportButtons() {
         departmentGroups[dept].push({ facultyName, dept, designation, idx });
       });
       
-      // Build expandable list grouped by department
+      // Store groups globally (used for ordering later)
+      window._facultyModalDepartmentGroups = departmentGroups;
+
+      // Build expandable list grouped by department and add department-order controls
       let listHTML = '<div class="space-y-3">';
       const sortedDepartments = Object.keys(departmentGroups).sort();
-      
+
+      // Department selection with checkboxes for order
+      listHTML += `<div class="mb-3 p-3 border border-gray-200 rounded"><div class="font-semibold mb-2">Select Departments for Export Order (check in desired number-wise order)</div><div id="departmentCheckboxes" class="grid grid-cols-2 gap-2"></div></div>`;
+
+      // Initialize selected departments
+      window.selectedDepartments = [];
+
       sortedDepartments.forEach(dept => {
         const facultyList = departmentGroups[dept];
         const groupId = `group-${dept.replace(/\s+/g, '-')}`;
         
         listHTML += `<div class="border border-gray-300 rounded-lg overflow-hidden">`;
         
-        // Department header with checkbox and expand/collapse
+        // Department header with expand/collapse
         listHTML += `<div class="bg-purple-50 p-3 flex items-center gap-3 cursor-pointer hover:bg-purple-100" onclick="toggleDepartmentGroup('${groupId}')">`;
-        listHTML += `<input type="checkbox" checked class="department-checkbox w-5 h-5 cursor-pointer" data-department="${dept}" onclick="event.stopPropagation(); toggleDepartment(this, '${dept}')">`;
         listHTML += `<svg class="w-5 h-5 text-gray-600 expand-icon" id="icon-${groupId}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
         listHTML += `<span class="font-bold text-purple-900">${dept} (${facultyList.length} faculty)</span>`;
         listHTML += `</div>`;
@@ -3180,8 +3188,41 @@ function attachExportButtons() {
       
       listHTML += '</div>';
       
+      // Populate department checkboxes after modal is rendered
+      setTimeout(() => {
+        const container = document.getElementById('departmentCheckboxes');
+        sortedDepartments.forEach(dept => {
+          const label = document.createElement('label');
+          label.className = 'flex items-center gap-2 p-2 bg-white border rounded cursor-pointer hover:bg-gray-50';
+          label.innerHTML = `<input type="checkbox" class="dept-order-checkbox" data-dept="${dept}" onchange="toggleDeptSelection('${dept.replace(/'/g, "\\'")}')"> <span class="dept-number" data-dept="${dept}"></span> ${dept}`;
+          container.appendChild(label);
+        });
+        renderSelectedOrder(); // Initial render
+      }, 10);
+      
       document.getElementById('facultySelectionList').innerHTML = listHTML;
       document.getElementById('facultySelectionModal').classList.remove('hidden');
+    }
+    
+    // Department selection functions
+    window.toggleDeptSelection = function(dept) {
+      const checkbox = document.querySelector(`.dept-order-checkbox[data-dept="${dept}"]`);
+      if (checkbox.checked) {
+        if (!window.selectedDepartments.includes(dept)) {
+          window.selectedDepartments.push(dept);
+        }
+      } else {
+        window.selectedDepartments = window.selectedDepartments.filter(d => d !== dept);
+      }
+      renderSelectedOrder();
+    };
+
+    function renderSelectedOrder() {
+      document.querySelectorAll('.dept-number').forEach(span => {
+        const dept = span.dataset.dept;
+        const idx = window.selectedDepartments.indexOf(dept);
+        span.textContent = idx >= 0 ? `${idx + 1}. ` : '';
+      });
     }
     
     function toggleDepartmentGroup(groupId) {
@@ -3196,11 +3237,6 @@ function attachExportButtons() {
       }
     }
     
-    function toggleDepartment(checkbox, department) {
-      const checkboxes = document.querySelectorAll(`.modal-faculty-checkbox[data-department="${department}"]`);
-      checkboxes.forEach(cb => cb.checked = checkbox.checked);
-    }
-    
     function closeFacultySelectionModal() {
       document.getElementById('facultySelectionModal').classList.add('hidden');
     }
@@ -3208,44 +3244,52 @@ function attachExportButtons() {
     function selectAllFacultyInModal() {
       const checkboxes = document.querySelectorAll('.modal-faculty-checkbox');
       checkboxes.forEach(cb => cb.checked = true);
-      const departmentCheckboxes = document.querySelectorAll('.department-checkbox');
-      departmentCheckboxes.forEach(cb => cb.checked = true);
     }
     
     function deselectAllFacultyInModal() {
       const checkboxes = document.querySelectorAll('.modal-faculty-checkbox');
       checkboxes.forEach(cb => cb.checked = false);
-      const departmentCheckboxes = document.querySelectorAll('.department-checkbox');
-      departmentCheckboxes.forEach(cb => cb.checked = false);
     }
     
     function confirmFacultySelectionAndExport() {
       const checkboxes = document.querySelectorAll('.modal-faculty-checkbox');
-      const selectedIndices = [];
-      checkboxes.forEach(cb => {
-        if (cb.checked) {
-          selectedIndices.push(parseInt(cb.dataset.rowIndex));
-        }
-      });
-      
-      if (selectedIndices.length === 0) {
+      // Build ordered list of selected indices based on window.selectedDepartments
+      const orderedIndices = [];
+      const deptOrder = window.selectedDepartments && window.selectedDepartments.length ? window.selectedDepartments : [];
+
+      // If no deptOrder available, fallback to original order
+      if (deptOrder.length === 0) {
+        checkboxes.forEach(cb => { if (cb.checked) orderedIndices.push(parseInt(cb.dataset.rowIndex)); });
+      } else {
+        // For each department in the specified order, append selected faculty indices in the modal display order
+        deptOrder.forEach(dept => {
+          const deptCheckboxes = Array.from(checkboxes).filter(cb => cb.dataset.department === dept && cb.checked);
+          // Preserve displayed order by sorting by dataset.rowIndex
+          deptCheckboxes.sort((a,b) => parseInt(a.dataset.rowIndex) - parseInt(b.dataset.rowIndex));
+          deptCheckboxes.forEach(cb => orderedIndices.push(parseInt(cb.dataset.rowIndex)));
+        });
+      }
+
+      if (orderedIndices.length === 0) {
         alert('Please select at least one faculty member to export.');
         return;
       }
-      
+
       closeFacultySelectionModal();
-      exportSummaryTableToPDF(selectedIndices);
+      // Pass department order as second argument so PDF header and ordering uses it
+      exportSummaryTableToPDF(orderedIndices, deptOrder);
     }
     
     // Export summary table to PDF (landscape format with logo and signatures)
-    async function exportSummaryTableToPDF(selectedIndices) {
+    async function exportSummaryTableToPDF(selectedIndices, deptOrder=[]) {
       try {
         const container = document.getElementById('summaryTableContainer');
         if (!container) { alert('No summary table found to export.'); return; }
         const table = container.querySelector('table');
         if (!table) { alert('No summary table found to export.'); return; }
 
-        const deptLabel = selectedSummaryDepartment || 'All';
+        // Dept label in header: if user provided an ordered list, join them; otherwise use selectedSummaryDepartment
+        const deptLabel = (deptOrder && deptOrder.length > 0) ? deptOrder.join(', ') : (selectedSummaryDepartment || 'All');
         const monthLabel = selectedSummaryMonth || '';
         const currentYear = new Date().getFullYear();
         const nextYear = currentYear + 1;
@@ -3258,34 +3302,41 @@ function attachExportButtons() {
         const formattedDate = `${day}/${month}/${year}`;
 
         const allRows = Array.from(table.querySelectorAll('tbody tr'));
-        
-        // Filter only selected rows based on indices
-        const selectedRows = allRows.filter((row, idx) => selectedIndices.includes(idx));
+
+        // Build ordered selected rows based on deptOrder if provided
+        let selectedRows = [];
+        if (deptOrder && deptOrder.length > 0) {
+          // For each department in order, append rows that match and are selected
+          deptOrder.forEach(dept => {
+            allRows.forEach((row, idx) => {
+              if (selectedIndices.includes(idx) && (row.dataset.dept || '') === dept) {
+                selectedRows.push(row);
+              }
+            });
+          });
+          // Finally, include any selected rows whose department wasn't in deptOrder
+          allRows.forEach((row, idx) => {
+            if (selectedIndices.includes(idx) && !deptOrder.includes(row.dataset.dept || '')) {
+              selectedRows.push(row);
+            }
+          });
+        } else {
+          // Fallback: preserve original selected order
+          selectedRows = allRows.filter((row, idx) => selectedIndices.includes(idx));
+        }
         
         // Create wrapper
         const wrapper = document.createElement('div');
         wrapper.style.cssText = 'width:297mm;padding:8mm;background:#fff;font-family:Arial,sans-serif;';
 
         let html = '';
-        
-        // Header with logo and title (only on first page)
-        html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;border-bottom:1px solid #ccc;padding-bottom:8px;">`;
-        html += `<div style="width:80px;"><img src="/static/img/pmc.jpg" style="width:80px;height:auto;" /></div>`;
-        html += `<div style="flex:1;text-align:center;">`;
-        html += `<h1 style="margin:0;color:#1e40af;font-size:18px;font-weight:700;text-transform:uppercase;">CONSOLIDATED PERFORMANCE SUMMARY</h1>`;
-        html += `<div style="margin-top:4px;font-size:13px;font-weight:600;color:#374151;">DEPARTMENT: ${deptLabel} | ${currentYear}-${nextYear} | MONTH: ${monthLabel.toUpperCase()} ${currentYear}</div>`;
-        html += `</div>`;
-        html += `</div>`;
-        
-        // Date field with actual export date
-        html += `<div style="margin-bottom:6px;font-size:11px;font-weight:600;">DATE: ${formattedDate}</div>`;
 
-        // Build table header with FACULTY SIGNATURE column added (without checkbox column)
+        // Build table header template
         const colWidths = ['3%', '5%', '8%', '12%', '7%', '8%', '8%', '8%', '8%', '8%', '10%', '10%', '5%'];
         let theadHTML = '<tr style="background:#1e40af;color:#fff;">';
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[0]};">SNO</th>`;
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[1]};">DEPT</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[2]};">DESIGNATION</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[2]};">DESIG</th>`;
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[3]};">FACULTY NAME</th>`;
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[4]};">FACULTY CORE SCOPE MONTHLY</th>`;
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[5]};">FACULTY MANDATORY SCOPE (YEARLY)</th>`;
@@ -3297,59 +3348,74 @@ function attachExportButtons() {
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[11]};">FACULTY SIGNATURE</th>`;
         theadHTML += '</tr>';
 
-        // Start table
-        html += `<table style="width:100%;border-collapse:collapse;font-size:9px;margin-bottom:10px;">`;
-        html += `<thead>${theadHTML}</thead>`;
-        html += '<tbody>';
-
-        // Add selected rows with sequential numbering and page break after every 8 rows
-        selectedRows.forEach((r, idx) => {
-          const cells = Array.from(r.children);
-          html += '<tr>';
-          // SNO (sequential numbering starting from 1)
-          html += `<td style="border:1px solid #999;padding:3px;text-align:center;width:${colWidths[0]};">${idx + 1}.</td>`;
-          // Original cells (DEPT, DESIGNATION, FACULTY NAME, percentages, rating - no checkbox to skip)
-          for (let i = 0; i < cells.length; i++) {
-            html += `<td style="border:1px solid #999;padding:3px;text-align:center;width:${colWidths[i + 1]};">${cells[i].innerHTML}</td>`;
-          }
-          // Empty FACULTY SIGNATURE column (no line)
-          html += `<td style="border:1px solid #999;padding:8px 3px;text-align:center;width:${colWidths[11]};height:30px;"></td>`;
-          html += '</tr>';
-          
-          // Add page break after every 8 rows (except the last row)
-          if ((idx + 1) % 8 === 0 && idx < selectedRows.length - 1) {
-            html += `</tbody></table>`;
-            html += `<div style="page-break-after:always;"></div>`;
-            // Repeat header on new page
-            html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;border-bottom:1px solid #ccc;padding-bottom:8px;">`;
-            html += `<div style="width:80px;"><img src="/static/img/pmc.jpg" style="width:80px;height:auto;" /></div>`;
-            html += `<div style="flex:1;text-align:center;">`;
-            html += `<h1 style="margin:0;color:#1e40af;font-size:18px;font-weight:700;text-transform:uppercase;">CONSOLIDATED PERFORMANCE SUMMARY</h1>`;
-            html += `<div style="margin-top:4px;font-size:13px;font-weight:600;color:#374151;">DEPARTMENT: ${deptLabel} | ${currentYear}-${nextYear} | MONTH: ${monthLabel.toUpperCase()} ${currentYear}</div>`;
-            html += `</div></div>`;
-            html += `<div style="margin-bottom:6px;font-size:11px;font-weight:600;">DATE: ${formattedDate}</div>`;
-            html += `<table style="width:100%;border-collapse:collapse;font-size:9px;margin-bottom:10px;">`;
-            html += `<thead>${theadHTML}</thead>`;
-            html += '<tbody>';
-          }
+        // Group selectedRows by department (preserve order)
+        const rowsByDept = {};
+        selectedRows.forEach((r) => {
+          const dept = r.dataset.dept || 'Unknown';
+          if (!rowsByDept[dept]) rowsByDept[dept] = [];
+          rowsByDept[dept].push(r);
         });
 
-        html += '</tbody></table>';
-        
-        // Add empty rows if less than 10 total rows
-        const totalRows = selectedRows.length;
-        if (totalRows < 10) {
+        // Determine department order for output
+        const outputDeptOrder = (deptOrder && deptOrder.length > 0) ? deptOrder : Object.keys(rowsByDept);
+
+        // For each department, render its own header + table and paginate within department
+        for (let di = 0; di < outputDeptOrder.length; di++) {
+          const dept = outputDeptOrder[di];
+          const deptRows = rowsByDept[dept] || [];
+          if (deptRows.length === 0) continue;
+
+          // Header for this department
+          html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;border-bottom:1px solid #ccc;padding-bottom:8px;">`;
+          html += `<div style="width:80px;"><img src="/static/img/pmc.jpg" style="width:80px;height:auto;" /></div>`;
+          html += `<div style="flex:1;text-align:center;">`;
+          html += `<h1 style="margin:0;color:#1e40af;font-size:18px;font-weight:700;text-transform:uppercase;">CONSOLIDATED PERFORMANCE SUMMARY</h1>`;
+          html += `<div style="margin-top:4px;font-size:13px;font-weight:600;color:#374151;">DEPARTMENT: ${dept} | ${currentYear}-${nextYear} | MONTH: ${monthLabel.toUpperCase()} ${currentYear}</div>`;
+          html += `</div></div>`;
+          html += `<div style="margin-bottom:6px;font-size:11px;font-weight:600;">DATE: ${formattedDate}</div>`;
+
+          // Start table for this department
           html += `<table style="width:100%;border-collapse:collapse;font-size:9px;margin-bottom:10px;">`;
+          html += `<thead>${theadHTML}</thead>`;
           html += '<tbody>';
-          for (let i = totalRows; i < 10; i++) {
+
+          // Render rows for this department with local numbering
+          deptRows.forEach((r, idx) => {
+            const cells = Array.from(r.children);
             html += '<tr>';
-            html += `<td style="border:1px solid #999;padding:3px;text-align:center;width:${colWidths[0]};">${i + 1}.</td>`;
-            for (let j = 1; j < 12; j++) {
-              html += `<td style="border:1px solid #999;padding:3px;width:${colWidths[j]};height:30px;"></td>`;
+            html += `<td style="border:1px solid #999;padding:3px;text-align:center;width:${colWidths[0]};">${idx + 1}.</td>`;
+            for (let i = 0; i < cells.length; i++) {
+              html += `<td style="border:1px solid #999;padding:3px;text-align:center;width:${colWidths[i + 1]};">${cells[i].innerHTML}</td>`;
             }
+            html += `<td style="border:1px solid #999;padding:8px 3px;text-align:center;width:${colWidths[11]};height:30px;"></td>`;
             html += '</tr>';
-          }
+
+            // Page break after every 8 rows within this department
+            if ((idx + 1) % 8 === 0 && idx < deptRows.length - 1) {
+              html += `</tbody></table>`;
+              html += `<div style="page-break-after:always;"></div>`;
+              // Repeat header for next page of same department
+              html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;border-bottom:1px solid #ccc;padding-bottom:8px;">`;
+              html += `<div style="width:80px;"><img src="/static/img/pmc.jpg" style="width:80px;height:auto;" /></div>`;
+              html += `<div style="flex:1;text-align:center;">`;
+              html += `<h1 style="margin:0;color:#1e40af;font-size:18px;font-weight:700;text-transform:uppercase;">CONSOLIDATED PERFORMANCE SUMMARY</h1>`;
+              html += `<div style="margin-top:4px;font-size:13px;font-weight:600;color:#374151;">DEPARTMENT: ${dept} | ${currentYear}-${nextYear} | MONTH: ${monthLabel.toUpperCase()} ${currentYear}</div>`;
+              html += `</div></div>`;
+              html += `<div style="margin-bottom:6px;font-size:11px;font-weight:600;">DATE: ${formattedDate}</div>`;
+              html += `<table style="width:100%;border-collapse:collapse;font-size:9px;margin-bottom:10px;">`;
+              html += `<thead>${theadHTML}</thead>`;
+              html += '<tbody>';
+            }
+          });
+
           html += '</tbody></table>';
+
+          // Do not pad departments with empty rows — keep only actual rows
+
+          // Add a page break between departments except after the last one
+          if (di < outputDeptOrder.length - 1) {
+            html += `<div style="page-break-after:always;"></div>`;
+          }
         }
         
         // Signature section at the bottom with IQAC SIGN instead of HOD SIGN
