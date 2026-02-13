@@ -242,6 +242,7 @@
             Deselect All
           </button>
         </div>
+        <input id="facultySearchInput" placeholder="Search faculty or department..." class="w-full p-2 border rounded mb-3" />
         <div id="facultySelectionList" class="max-h-96 overflow-y-auto border border-gray-300 rounded p-4 mb-4"></div>
         <div class="flex justify-end gap-3">
           <button onclick="closeFacultySelectionModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded">
@@ -3149,7 +3150,10 @@ function attachExportButtons() {
 
       // Build expandable list grouped by department and add department-order controls
       let listHTML = '<div class="space-y-3">';
-      const sortedDepartments = Object.keys(departmentGroups).sort();
+      // Exclude S&H variants from the UI and ordering (e.g. "S&H V1", "S&H V2", etc.)
+      const sortedDepartments = Object.keys(departmentGroups)
+        .sort()
+        .filter(d => !/^\s*S\s*&\s*H\b/i.test(d));
 
       // Department selection with checkboxes for order
       listHTML += `<div class="mb-3 p-3 border border-gray-200 rounded"><div class="font-semibold mb-2">Select Departments for Export Order (check in desired number-wise order)</div><div id="departmentCheckboxes" class="grid grid-cols-2 gap-2"></div></div>`;
@@ -3172,7 +3176,7 @@ function attachExportButtons() {
         // Faculty list (initially visible)
         listHTML += `<div id="${groupId}" class="department-group">`;
         facultyList.forEach(({ facultyName, dept, designation, idx }) => {
-          listHTML += `<div class="flex items-center gap-3 p-3 hover:bg-gray-50 border-t border-gray-200">`;
+          listHTML += `<div class="flex items-center gap-3 p-3 hover:bg-gray-50 border-t border-gray-200 modal-faculty-row">`;
           listHTML += `<div class="w-5"></div>`; // Indent
           listHTML += `<input type="checkbox" checked class="modal-faculty-checkbox w-5 h-5 cursor-pointer" data-row-index="${idx}" data-department="${dept}" id="faculty-cb-${idx}">`;
           listHTML += `<label for="faculty-cb-${idx}" class="cursor-pointer flex-1">`;
@@ -3198,6 +3202,24 @@ function attachExportButtons() {
           container.appendChild(label);
         });
         renderSelectedOrder(); // Initial render
+        // Attach search handler
+        const searchInput = document.getElementById('facultySearchInput');
+        if (searchInput) {
+          searchInput.oninput = function() {
+            const q = this.value.trim().toLowerCase();
+            document.querySelectorAll('.modal-faculty-row').forEach(row => {
+              const text = row.innerText.toLowerCase();
+              row.style.display = text.includes(q) ? '' : 'none';
+            });
+            // Hide empty department groups and headers
+            document.querySelectorAll('.department-group').forEach(group => {
+              const header = group.previousElementSibling;
+              const anyVisible = Array.from(group.querySelectorAll('.modal-faculty-row')).some(r => r.style.display !== 'none');
+              group.style.display = anyVisible ? '' : 'none';
+              if (header) header.style.display = anyVisible ? '' : 'none';
+            });
+          };
+        }
       }, 10);
       
       document.getElementById('facultySelectionList').innerHTML = listHTML;
@@ -3356,8 +3378,9 @@ function attachExportButtons() {
           rowsByDept[dept].push(r);
         });
 
-        // Determine department order for output
-        const outputDeptOrder = (deptOrder && deptOrder.length > 0) ? deptOrder : Object.keys(rowsByDept);
+        // Determine department order for output (exclude S&H variants)
+        const nonSHDepts = Object.keys(rowsByDept).filter(d => !/^\s*S\s*&\s*H\b/i.test(d));
+        const outputDeptOrder = (deptOrder && deptOrder.length > 0) ? deptOrder : nonSHDepts;
 
         // For each department, render its own header + table and paginate within department
         for (let di = 0; di < outputDeptOrder.length; di++) {
