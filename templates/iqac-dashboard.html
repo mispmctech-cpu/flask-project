@@ -421,12 +421,8 @@ async function exportCoreScopeTableToExcel(scope) {
         });
       }
       
-      // Get the latest row (by input_id)
-      let row = null;
-      if (matchingRows.length > 0) {
-        matchingRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
-        row = matchingRows[0];
-      }
+      // Get the latest row (prefer updated_at, then input_id/id)
+      const row = chooseLatestRow(matchingRows);
       
       // Calculate percentage (fixed denominator: 15)
       let completedCount = 0;
@@ -1318,8 +1314,8 @@ function attachExportButtons() {
             });
             if (filteredRows.length > 0) {
               filled = true;
-              // Use the latest row (by id or timestamp)
-              bestRow = filteredRows.sort((a, b) => (b.id || 0) - (a.id || 0))[0];
+              // Use the latest row (prefer updated_at, then input_id/id)
+              bestRow = chooseLatestRow(filteredRows);
             }
           }
           // Calculate percentage if bestRow exists (fixed denominator: 8)
@@ -1473,6 +1469,25 @@ function attachExportButtons() {
       try {
         return /\bS\s*&\s*H(?:\s*(?:V|v)?\s*[1-6])?\b/i.test(dept.toString());
       } catch (e) { return false; }
+    }
+
+    // Helper: choose the latest row from an array of rows.
+    // Preference order: `updated_at` (most recent), then `input_id`, then `id`, then `created_at`.
+    function chooseLatestRow(rows) {
+      if (!rows || rows.length === 0) return null;
+      return rows.reduce((latest, current) => {
+        if (!latest) return current;
+        const latestTime = latest.updated_at ? new Date(latest.updated_at).getTime() : 0;
+        const currentTime = current.updated_at ? new Date(current.updated_at).getTime() : 0;
+        if (currentTime && currentTime > latestTime) return current;
+        const latestInput = latest.input_id || latest.id || 0;
+        const currentInput = current.input_id || current.id || 0;
+        if (currentInput > latestInput) return current;
+        const latestCreated = latest.created_at ? new Date(latest.created_at).getTime() : 0;
+        const currentCreated = current.created_at ? new Date(current.created_at).getTime() : 0;
+        if (currentCreated && currentCreated > latestCreated) return current;
+        return latest;
+      }, null);
     }
 
     // --- NEW: Faculty Core Scope - Monthly Table from Core_scope table ---
@@ -2544,8 +2559,7 @@ function attachExportButtons() {
             );
             if (matchingRows.length > 0) {
               // Get the latest row by input_id
-              matchingRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
-              const coreScopeRow = matchingRows[0];
+              const coreScopeRow = chooseLatestRow(matchingRows);
               
               let completedCount = 0;
               const totalCount = 15; // Fixed denominator for Core Scope
@@ -2654,9 +2668,7 @@ function attachExportButtons() {
             
             // Get the row with the highest input_id (most recent submission)
             const formRow = matchingRows.length > 0 
-              ? matchingRows.reduce((latest, current) => 
-                  (current.input_id || 0) > (latest.input_id || 0) ? current : latest
-                )
+              ? chooseLatestRow(matchingRows)
               : null;
             
             // If faculty found, calculate percentage
@@ -2839,8 +2851,7 @@ function attachExportButtons() {
             );
             if (matchingRows.length > 0) {
               // Get the latest row by input_id
-              matchingRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
-              const coreScopeRow = matchingRows[0];
+              const coreScopeRow = chooseLatestRow(matchingRows);
               
               let completedCount = 0;
               const totalCount = 15; // Fixed denominator for Core Scope

@@ -2397,7 +2397,9 @@
               
               if (yearlyRow) {
                 let completedCount = 0;
-                // S&H: AP=5, ASP=6, Prof=6 | Engineering: AP=8, ASP=8, Prof=9
+                // Yearly counts:
+                // - For S&H: AP=5, ASP=6, Prof=6 (unchanged)
+                // - For Engineering: AP=8, ASP=9, Prof=9 (ASP and Prof should use 9 fields)
                 let totalCount, maxStatus;
                 if (isSHFaculty) {
                   if (desigDisplay === 'AP') {
@@ -2411,9 +2413,17 @@
                     maxStatus = 6;
                   }
                 } else {
-                  // Engineering
-                  totalCount = desigDisplay === 'Prof' ? 9 : 8;
-                  maxStatus = desigDisplay === 'Prof' ? 9 : 8;
+                  // Engineering departments: AP=8, ASP=9, Prof=9
+                  if (desigDisplay === 'AP') {
+                    totalCount = 8;
+                    maxStatus = 8;
+                  } else if (desigDisplay === 'ASP' || desigDisplay === 'Prof') {
+                    totalCount = 9;
+                    maxStatus = 9;
+                  } else {
+                    totalCount = 8;
+                    maxStatus = 8;
+                  }
                 }
                 for (let i = 1; i <= maxStatus; i++) {
                   const status = (yearlyRow[`Status_${i}`] || '').toString().toLowerCase();

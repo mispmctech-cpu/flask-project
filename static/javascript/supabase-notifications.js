@@ -6,11 +6,15 @@ if (typeof window.supabase === 'undefined') {
   console.error('Supabase library not loaded! Make sure @supabase/supabase-js is included before this script.');
 }
 
-// Load Supabase client
-const supabase = window.supabase ? window.supabase.createClient(
+// Load Supabase client (reuse if this script is loaded multiple times)
+window._supabaseNotificationsClient = window._supabaseNotificationsClient || (window.supabase ? window.supabase.createClient(
   "https://cbhodgwaazmjszkujrti.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
-) : null;
+) : null);
+
+function getSupabaseClient() {
+  return window._supabaseNotificationsClient;
+}
 
 function getUsername() {
   return localStorage.getItem('pmc_username') || 'User';
@@ -52,7 +56,8 @@ function getRole() {
 async function fetchFacultyNameFromSupabase(email) {
   if (!email) return;
   try {
-    const { data, error } = await supabase
+    const supabaseClient = getSupabaseClient();
+    const { data, error } = await supabaseClient
       .from('Faculty')
       .select('Name')
       .eq('email', email)
@@ -87,7 +92,8 @@ async function postNotification() {
     }
   }
   // Debug: Check Supabase client
-  if (!supabase || typeof supabase.from !== 'function') {
+  const supabaseClient = getSupabaseClient();
+  if (!supabaseClient || typeof supabaseClient.from !== 'function') {
     errorDiv.textContent = 'Supabase client not initialized. Check script order and API key.';
     errorDiv.className = 'text-red-600 font-semibold mb-2';
     return;
@@ -105,7 +111,7 @@ async function postNotification() {
       sender = 'HR';
       role = 'HR';
     }
-    const response = await supabase.from('notifications').insert([
+    const response = await supabaseClient.from('notifications').insert([
       {
         message: text,
         sender: sender,
@@ -141,7 +147,8 @@ async function fetchNotifications() {
   if (!listDiv) return;
   listDiv.innerHTML = '<span class="text-gray-400">Loading...</span>';
   try {
-    const { data, error } = await supabase
+    const supabaseClient = getSupabaseClient();
+    const { data, error } = await supabaseClient
       .from('notifications')
       .select('id, message, sender, role, created_at, audience')
       .order('created_at', { ascending: false });

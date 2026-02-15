@@ -1356,6 +1356,10 @@ window.verifyRow = function(btn, idx) {
 
 // Create modal HTML if not present
 function ensureModalExists() {
+  if (!document.body) {
+    document.addEventListener('DOMContentLoaded', ensureModalExists, { once: true });
+    return;
+  }
   if (!document.getElementById('viewModal')) {
     const modalHtml = `
     <div id="viewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">

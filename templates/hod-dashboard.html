@@ -360,237 +360,41 @@
       
       // Core Scope field labels (15 fields) - Full descriptions from faculty-core-scope.html
       const coreScopeLabels = [
-        'Teaching & Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
-        'Teaching & Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
-        'Teaching & Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
-        'Teaching & Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
-        'Student Mentorship & Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
-        'Student Mentorship & Support: Monitor student attendance, performance, and well-being.',
-        'Student Mentorship & Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
-        'Student Mentorship & Support: Maintain the Mentor book for assigned mentee.',
-        'Student Mentorship & Support: Consolidate innovative course material, Lab manuals',
-        'Research and Development: Present at conferences.',
-        'Research and Development: Guide student research and final-year projects',
-        'Institutional Development: Participate in curriculum development and revision through Board of Studies.',
-        'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
-        'Institutional Development: Serve on academic and administrative committees.',
-        'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.'
+        'Design and deliver lectures and lab sessions',
+        'Develop course materials, lesson plans and assessments',
+        'Incorporating innovative teaching methods including ICT tools',
+        'Prepare Product model and instructional Chart',
+        'Mentoring 30 students on coursework, projects and career planning',
+        'Monitoring student attendance, performance, and well-being',
+        'Provide remedial support and encourage participation in co-curricular activities',
+        'Maintain the Mentor book for assigned mentee',
+        'Consolidate innovative course material and Lab manuals',
+        'Present at conferences',
+        'Guide student research and final-year projects',
+        'Participate in curriculum development and revision through BOS',
+        'Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives',
+        'Serve on academic and administrative committees',
+        'Maintain academic records, course files, Log Book and student evaluations'
       ];
       
       // Shorter labels for table headers
       const coreScopeShortLabels = [
         'Design and deliver lectures and lab sessions',
-            'Develop course materials, lesson plans and assessments ',
-            'Incorporating innovative teaching methods including ICT tools ',
-            'Prepare Product model and instructional Chart ',
-            'Mentoring 30 students on coursework, projects and career planning.',
-            'Monitoring student attendance, performance, and well-being.',
-            'Provide remedial support and encourage participation in co-curricular and extra- curricular activities.',
-            'Maintain the Mentor book for assigned mentee.',
-            'Consolidate innovative course material & Lab manuals ',
-            'Participate in curriculum development and revision through BOS',
-            'Contribute to accreditation processes (NBA, NAAC) and quality Assurance initiatives.',
-            'Serve on academic and administrative committees.',
-            'Assist in exam duties, QP setting, Invigilation and evaluation.',
-            'Submit the FPBA (Faculty performance Based Appraisal) with the documents',
-            'Library Utilization'
-   
+        'Develop course materials, lesson plans and assessments',
+        'Incorporating innovative teaching methods including ICT tools',
+        'Prepare Product model and instructional Chart',
+        'Mentoring 30 students on coursework, projects and career planning',
+        'Monitoring student attendance, performance, and well-being',
+        'Provide remedial support and encourage participation in co-curricular activities',
+        'Maintain the Mentor book for assigned mentee',
+        'Consolidate innovative course material and Lab manuals',
+        'Present at conferences',
+        'Guide student research and final-year projects',
+        'Participate in curriculum development and revision through BOS',
+        'Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives',
+        'Serve on academic and administrative committees',
+        'Maintain academic records, course files, Log Book and student evaluations'
       ];
-      
-      // Filter faculty by designation if needed
-      let filteredFacultyList = facultyList;
-      if (selectedCoreScopeDesignation !== 'All') {
-        filteredFacultyList = facultyList.filter(fac => {
-          const desig = (fac.Designation || '').toUpperCase();
-          if (selectedCoreScopeDesignation === 'AP') return desig === 'AP' || desig === 'ASSISTANT PROFESSOR';
-          if (selectedCoreScopeDesignation === 'ASP') return desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR';
-          if (selectedCoreScopeDesignation === 'Prof') return desig === 'PROF' || desig === 'PROFESSOR';
-          return false;
-        });
-      }
-      
-      let html = '';
-      
-      if (filteredFacultyList.length === 0) {
-        document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500">No faculty data found.</div>';
-        return;
-      }
-      
-      // Single table header with Designation column - wrapped in scrolling container
-      html += `<div class="overflow-auto mb-6 border rounded-lg shadow-sm" style="max-height: 600px;"><table class="min-w-full text-xs bg-white" style="table-layout: auto;"><thead class="bg-green-700 text-white sticky top-0 z-20"><tr>`;
-      html += `<th class="px-3 py-2 sticky left-0 bg-green-700 z-30" style="min-width: 150px;">Department</th>`;
-      html += `<th class="px-3 py-2 bg-green-700" style="min-width: 120px;">Designation</th>`;
-      html += `<th class="px-3 py-2" style="min-width: 180px;">Faculty Name</th>`;
-      html += `<th class="px-3 py-2" style="min-width: 100px;">Percentage</th>`;
-      html += `<th class="px-3 py-2" style="min-width: 120px;">Verification</th>`;
-      
-      // Add columns for all 15 status fields with full descriptions as tooltips
-      for (let i = 0; i < 15; i++) {
-        html += `<th class="px-2 py-2" style="min-width: 120px;" title="${coreScopeLabels[i]}">${coreScopeShortLabels[i]}</th>`;
-      }
-      
-      html += `</tr></thead><tbody>`;
-      
-      // Fetch both Hod-workdone and hod-workdone_reject data
-      const [verifyRes, rejectRes] = await Promise.all([
-        supabaseClient.from('Hod-workdone').select('*'),
-        supabaseClient.from('hod-workdone_reject').select('*')
-      ]);
-      const verifyDataMap = verifyRes.data || [];
-      const rejectDataMap = rejectRes.data || [];
-      
-      // Process each faculty
-      let facultyIndex = 0;
-      for (const fac of filteredFacultyList) {
-        facultyIndex++;
-        const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
-        const dept = fac.department || department;
-        const designation = fac.Designation || 'N/A';
-        
-        // Normalize designation for display - trim to remove whitespace and special characters
-        let desigDisplay = designation;
-        const desigUpper = designation.toString().trim().toUpperCase();
-        if (desigUpper === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
-        else if (desigUpper === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
-        else if (desigUpper === 'PROFESSOR') desigDisplay = 'Prof';
-        
-        // Find matching Core_scope data for this faculty
-        let facNamesToTry = [];
-        if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
-        if (fac.Name) facNamesToTry.push(fac.Name);
-        if (fac.email) facNamesToTry.push(fac.email);
-        facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n || '').toString().trim().toLowerCase()).filter(Boolean)));
-        
-        let matchingRows = [];
-        if (coreScopeData && coreScopeData.length > 0) {
-          matchingRows = coreScopeData.filter(row => {
-            const rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
-            return facNamesToTry.includes(rowName);
-          });
-        }
-        
-        // Get the latest row (by input_id)
-        let row = null;
-        if (matchingRows.length > 0) {
-          matchingRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
-          row = matchingRows[0];
-        }
-        
-        // Calculate percentage (fixed denominator: 15)
-        let completedCount = 0;
-        const totalCount = 15;
-        
-        if (row) {
-          for (let i = 1; i <= 15; i++) {
-            const statusVal = (row[`Status_${i}`] || '').toString().trim().toLowerCase();
-            if (statusVal === 'completed' || statusVal === 'completed and updated') {
-              completedCount++;
-            }
-            // All statuses (including 'Not Applicable') are included in denominator
-          }
-        }
-        
-        const percentage = Math.round((completedCount / totalCount) * 100);
-        const percentageDisplay = row ? `${percentage}%` : '0% (Not Submitted)';
-        const percentageClass = row ? (percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600') : 'text-red-600';
-        
-        // Check verification in Hod-workdone table
-        const coreScopeRowId = `corescope-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
-        const coreScopePercentageId = `percentage-${coreScopeRowId}`;
-        let verificationMark = '<span class="text-gray-400">-</span>';
-        if (row && row.input_id) {
-          verificationMark = `<span id="verify-${coreScopeRowId}" class="text-gray-400">...</span>`;
-          
-          // Async verification check inline
-          setTimeout(async () => {
-            const { data: verifyData } = await supabaseClient
-              .from('Hod-workdone')
-              .select('*')
-              .eq('department', dept)
-              .ilike('portfolio_member_name', facultyName);
-            
-            const verifyCell = document.getElementById(`verify-${coreScopeRowId}`);
-            const percentageCell = document.getElementById(`${coreScopePercentageId}`);
-            if (verifyCell) {
-              // Try exact match first
-              let matchingVerify = verifyData?.find(v => {
-                const inputIdMatch = v.input_id === row.input_id;
-                const tableNameMatch = v.table_name && v.table_name.toLowerCase().includes('core');
-                return inputIdMatch && tableNameMatch;
-              });
-              
-              // If no exact match, try partial
-              if (!matchingVerify) {
-                matchingVerify = verifyData?.find(v => 
-                  (v.table_name && v.table_name.toLowerCase().includes('core')) || 
-                  v.input_id === row.input_id
-                );
-              }
-              
-              if (matchingVerify) {
-                const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
-                verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
-                
-                // Update percentage with validation score
-                if (percentageCell && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
-                  const validationScore = parseFloat(matchingVerify.validation_score);
-                  if (!isNaN(validationScore)) {
-                    const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
-                    percentageCell.className = `px-3 py-2 border ${percentageClass} font-semibold`;
-                    percentageCell.textContent = `${Math.round(validationScore)}%`;
-                  }
-                }
-              } else {
-                verifyCell.innerHTML = '<span class="text-red-600 font-bold text-lg" title="Not verified">✗</span>';
-              }
-            }
-          }, 100);
-        }
-        
-        html += `<tr class="hover:bg-gray-50">`;
-        html += `<td class="px-3 py-2 border sticky left-0 bg-white z-10 font-medium">${dept}</td>`;
-        html += `<td class="px-3 py-2 border font-medium">${desigDisplay}</td>`;
-        html += `<td class="px-3 py-2 border font-medium text-green-700">${facultyName}</td>`;
-        html += `<td id="${coreScopePercentageId}" class="px-3 py-2 border ${percentageClass} font-semibold">${percentageDisplay}</td>`;
-        html += `<td class="px-3 py-2 border text-center">${verificationMark}</td>`;
-        
-        // Add status cells for all 15 fields
-        for (let i = 1; i <= 15; i++) {
-          const statusVal = row ? (row[`Status_${i}`] || '-') : '-';
-          let display = '-';
-          let statusClass = '';
-          
-          if (row && statusVal && typeof statusVal === 'string') {
-            const val = statusVal.trim().toLowerCase();
-            if (val === 'completed') {
-              display = 'Completed';
-              statusClass = 'text-green-600 font-semibold';
-            } else if (val === 'in progress' || val === 'inprogress') {
-              display = 'In Progress';
-              statusClass = 'text-yellow-600 font-semibold';
-            } else if (val === 'yet to be completed' || val === 'not started') {
-              display = 'Yet to be Completed';
-              statusClass = 'text-red-600 font-semibold';
-            } else if (val === 'not applicable' || val === 'na') {
-              display = 'N/A';
-              statusClass = 'text-gray-400';
-            } else if (val === '-' || val === '' || val === null) {
-              display = '-';
-              statusClass = 'text-gray-500';
-            } else {
-              display = statusVal;
-              statusClass = 'text-blue-600 font-semibold';
-            }
-          } else {
-            display = '-';
-            statusClass = 'text-gray-500';
-          }
-          
-          html += `<td class="px-2 py-2 border ${statusClass}">${display}</td>`;
-        }
-        
-        html += `</tr>`;
-      }
       
       html += `</tbody></table></div>`;
       
@@ -1545,170 +1349,7 @@
         
         html += '</tbody></table></div>';
         container.innerHTML = html || '<div class="text-gray-500 text-center py-4">No summary data found.</div>';
-        console.log('[HOD Dashboard Consolidated] Rendered', summaryRows.length, 'faculty rows - now fetching HOD validation scores...');
-        
-        // Async update validation scores from Hod-workdone table
-        for (const row of summaryRows) {
-          setTimeout(async () => {
-            try {
-              // Query Hod-workdone with MONTH filter first
-              let { data: verifyData, error: monthErr } = await supabaseClient
-                .from('Hod-workdone')
-                .select('*')
-                .eq('department', row.dept)
-                .eq('month', selectedSummaryMonth)
-                .ilike('portfolio_member_name', row.facultyName);
-              
-              // If month filter fails (column doesn't exist), try without month filter
-              if (monthErr && monthErr.code === 'PGRST116') {
-                console.log('[HOD Consolidated] Month column not found, querying without month filter for', row.facultyName);
-                const { data: allData } = await supabaseClient
-                  .from('Hod-workdone')
-                  .select('*')
-                  .eq('department', row.dept)
-                  .ilike('portfolio_member_name', row.facultyName);
-                verifyData = allData;
-              }
-              
-              console.log('[HOD Consolidated] Validation data for', row.facultyName, 'month', selectedSummaryMonth, ':', verifyData?.length || 0, 'records');
-              
-              if (!verifyData || verifyData.length === 0) {
-                console.log('[HOD Consolidated] No validation found for', row.facultyName, '- keeping raw scores');
-                return;
-              }
-              
-              // Update Faculty Core Scope Monthly if verified
-              const coreCell = document.getElementById(`summary-core-${row.summaryRowId}`);
-              if (coreCell) {
-                // Look for Core Scope validation by faculty name and month
-                const coreValidation = verifyData.find(v => 
-                  v.table_name && v.table_name.toLowerCase().includes('core')
-                );
-                
-                if (coreValidation && coreValidation.validation_score != null && coreValidation.validation_score !== '') {
-                  const validationScore = parseFloat(coreValidation.validation_score);
-                  if (!isNaN(validationScore)) {
-                    console.log('[HOD Consolidated] Updating Core Scope for', row.facultyName, 'to', validationScore + '%');
-                    const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
-                    coreCell.innerHTML = `<span class="${percentageClass}">${Math.round(validationScore)}%</span>`;
-                    row.coreScopePercent = `${Math.round(validationScore)}%`;
-                  }
-                }
-              }
-              
-              // Update Faculty Mandatory Scope Yearly if verified
-              const yearlyCell = document.getElementById(`summary-yearly-${row.summaryRowId}`);
-              if (yearlyCell) {
-                const desigDisplay = row.designation;
-                // Look for Yearly validation by faculty name, month, and designation
-                const yearlyValidation = verifyData.find(v => 
-                  v.table_name && v.table_name.includes(desigDisplay) && v.table_name.toLowerCase().includes('yearly')
-                );
-                
-                if (yearlyValidation && yearlyValidation.validation_score != null && yearlyValidation.validation_score !== '') {
-                  const validationScore = parseFloat(yearlyValidation.validation_score);
-                  if (!isNaN(validationScore)) {
-                    console.log('[HOD Consolidated] Updating Yearly for', row.facultyName, 'to', validationScore + '%');
-                    const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
-                    yearlyCell.innerHTML = `<span class="${percentageClass}">${Math.round(validationScore)}%</span>`;
-                    row.yearlyPercent = `${Math.round(validationScore)}%`;
-                  }
-                }
-              }
-              
-              // Get ALL portfolio validations for this faculty (not just one)
-              const portfolioValidations = verifyData.filter(v => 
-                v.table_name && (v.table_name.toLowerCase().includes('form1') || 
-                                v.table_name.toLowerCase().includes('form2') ||
-                                v.table_name.toLowerCase().includes('form3') || 
-                                v.table_name.toLowerCase().includes('form4') ||
-                                v.table_name.toLowerCase().includes('form5') ||
-                                v.table_name.toLowerCase().includes('form6') ||
-                                v.table_name.toLowerCase().includes('form7') ||
-                                v.table_name.toLowerCase().includes('form8'))
-              );
-              
-              console.log('[HOD Consolidated] Portfolio validations found for', row.facultyName, ':', portfolioValidations.map(v => v.table_name + '=' + v.validation_score));
-              
-              // Update Department Portfolio Scope-1 if verified
-              const dept1Cell = document.getElementById(`summary-dept1-${row.summaryRowId}`);
-              if (dept1Cell) {
-                // First try exact match, then use first available portfolio validation
-                let dept1Validation = null;
-                
-                if (row.deptPortfolio1Data && row.deptPortfolio1Data.table_name) {
-                  dept1Validation = portfolioValidations.find(v => 
-                    v.table_name.toLowerCase() === row.deptPortfolio1Data.table_name.toLowerCase()
-                  );
-                }
-                
-                // Fallback: use first portfolio validation if no exact match
-                if (!dept1Validation && portfolioValidations.length > 0) {
-                  dept1Validation = portfolioValidations[0];
-                }
-                
-                console.log('[HOD Consolidated] Dept Portfolio 1 - stored:', row.deptPortfolio1Data?.table_name, 'matched:', dept1Validation?.table_name, 'score:', dept1Validation?.validation_score);
-                
-                if (dept1Validation && dept1Validation.validation_score != null && dept1Validation.validation_score !== '') {
-                  const validationScore = parseFloat(dept1Validation.validation_score);
-                  if (!isNaN(validationScore)) {
-                    console.log('[HOD Consolidated] Updating Dept Portfolio 1 for', row.facultyName, 'to', validationScore + '%');
-                    const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
-                    dept1Cell.innerHTML = `<span class="${percentageClass}">${Math.round(validationScore)}%</span>`;
-                    row.deptPortfolio1Percent = `${Math.round(validationScore)}%`;
-                  }
-                }
-              }
-              
-              // Update Department Portfolio Scope-2 if verified
-              const dept2Cell = document.getElementById(`summary-dept2-${row.summaryRowId}`);
-              if (dept2Cell) {
-                // First try exact match, then use second available portfolio validation
-                let dept2Validation = null;
-                
-                if (row.deptPortfolio2Data && row.deptPortfolio2Data.table_name) {
-                  dept2Validation = portfolioValidations.find(v => 
-                    v.table_name.toLowerCase() === row.deptPortfolio2Data.table_name.toLowerCase()
-                  );
-                }
-                
-                // Fallback: use second portfolio validation if no exact match
-                if (!dept2Validation && portfolioValidations.length > 1) {
-                  dept2Validation = portfolioValidations[1];
-                }
-                
-                console.log('[HOD Consolidated] Dept Portfolio 2 - stored:', row.deptPortfolio2Data?.table_name, 'matched:', dept2Validation?.table_name, 'score:', dept2Validation?.validation_score);
-                
-                if (dept2Validation && dept2Validation.validation_score != null && dept2Validation.validation_score !== '') {
-                  const validationScore = parseFloat(dept2Validation.validation_score);
-                  if (!isNaN(validationScore)) {
-                    console.log('[HOD Consolidated] Updating Dept Portfolio 2 for', row.facultyName, 'to', validationScore + '%');
-                    const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
-                    dept2Cell.innerHTML = `<span class="${percentageClass}">${Math.round(validationScore)}%</span>`;
-                    row.deptPortfolio2Percent = `${Math.round(validationScore)}%`;
-                  }
-                }
-              }
-              
-              // Recalculate overall rating based on updated validation scores
-              const ratingCell = document.getElementById(`summary-rating-${row.summaryRowId}`);
-              if (ratingCell) {
-                const updatedRating = calculateFacultyRating(
-                  row.coreScopePercent,
-                  row.yearlyPercent,
-                  row.deptPortfolio1Percent,
-                  row.deptPortfolio2Percent,
-                  row.instPortfolio1Percent,
-                  row.instPortfolio2Percent
-                );
-                ratingCell.innerHTML = `<div class="star-rating ${updatedRating.colorClass}">${updatedRating.stars}</div><div class="text-xs mt-1 ${updatedRating.colorClass}">${updatedRating.average}%</div>`;
-              }
-              
-            } catch (err) {
-              console.error('[HOD Dashboard Consolidated] Error updating validation scores:', err);
-            }
-          }, 100);
-        }
+        console.log('[HOD Dashboard Consolidated] Rendered', summaryRows.length, 'faculty rows');
         
       } catch (error) {
         console.error('[HOD Dashboard Consolidated] Summary table error:', error);

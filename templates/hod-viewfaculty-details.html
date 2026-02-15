@@ -386,6 +386,9 @@
             '<div class="text-center mt-20 text-red-500">Faculty not found.</div>';
           return;
         }
+
+        const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+        const isSHFaculty = shDepartments.includes(data["department"] || "");
         // Institution Portfolio Section: show only forms assigned to this faculty
         let assignedFormsArr = [];
         try {
@@ -521,6 +524,8 @@
           const facultyName = data["Name"] || "";
           const department = data["department"] || "";
           const designation = (data["Designation"] || "").toUpperCase();
+          const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+          const isSHFaculty = shDepartments.includes(department);
           
           // Normalize designation
           let desig = '';
@@ -532,8 +537,8 @@
             return;
           }
           
-          // Particulars for each designation
-          const particularsMap = {
+          // Particulars for each designation (Engineering)
+          const particularsMapEng = {
             AP: [
               'Present at Conference',
               'Guide student research and final year projects',
@@ -567,16 +572,45 @@
               'No of Proposals submitted in Manthan Portal'
             ]
           };
-          
-          const particulars = particularsMap[desig];
-          const tableName = desig === 'Prof' ? 'Prof(Yearly)' : `${desig}(Yearly)`;
+
+          // Particulars for S&H faculty (reduced items)
+          const particularsMapSH = {
+            AP: [
+              'Present at Conferences.',
+              'Attend FDPs / workshop/Seminars',
+              'Engage in extension activities, and social outreach programs.',
+              'Membership in professional body',
+              'No of Proposals submitted in Manthan Portal'
+            ],
+            ASP: [
+              'Publish in peer-reviewed journals',
+              'Apply for research grants',
+              'Organize FDPs / workshop/Seminars',
+              'Engage in Consultancy.',
+              'Membership in professional body',
+              'No of Proposals submitted in Manthan Portal'
+            ],
+            Prof: [
+              'Publish in peer-reviewed journals',
+              'Apply for research grants',
+              'Organize FDPs / workshop/Seminars',
+              'Engage in Consultancy.',
+              'Membership in professional body',
+              'No of Proposals submitted in Manthan Portal'
+            ]
+          };
+
+          const particulars = isSHFaculty ? particularsMapSH[desig] : particularsMapEng[desig];
+          const tableName = isSHFaculty
+            ? (desig === 'Prof' ? 'Prof_SH_Yearly' : `${desig}_SH_Yearly`)
+            : (desig === 'Prof' ? 'Prof(Yearly)' : `${desig}(Yearly)`);
           
           // All months
           const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
           
           // Fetch ALL form data for this faculty (all months)
-          // Prof(Yearly) uses created_at, others use submitted_at
-          const orderColumn = desig === 'Prof' ? 'created_at' : 'submitted_at';
+          // S&H tables and Prof tables use created_at, Engineering non-Prof tables use submitted_at
+          const orderColumn = (isSHFaculty || desig === 'Prof') ? 'created_at' : 'submitted_at';
           const { data: allFormData, error } = await supabaseClient
             .from(tableName)
             .select('*')
@@ -666,27 +700,20 @@
             
             if (monthData) {
               let completedCount = 0;
-              let applicableCount = 0; // Count only applicable fields (exclude N/A)
-              
-              for (let i = 1; i <= particulars.length; i++) {
+              const totalCount = particulars.length;
+
+              for (let i = 1; i <= totalCount; i++) {
                 const status = monthData[`Status_${i}`];
                 const statusLower = status ? status.toString().trim().toLowerCase() : '';
-                
-                // Exclude "Not Applicable" from calculation
-                if (statusLower === 'not applicable') {
-                  continue; // Skip this field
-                }
-                
-                // Count this field as applicable
-                applicableCount++;
-                
+
                 // Count as completed if status is "completed" or "completed and updated"
                 if (statusLower === 'completed' || statusLower === 'completed and updated') {
                   completedCount++;
                 }
+                // All statuses (including 'Not Applicable', null, empty) are included in denominator
               }
-              
-              percentage = applicableCount > 0 ? Math.round((completedCount / applicableCount) * 100) : 0;
+
+              percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
             }
             
             const percentColor = percentage === 100 ? 'text-green-600' : percentage >= 50 ? 'text-orange-600' : 'text-red-600';
@@ -748,11 +775,13 @@
           const designation = (data["Designation"] || "").toUpperCase();
           
           // Fetch ALL Core_scope data for this department (all months)
+          const tableName = isSHFaculty ? 'Core_scope_SH' : 'Core_scope';
+          const orderColumn = isSHFaculty ? 'created_at' : 'submitted_at';
           const { data: allData, error } = await supabaseClient
-            .from('Core_scope')
+            .from(tableName)
             .select('*')
             .eq('Department', department)
-            .order('submitted_at', { ascending: false });
+            .order(orderColumn, { ascending: false });
           
           if (error) {
             console.error('Error fetching Core Scope data:', error);
@@ -789,8 +818,8 @@
             }
           });
           
-          // Core Scope particulars (15 items)
-          const particulars = [
+          // Core Scope particulars - Engineering (15 items) vs S&H (13 items)
+          const particularsEng = [
             'Design and deliver lectures and lab sessions',
             'Develop course materials, lesson plans and assessments ',
             'Incorporating innovative teaching methods including ICT tools ',
@@ -808,6 +837,25 @@
             'Library Utilization'
    
           ];
+
+          // Core Scope particulars for S&H (13 items - excludes items 10 and 14)
+          const particularsSH = [
+            'Design and deliver lectures and lab sessions',
+            'Develop course materials, lesson plans and assessments ',
+            'Incorporating innovative teaching methods including ICT tools ',
+            'Prepare Product model and instructional Chart ',
+            'Mentoring 30 students on coursework, projects and career planning.',
+            'Monitoring student attendance, performance, and well-being.',
+            'Provide remedial support and encourage participation in co-curricular and extra- curricular activities.',
+            'Maintain the Mentor book for assigned mentee.',
+            'Consolidate innovative course material & Lab manuals ',
+            'Contribute to accreditation processes (NBA, NAAC) and quality Assurance initiatives.',
+            'Serve on academic and administrative committees.',
+            'Maintain academic records, course files and logbook and student evaluations',
+            'Library Utilization'
+          ];
+
+          const particulars = isSHFaculty ? particularsSH : particularsEng;
           
           // Build month-wise matrix table
           let html = '<div class="overflow-x-auto">';
@@ -935,6 +983,9 @@
 
         // --- Begin: Faculty Responsibilities Status Table ---
         async function renderFacultyResponsibilitiesStatusTable() {
+          const responsibilitiesTableEl = document.getElementById("facultyResponsibilitiesStatusTable");
+          if (!responsibilitiesTableEl) return;
+
           const name = data["Name"] || "";
           const department = data["department"] || "";
           const designation = (data["Designation"] || "").toUpperCase();
@@ -943,7 +994,7 @@
           else if (designation === "ASP") tableName = "ASP";
           else if (designation === "PROF" || designation === "PROFESSOR") tableName = "Prof";
           if (!tableName) {
-            document.getElementById("facultyResponsibilitiesStatusTable").innerHTML = '<div class="text-gray-400">No responsibilities status available for this designation.</div>';
+            responsibilitiesTableEl.innerHTML = '<div class="text-gray-400">No responsibilities status available for this designation.</div>';
             return;
           }
           // Responsibility descriptions (order matches Status_1, Status_2, ...)
@@ -972,7 +1023,7 @@
             .order('submitted_at', { ascending: false })
             .limit(1);
           if (error || !portfolioRows || portfolioRows.length === 0) {
-            document.getElementById("facultyResponsibilitiesStatusTable").innerHTML = '<div class="text-gray-400">No recent responsibilities submission found.</div>';
+            responsibilitiesTableEl.innerHTML = '<div class="text-gray-400">No recent responsibilities submission found.</div>';
             return;
           }
           const row = portfolioRows[0];
@@ -990,8 +1041,7 @@
             html += `<td class="px-2 py-1 border border-gray-400">${status}</td>`;
           }
           html += '</tr></tbody></table></div>';
-          const responsibilitiesTableEl = document.getElementById("facultyResponsibilitiesStatusTable");
-          if (responsibilitiesTableEl) responsibilitiesTableEl.innerHTML = html;
+          responsibilitiesTableEl.innerHTML = html;
 
         // Modal logic for viewing original responsibilities data
         window.closeResponsibilitiesModal = function() {
@@ -1169,6 +1219,8 @@
               const nameTrimmed = facultyName.toString().trim().toLowerCase();
               const dept = data["department"] || "Unknown";
               const designation = data["Designation"] || "N/A";
+              const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+              const isSHFaculty = shDepartments.includes(dept);
               
               // Normalize designation
               const desig = designation.toUpperCase();
@@ -1181,18 +1233,24 @@
                 return;
               }
               
-              // Fetch Core Scope Monthly data
+              // Fetch Core Scope Monthly data (use appropriate table)
+            const coreScopeTableName = isSHFaculty ? 'Core_scope_SH' : 'Core_scope';
             const { data: coreScopeData } = await supabaseClient
-              .from('Core_scope')
+              .from(coreScopeTableName)
               .select('*')
               .eq('Month', selectedFacultySummaryMonth)
-              .eq('Department', dept);              // Fetch Yearly Mandatory Scope data
-              let yearlyTableName = desigDisplay === 'Prof' ? 'Prof(Yearly)' : `${desigDisplay}(Yearly)`;
+              .eq('Department', dept);
+
+              // Fetch Yearly Mandatory Scope data (use appropriate table)
+              let yearlyTableName = isSHFaculty
+                ? (desigDisplay === 'Prof' ? 'Prof_SH_Yearly' : `${desigDisplay}_SH_Yearly`)
+                : (desigDisplay === 'Prof' ? 'Prof(Yearly)' : `${desigDisplay}(Yearly)`);
+              const orderColumn = (isSHFaculty || desigDisplay === 'Prof') ? 'created_at' : 'submitted_at';
               const { data: yearlyData } = await supabaseClient
                 .from(yearlyTableName)
                 .select('*')
-                .eq('Month', selectedFacultySummaryMonth)
-                .eq('Department', dept);
+                .eq('Department', dept)
+                .order(orderColumn, { ascending: false });
               
               // Fetch department portfolio data for all 8 forms
               const deptPortfolioPromises = deptPortfolioFormMap.map(form => 
@@ -1214,8 +1272,8 @@
                 );
                 if (coreScopeRow) {
                   let completedCount = 0;
-                  const totalCount = 15; // Fixed denominator for Core Scope
-                  for (let i = 1; i <= 15; i++) {
+                  const totalCount = isSHFaculty ? 13 : 15;
+                  for (let i = 1; i <= totalCount; i++) {
                     const status = (coreScopeRow[`Status_${i}`] || '').toString().toLowerCase();
                     // Count as completed if status is "completed" or "completed and updated"
                     if (status === 'completed' || status === 'completed and updated') {
@@ -1240,9 +1298,31 @@
                 
                 if (yearlyRow) {
                   let completedCount = 0;
-                  // Professor has 9 particulars, others have 8
-                  let totalCount = desigDisplay === 'Prof' ? 9 : 8;
-                  let maxStatus = desigDisplay === 'Prof' ? 9 : 8;
+                  // S&H: AP=5, ASP=6, Prof=6 | Engineering: AP=8, ASP=9, Prof=9
+                  let totalCount, maxStatus;
+                  if (isSHFaculty) {
+                    if (desigDisplay === 'AP') {
+                      totalCount = 5;
+                      maxStatus = 5;
+                    } else if (desigDisplay === 'ASP') {
+                      totalCount = 6;
+                      maxStatus = 6;
+                    } else { // Prof
+                      totalCount = 6;
+                      maxStatus = 6;
+                    }
+                  } else {
+                    if (desigDisplay === 'AP') {
+                      totalCount = 8;
+                      maxStatus = 8;
+                    } else if (desigDisplay === 'ASP' || desigDisplay === 'Prof') {
+                      totalCount = 9;
+                      maxStatus = 9;
+                    } else {
+                      totalCount = 8;
+                      maxStatus = 8;
+                    }
+                  }
                   for (let i = 1; i <= maxStatus; i++) {
                     const status = (yearlyRow[`Status_${i}`] || '').toString().toLowerCase();
                     if (status === 'completed' || status === 'completed and updated') {
