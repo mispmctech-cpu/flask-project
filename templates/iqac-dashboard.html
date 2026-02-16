@@ -631,10 +631,6 @@ async function exportYearlyCurrentDepartment() {
     const verifyDataMap = verifyRes2.data || [];
     const rejectDataMap = rejectRes2.data || [];
     
-    // Build single combined sheet with all designations
-    const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', 'Verification Status', ...particularsMap.AP];
-    const allRows = [headers];
-    
     // Create lookup maps for form submissions
     const formDataMaps = {
       AP: {},
@@ -663,104 +659,103 @@ async function exportYearlyCurrentDepartment() {
       });
     });
     
-    // Process all faculty from current department
-    deptFaculty.forEach(fac => {
-      const dept = fac.department || selectedDepartment;
-      const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
-      const designation = (fac.Designation || '').toUpperCase();
-      
-      // Normalize designation
-      let desig = '';
-      if (designation === 'AP' || designation === 'ASSISTANT PROFESSOR') desig = 'AP';
-      else if (designation === 'ASP' || designation === 'ASSOCIATE PROFESSOR') desig = 'ASP';
-      else if (designation === 'PROF' || designation === 'PROFESSOR') desig = 'Prof';
-      else return; // Skip if designation not recognized
-      
-      const statusCount = desig === 'AP' ? 7 : 8;
-      const key = facultyName.trim().toLowerCase();
-      const formRow = formDataMaps[desig][key];
-      
-      let percentage = 0;
-      const rowData = [dept, desig, facultyName];
-      
-      if (formRow) {
-        // Faculty has submitted form - calculate percentage (fixed denominator: 7 for AP, 8 for ASP/Prof)
-        let completedCount = 0;
-        for (let i = 1; i <= statusCount; i++) {
-          const status = (formRow[`Status_${i}`] || '').toString().toLowerCase();
-          if (status === 'completed' || status === 'completed and updated') {
-            completedCount++;
+    // Build workbook with separate sheets per designation
+    const wb = XLSX.utils.book_new();
+    ['AP', 'ASP', 'Prof'].forEach(desigKey => {
+      const statusCount = desigKey === 'AP' ? 7 : 8;
+      const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', 'Verification Status', ...particularsMap[desigKey]];
+      const rows = [headers];
+
+      deptFaculty.forEach(fac => {
+        const dept = fac.department || selectedDepartment;
+        const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+        const designation = (fac.Designation || '').toUpperCase();
+
+        let desig = '';
+        if (designation === 'AP' || designation === 'ASSISTANT PROFESSOR') desig = 'AP';
+        else if (designation === 'ASP' || designation === 'ASSOCIATE PROFESSOR') desig = 'ASP';
+        else if (designation === 'PROF' || designation === 'PROFESSOR') desig = 'Prof';
+        else return;
+        if (desig !== desigKey) return;
+
+        const key = facultyName.trim().toLowerCase();
+        const formRow = formDataMaps[desig][key];
+
+        let percentage = 0;
+        const rowData = [dept, desig, facultyName];
+
+        if (formRow) {
+          let completedCount = 0;
+          for (let i = 1; i <= statusCount; i++) {
+            const status = (formRow[`Status_${i}`] || '').toString().toLowerCase();
+            if (status === 'completed' || status === 'completed and updated') {
+              completedCount++;
+            }
           }
-          // All statuses (including 'Not Applicable') are included in denominator
-        }
-        percentage = Math.round((completedCount / statusCount) * 100);
-        rowData.push(percentage + '%');
-        
-        // Check verification status
-        let verificationStatus = 'Not Submitted';
-        if (formRow.input_id) {
-          // Check if rejected first
-          const matchingReject = rejectDataMap.find(v => 
-            v.department === dept &&
-            v.portfolio_member_name?.toLowerCase() === facultyName.toLowerCase() &&
-            ((v.table_name && v.table_name.includes(desig) && v.table_name.toLowerCase().includes('yearly')) || 
-             v.input_id === formRow.input_id)
-          );
-          
-          if (matchingReject) {
-            const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
-            const reason = matchingReject.Commands || 'No reason';
-            verificationStatus = `Rejected (${rejectDate}) - ${reason}`;
-          } else {
-            // Check if verified
-            const matchingVerify = verifyDataMap.find(v => 
+          percentage = Math.round((completedCount / statusCount) * 100);
+          rowData.push(percentage + '%');
+
+          let verificationStatus = 'Not Submitted';
+          if (formRow.input_id) {
+            const matchingReject = rejectDataMap.find(v => 
               v.department === dept &&
               v.portfolio_member_name?.toLowerCase() === facultyName.toLowerCase() &&
               ((v.table_name && v.table_name.includes(desig) && v.table_name.toLowerCase().includes('yearly')) || 
                v.input_id === formRow.input_id)
             );
-            
-            if (matchingVerify) {
-              const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
-              verificationStatus = `Verified (${verifyDate})`;
+
+            if (matchingReject) {
+              const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
+              const reason = matchingReject.Commands || 'No reason';
+              verificationStatus = `Rejected (${rejectDate}) - ${reason}`;
             } else {
-              verificationStatus = 'Pending Verification';
+              const matchingVerify = verifyDataMap.find(v => 
+                v.department === dept &&
+                v.portfolio_member_name?.toLowerCase() === facultyName.toLowerCase() &&
+                ((v.table_name && v.table_name.includes(desig) && v.table_name.toLowerCase().includes('yearly')) || 
+                 v.input_id === formRow.input_id)
+              );
+
+              if (matchingVerify) {
+                const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
+                verificationStatus = `Verified (${verifyDate})`;
+              } else {
+                verificationStatus = 'Pending Verification';
+              }
             }
           }
-        }
-        rowData.push(verificationStatus);
-        
-        // Add status columns
-        for (let i = 1; i <= 8; i++) {
-          if (i <= statusCount) {
-            rowData.push(formRow[`Status_${i}`] || '-');
-          } else {
+          rowData.push(verificationStatus);
+
+          const headerCount = headers.length - 5;
+          for (let i = 1; i <= headerCount; i++) {
+            let statusKey = `Status_${i}`;
+            if (desigKey === 'AP' && i === 8) statusKey = 'Status_8';
+            if ((desigKey === 'ASP' || desigKey === 'Prof') && i === 9) statusKey = 'Status_9';
+            rowData.push(formRow[statusKey] || '-');
+          }
+        } else {
+          rowData.push('0%');
+          rowData.push('Not Submitted');
+          const headerCount = headers.length - 5;
+          for (let i = 1; i <= headerCount; i++) {
             rowData.push('-');
           }
         }
-      } else {
-        // Faculty has NOT submitted form - show 0% and empty columns
-        rowData.push('0%');
-        rowData.push('Not Submitted');
-        for (let i = 1; i <= 8; i++) {
-          rowData.push('-');
-        }
+
+        rows.push(rowData);
+      });
+
+      if (rows.length > 1) {
+        const dataRows = rows.slice(1);
+        dataRows.sort((a, b) => {
+          if (a[1] !== b[1]) return a[1].localeCompare(b[1]);
+          return a[2].localeCompare(b[2]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
+        XLSX.utils.book_append_sheet(wb, ws, desigKey);
       }
-      
-      allRows.push(rowData);
     });
-    
-    // Sort by designation, then faculty name
-    const dataRows = allRows.slice(1);
-    dataRows.sort((a, b) => {
-      if (a[1] !== b[1]) return a[1].localeCompare(b[1]);
-      return a[2].localeCompare(b[2]);
-    });
-    
-    // Create workbook and export
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, selectedDepartment);
+
     XLSX.writeFile(wb, `IQAC_Dashboard_Yearly_${selectedDepartment}.xlsx`);
     
   } catch (error) {
@@ -946,17 +941,18 @@ async function exportYearlyAllDepartments() {
           }
           rowData.push(verificationStatus);
           
-          for (let i = 1; i <= 8; i++) {
-            if (i <= statusCount) {
-              rowData.push(formRow[`Status_${i}`] || '-');
-            } else {
-              rowData.push('-');
-            }
+          const headerCount = headers.length - 5;
+          for (let i = 1; i <= headerCount; i++) {
+            let statusKey = `Status_${i}`;
+            if (desigKey === 'AP' && i === 8) statusKey = 'Status_8';
+            if ((desigKey === 'ASP' || desigKey === 'Prof') && i === 9) statusKey = 'Status_9';
+            rowData.push(formRow[statusKey] || '-');
           }
         } else {
           rowData.push('0%');
           rowData.push('Not Submitted');
-          for (let i = 1; i <= 8; i++) {
+          const headerCount = headers.length - 5;
+          for (let i = 1; i <= headerCount; i++) {
             rowData.push('-');
           }
         }
