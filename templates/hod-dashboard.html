@@ -395,10 +395,219 @@
         'Serve on academic and administrative committees',
         'Maintain academic records, course files, Log Book and student evaluations'
       ];
-      
+
+      let filteredFacultyList = facultyList;
+      if (selectedCoreScopeDesignation !== 'All') {
+        filteredFacultyList = facultyList.filter(fac => {
+          const desig = (fac.Designation || '').toUpperCase();
+          if (selectedCoreScopeDesignation === 'AP') return desig === 'AP' || desig === 'ASSISTANT PROFESSOR';
+          if (selectedCoreScopeDesignation === 'ASP') return desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR';
+          if (selectedCoreScopeDesignation === 'Prof') return desig === 'PROF' || desig === 'PROFESSOR';
+          return false;
+        });
+      }
+
+      if (csErr) {
+        document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-red-500">Failed to load core scope data.</div>';
+        return;
+      }
+
+      if (filteredFacultyList.length === 0) {
+        document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500">No faculty match the selected filters.</div>';
+        return;
+      }
+
+      let html = '';
+      html += `<div class="overflow-auto mb-6 border rounded-lg shadow-sm" style="max-height: 600px;">`;
+      html += `<table class="min-w-full text-xs bg-white" style="table-layout: auto;">`;
+      html += `<thead class="bg-green-700 text-white sticky top-0 z-20"><tr>`;
+      html += `<th class="px-3 py-2 sticky left-0 bg-green-700 z-30" style="min-width: 150px;">Department</th>`;
+      html += `<th class="px-3 py-2 bg-green-700" style="min-width: 120px;">Designation</th>`;
+      html += `<th class="px-3 py-2" style="min-width: 180px;">Faculty Name</th>`;
+      html += `<th class="px-3 py-2" style="min-width: 100px;">Percentage</th>`;
+      html += `<th class="px-3 py-2 text-center" style="min-width: 100px;">Verification</th>`;
+
+      for (let i = 0; i < 15; i++) {
+        html += `<th class="px-2 py-2" style="min-width: 120px;" title="${coreScopeLabels[i]}">${coreScopeShortLabels[i]}</th>`;
+      }
+
+      html += `</tr></thead><tbody>`;
+
+      for (const fac of filteredFacultyList) {
+        const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+        const designation = fac.Designation || 'N/A';
+
+        let desigDisplay = designation;
+        const desigUpper = designation.toUpperCase();
+        if (desigUpper === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
+        else if (desigUpper === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
+        else if (desigUpper === 'PROFESSOR') desigDisplay = 'Prof';
+
+        const facNamesToTry = [facultyName, fac.Name, fac['Portfolio Member Name'], fac.email]
+          .filter(Boolean)
+          .map(n => n.toString().trim().toLowerCase());
+
+        let matchingRows = [];
+        if (coreScopeData && coreScopeData.length > 0) {
+          matchingRows = coreScopeData.filter(row => {
+            const rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+            return facNamesToTry.includes(rowName);
+          });
+        }
+
+        let row = null;
+        if (matchingRows.length > 0) {
+          matchingRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
+          row = matchingRows[0];
+        }
+
+        let completedCount = 0;
+        const totalCount = 15;
+        if (row) {
+          for (let i = 1; i <= 15; i++) {
+            const statusVal = (row[`Status_${i}`] || '').toString().trim().toLowerCase();
+            if (statusVal === 'completed' || statusVal === 'completed and updated') {
+              completedCount++;
+            }
+          }
+        }
+
+        const percentage = Math.round((completedCount / totalCount) * 100);
+        const percentageDisplay = row ? `${percentage}%` : '0% (Not Submitted)';
+        const percentageClass = row ? (percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600') : 'text-red-600';
+
+        const coreScopeRowId = `corescope-${department.replace(/[^a-zA-Z0-9]/g, '')}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
+        const coreScopePercentageId = `percentage-${coreScopeRowId}`;
+        let verificationMark = '<span class="text-gray-400">-</span>';
+
+        if (row && row.input_id) {
+          verificationMark = `<span id="verify-${coreScopeRowId}" class="text-gray-400">...</span>`;
+
+          setTimeout(async () => {
+            const [verifyRes2, rejectRes2] = await Promise.all([
+              supabaseClient
+                .from('Hod-workdone')
+                .select('*')
+                .eq('department', department)
+                .ilike('portfolio_member_name', facultyName),
+              supabaseClient
+                .from('hod-workdone_reject')
+                .select('*')
+                .eq('department', department)
+                .ilike('portfolio_member_name', facultyName)
+            ]);
+
+            const verifyData = verifyRes2.data || [];
+            const rejectData = rejectRes2.data || [];
+
+            const verifyCell = document.getElementById(`verify-${coreScopeRowId}`);
+            const percentageCell = document.getElementById(`${coreScopePercentageId}`);
+
+            if (verifyCell) {
+              let matchingReject = rejectData.find(v => v.input_id === row.input_id);
+              if (!matchingReject) {
+                matchingReject = rejectData.find(v => {
+                  if (v.table_name && v.department === department) {
+                    const tableNameLower = v.table_name.toLowerCase();
+                    const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
+                    return (tableNameLower === 'core_scope' || tableNameLower.includes('core_scope')) && nameMatch;
+                  }
+                  return false;
+                });
+              }
+
+              if (matchingReject) {
+                const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
+                verifyCell.innerHTML = `<span class="text-red-600 font-bold text-lg" title="Rejected on ${rejectDate}">✗</span>`;
+              } else {
+                let matchingVerify = verifyData.find(v => {
+                  if (v.input_id === row.input_id) {
+                    if (v.table_name) {
+                      const tableNameLower = v.table_name.toLowerCase();
+                      return tableNameLower === 'core_scope' || tableNameLower.includes('core_scope');
+                    }
+                    return true;
+                  }
+                  return false;
+                });
+
+                if (!matchingVerify) {
+                  matchingVerify = verifyData.find(v => {
+                    if (v.table_name && v.department === department) {
+                      const tableNameLower = v.table_name.toLowerCase();
+                      const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
+                      return (tableNameLower === 'core_scope' || tableNameLower.includes('core_scope')) && nameMatch;
+                    }
+                    return false;
+                  });
+                }
+
+                if (matchingVerify) {
+                  const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
+                  verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
+
+                  if (percentageCell && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
+                    const validationScore = parseFloat(matchingVerify.validation_score);
+                    if (!isNaN(validationScore)) {
+                      const newClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
+                      percentageCell.className = `px-3 py-2 border ${newClass} font-semibold`;
+                      percentageCell.textContent = `${Math.round(validationScore)}%`;
+                    }
+                  }
+                } else {
+                  verifyCell.innerHTML = '<span class="text-red-600 font-bold text-lg" title="Not verified">✗</span>';
+                }
+              }
+            }
+          }, 100);
+        }
+
+        html += `<tr class="hover:bg-gray-50">`;
+        html += `<td class="px-3 py-2 border sticky left-0 bg-white z-10 font-medium">${department}</td>`;
+        html += `<td class="px-3 py-2 border font-medium">${desigDisplay}</td>`;
+        html += `<td class="px-3 py-2 border font-medium text-green-700">${facultyName}</td>`;
+        html += `<td id="${coreScopePercentageId}" class="px-3 py-2 border ${percentageClass} font-semibold">${percentageDisplay}</td>`;
+        html += `<td class="px-3 py-2 border text-center">${verificationMark}</td>`;
+
+        for (let i = 1; i <= 15; i++) {
+          const statusVal = row ? (row[`Status_${i}`] || '-') : '-';
+          let display = '-';
+          let statusClass = '';
+
+          if (row && statusVal && typeof statusVal === 'string') {
+            const val = statusVal.trim().toLowerCase();
+            if (val === 'completed' || val === 'completed and updated') {
+              display = 'Completed';
+              statusClass = 'text-green-600 font-semibold';
+            } else if (val === 'in progress' || val === 'inprogress') {
+              display = 'In Progress';
+              statusClass = 'text-yellow-600 font-semibold';
+            } else if (val === 'yet to be completed' || val === 'not started') {
+              display = 'Yet to be Completed';
+              statusClass = 'text-red-600 font-semibold';
+            } else if (val === 'not applicable' || val === 'na') {
+              display = 'N/A';
+              statusClass = 'text-gray-400';
+            } else if (val === '-' || val === '' || val === null) {
+              display = '-';
+              statusClass = 'text-gray-500';
+            } else {
+              display = statusVal;
+              statusClass = 'text-blue-600 font-semibold';
+            }
+          } else {
+            display = '-';
+            statusClass = 'text-gray-500';
+          }
+
+          html += `<td class="px-2 py-2 border ${statusClass}">${display}</td>`;
+        }
+
+        html += '</tr>';
+      }
+
       html += `</tbody></table></div>`;
-      
-      document.getElementById('coreScopeTableContainer').innerHTML = html || '<div class="text-gray-500">No faculty data found.</div>';
+      document.getElementById('coreScopeTableContainer').innerHTML = html || '<div class="text-gray-500">No core scope data found.</div>';
     }
     // --- END NEW: Core Scope Table ---
   </script>
