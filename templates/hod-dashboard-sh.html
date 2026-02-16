@@ -1094,9 +1094,12 @@
           let yearlyPercent = '-';
           let yearlyData = desigDisplay === 'AP' ? apRes.data : desigDisplay === 'ASP' ? aspRes.data : profRes.data;
           if (yearlyData && yearlyData.length > 0) {
-            const yearlyRow = yearlyData.find(r =>
+            const yearlyMatches = yearlyData.filter(r =>
               (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
             );
+            const yearlyRow = yearlyMatches.length > 0
+              ? yearlyMatches.sort((a, b) => (b.input_id || b.id || 0) - (a.input_id || a.id || 0))[0]
+              : null;
             if (yearlyRow) {
               let completedCount = 0;
               // S&H Designation-specific field counts: AP=5, ASP=6, Prof=6
@@ -1126,12 +1129,15 @@
               let percent = '0%';
 
               const formData = deptPortfolioResults[i].data || [];
-              const formRow = formData.find(r => {
+              const matchingRows = formData.filter(r => {
                 const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || r['Portfolio Memeber Name'] || r['faculty_name'] || r['Faculty Name'] || r['Name'] || '';
                 const rowMonth = r['Month'] || r['month'] || r['Month:'] || '';
                 const deptMatches = (r['Department'] || r['Department:'] || '').toString().trim().toLowerCase() === dept.toString().trim().toLowerCase();
                 return rowName.toString().trim().toLowerCase() === nameTrimmed && rowMonth === selectedSummaryMonth && deptMatches;
               });
+              const formRow = matchingRows.length > 0
+                ? matchingRows.sort((a, b) => (b.input_id || b.id || 0) - (a.input_id || a.id || 0))[0]
+                : null;
 
               if (formRow) {
                 let completedCount = 0;
@@ -1486,9 +1492,12 @@
           let yearlyPercent = '-';
           let yearlyData = desigDisplay === 'AP' ? apRes.data : desigDisplay === 'ASP' ? aspRes.data : profRes.data;
           if (yearlyData && yearlyData.length > 0) {
-            const yearlyRow = yearlyData.find(r =>
+            const yearlyMatches = yearlyData.filter(r =>
               (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
             );
+            const yearlyRow = yearlyMatches.length > 0
+              ? yearlyMatches.sort((a, b) => (b.input_id || b.id || 0) - (a.input_id || a.id || 0))[0]
+              : null;
             if (yearlyRow) {
               let completedCount = 0;
               let totalCount = desigDisplay === 'AP' ? 5 : 6;

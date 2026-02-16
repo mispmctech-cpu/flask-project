@@ -105,11 +105,7 @@ class WorkdoneTable {
       { table: "form6_monthly", portfolio: "Teaching & Learning Process Member (IQAC) (Monthly)" },
       { table: "form6-once in a semester", portfolio: "Teaching & Learning Process Member (IQAC) (Semester)" },
       { table: "form7-monthly", portfolio: "Student Support System Member (Discipline & Extra Curricular) (Monthly)" },
-      { table: "form7-Once in a Semester", portfolio: "Student Support System Member (Discipline & Extra Curricular) (Semester)" },
-      { table: "form7-Once in 2 Months", portfolio: "Student Support System Member (Discipline & Extra Curricular) (Bi-monthly)" },
       { table: "form8-monthly", portfolio: "Facilities & Technical Support Member (Lab Member) (Monthly)" },
-      { table: "form8-weekly", portfolio: "Facilities & Technical Support Member (Lab Member) (Weekly)" },
-      { table: "form8-once in 3 Months", portfolio: "Facilities & Technical Support Member (Lab Member) (Quarterly)" },
       // Core Scope Forms (ASP, AP, Professor)
       { table: "ASP(Yearly)", portfolio: "ASP Yearly Form" },
       { table: "AP(Yearly)", portfolio: "AP Yearly Form" },

@@ -1282,17 +1282,17 @@ function attachExportButtons() {
     );
 
     // Helper: choose the latest row from an array of rows.
-    // Preference order: `updated_at` (most recent), then `input_id`, then `id`, then `created_at`.
+    // Preference order: `input_id`, then `id`, then `updated_at`, then `created_at`.
     function chooseLatestRow(rows) {
       if (!rows || rows.length === 0) return null;
       return rows.reduce((latest, current) => {
         if (!latest) return current;
-        const latestTime = latest.updated_at ? new Date(latest.updated_at).getTime() : 0;
-        const currentTime = current.updated_at ? new Date(current.updated_at).getTime() : 0;
-        if (currentTime && currentTime > latestTime) return current;
         const latestInput = latest.input_id || latest.id || 0;
         const currentInput = current.input_id || current.id || 0;
         if (currentInput > latestInput) return current;
+        const latestTime = latest.updated_at ? new Date(latest.updated_at).getTime() : 0;
+        const currentTime = current.updated_at ? new Date(current.updated_at).getTime() : 0;
+        if (currentTime && currentTime > latestTime) return current;
         const latestCreated = latest.created_at ? new Date(latest.created_at).getTime() : 0;
         const currentCreated = current.created_at ? new Date(current.created_at).getTime() : 0;
         if (currentCreated && currentCreated > latestCreated) return current;
@@ -2467,9 +2467,10 @@ function attachExportButtons() {
           let yearlyPercent = '-';
           let yearlyData = desigDisplay === 'AP' ? apRes.data : desigDisplay === 'ASP' ? aspRes.data : profRes.data;
           if (yearlyData && yearlyData.length > 0) {
-            const yearlyRow = yearlyData.find(r => 
+            const yearlyMatches = yearlyData.filter(r => 
               (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
             );
+            const yearlyRow = chooseLatestRow(yearlyMatches);
             if (yearlyRow) {
               let completedCount = 0;
               // Designation-specific field counts for S&H: AP=5, ASP=6, Prof=6
@@ -2701,9 +2702,10 @@ function attachExportButtons() {
           let yearlyPercent = '-';
           let yearlyData = desigDisplay === 'AP' ? apRes.data : desigDisplay === 'ASP' ? aspRes.data : profRes.data;
           if (yearlyData && yearlyData.length > 0) {
-            const yearlyRow = yearlyData.find(r => 
+            const yearlyMatches = yearlyData.filter(r => 
               (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
             );
+            const yearlyRow = chooseLatestRow(yearlyMatches);
             if (yearlyRow) {
               let completedCount = 0;
               // Designation-specific field counts for S&H: AP=5, ASP=6, Prof=6
