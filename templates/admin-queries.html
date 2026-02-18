@@ -25,12 +25,29 @@
         <button id="modal-submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Submit</button>
       </div>
     </div>
+    <!-- Footer -->
+    <footer class="bg-gray-100 text-center py-4 mt-8 border-t border-gray-300 w-full">
+      <p class="text-gray-500 text-sm">
+        &copy; All Rights Reserved
+        <a href="https://pmctech.org" target="_blank" class="text-gray-500 hover:text-gray-700 underline">PMC TECH</a>, IV CSE 2022-2026.
+      </p>
+    </footer>
   </div>
   <!-- Modal Popup for Messages -->
   <div id="message-modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
     <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm text-center">
       <div id="message-modal-text" class="mb-4 text-purple-800 font-semibold"></div>
       <button id="message-modal-close" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">OK</button>
+    </div>
+  </div>
+  <!-- Modal Popup for full Query viewing -->
+  <div id="seeall-modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl">
+      <h2 class="text-lg font-bold mb-2 text-purple-800">Full Query</h2>
+      <div id="seeall-content" class="mb-4 text-gray-800 whitespace-pre-wrap"></div>
+      <div class="flex justify-end">
+        <button id="seeall-close" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">Close</button>
+      </div>
     </div>
   </div>
   <header class="w-full max-w-4xl text-center mt-8 mb-4">
@@ -60,7 +77,7 @@
         <input type="text" id="filter-query" placeholder="Filter Query" class="p-2 border border-gray-300 rounded-md w-40" />
       </div>
       <div class="overflow-x-auto w-full mb-4">
-        <table class="min-w-full border border-gray-300 rounded-lg">
+        <table class="min-w-full border border-gray-300 rounded-lg text-left table-auto">
           <thead class="bg-purple-800 text-white">
             <tr>
               <th class="py-2 px-4">Name</th>
@@ -74,17 +91,10 @@
           </thead>
           <tbody id="queries-table-body" class="bg-white text-gray-700">
             <!-- Rows will be injected here -->
-
-            <!-- Footer -->
-            <footer class="bg-gray-100 text-center py-4 mt-8 border-t border-gray-300">
-              <p class="text-gray-500 text-sm">
-                &copy; All Rights Reserved
-                <a href="https://pmctech.org" target="_blank" class="text-gray-500 hover:text-gray-700 underline">PMC TECH</a>, IV CSE 2022-2026.<br/>
-              </p>
-            </footer>
-
-          </body>
+          </tbody>
+        </table>
       </div>
+      <div id="unresolved-pagination" class="flex justify-center items-center gap-2 mt-4"></div>
       <div id="no-results" class="hidden text-red-600 mt-4 font-semibold">No queries found.</div>
     </div>
 
@@ -112,7 +122,7 @@
         <input type="text" id="filter-r-resolution" placeholder="Filter Resolution" class="p-2 border border-gray-300 rounded-md w-36" />
       </div>
       <div class="overflow-x-auto w-full">
-        <table class="min-w-full border border-gray-300 rounded-lg">
+        <table class="min-w-full border border-gray-300 rounded-lg text-left table-auto">
           <thead class="bg-green-700 text-white">
             <tr>
               <th class="py-2 px-4">Name</th>
@@ -130,6 +140,7 @@
           </tbody>
         </table>
       </div>
+      <div id="resolved-pagination" class="flex justify-center items-center gap-2 mt-4"></div>
       <div id="no-resolved-results" class="hidden text-red-600 mt-4 font-semibold">No resolved queries found.</div>
     </div>
   </div>
@@ -139,6 +150,28 @@
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let allQueries = [];
     let allResolved = [];
+    const pageSize = 10; // rows per page
+    let unresolvedCurrentPage = 1;
+    let resolvedCurrentPage = 1;
+
+    function truncateWords(text, maxWords) {
+      if (!text) return '';
+      const words = text.trim().split(/\s+/);
+      if (words.length <= maxWords) return text;
+      return words.slice(0, maxWords).join(' ') + '...';
+    }
+
+    function showFullQueryModal(text) {
+      const modal = document.getElementById('seeall-modal');
+      document.getElementById('seeall-content').textContent = text || '';
+      modal.classList.remove('hidden');
+      const closeBtn = document.getElementById('seeall-close');
+      function closeHandler() { modal.classList.add('hidden'); closeBtn.removeEventListener('click', closeHandler); }
+      closeBtn.addEventListener('click', closeHandler);
+    }
+
+    function goToUnresolvedPage(p) { unresolvedCurrentPage = p; renderTable(); }
+    function goToResolvedPage(p) { resolvedCurrentPage = p; renderResolvedTable(); }
 
     async function fetchQueries() {
       const { data, error } = await supabaseClient
@@ -185,48 +218,99 @@
                (!filters.mail || (q["mail id"]||'').toLowerCase().includes(filters.mail)) &&
                (!filters.query || (q["queries"]||'').toLowerCase().includes(filters.query));
       });
+
+      const total = filtered.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (unresolvedCurrentPage > totalPages) unresolvedCurrentPage = totalPages;
+
       if (filtered.length === 0) {
         document.getElementById('no-results').classList.remove('hidden');
+        document.getElementById('unresolved-pagination').innerHTML = '';
+        return;
       } else {
         document.getElementById('no-results').classList.add('hidden');
-        filtered.forEach(q => {
+        const start = (unresolvedCurrentPage - 1) * pageSize;
+        const pageItems = filtered.slice(start, start + pageSize);
+
+        pageItems.forEach(q => {
           const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td class="py-2 px-4">${q["Name"] || ''}</td>
-            <td class="py-2 px-4">${q["department"] || ''}</td>
-            <td class="py-2 px-4">${q["mobile number"] || ''}</td>
-            <td class="py-2 px-4">${q["mail id"] || ''}</td>
-            <td class="py-2 px-4">${q["queries"] || ''}</td>
-            <td class="py-2 px-4">${q.created_at ? new Date(q.created_at).toLocaleString() : ''}</td>
-            <td class="py-2 px-4">
-              <button class="resolve-btn bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded" data-id="${q.id}">Resolve</button>
-            </td>
-          `;
+
+          const tdName = document.createElement('td'); tdName.className = 'py-2 px-4'; tdName.textContent = q["Name"] || '';
+          const tdDept = document.createElement('td'); tdDept.className = 'py-2 px-4'; tdDept.textContent = q["department"] || '';
+          const tdMobile = document.createElement('td'); tdMobile.className = 'py-2 px-4'; tdMobile.textContent = q["mobile number"] || '';
+          const tdMail = document.createElement('td'); tdMail.className = 'py-2 px-4'; tdMail.textContent = q["mail id"] || '';
+
+          const tdQuery = document.createElement('td'); tdQuery.className = 'py-2 px-4';
+          const fullQuery = (q["queries"] || '').toString();
+          const truncated = truncateWords(fullQuery, 10);
+          const span = document.createElement('span'); span.textContent = truncated;
+          tdQuery.appendChild(span);
+          if ((fullQuery.trim().split(/\s+/).length) > 10) {
+            const btn = document.createElement('button');
+            btn.className = 'text-blue-600 underline ml-2';
+            btn.textContent = 'See all';
+            btn.addEventListener('click', () => showFullQueryModal(fullQuery));
+            tdQuery.appendChild(btn);
+          }
+
+          const tdCreated = document.createElement('td'); tdCreated.className = 'py-2 px-4'; tdCreated.textContent = q.created_at ? new Date(q.created_at).toLocaleString() : '';
+
+          const tdAction = document.createElement('td'); tdAction.className = 'py-2 px-4';
+          const resolveBtn = document.createElement('button');
+          resolveBtn.className = 'resolve-btn bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded';
+          resolveBtn.setAttribute('data-id', q.id);
+          resolveBtn.textContent = 'Resolve';
+          resolveBtn.addEventListener('click', function() {
+            showResolveModal(q);
+          });
+          tdAction.appendChild(resolveBtn);
+
+          tr.appendChild(tdName);
+          tr.appendChild(tdDept);
+          tr.appendChild(tdMobile);
+          tr.appendChild(tdMail);
+          tr.appendChild(tdQuery);
+          tr.appendChild(tdCreated);
+          tr.appendChild(tdAction);
+
           tbody.appendChild(tr);
         });
-        // Attach resolve button listeners
-        document.querySelectorAll('.resolve-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const queryId = this.getAttribute('data-id');
-            const queryObj = allQueries.find(q => q.id == queryId);
-            showResolveModal(queryObj);
-          });
-        });
+
+        renderUnresolvedPagination(totalPages);
       }
-    // Modal logic
+    }
+
+    function renderUnresolvedPagination(totalPages) {
+      const container = document.getElementById('unresolved-pagination');
+      container.innerHTML = '';
+      if (totalPages <= 1) return;
+      const prev = document.createElement('button'); prev.className = 'px-3 py-1 bg-gray-200 rounded disabled:opacity-50'; prev.textContent = 'Prev'; prev.disabled = unresolvedCurrentPage === 1;
+      prev.addEventListener('click', () => { if (unresolvedCurrentPage > 1) { unresolvedCurrentPage--; renderTable(); } });
+      const next = document.createElement('button'); next.className = 'px-3 py-1 bg-gray-200 rounded disabled:opacity-50'; next.textContent = 'Next'; next.disabled = unresolvedCurrentPage === totalPages;
+      next.addEventListener('click', () => { if (unresolvedCurrentPage < totalPages) { unresolvedCurrentPage++; renderTable(); } });
+      const info = document.createElement('span'); info.className = 'px-3'; info.textContent = `Page ${unresolvedCurrentPage} of ${totalPages}`;
+      container.appendChild(prev);
+      container.appendChild(info);
+      container.appendChild(next);
+    }
+
+    // Show resolve modal and handle submit/cancel (global function)
     function showResolveModal(queryObj) {
       const modal = document.getElementById('resolve-modal');
       modal.classList.remove('hidden');
       document.getElementById('modal-resolution').value = '';
-      document.getElementById('modal-resolvedby').value = '';
-      // Submit handler
+      const savedAdmin = localStorage.getItem('adminName') || '';
+      document.getElementById('modal-resolvedby').value = savedAdmin;
+
       const submitBtn = document.getElementById('modal-submit');
       const cancelBtn = document.getElementById('modal-cancel');
+
       function cleanup() {
         modal.classList.add('hidden');
         submitBtn.removeEventListener('click', submitHandler);
         cancelBtn.removeEventListener('click', cancelHandler);
       }
+
       function submitHandler() {
         const resolution = document.getElementById('modal-resolution').value.trim();
         const resolvedBy = document.getElementById('modal-resolvedby').value.trim();
@@ -238,9 +322,8 @@
           showMessageModal('Please specify your name (Resolved By).');
           return;
         }
-        // Save admin name to localStorage for future
         localStorage.setItem('adminName', resolvedBy);
-        // Insert into ResolvedQueries
+
         supabaseClient
           .from('ResolvedQueries')
           .insert({
@@ -258,7 +341,6 @@
               cleanup();
               return;
             }
-            // Delete from Queries
             supabaseClient
               .from('Queries')
               .delete()
@@ -269,14 +351,15 @@
                 } else {
                   showMessageModal('Query resolved and moved to ResolvedQueries.');
                   fetchQueries();
+                  fetchResolved();
                 }
                 cleanup();
               });
           });
       }
-      function cancelHandler() {
-        cleanup();
-      }
+
+      function cancelHandler() { cleanup(); }
+
       submitBtn.addEventListener('click', submitHandler);
       cancelBtn.addEventListener('click', cancelHandler);
     }
@@ -286,12 +369,8 @@
       document.getElementById('message-modal-text').textContent = message;
       modal.classList.remove('hidden');
       const closeBtn = document.getElementById('message-modal-close');
-      function closeHandler() {
-        modal.classList.add('hidden');
-        closeBtn.removeEventListener('click', closeHandler);
-      }
+      function closeHandler() { modal.classList.add('hidden'); closeBtn.removeEventListener('click', closeHandler); }
       closeBtn.addEventListener('click', closeHandler);
-    }
     }
 
     function renderResolvedTable() {
@@ -315,25 +394,73 @@
                (!filters.resolvedby || (q["resolved_by"]||'').toLowerCase().includes(filters.resolvedby)) &&
                (!filters.resolution || (q["resolution"]||'').toLowerCase().includes(filters.resolution));
       });
+
+      const total = filtered.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (resolvedCurrentPage > totalPages) resolvedCurrentPage = totalPages;
+
       if (filtered.length === 0) {
         document.getElementById('no-resolved-results').classList.remove('hidden');
+        document.getElementById('resolved-pagination').innerHTML = '';
+        return;
       } else {
         document.getElementById('no-resolved-results').classList.add('hidden');
-        filtered.forEach(q => {
+        const start = (resolvedCurrentPage - 1) * pageSize;
+        const pageItems = filtered.slice(start, start + pageSize);
+
+        pageItems.forEach(q => {
           const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td class="py-2 px-4">${q["Name"] || ''}</td>
-            <td class="py-2 px-4">${q["department"] || ''}</td>
-            <td class="py-2 px-4">${q["mobile number"] || ''}</td>
-            <td class="py-2 px-4">${q["mail id"] || ''}</td>
-            <td class="py-2 px-4">${q["queries"] || ''}</td>
-            <td class="py-2 px-4">${q["resolved_by"] || ''}</td>
-            <td class="py-2 px-4">${q["resolution"] || ''}</td>
-            <td class="py-2 px-4">${q.resolved_at ? new Date(q.resolved_at).toLocaleString() : ''}</td>
-          `;
+
+          const tdName = document.createElement('td'); tdName.className = 'py-2 px-4'; tdName.textContent = q["Name"] || '';
+          const tdDept = document.createElement('td'); tdDept.className = 'py-2 px-4'; tdDept.textContent = q["department"] || '';
+          const tdMobile = document.createElement('td'); tdMobile.className = 'py-2 px-4'; tdMobile.textContent = q["mobile number"] || '';
+          const tdMail = document.createElement('td'); tdMail.className = 'py-2 px-4'; tdMail.textContent = q["mail id"] || '';
+
+          const tdQuery = document.createElement('td'); tdQuery.className = 'py-2 px-4';
+          const fullQuery = (q["queries"] || '').toString();
+          const truncated = truncateWords(fullQuery, 10);
+          const span = document.createElement('span'); span.textContent = truncated;
+          tdQuery.appendChild(span);
+          if ((fullQuery.trim().split(/\s+/).length) > 10) {
+            const btn = document.createElement('button');
+            btn.className = 'text-blue-600 underline ml-2';
+            btn.textContent = 'See all';
+            btn.addEventListener('click', () => showFullQueryModal(fullQuery));
+            tdQuery.appendChild(btn);
+          }
+
+          const tdResolvedBy = document.createElement('td'); tdResolvedBy.className = 'py-2 px-4'; tdResolvedBy.textContent = q["resolved_by"] || '';
+          const tdResolution = document.createElement('td'); tdResolution.className = 'py-2 px-4'; tdResolution.textContent = q["resolution"] || '';
+          const tdResolvedAt = document.createElement('td'); tdResolvedAt.className = 'py-2 px-4'; tdResolvedAt.textContent = q.resolved_at ? new Date(q.resolved_at).toLocaleString() : '';
+
+          tr.appendChild(tdName);
+          tr.appendChild(tdDept);
+          tr.appendChild(tdMobile);
+          tr.appendChild(tdMail);
+          tr.appendChild(tdQuery);
+          tr.appendChild(tdResolvedBy);
+          tr.appendChild(tdResolution);
+          tr.appendChild(tdResolvedAt);
+
           tbody.appendChild(tr);
         });
+
+        renderResolvedPagination(totalPages);
       }
+    }
+
+    function renderResolvedPagination(totalPages) {
+      const container = document.getElementById('resolved-pagination');
+      container.innerHTML = '';
+      if (totalPages <= 1) return;
+      const prev = document.createElement('button'); prev.className = 'px-3 py-1 bg-gray-200 rounded disabled:opacity-50'; prev.textContent = 'Prev'; prev.disabled = resolvedCurrentPage === 1;
+      prev.addEventListener('click', () => { if (resolvedCurrentPage > 1) { resolvedCurrentPage--; renderResolvedTable(); } });
+      const next = document.createElement('button'); next.className = 'px-3 py-1 bg-gray-200 rounded disabled:opacity-50'; next.textContent = 'Next'; next.disabled = resolvedCurrentPage === totalPages;
+      next.addEventListener('click', () => { if (resolvedCurrentPage < totalPages) { resolvedCurrentPage++; renderResolvedTable(); } });
+      const info = document.createElement('span'); info.className = 'px-3'; info.textContent = `Page ${resolvedCurrentPage} of ${totalPages}`;
+      container.appendChild(prev);
+      container.appendChild(info);
+      container.appendChild(next);
     }
 
     document.getElementById('filter-name').addEventListener('input', renderTable);
