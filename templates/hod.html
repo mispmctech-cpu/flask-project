@@ -801,13 +801,65 @@
             document.getElementById('facultyGrid').innerHTML = '<div class="col-span-4 text-red-500">Failed to load faculty list.</div>';
             return;
           }
-          if (!data || data.length === 0) {
+
+          // Ensure HOD appears first in the list. Fetch HOD record for this department
+          // and move that faculty (if present) to the front. If HOD exists only in
+          // the `HOD` table and not in `Faculty`, create a synthetic card for display.
+          let facultyList = Array.isArray(data) ? data.slice() : [];
+
+          try {
+            const { data: hodData } = await supabaseClient
+              .from('HOD')
+              .select('email, Name, "Upload Image", "Designation"')
+              .eq('department', department)
+              .maybeSingle();
+
+            if (hodData && hodData.email) {
+              const hodEmail = hodData.email.toString().trim().toLowerCase();
+              let idx = facultyList.findIndex(f => (f.email || '').toString().trim().toLowerCase() === hodEmail);
+              if (idx > -1) {
+                const [hodEntry] = facultyList.splice(idx, 1);
+                facultyList.unshift(hodEntry);
+              } else {
+                // If no email match, attempt to match by name (case-insensitive).
+                const hodName = (hodData.Name || '').toString().trim().toLowerCase();
+                if (hodName) {
+                  const nameIdx = facultyList.findIndex(f => (f.Name || '').toString().trim().toLowerCase() === hodName);
+                  if (nameIdx > -1) {
+                    const [hodEntry] = facultyList.splice(nameIdx, 1);
+                    facultyList.unshift(hodEntry);
+                  } else {
+                    // Prepend synthetic HOD entry so HOD is visible first
+                    facultyList.unshift({
+                      email: hodData.email,
+                      Name: hodData.Name || 'HOD',
+                      'Upload Image': hodData['Upload Image'] || null,
+                      Designation: hodData.Designation || 'HOD'
+                    });
+                  }
+                } else {
+                  facultyList.unshift({
+                    email: hodData.email,
+                    Name: hodData.Name || 'HOD',
+                    'Upload Image': hodData['Upload Image'] || null,
+                    Designation: hodData.Designation || 'HOD'
+                  });
+                }
+              }
+              
+            }
+          } catch (e) {
+            console.warn('Could not fetch HOD record:', e);
+          }
+
+          if (!facultyList || facultyList.length === 0) {
             document.getElementById('facultyGrid').innerHTML = '<div class="col-span-4 text-gray-500">No faculty found for this department.</div>';
             return;
           }
-          document.getElementById('facultyGrid').innerHTML = data.map(faculty => `
+
+          document.getElementById('facultyGrid').innerHTML = facultyList.map(faculty => `
             <div class="flex flex-col items-center bg-white rounded-xl shadow p-4 faculty-card">
-              <a href="hod-viewfaculty-details.html?email=${encodeURIComponent(faculty['email'])}">
+              <a href="hod-viewfaculty-details.html?email=${encodeURIComponent(faculty['email'] || '')}">
                 <img src="${faculty['Upload Image'] || 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80'}" alt="Faculty" class="w-28 h-28 object-cover rounded-full shadow hover:scale-105 transition" />
               </a>
               <div class="faculty-name mt-3 font-medium text-pmcPurple">
