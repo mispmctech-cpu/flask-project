@@ -151,6 +151,7 @@
           <a href="workdone-edit-request.html" class="hover:underline text-green-400" id="editRequestLink">Edit Requests</a>
           <a href="#" onclick="openReportsModal(); return false;" class="hover:underline text-yellow-300" id="reportsLink">Reports</a>
           <a href="add-faculty.html" class="hover:underline">Add Faculty</a>
+          <button onclick="openChangePasswordModal()" aria-label="Update Password" class="ml-2 bg-red-500 hover:bg-red-600 text-white rounded px-3 py-1 text-sm shadow">Update Password</button>
           <button onclick="openNotificationModal()" aria-label="Notifications" class="focus:outline-none">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-blue-400 transition">
               <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3.75h6m-10.125 6.375V6.75A2.25 2.25 0 0 1 5.625 4.5h12.75a2.25 2.25 0 0 1 2.25 2.25v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75l-4.5 4.5z" />
@@ -171,6 +172,7 @@
           <a href="workdone-edit-request.html" class="hover:underline text-green-400" id="editRequestLinkMobile">Edit Requests</a>
           <a href="#" onclick="openReportsModal(); return false;" class="hover:underline text-yellow-300" id="reportsLinkMobile">Reports</a>
           <a href="add-faculty.html" class="hover:underline">Add Faculty</a>
+          <button onclick="openChangePasswordModal()" aria-label="Update Password" class="ml-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded px-3 py-1 text-sm shadow">Update Password</button>
           <button onclick="openNotificationModal()" aria-label="Notifications" class="focus:outline-none py-2 text-left">
             <span class="inline-flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-blue-400 transition">
@@ -473,10 +475,11 @@
         try {
           const supabaseUrl = "https://cbhodgwaazmjszkujrti.supabase.co";
           const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU";
-          const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+          // create a function-local client for fetching HOD info; don't overwrite global
+          const _localSupabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
           
           // Fetch HOD info from HOD table
-          const { data, error } = await supabaseClient
+          const { data, error } = await _localSupabaseClient
             .from('HOD')
             .select('Name, Department')
             .eq('department', department)
@@ -755,6 +758,41 @@
       <div class="grid grid-cols-2 md:grid-cols-4 gap-6" id="facultyGrid">
         <!-- Faculty cards will be injected here by JS -->
       </div>
+      <!-- Update Password Modal -->
+      <div id="changePasswordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+          <button type="button" onclick="closeChangePasswordModal()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-2xl font-bold">&times;</button>
+          <h2 class="text-xl font-bold text-pmcPurple mb-4">Update HOD Password</h2>
+
+          <div id="changePassStatus" class="mb-3 text-sm"></div>
+
+          <label class="block text-sm font-medium text-gray-700">Current Password</label>
+          <input id="currentPassword" type="password" class="w-full px-3 py-2 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-pmcPurple" />
+
+          <label class="block text-sm font-medium text-gray-700">New Password</label>
+          <input id="newPassword" type="password" class="w-full px-3 py-2 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-pmcPurple" />
+
+          <label class="block text-sm font-medium text-gray-700">Confirm New Password</label>
+          <input id="confirmNewPassword" type="password" class="w-full px-3 py-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-pmcPurple" />
+
+          <div class="flex justify-end gap-3">
+            <button onclick="closeChangePasswordModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded">Cancel</button>
+            <button onclick="updateHodPassword()" id="savePasswordBtn" class="px-4 py-2 bg-pmcPurple hover:bg-pmcPurpleDark text-white rounded">Update</button>
+          </div>
+        </div>
+      </div>
+      <!-- Success Popup -->
+      <div id="passwordSuccessModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 text-center transform transition-all">
+          <div class="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-white" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-800">Password updated</h3>
+          <p id="passwordSuccessMessage" class="text-sm text-gray-600 mt-2">Your password has been updated successfully.</p>
+        </div>
+      </div>
       <script src="https://unpkg.com/@supabase/supabase-js"></script>
       <script>
         // Only show HOD dashboard if ?as=hod is present, else redirect to hod-role.html
@@ -783,8 +821,8 @@
           const dashboardPage = isSHDepartment ? 'hod-dashboard-sh.html' : 'hod-dashboard.html';
           hodDashboardLink.href = `${dashboardPage}?department=${encodeURIComponent(department)}`;
         }
-        // Supabase client
-        const supabaseClient = window.supabase.createClient(
+        // create a global Supabase client for use by other scripts
+        window.supabaseClient = window.supabase.createClient(
           "https://cbhodgwaazmjszkujrti.supabase.co",
           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
         );
@@ -889,11 +927,11 @@
           console.log('[HOD DEBUG] No department found in query param or localStorage.');
           return;
         }
-        // Fetch Name and Upload Image from HOD table by department
+        // Fetch Name, email and Upload Image from HOD table by department
         try {
           const { data, error } = await supabaseClient
             .from('HOD')
-            .select('Name, "Upload Image"')
+            .select('email, Name, "Upload Image"')
             .eq('department', department)
             .maybeSingle();
           console.log('[HOD DEBUG] Querying HOD table for department:', department);
@@ -901,9 +939,10 @@
             console.error('[HOD DEBUG] Supabase error:', error);
           }
           console.log('[HOD DEBUG] HOD data:', data);
-          if (data && data.Name) {
-            usernameSpan.textContent = data.Name.trim() || 'Username';
+          if (data) {
+            if (data.Name) usernameSpan.textContent = data.Name.trim() || 'Username';
             profileImg.src = data["Upload Image"] || 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
+            if (data.email) localStorage.setItem('hodEmail', data.email);
           } else {
             usernameSpan.textContent = 'Username';
             profileImg.src = 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740&q=80';
@@ -917,6 +956,124 @@
       }
       // Ensure HOD info loads as soon as DOM is ready
       document.addEventListener('DOMContentLoaded', setHodUsername);
+      </script>
+      <script>
+        // Update Password modal controls and Supabase update
+        function openChangePasswordModal(){
+          document.getElementById('changePassStatus').textContent = '';
+          document.getElementById('currentPassword').value = '';
+          document.getElementById('newPassword').value = '';
+          document.getElementById('confirmNewPassword').value = '';
+          document.getElementById('changePasswordModal').classList.remove('hidden');
+        }
+
+        function closeChangePasswordModal(){
+          document.getElementById('changePasswordModal').classList.add('hidden');
+        }
+
+        async function updateHodPassword(){
+          const dept = (new URL(window.location.href)).searchParams.get('department') || localStorage.getItem('department') || '';
+          const current = document.getElementById('currentPassword').value || '';
+          const npass = document.getElementById('newPassword').value || '';
+          const confirm = document.getElementById('confirmNewPassword').value || '';
+          const statusDiv = document.getElementById('changePassStatus');
+
+          if(!dept){ statusDiv.textContent = 'No department selected.'; statusDiv.className = 'text-red-600 mb-3'; return; }
+          if(!npass){ statusDiv.textContent = 'Enter new password.'; statusDiv.className = 'text-red-600 mb-3'; return; }
+          if(npass !== confirm){ statusDiv.textContent = 'New passwords do not match.'; statusDiv.className = 'text-red-600 mb-3'; return; }
+
+          statusDiv.textContent = 'Updating password...'; statusDiv.className = 'text-blue-600 mb-3';
+
+          try {
+            const client = window.supabaseClient
+              || (window.supabase && typeof window.supabase.createClient === 'function'
+                ? window.supabase.createClient('https://cbhodgwaazmjszkujrti.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU')
+                : null);
+            if (!client) { throw new Error('Supabase client not available'); }
+
+            console.log('[HOD PW] fetching HOD for department:', dept);
+            const { data, error } = await client
+              .from('HOD')
+              .select('input_id, password')
+              .eq('department', dept)
+              .maybeSingle();
+            console.log('[HOD PW] fetch result:', data, error);
+
+            if (error) throw error;
+
+            // If not found by department, try to fetch by stored HOD email as fallback
+            let hodRecord = data;
+            if (!hodRecord) {
+              const hodEmail = localStorage.getItem('hodEmail') || '';
+              if (hodEmail) {
+                console.log('[HOD PW] not found by department, trying by email:', hodEmail);
+                const { data: byEmailData, error: byEmailErr } = await client
+                  .from('HOD')
+                  .select('input_id, email, password, department')
+                  .eq('email', hodEmail)
+                  .maybeSingle();
+                console.log('[HOD PW] fetch by email result:', byEmailData, byEmailErr);
+                if (byEmailErr) throw byEmailErr;
+                hodRecord = byEmailData;
+              }
+            }
+
+            if(!hodRecord){ statusDiv.textContent = 'HOD record not found (department/email).'; statusDiv.className = 'text-red-600 mb-3'; return; }
+
+            // Basic check: compare current password (assuming stored as plaintext in DB)
+            if((hodRecord.password || '') !== current){ statusDiv.textContent = 'Current password is incorrect.'; statusDiv.className = 'text-red-600 mb-3'; return; }
+
+            // Prefer update by email if available, else by department
+            const updateMatcher = (hodRecord.email) ? { column: 'email', value: hodRecord.email } : { column: 'department', value: dept };
+
+            const updateQuery = client.from('HOD').update({ password: npass });
+            const { data: upData, error: upErr } = await updateQuery.eq(updateMatcher.column, updateMatcher.value);
+
+            console.log('[HOD PW] update result:', upData, upErr);
+            if(upErr) throw upErr;
+
+                // If Supabase returned updated rows, show success. Otherwise verify by refetch.
+                let updated = false;
+                if (upData) {
+                  if (Array.isArray(upData)) updated = upData.length > 0;
+                  else updated = true;
+                }
+
+                if (!updated) {
+                  // refetch to confirm current stored password
+                  try {
+                    const { data: checkData, error: checkErr } = await client
+                      .from('HOD')
+                      .select('password')
+                      .eq(updateMatcher.column, updateMatcher.value)
+                      .maybeSingle();
+                    console.log('[HOD PW] verify fetch:', checkData, checkErr);
+                    if (!checkErr && checkData && (checkData.password || '') === npass) {
+                      updated = true;
+                    }
+                  } catch (ve) {
+                    console.warn('[HOD PW] verify fetch failed:', ve);
+                  }
+                }
+
+                if (updated) {
+                  // show attractive modal
+                  document.getElementById('passwordSuccessMessage').textContent = 'Your password has been updated successfully.';
+                  document.getElementById('passwordSuccessModal').classList.remove('hidden');
+                  statusDiv.textContent = '';
+                  setTimeout(() => {
+                    document.getElementById('passwordSuccessModal').classList.add('hidden');
+                    closeChangePasswordModal();
+                  }, 1800);
+                } else {
+                  statusDiv.textContent = 'Update completed but no rows returned — update may be blocked by Supabase permissions.';
+                  statusDiv.className = 'text-yellow-600 mb-3';
+                }
+          }catch(err){
+            console.error('Error updating HOD password:', err);
+            statusDiv.textContent = 'Error: ' + (err.message || err); statusDiv.className = 'text-red-600 mb-3';
+          }
+        }
       </script>
     </div>
     <!-- SheetJS (xlsx) CDN for Excel export -->
