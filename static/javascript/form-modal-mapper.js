@@ -142,7 +142,7 @@ function getFormModalContent(row, details) {
       'Contribute to accreditation processes (NBA),(NAAC) and quality Assurance initiatives.',
       'Serve on academic and administrative committees',
       'ADMINISTRATIVE DUTIES : MAINTAIN ACADEMIC RECORDS, COURSE FILES, LOG BOOK AND STUDENT EVALUATIONS',
-      'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
+      'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
       'Library Utilization'
     ];
 
