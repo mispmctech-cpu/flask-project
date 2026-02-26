@@ -138,10 +138,10 @@ function getFormModalContent(row, details) {
       'Student Mentorship & Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
       'Student Mentorship & Support: Maintain the Mentor book for assigned mentee.',
       'Student Mentorship & Support: Consolidate innovative course material, Lab manuals',
-      'Research and Development: Present at conferences.',
-      'Research and Development: Guide student research and final-year projects',
       'Institutional Development: Participate in curriculum development and revision through Boards of Studies.',
-      'Institutional Development: Serve on academic and administrative committees.',
+      'Contribute to accreditation processes (NBA),(NAAC) and quality Assurance initiatives.',
+      'Serve on academic and administrative committees',
+      'ADMINISTRATIVE DUTIES : MAINTAIN ACADEMIC RECORDS, COURSE FILES, LOG BOOK AND STUDENT EVALUATIONS',
       'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
       'Library Utilization'
     ];
