@@ -1222,7 +1222,7 @@ function attachExportButtons() {
   html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:180px;">Faculty Name</th>';
   html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:200px;">Portfolio Name</th>';
   html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:150px;">Percentage</th>';
-  html += '<th class="px-3 py-2 border border-gray-400 text-center" style="background:#FEF3C7; min-width:100px;">Verification</th>';
+  
   html += '</tr></thead>';
   html += '<tbody>';
   
@@ -1277,7 +1277,7 @@ function attachExportButtons() {
     html += `<td class="px-3 py-2 border border-gray-400" style="min-width:180px;">${row.facultyName}</td>`;
     html += `<td class="px-3 py-2 border border-gray-400" style="min-width:200px;">${row.portfolioName}</td>`;
     html += `<td class="px-3 py-2 border border-gray-400" style="min-width:150px;" id="percent-${row.rowId}">Loading...</td>`;
-    html += `<td class="px-3 py-2 border border-gray-400 text-center" style="min-width:100px;" id="verify-${row.rowId}">-</td>`;
+    
     html += `</tr>`;
   }
   
@@ -1346,62 +1346,8 @@ function attachExportButtons() {
             }
           }
           
-          // Check verification status AFTER setting initial percentage
-          // This allows the validation score to override the calculated percentage
-          const verifyCell = document.getElementById(`verify-${row.rowId}`);
-          if (verifyCell && bestRow) {
-            // Extract form number from table name (e.g., "form2-monthly" -> "form2")
-            const formNumber = row.tableName.match(/form\d+/)?.[0] || row.tableName;
-            
-            // Check if verified
-            const { data: verifyData } = await supabaseClient
-              .from('Hod-workdone')
-              .select('*')
-              .eq('department', row.dept)
-              .ilike('portfolio_member_name', row.facultyName);
-            
-            // First, try to find exact match by input_id AND table_name
-            let matchingVerify = verifyData?.find(v => {
-              const inputIdMatch = v.input_id === bestRow.input_id;
-              const tableNameMatch = v.table_name && v.table_name.toLowerCase() === row.tableName.toLowerCase();
-              return inputIdMatch && tableNameMatch;
-            });
-            
-            // If no exact match, try partial matching
-            if (!matchingVerify) {
-              matchingVerify = verifyData?.find(v => {
-                // Match by table_name (form6_monthly should match form6)
-                const tableNameMatch = v.table_name && v.table_name.toLowerCase() === row.tableName.toLowerCase();
-                // Also try partial match for the form number
-                const formNumberMatch = v.table_name && v.table_name.toLowerCase().includes(formNumber.toLowerCase());
-                const inputIdMatch = v.input_id === bestRow.input_id;
-                return tableNameMatch || formNumberMatch || inputIdMatch;
-              });
-            }
-            
-            if (matchingVerify) {
-              const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
-              verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
-              
-              // Update percentage with validation score from Hod-workdone if verified
-              const currentPercentCell = document.getElementById(`percent-${row.rowId}`);
-              if (currentPercentCell) {
-                // Check if validation_score exists and is not null/undefined
-                const rawScore = matchingVerify.validation_score;
-                if (rawScore != null && rawScore !== '') {
-                  const validationScore = parseFloat(rawScore);
-                  if (!isNaN(validationScore)) {
-                    const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
-                    currentPercentCell.innerHTML = `<span class="font-semibold ${percentageClass}">${Math.round(validationScore)}%</span>`;
-                  }
-                }
-              }
-            } else {
-              verifyCell.innerHTML = '<span class="text-red-600 font-bold text-lg" title="Not verified">✗</span>';
-            }
-          } else if (verifyCell) {
-            verifyCell.innerHTML = '<span class="text-gray-400" title="No data submitted">-</span>';
-          }
+          // Verification/validation scores are intentionally not displayed here.
+          // Keep the percentage shown as the submitted (calculated) score.
         })();
       }
 
@@ -1612,7 +1558,6 @@ function attachExportButtons() {
       html += `<th class="px-3 py-2 bg-green-700" style="min-width: 120px;">Designation</th>`;
       html += `<th class="px-3 py-2" style="min-width: 180px;">Faculty Name</th>`;
       html += `<th class="px-3 py-2" style="min-width: 100px;">Percentage</th>`;
-      html += `<th class="px-3 py-2 text-center" style="min-width: 100px;">Verification</th>`;
       
       // Add columns for all 15 status fields with full descriptions as tooltips
       for (let i = 0; i < 15; i++) {
@@ -1674,66 +1619,12 @@ function attachExportButtons() {
         // Check verification in Hod-workdone table
         const coreScopeRowId = `corescope-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
         const coreScopePercentageId = `percentage-${coreScopeRowId}`;
-        let verificationMark = '<span class="text-gray-400">-</span>';
-        if (row && row.input_id) {
-          // We'll check this asynchronously after rendering
-          verificationMark = `<span id="verify-${coreScopeRowId}" class="text-gray-400">...</span>`;
-          
-          // Async check
-          setTimeout(async () => {
-            // Check if verified
-            const { data: verifyData } = await supabaseClient
-              .from('Hod-workdone')
-              .select('*')
-              .eq('department', dept)
-              .ilike('portfolio_member_name', facultyName);
-            
-            const verifyCell = document.getElementById(`verify-${coreScopeRowId}`);
-            const percentageCell = document.getElementById(`${coreScopePercentageId}`);
-            if (verifyCell) {
-              // First, try to find exact match by input_id AND table_name
-              let matchingVerify = verifyData?.find(v => {
-                const inputIdMatch = v.input_id === row.input_id;
-                const tableNameMatch = v.table_name && v.table_name.toLowerCase().includes('core');
-                return inputIdMatch && tableNameMatch;
-              });
-              
-              // If no exact match, try partial matching
-              if (!matchingVerify) {
-                matchingVerify = verifyData?.find(v => 
-                  (v.table_name && v.table_name.toLowerCase().includes('core')) || 
-                  v.input_id === row.input_id
-                );
-              }
-              
-              if (matchingVerify) {
-                const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
-                verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
-                verifyCell.className = 'text-green-600';
-                
-                // Update percentage with validation score from Hod-workdone if verified
-                if (percentageCell && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
-                  const validationScore = parseFloat(matchingVerify.validation_score);
-                  if (!isNaN(validationScore)) {
-                    const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
-                    percentageCell.className = `px-3 py-2 border ${percentageClass} font-semibold`;
-                    percentageCell.textContent = `${Math.round(validationScore)}%`;
-                  }
-                }
-              } else {
-                verifyCell.innerHTML = '<span class="text-red-600 font-bold text-lg" title="Not verified">✗</span>';
-                verifyCell.className = 'text-red-600';
-              }
-            }
-          }, 100);
-        }
         
         html += `<tr class="hover:bg-gray-50">`;
         html += `<td class="px-3 py-2 border sticky left-0 bg-white z-10 font-medium">${dept}</td>`;
         html += `<td class="px-3 py-2 border font-medium">${desigDisplay}</td>`;
         html += `<td class="px-3 py-2 border font-medium text-green-700">${facultyName}</td>`;
         html += `<td id="${coreScopePercentageId}" class="px-3 py-2 border ${percentageClass} font-semibold">${percentageDisplay}</td>`;
-        html += `<td class="px-3 py-2 border text-center">${verificationMark}</td>`;
         
         // Add status cells for all 15 fields
         for (let i = 1; i <= 15; i++) {
@@ -2341,9 +2232,11 @@ function attachExportButtons() {
         return isNaN(num) ? (isMandatory ? 0 : null) : num;
       };
       
-      // Mandatory scopes - always include (0 if not filled)
+      // Mandatory scopes - core scope always included (0 if not filled)
       validScores.push(parsePercent(coreScopePercent, true));
-      validScores.push(parsePercent(yearlyPercent, true));
+      // Yearly scope: include only if submitted; do not force 0 when missing
+      const parsedYearly = parsePercent(yearlyPercent, false);
+      if (parsedYearly !== null) validScores.push(parsedYearly);
       
       // Optional portfolios - only include if allocated (0 if allocated but not filled)
       [deptPortfolio1, deptPortfolio2, instPortfolio1, instPortfolio2].forEach(score => {
@@ -2483,6 +2376,8 @@ function attachExportButtons() {
         }
         const { data: allFaculty, error: facErr } = await facultyQuery;
         if (facErr) throw facErr;
+        // Exclude S&H departments from the consolidated summary export
+        const nonSHFaculty = (allFaculty || []).filter(f => !isSHDepartment(f.department));
         
         // Fetch Core Scope Monthly data
         let coreScopeQuery = supabaseClient.from('Core_scope').select('*').eq('Month', selectedSummaryMonth);
@@ -2519,7 +2414,7 @@ function attachExportButtons() {
         // Build summary data
         const summaryRows = [];
         
-        for (const fac of allFaculty) {
+        for (const fac of nonSHFaculty) {
           const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || '';
           const nameTrimmed = facultyName.toString().trim().toLowerCase();
           const dept = fac.department || 'Unknown';
@@ -2994,6 +2889,7 @@ function attachExportButtons() {
             'Department': dept,
             'Designation': desigDisplay,
             'Faculty Name': facultyName,
+            'Faculty Email': fac.email || '',
             'Faculty Core Scope Monthly': coreScopePercent,
             'Faculty Mandatory Scope (Yearly)': yearlyPercent,
             'Department Portfolio Scope-1': deptPortfolio1Percent,
