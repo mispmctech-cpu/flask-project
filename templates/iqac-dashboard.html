@@ -1222,6 +1222,7 @@ function attachExportButtons() {
   html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:180px;">Faculty Name</th>';
   html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:200px;">Portfolio Name</th>';
   html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:150px;">Percentage</th>';
+  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:100px;">View</th>';
   
   html += '</tr></thead>';
   html += '<tbody>';
@@ -1250,7 +1251,8 @@ function attachExportButtons() {
             portfolioName: h.label,
             tableName: h.table,
             formKey,
-            rowId
+            rowId,
+            viewCellId: `view-${rowId}`
           });
         }
       }
@@ -1277,6 +1279,7 @@ function attachExportButtons() {
     html += `<td class="px-3 py-2 border border-gray-400" style="min-width:180px;">${row.facultyName}</td>`;
     html += `<td class="px-3 py-2 border border-gray-400" style="min-width:200px;">${row.portfolioName}</td>`;
     html += `<td class="px-3 py-2 border border-gray-400" style="min-width:150px;" id="percent-${row.rowId}">Loading...</td>`;
+    html += `<td class="px-3 py-2 border border-gray-400 text-center" style="min-width:100px;" id="${row.viewCellId}"><span class="text-gray-400">-</span></td>`;
     
     html += `</tr>`;
   }
@@ -1327,6 +1330,7 @@ function attachExportButtons() {
           
           // Update the percentage cell
           let percentCell = document.getElementById(`percent-${row.rowId}`);
+          let viewCell = document.getElementById(row.viewCellId);
           if (percentCell) {
             // Apply status filter
             if (selectedStatus === 'Completed' && !filled) {
@@ -1343,6 +1347,24 @@ function attachExportButtons() {
               percentCell.innerHTML = `<span class="font-semibold ${percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600'}">${percentage}%</span>`;
             } else {
               percentCell.innerHTML = `<span class="text-red-600 font-semibold">0% (Not Submitted)</span>`;
+            }
+          }
+
+          if (viewCell) {
+            if (bestRow) {
+              const mapperPortfolio = getDepartmentPortfolioMapperName(row.formKey, row.portfolioName);
+              const cacheKey = `dept-${row.rowId}-${bestRow.input_id || bestRow.id || 'latest'}`;
+              window.dashboardMappedFormCache = window.dashboardMappedFormCache || {};
+              window.dashboardMappedFormCache[cacheKey] = {
+                rowContext: {
+                  table: row.tableName,
+                  portfolio: mapperPortfolio
+                },
+                details: bestRow
+              };
+              viewCell.innerHTML = `<button class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-xs font-semibold" onclick="viewMappedDashboardForm('${cacheKey}', 'Department Portfolio Form')">View</button>`;
+            } else {
+              viewCell.innerHTML = '<span class="text-gray-400">-</span>';
             }
           }
           
@@ -1423,6 +1445,46 @@ function attachExportButtons() {
         if (currentCreated && currentCreated > latestCreated) return current;
         return latest;
       }, null);
+    }
+
+    function getDepartmentPortfolioMapperName(formKey, fallbackLabel) {
+      const map = {
+        form1: 'Students Performance in Training & Placement Member',
+        form2: 'Class Advisor',
+        form3: 'Faculty Information & Contribution Member',
+        form4: 'Course Outcome & Program Outcome Member (Exam Cell)',
+        form5: 'Continuous Improvement Member (Program Member)',
+        form6: 'Teaching & Learning Process Member (IQAC)',
+        form7: 'Student Support System Member (Discipline & Extra Curricular)',
+        form8: 'Facilities & Technical Support Member (Lab Member)'
+      };
+      return map[formKey] || fallbackLabel || '';
+    }
+
+    function viewMappedDashboardForm(cacheKey, modalTitle = 'Faculty Form Details') {
+      document.getElementById('viewFormModal').classList.remove('hidden');
+      document.getElementById('viewFormModalTitle').textContent = modalTitle;
+      document.getElementById('viewFormModalContent').innerHTML = '<div class="text-center text-gray-500">Loading form data...</div>';
+
+      const cache = window.dashboardMappedFormCache || {};
+      const cached = cache[cacheKey];
+      if (!cached || !cached.rowContext || !cached.details) {
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Submitted form data not found.</div>';
+        return;
+      }
+
+      if (typeof getFormModalContent !== 'function') {
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Form modal mapper not loaded.</div>';
+        return;
+      }
+
+      try {
+        const html = getFormModalContent(cached.rowContext, cached.details);
+        document.getElementById('viewFormModalContent').innerHTML = html;
+      } catch (error) {
+        console.error('Mapper render error:', error);
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Failed to render form details.</div>';
+      }
     }
 
     // --- NEW: Faculty Core Scope - Monthly Table from Core_scope table ---
@@ -1558,6 +1620,7 @@ function attachExportButtons() {
       html += `<th class="px-3 py-2 bg-green-700" style="min-width: 120px;">Designation</th>`;
       html += `<th class="px-3 py-2" style="min-width: 180px;">Faculty Name</th>`;
       html += `<th class="px-3 py-2" style="min-width: 100px;">Percentage</th>`;
+      html += `<th class="px-3 py-2" style="min-width: 100px;">View</th>`;
       
       // Add columns for all 15 status fields with full descriptions as tooltips
       for (let i = 0; i < 15; i++) {
@@ -1619,12 +1682,24 @@ function attachExportButtons() {
         // Check verification in Hod-workdone table
         const coreScopeRowId = `corescope-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
         const coreScopePercentageId = `percentage-${coreScopeRowId}`;
+        const coreScopeCacheKey = `core-${coreScopeRowId}`;
+        if (row) {
+          window.dashboardMappedFormCache = window.dashboardMappedFormCache || {};
+          window.dashboardMappedFormCache[coreScopeCacheKey] = {
+            rowContext: {
+              table: 'Core_scope',
+              portfolio: 'Faculty Core Scope (Monthly)'
+            },
+            details: row
+          };
+        }
         
         html += `<tr class="hover:bg-gray-50">`;
         html += `<td class="px-3 py-2 border sticky left-0 bg-white z-10 font-medium">${dept}</td>`;
         html += `<td class="px-3 py-2 border font-medium">${desigDisplay}</td>`;
         html += `<td class="px-3 py-2 border font-medium text-green-700">${facultyName}</td>`;
         html += `<td id="${coreScopePercentageId}" class="px-3 py-2 border ${percentageClass} font-semibold">${percentageDisplay}</td>`;
+        html += `<td class="px-3 py-2 border text-center">${row ? `<button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold" onclick="viewMappedDashboardForm('${coreScopeCacheKey}', 'Faculty Core Scope - Monthly Form')">View</button>` : '<span class="text-gray-400">-</span>'}</td>`;
         
         // Add status cells for all 15 fields
         for (let i = 1; i <= 15; i++) {
@@ -2644,7 +2719,7 @@ function attachExportButtons() {
           html += `<td id="summary-inst2-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.instPortfolio2Percent}</td>`;
           html += `<td id="summary-rating-${summaryRowId}" class="px-2 py-2 border text-center">`;
           html += `<div class="star-rating ${rating.colorClass}">${rating.stars}</div>`;
-          html += `<div class="text-xs mt-1 ${rating.colorClass}">${rating.average}%</div>`;
+          html += `<div class="text-xs mt-1 ${rating.colorClass}">${Math.round(rating.average)}%</div>`;
           html += `</td>`;
           html += '</tr>';
           
@@ -2896,7 +2971,7 @@ function attachExportButtons() {
             'Department Portfolio Scope-2': deptPortfolio2Percent,
             'Institution Portfolio-1': instPortfolio1Percent,
             'Institution Portfolio-2': instPortfolio2Percent,
-            'Overall Rating (%)': rating.average + '%',
+            'Overall Rating (%)': Math.round(rating.average) + '%',
             'Stars': rating.starCount + ' stars'
           });
         }

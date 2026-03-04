@@ -1462,7 +1462,7 @@
               );
               html += `<td class="px-2 py-2 border text-center">`;
               html += `<div class="star-rating ${rating.colorClass}">${rating.stars}</div>`;
-              html += `<div class="text-xs mt-1 ${rating.colorClass}">${rating.average}%</div>`;
+              html += `<div class="text-xs mt-1 ${rating.colorClass}">${Math.round(rating.average)}%</div>`;
               html += `</td>`;
               
               html += '</tr>';
@@ -1522,7 +1522,7 @@
           
           let html = '<div class="flex items-center justify-center gap-4">';
           html += `<div class="star-rating ${rating.colorClass}" style="font-size: 24px;">${rating.stars}</div>`;
-          html += `<div class="text-2xl font-bold ${rating.colorClass}">${rating.average}%</div>`;
+          html += `<div class="text-2xl font-bold ${rating.colorClass}">${Math.round(rating.average)}%</div>`;
           html += '<div class="text-xs text-gray-600">Overall Performance Score</div>';
           html += `<div class="text-xs font-medium ${rating.colorClass}">${message}</div>`;
           html += '</div>';

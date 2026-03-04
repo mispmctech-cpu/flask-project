@@ -2495,7 +2495,7 @@ function attachExportButtons() {
           html += `<td id="summary-inst2-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.instPortfolio2Percent}</td>`;
           html += `<td id="summary-rating-${summaryRowId}" class="px-2 py-2 border text-center">`;
           html += `<div class="star-rating ${rating.colorClass}">${rating.stars}</div>`;
-          html += `<div class="text-xs mt-1 ${rating.colorClass}">${rating.average}%</div>`;
+          html += `<div class="text-xs mt-1 ${rating.colorClass}">${Math.round(rating.average)}%</div>`;
           html += `</td>`;
           html += '</tr>';
           
@@ -2696,7 +2696,7 @@ function attachExportButtons() {
             'Faculty Mandatory Scope (Yearly)': yearlyPercent,
             'Institution Portfolio-1': instPortfolio1Percent,
             'Institution Portfolio-2': instPortfolio2Percent,
-            'Overall Rating (%)': rating.average + '%',
+            'Overall Rating (%)': Math.round(rating.average) + '%',
             'Stars': rating.starCount + ' stars'
           });
         }
