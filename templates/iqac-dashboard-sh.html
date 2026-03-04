@@ -1434,7 +1434,7 @@ function attachExportButtons() {
       html += `<th class="px-3 py-2 bg-green-700" style="min-width: 120px;">Designation</th>`;
       html += `<th class="px-3 py-2" style="min-width: 180px;">Faculty Name</th>`;
       html += `<th class="px-3 py-2" style="min-width: 100px;">Percentage</th>`;
-      html += `<th class="px-3 py-2 text-center" style="min-width: 100px;">Verification</th>`;
+      
       
       // Add columns for all 13 status fields with full descriptions as tooltips (S&H form)
       for (let i = 0; i < 13; i++) {
@@ -1489,112 +1489,14 @@ function attachExportButtons() {
         const percentageDisplay = row ? `${percentage}%` : '0% (Not Submitted)';
         const percentageClass = row ? (percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600') : 'text-red-600';
         
-        // Check verification in Hod-workdone table
         const coreScopeRowId = `corescope-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
         const coreScopePercentageId = `percentage-${coreScopeRowId}`;
-        let verificationMark = '<span class="text-gray-400">-</span>';
-        if (row && row.input_id) {
-          // We'll check this asynchronously after rendering
-          verificationMark = `<span id="verify-${coreScopeRowId}" class="text-gray-400">...</span>`;
-          
-          // Async check
-          setTimeout(async () => {
-            // Check both verified and rejected records
-            const [verifyRes, rejectRes] = await Promise.all([
-              supabaseClient
-                .from('Hod-workdone')
-                .select('*')
-                .eq('department', dept)
-                .ilike('portfolio_member_name', facultyName),
-              supabaseClient
-                .from('hod-workdone_reject')
-                .select('*')
-                .eq('department', dept)
-                .ilike('portfolio_member_name', facultyName)
-            ]);
-            
-            const verifyData = verifyRes.data || [];
-            const rejectData = rejectRes.data || [];
-            
-            const verifyCell = document.getElementById(`verify-${coreScopeRowId}`);
-            const percentageCell = document.getElementById(`${coreScopePercentageId}`);
-            if (verifyCell) {
-              // First check if rejected
-              let matchingReject = rejectData.find(v => v.input_id === row.input_id);
-              if (!matchingReject) {
-                matchingReject = rejectData.find(v => {
-                  if (v.table_name && v.department === dept) {
-                    const tableNameLower = v.table_name.toLowerCase();
-                    const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
-                    return (tableNameLower === 'core_scope_sh' || tableNameLower.includes('core_scope')) && nameMatch;
-                  }
-                  return false;
-                });
-              }
-              
-              if (matchingReject) {
-                const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
-                const reason = matchingReject.Commands || 'No reason';
-                verifyCell.innerHTML = `<span class="text-red-600 font-bold text-lg" title="Rejected on ${rejectDate}: ${reason}">✗</span>`;
-                verifyCell.className = 'text-red-600';
-              } else {
-                // Check if verified - match by input_id first (most reliable), then verify table_name
-                let matchingVerify = verifyData.find(v => {
-                  if (v.input_id === row.input_id) {
-                    // If table_name exists, check if it matches Core_scope_SH (case-insensitive)
-                    if (v.table_name) {
-                      const tableNameLower = v.table_name.toLowerCase();
-                      return tableNameLower === 'core_scope_sh' || 
-                             tableNameLower.includes('core_scope') ||
-                             tableNameLower.includes('core');
-                    }
-                    // If no table_name, match by input_id only
-                    return true;
-                  }
-                  return false;
-                });
-                
-                // If no match by input_id, try matching by table_name and name
-                if (!matchingVerify) {
-                  matchingVerify = verifyData.find(v => {
-                    if (v.table_name) {
-                      const tableNameLower = v.table_name.toLowerCase();
-                      const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
-                      return (tableNameLower === 'core_scope_sh' || tableNameLower.includes('core_scope')) && nameMatch;
-                    }
-                    return false;
-                  });
-                }
-                
-                if (matchingVerify) {
-                  const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
-                  verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
-                  verifyCell.className = 'text-green-600';
-                  
-                  // Update percentage with validation score from Hod-workdone if verified
-                  if (percentageCell && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
-                    const validationScore = parseFloat(matchingVerify.validation_score);
-                    if (!isNaN(validationScore)) {
-                      const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
-                      percentageCell.className = `px-3 py-2 border ${percentageClass} font-semibold`;
-                      percentageCell.textContent = `${Math.round(validationScore)}%`;
-                    }
-                  }
-                } else {
-                  verifyCell.innerHTML = '<span class="text-red-600 font-bold text-lg" title="Not verified">✗</span>';
-                  verifyCell.className = 'text-red-600';
-                }
-              }
-            }
-          }, 100);
-        }
         
         html += `<tr class="hover:bg-gray-50">`;
         html += `<td class="px-3 py-2 border sticky left-0 bg-white z-10 font-medium">${dept}</td>`;
         html += `<td class="px-3 py-2 border font-medium">${desigDisplay}</td>`;
         html += `<td class="px-3 py-2 border font-medium text-green-700">${facultyName}</td>`;
         html += `<td id="${coreScopePercentageId}" class="px-3 py-2 border ${percentageClass} font-semibold">${percentageDisplay}</td>`;
-        html += `<td class="px-3 py-2 border text-center">${verificationMark}</td>`;
         
         // Add status cells for all 13 fields (S&H Core Scope)
         for (let i = 1; i <= 13; i++) {
@@ -2239,9 +2141,11 @@ function attachExportButtons() {
         return isNaN(num) ? (isMandatory ? 0 : null) : num;
       };
       
-      // Mandatory scopes - always include (0 if not filled)
+      // Mandatory scopes - core scope always included (0 if not filled)
       validScores.push(parsePercent(coreScopePercent, true));
-      validScores.push(parsePercent(yearlyPercent, true));
+      // Yearly scope: include only if submitted; do not force 0 when missing
+      const parsedYearly = parsePercent(yearlyPercent, false);
+      if (parsedYearly !== null) validScores.push(parsedYearly);
       
       // Optional institution portfolios - only include if allocated (0 if allocated but not filled)
       [instPortfolio1, instPortfolio2].forEach(score => {
@@ -2787,6 +2691,7 @@ function attachExportButtons() {
             'Department': dept,
             'Designation': desigDisplay,
             'Faculty Name': facultyName,
+            'Faculty Email': fac.email || '',
             'Faculty Core Scope Monthly': coreScopePercent,
             'Faculty Mandatory Scope (Yearly)': yearlyPercent,
             'Institution Portfolio-1': instPortfolio1Percent,
