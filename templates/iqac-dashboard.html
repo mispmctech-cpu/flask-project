@@ -345,7 +345,8 @@ async function exportCoreScopeTableToExcel(scope) {
     const { data: facultyData, error: facErr } = await facultyQuery;
     
     if (facErr) throw facErr;
-    if (!facultyData || facultyData.length === 0) {
+    const nonSHFacultyData = (facultyData || []).filter(f => !isSHDepartment(f.department));
+    if (!nonSHFacultyData || nonSHFacultyData.length === 0) {
       alert('No faculty data found');
       return;
     }
@@ -363,9 +364,10 @@ async function exportCoreScopeTableToExcel(scope) {
       console.error('❌ Query error:', csErr);
       throw csErr;
     }
-    console.log('✅ Core_scope data retrieved:', coreScopeData?.length, 'records');
-    if (coreScopeData && coreScopeData.length > 0) {
-      console.log('📊 Sample record:', coreScopeData[0]);
+    const nonSHCoreScopeData = (coreScopeData || []).filter(r => !isSHDepartment(r.Department));
+    console.log('✅ Core_scope data retrieved:', nonSHCoreScopeData?.length, 'records');
+    if (nonSHCoreScopeData && nonSHCoreScopeData.length > 0) {
+      console.log('📊 Sample record:', nonSHCoreScopeData[0]);
     }
 
     // Fetch both Hod-workdone and hod-workdone_reject data
@@ -381,7 +383,7 @@ async function exportCoreScopeTableToExcel(scope) {
     const allRows = [];
 
     // Process each faculty
-    for (const fac of facultyData) {
+    for (const fac of nonSHFacultyData) {
       const dept = fac.department || 'Unknown';
       const designation = fac.Designation || 'N/A';
       const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
@@ -414,8 +416,8 @@ async function exportCoreScopeTableToExcel(scope) {
       facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n || '').toString().trim().toLowerCase()).filter(Boolean)));
       
       let matchingRows = [];
-      if (coreScopeData && coreScopeData.length > 0) {
-        matchingRows = coreScopeData.filter(row => {
+      if (nonSHCoreScopeData && nonSHCoreScopeData.length > 0) {
+        matchingRows = nonSHCoreScopeData.filter(row => {
           const rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
           return facNamesToTry.includes(rowName);
         });
@@ -437,7 +439,7 @@ async function exportCoreScopeTableToExcel(scope) {
         }
       }
       
-      const percentage = Math.round((completedCount / totalCount) * 100) + '%';
+      const percentage = row ? (Math.round((completedCount / totalCount) * 100) + '%') : '0% (Not Submitted)';
       
       // Check verification status
       let verificationStatus = 'Not Submitted';
@@ -477,7 +479,7 @@ async function exportCoreScopeTableToExcel(scope) {
       
       // Add status values for all 15 fields
       for (let i = 1; i <= 15; i++) {
-        rowData.push(row ? (row[`Status_${i}`] || '-') : '-');
+        rowData.push(row ? (row[`Status_${i}`] || '-') : 'Not Submitted');
       }
       
       allRows.push(rowData);
@@ -492,9 +494,9 @@ async function exportCoreScopeTableToExcel(scope) {
 
     // Create workbook and export
     console.log('✅ Export Summary:', {
-      totalFaculty: facultyData.length,
+      totalFaculty: nonSHFacultyData.length,
       filteredFaculty: allRows.length,
-      coreScopeRecords: coreScopeData?.length || 0,
+      coreScopeRecords: nonSHCoreScopeData?.length || 0,
       month: selectedMonth,
       dept: selectedDept,
       designation: selectedDesignation
@@ -1420,11 +1422,11 @@ function attachExportButtons() {
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
     );
 
-    // Helper: detect S&H departments and variants (e.g. "S&H", "S&H V1".."S&H V6")
+    // Helper: detect S&H departments and variants (e.g. "S&H", "S&H V1".."S&H V6B")
     function isSHDepartment(dept) {
       if (!dept) return false;
       try {
-        return /\bS\s*&\s*H(?:\s*(?:V|v)?\s*[1-6])?\b/i.test(dept.toString());
+        return /\bS\s*&\s*H(?:\s*(?:V|v)?\s*[1-6](?:\s*[A-B])?)?\b/i.test(dept.toString());
       } catch (e) { return false; }
     }
 
@@ -2680,17 +2682,17 @@ function attachExportButtons() {
         
         // Render table
         let html = '<div class="overflow-auto border rounded-lg shadow-sm" style="max-height: 600px;">';
-        html += '<table class="min-w-full text-sm bg-white"><thead class="bg-blue-700 text-white sticky top-0 z-20"><tr>';
-        html += '<th class="px-3 py-2 sticky left-0 bg-blue-700 z-30">Dept</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Desig</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Faculty Name</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Faculty Core Scope Monthly</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Faculty Mandatory Scope (Yearly)</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Department Portfolio Scope-1</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Department Portfolio Scope-2</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Institution Portfolio-1</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Institution Portfolio-2</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Overall Rating</th>';
+        html += '<table class="min-w-full text-sm bg-white"><thead class="bg-yellow-200 text-black sticky top-0 z-20"><tr>';
+        html += '<th class="px-3 py-2 sticky left-0 bg-yellow-200 z-30">Dept</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200">Desig</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200">Faculty Name</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200">Faculty Core Scope Monthly</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200">Faculty Mandatory Scope (Yearly)</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200">Department Portfolio Scope-1</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200">Department Portfolio Scope-2</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200">Institution Portfolio-1</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200">Institution Portfolio-2</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200">Overall Rating</th>';
         html += '</tr></thead><tbody>';
         
         // Render rows with unique IDs for async validation score updates
@@ -2789,6 +2791,7 @@ function attachExportButtons() {
           const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || '';
           const nameTrimmed = facultyName.toString().trim().toLowerCase();
           const dept = fac.department || 'Unknown';
+          if (isSHDepartment(dept)) continue;
           const designation = fac.Designation || 'N/A';
           
           // Normalize designation

@@ -7,6 +7,7 @@
   <title>Dashboard - S&H Faculty Core Scope Compliance</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script src="/static/javascript/form-modal-mapper.js"></script>
   <!-- SheetJS for Excel export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- html2pdf for PDF export -->
@@ -1300,6 +1301,32 @@ function attachExportButtons() {
       }, null);
     }
 
+    function viewMappedDashboardForm(cacheKey, modalTitle = 'Faculty Form Details') {
+      document.getElementById('viewFormModal').classList.remove('hidden');
+      document.getElementById('viewFormModalTitle').textContent = modalTitle;
+      document.getElementById('viewFormModalContent').innerHTML = '<div class="text-center text-gray-500">Loading form data...</div>';
+
+      const cache = window.dashboardMappedFormCache || {};
+      const cached = cache[cacheKey];
+      if (!cached || !cached.rowContext || !cached.details) {
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Submitted form data not found.</div>';
+        return;
+      }
+
+      if (typeof getFormModalContent !== 'function') {
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Form modal mapper not loaded.</div>';
+        return;
+      }
+
+      try {
+        const html = getFormModalContent(cached.rowContext, cached.details);
+        document.getElementById('viewFormModalContent').innerHTML = html;
+      } catch (error) {
+        console.error('Mapper render error:', error);
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Failed to render form details.</div>';
+      }
+    }
+
     // --- NEW: Faculty Core Scope - Monthly Table from Core_scope table ---
     let allCoreScopeDepartments = [];
     let selectedCoreScopeDepartment = '';
@@ -1434,6 +1461,7 @@ function attachExportButtons() {
       html += `<th class="px-3 py-2 bg-green-700" style="min-width: 120px;">Designation</th>`;
       html += `<th class="px-3 py-2" style="min-width: 180px;">Faculty Name</th>`;
       html += `<th class="px-3 py-2" style="min-width: 100px;">Percentage</th>`;
+      html += `<th class="px-3 py-2" style="min-width: 100px;">View</th>`;
       
       
       // Add columns for all 13 status fields with full descriptions as tooltips (S&H form)
@@ -1491,12 +1519,24 @@ function attachExportButtons() {
         
         const coreScopeRowId = `corescope-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
         const coreScopePercentageId = `percentage-${coreScopeRowId}`;
+        const coreScopeCacheKey = `core-${coreScopeRowId}`;
+        if (row) {
+          window.dashboardMappedFormCache = window.dashboardMappedFormCache || {};
+          window.dashboardMappedFormCache[coreScopeCacheKey] = {
+            rowContext: {
+              table: 'Core_scope_SH',
+              portfolio: 'Faculty Core Scope - Monthly'
+            },
+            details: row
+          };
+        }
         
         html += `<tr class="hover:bg-gray-50">`;
         html += `<td class="px-3 py-2 border sticky left-0 bg-white z-10 font-medium">${dept}</td>`;
         html += `<td class="px-3 py-2 border font-medium">${desigDisplay}</td>`;
         html += `<td class="px-3 py-2 border font-medium text-green-700">${facultyName}</td>`;
         html += `<td id="${coreScopePercentageId}" class="px-3 py-2 border ${percentageClass} font-semibold">${percentageDisplay}</td>`;
+        html += `<td class="px-3 py-2 border text-center">${row ? `<button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold" onclick="viewMappedDashboardForm('${coreScopeCacheKey}', 'Faculty Core Scope - Monthly Form')">View</button>` : '<span class="text-gray-400">-</span>'}</td>`;
         
         // Add status cells for all 13 fields (S&H Core Scope)
         for (let i = 1; i <= 13; i++) {
@@ -2462,15 +2502,15 @@ function attachExportButtons() {
         
         // Render table
         let html = '<div class="overflow-auto border rounded-lg shadow-sm" style="max-height: 600px;">';
-        html += '<table class="min-w-full text-sm bg-white"><thead class="bg-blue-700 text-white sticky top-0 z-20"><tr>';
-        html += '<th class="px-3 py-2 sticky left-0 bg-blue-700 z-30">Dept</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Desig</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Faculty Name</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Faculty Core Scope Monthly</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Faculty Mandatory Scope (Yearly)</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Institution Portfolio-1</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Institution Portfolio-2</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Overall Rating</th>';
+        html += '<table class="min-w-full text-sm bg-white"><thead class="bg-yellow-200 text-black sticky top-0 z-20"><tr>';
+        html += '<th class="px-3 py-2 sticky left-0 bg-yellow-200 z-30">Dept</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200">Desig</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200">Faculty Name</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200">Faculty Core Scope Monthly</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200">Faculty Mandatory Scope (Yearly)</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200">Institution Portfolio-1</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200">Institution Portfolio-2</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200">Overall Rating</th>';
         html += '</tr></thead><tbody>';
         
         // Render rows with unique IDs for async validation score updates
