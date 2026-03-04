@@ -2504,13 +2504,13 @@ function attachExportButtons() {
         let html = '<div class="overflow-auto border rounded-lg shadow-sm" style="max-height: 600px;">';
         html += '<table class="min-w-full text-sm bg-white"><thead class="bg-yellow-200 text-black sticky top-0 z-20"><tr>';
         html += '<th class="px-3 py-2 sticky left-0 bg-yellow-200 z-30">Dept</th>';
-        html += '<th class="px-3 py-2 bg-yellow-200">Desig</th>';
-        html += '<th class="px-3 py-2 bg-yellow-200">Faculty Name</th>';
-        html += '<th class="px-3 py-2 bg-yellow-200">Faculty Core Scope Monthly</th>';
-        html += '<th class="px-3 py-2 bg-yellow-200">Faculty Mandatory Scope (Yearly)</th>';
-        html += '<th class="px-3 py-2 bg-yellow-200">Institution Portfolio-1</th>';
-        html += '<th class="px-3 py-2 bg-yellow-200">Institution Portfolio-2</th>';
-        html += '<th class="px-3 py-2 bg-yellow-200">Overall Rating</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Desig</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Faculty Name</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Faculty Core Scope Monthly</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Faculty Mandatory Scope (Yearly)</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Institution Portfolio-1</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Institution Portfolio-2</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Overall Rating</th>';
         html += '</tr></thead><tbody>';
         
         // Render rows with unique IDs for async validation score updates
@@ -2992,7 +2992,7 @@ function attachExportButtons() {
 
         // Build table header template
         const colWidths = ['3%', '5%', '8%', '12%', '7%', '8%', '8%', '8%', '10%', '10%', '5%'];
-        let theadHTML = '<tr style="background:#1e40af;color:#fff;">';
+        let theadHTML = '<tr style="background:#FEF3C7;color:#000;">';
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[0]};">SNO</th>`;
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[1]};">DEPT</th>`;
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[2]};">DESIG</th>`;

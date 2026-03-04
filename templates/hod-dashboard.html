@@ -1514,17 +1514,17 @@
         
         // Render table
         let html = '<div class="overflow-auto border rounded-lg shadow-sm" style="max-height: 600px;">';
-        html += '<table class="min-w-full text-sm bg-white" id="summaryTable"><thead class="bg-blue-700 text-white sticky top-0 z-20"><tr>';
-        html += '<th class="px-3 py-2 sticky left-0 bg-blue-700 z-30">Dept</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Desig</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Faculty Name</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Faculty Core Scope Monthly</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Faculty Mandatory Scope (Yearly)</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Department Portfolio Scope-1</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Department Portfolio Scope-2</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Institution Portfolio-1</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Institution Portfolio-2</th>';
-        html += '<th class="px-3 py-2 bg-blue-700">Overall Rating</th>';
+        html += '<table class="min-w-full text-sm bg-white" id="summaryTable"><thead class="bg-yellow-200 text-black sticky top-0 z-20"><tr>';
+        html += '<th class="px-3 py-2 sticky left-0 bg-yellow-200 z-30">Dept</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Desig</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Faculty Name</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Faculty Core Scope Monthly</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Faculty Mandatory Scope (Yearly)</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Department Portfolio Scope-1</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Department Portfolio Scope-2</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Institution Portfolio-1</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Institution Portfolio-2</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Overall Rating</th>';
         html += '</tr></thead><tbody>';
         
         // Render rows with unique IDs for async validation score updates
@@ -1552,8 +1552,8 @@
           html += `<td id="summary-inst1-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.instPortfolio1Percent}</td>`;
           html += `<td id="summary-inst2-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.instPortfolio2Percent}</td>`;
           html += `<td id="summary-rating-${summaryRowId}" class="px-2 py-2 border text-center">`;
-          html += `<div class="star-rating ${rating.colorClass}">${rating.stars}</div>`;
-          html += `<div class="text-xs mt-1 ${rating.colorClass}">${Math.round(rating.average)}%</div>`;
+          html += `<div class="star-rating overall-rating" style="color:#000 !important;">${rating.stars}</div>`;
+          html += `<div class="text-xs mt-1 overall-rating" style="color:#000 !important;">${Math.round(rating.average)}%</div>`;
           html += `</td>`;
           html += '</tr>';
           
@@ -1990,19 +1990,19 @@
 
         // Build table header with FACULTY SIGNATURE column added (without checkbox column)
         const colWidths = ['3%', '5%', '8%', '12%', '7%', '8%', '8%', '8%', '8%', '8%', '10%', '10%', '5%'];
-        let theadHTML = '<tr style="background:#1e40af;color:#fff;">';
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[0]};">SNO</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[1]};">DEPT</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[2]};">DESIGNATION</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[3]};">FACULTY NAME</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[4]};">FACULTY CORE SCOPE MONTHLY</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[5]};">FACULTY MANDATORY SCOPE (YEARLY)</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[6]};">DEPARTMENT PORTFOLIO SCOPE-1</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[7]};">DEPARTMENT PORTFOLIO SCOPE-2</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[8]};">INSTITUTION PORTFOLIO-1</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[9]};">INSTITUTION PORTFOLIO-2</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[10]};">OVERALL RATING</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[11]};">FACULTY SIGNATURE</th>`;
+        let theadHTML = '<tr style="background:#FEF3C7;color:#000;">';
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[0]};background:#FEF3C7;color:#000;">SNO</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[1]};background:#FEF3C7;color:#000;">DEPT</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[2]};background:#FEF3C7;color:#000;">DESIGNATION</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[3]};background:#FEF3C7;color:#000;">FACULTY NAME</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[4]};background:#FEF3C7;color:#000;">FACULTY CORE SCOPE MONTHLY</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[5]};background:#FEF3C7;color:#000;">FACULTY MANDATORY SCOPE (YEARLY)</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[6]};background:#FEF3C7;color:#000;">DEPARTMENT PORTFOLIO SCOPE-1</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[7]};background:#FEF3C7;color:#000;">DEPARTMENT PORTFOLIO SCOPE-2</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[8]};background:#FEF3C7;color:#000;">INSTITUTION PORTFOLIO-1</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[9]};background:#FEF3C7;color:#000;">INSTITUTION PORTFOLIO-2</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[10]};background:#FEF3C7;color:#000;">OVERALL RATING</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[11]};background:#FEF3C7;color:#000;">FACULTY SIGNATURE</th>`;
         theadHTML += '</tr>';
 
         // Start table
