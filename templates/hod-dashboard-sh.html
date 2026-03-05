@@ -29,6 +29,7 @@
     .rating-good { color: #3b82f6; font-weight: 600; }
     .rating-average { color: #f59e0b; font-weight: 600; }
     .rating-poor { color: #ef4444; font-weight: 600; }
+    .overall-rating { color: #000 !important; }
   </style>
 </head>
 <body class="bg-pmcBg min-h-screen">
@@ -956,23 +957,23 @@
 
       if (average >= 90) {
         starCount = 5;
-        stars = '⭐⭐⭐⭐⭐';
+        stars = '★★★★★';
         colorClass = 'rating-excellent';
       } else if (average >= 80) {
         starCount = 4;
-        stars = '⭐⭐⭐⭐☆';
+        stars = '★★★★☆';
         colorClass = 'rating-excellent';
       } else if (average >= 70) {
         starCount = 3;
-        stars = '⭐⭐⭐☆☆';
+        stars = '★★★☆☆';
         colorClass = 'rating-good';
       } else if (average >= 60) {
         starCount = 2;
-        stars = '⭐⭐☆☆☆';
+        stars = '★★☆☆☆';
         colorClass = 'rating-average';
       } else if (average >= 50) {
         starCount = 1;
-        stars = '⭐☆☆☆☆';
+        stars = '★☆☆☆☆';
         colorClass = 'rating-average';
       } else {
         starCount = 0;

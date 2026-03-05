@@ -31,6 +31,7 @@
     .rating-good { color: #3b82f6; font-weight: 600; }
     .rating-average { color: #f59e0b; font-weight: 600; }
     .rating-poor { color: #ef4444; font-weight: 600; }
+    .overall-rating { color: #000 !important; }
   </style>
 </head>
 <body class="bg-pmcBg min-h-screen">
@@ -2205,7 +2206,7 @@ function attachExportButtons() {
       
       if (average >= 91) {
         starCount = 5;
-        stars = '★★★★★ <span class="shining">✨</span>';
+        stars = '★★★★★';
         colorClass = 'rating-excellent';
       } else if (average >= 81) {
         starCount = 5;
@@ -2534,8 +2535,8 @@ function attachExportButtons() {
           html += `<td id="summary-inst1-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.instPortfolio1Percent}</td>`;
           html += `<td id="summary-inst2-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.instPortfolio2Percent}</td>`;
           html += `<td id="summary-rating-${summaryRowId}" class="px-2 py-2 border text-center">`;
-          html += `<div class="star-rating ${rating.colorClass}">${rating.stars}</div>`;
-          html += `<div class="text-xs mt-1 ${rating.colorClass}">${Math.round(rating.average)}%</div>`;
+          html += `<div class="star-rating overall-rating ${rating.colorClass}" style="color:#000 !important;">${rating.stars}</div>`;
+          html += `<div class="text-xs mt-1 overall-rating" style="color:#000 !important;">${Math.round(rating.average)}%</div>`;
           html += `</td>`;
           html += '</tr>';
           
