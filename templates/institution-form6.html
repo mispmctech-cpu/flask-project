@@ -10,6 +10,24 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Supabase JS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <style>
+        .custom-upload {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #ede9fe;
+            color: #6d28d9;
+            border: 1px solid #a78bfa;
+            border-radius: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .custom-upload svg { width: 1.1em; height: 1.1em; }
+        input.file-input { display: none; }
+        .replace-btn { display: inline-flex; align-items: center; gap: 0.4rem; }
+        .file-name { max-width: 12rem; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    </style>
 </head>
 <body class="bg-[#f7f5f7] min-h-screen">
     <div class="bg-[#7d4c9e] py-3 px-0">
@@ -128,18 +146,88 @@
         }
     });
 
-    // Simple file upload indicator
-    document.addEventListener('change', function(e) {
-        if (e.target && e.target.classList.contains('file-input')) {
-            const row = e.target.getAttribute('data-row');
-            const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
-            if (e.target.files && e.target.files.length > 0 && checkMark) {
-                checkMark.classList.remove('hidden');
-            } else if (checkMark) {
-                checkMark.classList.add('hidden');
+    // Initialize enhanced upload UI: wrap existing file inputs with custom upload label, Replace button, filename and hidden uploaded-url
+    (function initFileUI() {
+        document.querySelectorAll('input.file-input').forEach(function(input) {
+            const row = input.getAttribute('data-row') || input.dataset.row || '';
+            const td = input.closest('td');
+            if (!td) return;
+            // find existing checkMark span if any
+            const existingCheck = td.querySelector(`.file-check[data-row="${row}"]`);
+            // build wrapper
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex items-center gap-2 justify-center';
+
+            const label = document.createElement('label');
+            label.className = 'custom-upload';
+            label.setAttribute('data-row', row);
+            label.innerHTML = 'Upload <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>';
+            // move file input into label and hide it
+            input.classList.add('hidden');
+            label.appendChild(input);
+
+            const replaceBtn = document.createElement('button');
+            replaceBtn.type = 'button';
+            replaceBtn.className = 'replace-btn hidden bg-yellow-100 text-yellow-800 font-semibold px-2 py-1 rounded text-sm';
+            replaceBtn.setAttribute('data-row', row);
+            replaceBtn.textContent = 'Replace';
+
+            const fileName = document.createElement('span');
+            fileName.className = 'file-name text-sm text-gray-700';
+            fileName.setAttribute('data-row', row);
+
+            const uploadedHidden = document.createElement('input');
+            uploadedHidden.type = 'hidden';
+            uploadedHidden.className = 'uploaded-url';
+            uploadedHidden.setAttribute('data-row', row);
+            uploadedHidden.name = `UploadedURL_${row}`;
+
+            wrapper.appendChild(label);
+            wrapper.appendChild(replaceBtn);
+            wrapper.appendChild(fileName);
+            wrapper.appendChild(uploadedHidden);
+            if (existingCheck) wrapper.appendChild(existingCheck);
+
+            // replace td contents with wrapper
+            td.innerHTML = '';
+            td.appendChild(wrapper);
+        });
+
+        // click handler to open file picker from label or replace button
+        document.addEventListener('click', function(e) {
+            const uploadLabel = e.target.closest('.custom-upload');
+            if (uploadLabel) {
+                const row = uploadLabel.getAttribute('data-row');
+                const fileInput = document.querySelector(`input.file-input[data-row="${row}"]`);
+                if (fileInput) fileInput.click();
+                return;
             }
-        }
-    });
+            const replace = e.target.closest('.replace-btn');
+            if (replace) {
+                const row = replace.getAttribute('data-row');
+                const fileInput = document.querySelector(`input.file-input[data-row="${row}"]`);
+                if (fileInput) fileInput.click();
+            }
+        });
+
+        // change handler: upload on select
+        document.addEventListener('change', async function(e) {
+            if (e.target && e.target.classList.contains('file-input')) {
+                const row = e.target.getAttribute('data-row');
+                if (e.target.files && e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    const ts = Date.now();
+                    const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+                    const path = `form6_monthly_${row}_${ts}_${safeName}`;
+                    try {
+                        await uploadFileToStorage(file, path, row);
+                    } catch (err) {
+                        window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + row + ': ' + err.message)}`;
+                    }
+                }
+            }
+        });
+    })();
 
     // Supabase config
     const supabaseUrl = "https://cbhodgwaazmjszkujrti.supabase.co";
@@ -162,13 +250,30 @@
         formType: null // No form_type for this form
     });
 
-    // Upload file to Supabase Storage
-    async function uploadFileToStorage(file, path) {
+    // Upload file to Supabase Storage and update UI + draft map
+    async function uploadFileToStorage(file, path, rowKey) {
         if (!file) return null;
         const { data, error } = await supabaseClient.storage.from('institution-files6').upload(path, file, { upsert: true });
         if (error) throw error;
         const { data: urlData } = supabaseClient.storage.from('institution-files6').getPublicUrl(path);
-        return urlData.publicUrl;
+        const publicUrl = urlData.publicUrl;
+        try {
+            window.draftFileUrls = window.draftFileUrls || {};
+            if (rowKey) {
+                window.draftFileUrls[rowKey] = publicUrl;
+                const uploadedInput = document.querySelector(`.uploaded-url[data-row="${rowKey}"]`);
+                const fileNameSpan = document.querySelector(`.file-name[data-row="${rowKey}"]`);
+                const replaceBtn = document.querySelector(`.replace-btn[data-row="${rowKey}"]`);
+                const checkMark = document.querySelector(`.file-check[data-row="${rowKey}"]`);
+                if (uploadedInput) uploadedInput.value = publicUrl;
+                if (fileNameSpan) fileNameSpan.textContent = file.name;
+                if (replaceBtn) replaceBtn.classList.remove('hidden');
+                if (checkMark) checkMark.classList.remove('hidden');
+            }
+        } catch (e) {
+            // ignore UI update errors
+        }
+        return publicUrl;
     }
 
     // Monthly form submission
@@ -185,21 +290,40 @@
         for (let i = 1; i <= 16; i++) {
             row[`Status_${i}`] = formData.get(`Status_${i}`) || null;
             row[`Description_${i}`] = formData.get(`Description_${i}`) || null;
-            const file = formData.get(`Upload the scanned file_${i}`);
-            if (file && file.size > 0) {
-                const ts = Date.now();
-                const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-                const path = `form6_monthly_${i}_${ts}_${safeName}`;
-                try {
-                    row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
-                } catch (err) {
-                    window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(err.message);
+            // prefer already uploaded public URL
+            const uploadedInput = document.querySelector(`.uploaded-url[data-row="${i}"]`);
+            let uploadedUrl = uploadedInput ? uploadedInput.value : null;
+            if (uploadedUrl) {
+                row[`Upload the scanned file_${i}`] = uploadedUrl;
+            } else {
+                // if user selected a file but didn't wait for upload, upload now
+                const fileInput = form.querySelector(`input.file-input[data-row="${i}"]`);
+                if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const ts = Date.now();
+                    const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+                    const path = `form6_monthly_${i}_${ts}_${safeName}`;
+                    try {
+                        row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path, i);
+                    } catch (err) {
+                        window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(err.message);
+                        return;
+                    }
+                } else if (window.draftFileUrls && window.draftFileUrls[i]) {
+                    row[`Upload the scanned file_${i}`] = window.draftFileUrls[i];
+                } else {
+                    row[`Upload the scanned file_${i}`] = null;
+                }
+            }
+
+            // Validation: if marked Completed, require Description or uploaded file
+            if (row[`Status_${i}`] && row[`Status_${i}`].toLowerCase().includes('completed')) {
+                const desc = row[`Description_${i}`] ? row[`Description_${i}`].trim() : '';
+                const fileVal = row[`Upload the scanned file_${i}`];
+                if (!desc && !fileVal) {
+                    window.location.href = `notification.html?status=error&msg=${encodeURIComponent('Row ' + i + ' marked Completed requires either Description or an uploaded file.')}`;
                     return;
                 }
-            } else if (window.draftFileUrls && window.draftFileUrls[i]) {
-                row[`Upload the scanned file_${i}`] = window.draftFileUrls[i];
-            } else {
-                row[`Upload the scanned file_${i}`] = null;
             }
         }
         const { data, error } = await supabaseClient

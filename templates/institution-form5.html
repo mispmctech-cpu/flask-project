@@ -67,44 +67,87 @@ document.addEventListener('DOMContentLoaded', function() {
 						<option>Not Applicable</option>
 					</select></td>
 					<td class="border px-2 py-1"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
-					<td class="border px-2 py-1">
-            <label class="custom-upload">
-              Upload
-              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
-              <input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="file-input" data-row="${idx}" />
-            </label>
-            <span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">? Uploaded</span>
-          </td>
+				<td class="border px-2 py-1">
+	            <div class="flex items-center gap-2">
+	                <label class="custom-upload" data-row="${idx}">
+	                  Upload
+	                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
+	                  <input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="file-input hidden" data-row="${idx}" />
+	                </label>
+	                <button type="button" class="replace-btn hidden bg-yellow-100 text-yellow-800 font-semibold px-2 py-1 rounded text-sm" data-row="${idx}">Replace</button>
+	                <span class="file-name text-sm text-gray-700 truncate" data-row="${idx}"></span>
+	                <input type="hidden" class="uploaded-url" data-row="${idx}" name="UploadedURL_${idx}" />
+	                <span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">? Uploaded</span>
+	            </div>
+	          </td>
         `;
         tbody1.appendChild(tr);
       });
     }
 
-	// Simple file upload indicator
-	document.addEventListener('change', function(e) {
-		if (e.target && e.target.classList.contains('file-input')) {
-			const row = e.target.getAttribute('data-row');
-			const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
-			if (e.target.files && e.target.files.length > 0 && checkMark) {
-				checkMark.classList.remove('hidden');
-			} else if (checkMark) {
-				checkMark.classList.add('hidden');
-			}
-		}
-	});
-
-	// Supabase setup
+	// File upload handlers: upload-on-select, Replace button click
 	const supabase = window.supabase.createClient(
 		"https://cbhodgwaazmjszkujrti.supabase.co",
 		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
 	);
-	async function uploadFileToStorage(file, path) {
+	async function uploadFileToStorage(file, path, rowKey) {
 		if (!file) return null;
 		const { data, error } = await supabase.storage.from('Institution form5').upload(path, file, { upsert: true });
 		if (error) throw error;
 		const { data: urlData } = supabase.storage.from('Institution form5').getPublicUrl(path);
-		return urlData.publicUrl;
+		const publicUrl = urlData.publicUrl;
+		try {
+			window.draftFileUrls = window.draftFileUrls || {};
+			if (rowKey) {
+				window.draftFileUrls[rowKey] = publicUrl;
+				const uploadedInput = document.querySelector(`.uploaded-url[data-row="${rowKey}"]`);
+				const fileNameSpan = document.querySelector(`.file-name[data-row="${rowKey}"]`);
+				const replaceBtn = document.querySelector(`.replace-btn[data-row="${rowKey}"]`);
+				const checkMark = document.querySelector(`.file-check[data-row="${rowKey}"]`);
+				if (uploadedInput) uploadedInput.value = publicUrl;
+				if (fileNameSpan) fileNameSpan.textContent = file.name;
+				if (replaceBtn) replaceBtn.classList.remove('hidden');
+				if (checkMark) checkMark.classList.remove('hidden');
+			}
+		} catch (e) {
+			// ignore UI update errors
+		}
+		return publicUrl;
 	}
+
+	// Click handler: label or Replace button should trigger file input
+	document.addEventListener('click', function(e) {
+		const uploadLabel = e.target.closest('.custom-upload');
+		if (uploadLabel) {
+			const row = uploadLabel.getAttribute('data-row');
+			const fileInput = document.querySelector(`.file-input[data-row="${row}"]`);
+			if (fileInput) fileInput.click();
+			return;
+		}
+		const replace = e.target.closest('.replace-btn');
+		if (replace) {
+			const row = replace.getAttribute('data-row');
+			const fileInput = document.querySelector(`.file-input[data-row="${row}"]`);
+			if (fileInput) fileInput.click();
+		}
+	});
+
+	// When a file is selected, upload immediately and update UI
+	document.addEventListener('change', async function(e) {
+		if (e.target && e.target.classList.contains('file-input')) {
+			const row = e.target.getAttribute('data-row');
+			if (e.target.files && e.target.files.length > 0) {
+				const file = e.target.files[0];
+				const ts = Date.now();
+				const path = `form5file${row}_${ts}_${file.name}`;
+				try {
+					await uploadFileToStorage(file, path, row);
+				} catch (err) {
+					window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + row + ': ' + err.message)}`;
+				}
+			}
+		}
+	});
 
 	const form = document.getElementById('acadForm1');
 	if (form) {
@@ -120,20 +163,38 @@ document.addEventListener('DOMContentLoaded', function() {
 			for (let i = 1; i <= 15; i++) {
 				row[`Status_${i}`] = formData.get(`Status_${i}`);
 				row[`Description_${i}`] = formData.get(`Description_${i}`);
-				const file = formData.get(`Upload the scanned file_${i}`);
-				if (file && file.size > 0) {
-					const ts = Date.now();
-					const path = `form5file${i}_${ts}_${file.name}`;
-					try {
-						row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
-					} catch (err) {
-						window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
+				// Prefer previously uploaded public URL (hidden input)
+				const uploadedInput = document.querySelector(`.uploaded-url[data-row="${i}"]`);
+				let uploadedUrl = uploadedInput ? uploadedInput.value : null;
+				if (uploadedUrl) {
+					row[`Upload the scanned file_${i}`] = uploadedUrl;
+				} else {
+					// If user selected a file but didn't wait for upload, upload now
+					const fileInput = form.querySelector(`input.file-input[data-row="${i}"]`);
+					if (fileInput && fileInput.files && fileInput.files.length > 0) {
+						const file = fileInput.files[0];
+						const ts = Date.now();
+						const path = `form5file${i}_${ts}_${file.name}`;
+						try {
+							row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path, i);
+						} catch (err) {
+							window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
+							return;
+						}
+					} else if (window.draftFileUrls && window.draftFileUrls[i]) {
+						row[`Upload the scanned file_${i}`] = window.draftFileUrls[i];
+					} else {
+						row[`Upload the scanned file_${i}`] = null;
+					}
+				}
+				// Validation: if marked Completed, require Description or uploaded file
+				if (row[`Status_${i}`] && row[`Status_${i}`].toLowerCase().includes('completed')) {
+					const desc = row[`Description_${i}`] ? row[`Description_${i}`].trim() : '';
+					const fileVal = row[`Upload the scanned file_${i}`];
+					if (!desc && !fileVal) {
+						window.location.href = `notification.html?status=error&msg=${encodeURIComponent('Row ' + i + ' marked Completed requires either Description or an uploaded file.')}`;
 						return;
 					}
-				} else if (window.draftFileUrls && window.draftFileUrls[i]) {
-					row[`Upload the scanned file_${i}`] = window.draftFileUrls[i];
-				} else {
-					row[`Upload the scanned file_${i}`] = null;
 				}
 			}
 			// Submit to Supabase
@@ -361,6 +422,22 @@ document.addEventListener('DOMContentLoaded', function() {
 					supabaseClient: supabase
 				});
 			}
+			// Populate UI from any draft file URLs (may be filled by initInstitutionDraft)
+			setTimeout(function() {
+				if (window.draftFileUrls) {
+					Object.keys(window.draftFileUrls).forEach(function(k) {
+						const val = window.draftFileUrls[k];
+						const uploadedInput = document.querySelector(`.uploaded-url[data-row="${k}"]`);
+						const fileNameSpan = document.querySelector(`.file-name[data-row="${k}"]`);
+						const replaceBtn = document.querySelector(`.replace-btn[data-row="${k}"]`);
+						const checkMark = document.querySelector(`.file-check[data-row="${k}"]`);
+						if (uploadedInput) uploadedInput.value = val;
+						if (fileNameSpan) fileNameSpan.textContent = val.split('/').pop().split('?')[0];
+						if (replaceBtn) replaceBtn.classList.remove('hidden');
+						if (checkMark) checkMark.classList.remove('hidden');
+					});
+				}
+			}, 500);
 			</script>
 			<script src="../static/javascript/month-filter.js"></script>
     <!-- Form Access Control - checks if form is open/closed -->

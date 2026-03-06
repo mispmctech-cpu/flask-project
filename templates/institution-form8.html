@@ -293,17 +293,40 @@
     </div>
 
     <script>
-    // Simple file upload indicator
-    document.addEventListener('change', function(e) {
-        if (e.target && e.target.classList.contains('file-input')) {
-            const row = e.target.getAttribute('data-row');
-            const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
-            if (e.target.files && e.target.files.length > 0 && checkMark) {
-                checkMark.classList.remove('hidden');
-            } else if (checkMark) {
-                checkMark.classList.add('hidden');
+    // Initialize enhanced file UI: add filename, Replace button, and hidden UploadedURL inputs
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('input.file-input').forEach(input => {
+            const row = input.getAttribute('data-row');
+            const label = input.closest('label') || input.parentElement;
+            if (!label) return;
+            label.classList.add('custom-upload');
+            label.setAttribute('data-row', row);
+
+            if (!document.querySelector(`.file-name[data-row="${row}"]`)) {
+                const fileName = document.createElement('span');
+                fileName.className = 'file-name text-sm text-gray-700 ml-2';
+                fileName.setAttribute('data-row', row);
+                label.after(fileName);
             }
-        }
+
+            if (!document.querySelector(`.replace-btn[data-row="${row}"]`)) {
+                const replaceBtn = document.createElement('button');
+                replaceBtn.type = 'button';
+                replaceBtn.className = 'replace-btn hidden text-sm bg-gray-100 px-2 py-1 rounded ml-2';
+                replaceBtn.setAttribute('data-row', row);
+                replaceBtn.textContent = 'Replace';
+                label.after(replaceBtn);
+            }
+
+            if (!document.querySelector(`input.uploaded-url[data-row="${row}"]`)) {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.className = 'uploaded-url';
+                hidden.name = `UploadedURL_${row}`;
+                hidden.setAttribute('data-row', row);
+                label.after(hidden);
+            }
+        });
     });
 
     // Supabase config
@@ -311,15 +334,72 @@
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU";
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    // Upload file to Supabase Storage
-    async function uploadFileToStorage(file, path) {
+    // Upload file to Supabase Storage and update UI for the row
+    async function uploadFileToStorage(file, path, row) {
         if (!file) return null;
         const { data, error } = await supabaseClient.storage.from('Institution-8').upload(path, file, { upsert: true });
         if (error) throw error;
         const { data: urlData } = supabaseClient.storage.from('Institution-8').getPublicUrl(path);
-        return urlData.publicUrl;
+        const publicUrl = urlData.publicUrl;
+
+        if (row) {
+            const fileNameSpan = document.querySelector(`.file-name[data-row="${row}"]`);
+            const replaceBtn = document.querySelector(`.replace-btn[data-row="${row}"]`);
+            const uploadedUrlInput = document.querySelector(`input.uploaded-url[data-row="${row}"]`);
+            const fileCheck = document.querySelector(`.file-check[data-row="${row}"]`);
+            if (fileNameSpan && file && file.name) fileNameSpan.textContent = file.name;
+            if (replaceBtn) replaceBtn.classList.remove('hidden');
+            if (uploadedUrlInput) uploadedUrlInput.value = publicUrl;
+            if (fileCheck) fileCheck.classList.remove('hidden');
+        }
+
+        return publicUrl;
     }
 
+    // Click handlers: open file picker when label or Replace clicked
+    document.addEventListener('click', function(e) {
+        if (!e.target) return;
+        const label = e.target.closest && e.target.closest('.custom-upload');
+        if (label && label.getAttribute) {
+            const row = label.getAttribute('data-row');
+            const fileInput = document.querySelector(`input.file-input[data-row="${row}"]`);
+            if (fileInput) fileInput.click();
+            return;
+        }
+        if (e.target.classList && e.target.classList.contains('replace-btn')) {
+            const row = e.target.getAttribute('data-row');
+            const fileInput = document.querySelector(`input.file-input[data-row="${row}"]`);
+            if (fileInput) fileInput.click();
+            return;
+        }
+    });
+
+    // Immediate upload on file selection
+    document.addEventListener('change', async function(e) {
+        if (e.target && e.target.classList.contains('file-input')) {
+            const row = e.target.getAttribute('data-row');
+            const file = e.target.files[0];
+            if (!file) return;
+            const fileNameSpan = document.querySelector(`.file-name[data-row="${row}"]`);
+            const replaceBtn = document.querySelector(`.replace-btn[data-row="${row}"]`);
+            const fileCheck = document.querySelector(`.file-check[data-row="${row}"]`);
+
+            if (fileNameSpan) fileNameSpan.textContent = file.name;
+            const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+            const path = `form8_${row}_${Date.now()}_${safeName}`;
+            try {
+                const publicUrl = await uploadFileToStorage(file, path, row);
+                if (replaceBtn) replaceBtn.classList.remove('hidden');
+                if (fileCheck) fileCheck.classList.remove('hidden');
+                console.log(`Uploaded row ${row} -> ${publicUrl}`);
+            } catch (err) {
+                alert('File upload failed for row ' + row + ': ' + err.message);
+                if (fileNameSpan) fileNameSpan.textContent = '';
+            }
+        }
+    });
+
+    // Form submit with validation: Completed rows must have Description OR uploaded file
     document.getElementById('institution-form8').addEventListener('submit', async function(e) {
         e.preventDefault();
         const form = e.target;
@@ -332,17 +412,36 @@
             "Month:": formData.get('Month:')
         };
 
-        // For each file row (1-9)
         for (let i = 1; i <= 9; i++) {
-            row[`Status_${i}`] = formData.get(`Status_${i}`) || null;
-            row[`Description_${i}`] = formData.get(`Description_${i}`) || null;
-            const file = formData.get(`Upload the scanned file_${i}`);
-            if (file && file.size > 0) {
+            const status = formData.get(`Status_${i}`) || null;
+            const desc = formData.get(`Description_${i}`) || null;
+            row[`Status_${i}`] = status;
+            row[`Description_${i}`] = desc;
+
+            const uploadedUrlInput = document.querySelector(`input.uploaded-url[data-row="${i}"]`);
+            const uploadedUrlVal = uploadedUrlInput ? uploadedUrlInput.value : '';
+            const fileInput = document.querySelector(`input.file-input[data-row="${i}"]`);
+            const file = fileInput && fileInput.files && fileInput.files[0];
+
+            if (status && status.includes('Completed')) {
+                const descTrim = (desc || '').trim();
+                const hasFileSelected = file && file.size > 0;
+                if (!descTrim && !uploadedUrlVal && !hasFileSelected) {
+                    alert('Row ' + i + ': When status is Completed, please provide a description or upload a file.');
+                    const sel = document.querySelector(`select[name="Status_${i}"]`);
+                    if (sel) { sel.scrollIntoView({behavior: 'smooth', block: 'center'}); sel.classList.add('ring-2','ring-red-500'); setTimeout(()=>sel.classList.remove('ring-2','ring-red-500'), 3000); }
+                    return;
+                }
+            }
+
+            if (uploadedUrlVal) {
+                row[`Upload the scanned file_${i}`] = uploadedUrlVal;
+            } else if (file && file.size > 0) {
                 const ts = Date.now();
                 const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
                 const path = `form8_${i}_${ts}_${safeName}`;
                 try {
-                    row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
+                    row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path, i);
                 } catch (err) {
                     window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(err.message);
                     return;

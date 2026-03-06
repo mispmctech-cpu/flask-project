@@ -252,12 +252,16 @@
                 <td class="border px-4 py-3"><select name="Status_${sn}" class="w-full border rounded px-2 py-2"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Yet to be completed</option><option>Not Applicable</option></select></td>
                 <td class="border px-4 py-3"><input type="text" name="Description_${sn}" maxlength="200" class="w-full border rounded px-2 py-2" placeholder="0-200 chars" /></td>
                 <td class="border px-4 py-3">
-                    <label class="custom-upload">
-                        Upload
-                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
-                        <input type="file" name="Upload the scanned file_${sn}" accept=".pdf,.jpg,.jpeg,.png" class="file-input" data-row="${sn}" />
-                    </label>
-                    <span class="file-check hidden text-green-600 font-bold ml-2" data-row="${sn}">? Uploaded</span>
+                    <div class="flex items-center gap-2">
+                        <label class="custom-upload cursor-pointer flex items-center" data-row="${sn}">
+                            Upload
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" class="ml-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
+                            <input type="file" name="Upload the scanned file_${sn}" accept=".pdf,.jpg,.jpeg,.png" class="file-input hidden" data-row="${sn}" />
+                        </label>
+                        <button type="button" class="replace-btn hidden bg-yellow-100 text-yellow-800 font-semibold px-2 py-1 rounded text-sm" data-row="${sn}">Replace</button>
+                        <span class="file-name text-sm text-gray-700 truncate" data-row="${sn}"></span>
+                        <input type="hidden" class="uploaded-url" data-row="${sn}" name="UploadedURL_${sn}" />
+                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -265,16 +269,41 @@
         });
     });
 
-    // Simple file upload indicator
-    document.addEventListener('change', function(e) {
+    // Upload on file selection: show filename, upload to Supabase, reveal Replace
+    document.addEventListener('change', async function(e) {
         if (e.target && e.target.classList.contains('file-input')) {
             const row = e.target.getAttribute('data-row');
-            const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
-            if (e.target.files && e.target.files.length > 0 && checkMark) {
-                checkMark.classList.remove('hidden');
-            } else if (checkMark) {
-                checkMark.classList.add('hidden');
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const uploadLabel = document.querySelector(`label.custom-upload[data-row="${row}"]`);
+            const fileNameSpan = document.querySelector(`.file-name[data-row="${row}"]`);
+            const replaceBtn = document.querySelector(`.replace-btn[data-row="${row}"]`);
+            const uploadedUrlInput = document.querySelector(`input.uploaded-url[data-row="${row}"]`);
+
+            // Show selected filename immediately
+            if (fileNameSpan) fileNameSpan.textContent = file.name;
+
+            try {
+                const path = `form2file${row}_${Date.now()}_${file.name}`;
+                const publicUrl = await uploadFileToStorage(file, path, uploadLabel);
+                if (replaceBtn) replaceBtn.classList.remove('hidden');
+                if (uploadedUrlInput) uploadedUrlInput.value = publicUrl || '';
+                console.log(`Uploaded row ${row} -> ${publicUrl}`);
+            } catch (err) {
+                alert('File upload failed for row ' + row + ': ' + err.message);
+                if (fileNameSpan) fileNameSpan.textContent = '';
             }
+        }
+    });
+
+    // Replace button opens file picker
+    document.addEventListener('click', function(e) {
+        if (!e.target) return;
+        if (e.target.classList.contains('replace-btn')) {
+            const row = e.target.getAttribute('data-row');
+            const fileInput = document.querySelector(`input.file-input[data-row='${row}']`);
+            if (fileInput) fileInput.click();
         }
     });
 
@@ -283,11 +312,27 @@
         "https://cbhodgwaazmjszkujrti.supabase.co",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
     );
-    async function uploadFileToStorage(file, path) {
+    async function uploadFileToStorage(file, path, uploadLabel) {
         if (!file) return null;
         const { data, error } = await supabaseDB.storage.from('Institution form2').upload(path, file, { upsert: true });
         if (error) throw error;
         const { data: urlData } = supabaseDB.storage.from('Institution form2').getPublicUrl(path);
+
+        // Update UI: show filename, reveal replace button, store uploaded URL
+        try {
+            if (uploadLabel) {
+                const row = uploadLabel.getAttribute('data-row');
+                const fileNameSpan = document.querySelector(`.file-name[data-row="${row}"]`);
+                const replaceBtn = document.querySelector(`.replace-btn[data-row="${row}"]`);
+                const uploadedUrlInput = document.querySelector(`input.uploaded-url[data-row="${row}"]`);
+                if (fileNameSpan) fileNameSpan.textContent = file.name;
+                if (replaceBtn) replaceBtn.classList.remove('hidden');
+                if (uploadedUrlInput) uploadedUrlInput.value = urlData.publicUrl;
+            }
+        } catch (uiErr) {
+            console.warn('UI update failed after upload', uiErr);
+        }
+
         return urlData.publicUrl;
     }
     const form = document.getElementById('hrForm');
@@ -314,18 +359,37 @@
             let totalRows = 0;
             hrSections.forEach(section => { totalRows += section.rows.length; });
             for (let i = 1; i <= 22; i++) {
-                // Use correct field names as per schema
                 const statusKey = `Status_${i}`;
                 const descKey = `Description_${i}`;
                 const fileKey = `Upload The Scanned File_${i}`;
                 row[statusKey] = formData.get(statusKey) || null;
                 row[descKey] = formData.get(descKey) || null;
-                const file = formData.get(`Upload the scanned file_${i}`) || formData.get(fileKey);
-                if (file && file.size > 0) {
+
+                const fileInput = document.querySelector(`input.file-input[data-row='${i}']`);
+                const uploadedUrlInput = document.querySelector(`input.uploaded-url[data-row='${i}']`);
+                const uploadedUrlVal = uploadedUrlInput ? uploadedUrlInput.value : '';
+                const fileNow = fileInput && fileInput.files && fileInput.files[0];
+
+                // Validation: if Completed, require description OR an uploaded file (either previously uploaded or selected now)
+                if (row[statusKey] === 'Completed') {
+                    const descTrim = (row[descKey] || '').trim();
+                    const hasFileSelected = fileNow && fileNow.size > 0;
+                    if (!descTrim && !uploadedUrlVal && !hasFileSelected) {
+                        alert('Row ' + i + ': When status is Completed, please provide a description or upload a file.');
+                        const sel = document.querySelector(`select[name="Status_${i}"]`);
+                        if (sel) { sel.scrollIntoView({behavior: 'smooth', block: 'center'}); sel.classList.add('ring-2','ring-red-500'); setTimeout(()=>sel.classList.remove('ring-2','ring-red-500'), 3000); }
+                        return;
+                    }
+                }
+
+                // Prefer previously uploaded URL
+                if (uploadedUrlVal) {
+                    row[fileKey] = uploadedUrlVal;
+                } else if (fileNow && fileNow.size > 0) {
                     const ts = Date.now();
-                    const path = `form2file${i}_${ts}_${file.name}`;
+                    const path = `form2file${i}_${ts}_${fileNow.name}`;
                     try {
-                        row[fileKey] = await uploadFileToStorage(file, path);
+                        row[fileKey] = await uploadFileToStorage(fileNow, path, document.querySelector(`label.custom-upload[data-row='${i}']`));
                     } catch (err) {
                         window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
                         return;

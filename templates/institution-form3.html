@@ -46,6 +46,27 @@
                 opacity: 1;
             }
         }
+        /* Upload UI helpers */
+        .custom-upload {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f7f5f7;
+            color: #7d4c9e;
+            border: 1px solid #d1c1e9;
+            border-radius: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            cursor: pointer;
+        }
+        .file-name {
+            max-width: 160px;
+            display: inline-block;
+            vertical-align: middle;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .replace-btn { cursor: pointer; }
     </style>
 <script>
 // Auto-fill Portfolio Name, Portfolio Person Name, and Month from localStorage if available
@@ -148,11 +169,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <input type="text" name="Description_1" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
                                 </td>
                                 <td class="text-center">
-                                    <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
-                                        <input type="file" name="Upload the scanned file_1" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input" data-row="monthly-1">
-                                    </label>
-                                    <span class="file-check hidden text-green-600 font-bold ml-2" data-row="monthly-1">? Uploaded</span>
+                                    <div class="flex items-center justify-center gap-2">
+                                        <label class="custom-upload" data-row="monthly-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
+                                            <input type="file" name="Upload the scanned file_1" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input" data-row="monthly-1">
+                                        </label>
+                                        <button type="button" class="replace-btn hidden bg-yellow-100 text-yellow-800 font-semibold px-2 py-1 rounded text-sm" data-row="monthly-1">Replace</button>
+                                        <span class="file-name text-sm text-gray-700 truncate" data-row="monthly-1"></span>
+                                        <input type="hidden" class="uploaded-url" data-row="monthly-1" name="UploadedURL_monthly-1" />
+                                        <span class="file-check hidden text-green-600 font-bold ml-2" data-row="monthly-1">? Uploaded</span>
+                                    </div>
                                 </td>
                             </tr>
                             <tr class="bg-[#faf7ff]">
@@ -171,11 +197,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <input type="text" name="Description_2" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
                                 </td>
                                 <td class="text-center">
-                                    <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
-                                        <input type="file" name="Upload the scanned file_2" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input" data-row="monthly-2">
-                                    </label>
-                                    <span class="file-check hidden text-green-600 font-bold ml-2" data-row="monthly-2">? Uploaded</span>
+                                    <div class="flex items-center justify-center gap-2">
+                                        <label class="custom-upload" data-row="monthly-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
+                                            <input type="file" name="Upload the scanned file_2" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input" data-row="monthly-2">
+                                        </label>
+                                        <button type="button" class="replace-btn hidden bg-yellow-100 text-yellow-800 font-semibold px-2 py-1 rounded text-sm" data-row="monthly-2">Replace</button>
+                                        <span class="file-name text-sm text-gray-700 truncate" data-row="monthly-2"></span>
+                                        <input type="hidden" class="uploaded-url" data-row="monthly-2" name="UploadedURL_monthly-2" />
+                                        <span class="file-check hidden text-green-600 font-bold ml-2" data-row="monthly-2">? Uploaded</span>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -250,11 +281,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <input type="text" name="Description_1" maxlength="200" class="w-full border border-gray-300 rounded-lg px-2 py-2 bg-white" />
                                 </td>
                                 <td class="text-center">
-                                    <label class="flex items-center justify-center cursor-pointer border border-gray-300 rounded-lg px-4 py-2 bg-[#f7f5f7] hover:bg-[#f0e6f7] transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
-                                        <input type="file" name="Upload the scanned file_1" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input" data-row="semester-1">
-                                    </label>
-                                    <span class="file-check hidden text-green-600 font-bold ml-2" data-row="semester-1">? Uploaded</span>
+                                    <div class="flex items-center justify-center gap-2">
+                                        <label class="custom-upload" data-row="semester-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
+                                            <input type="file" name="Upload the scanned file_1" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input" data-row="semester-1">
+                                        </label>
+                                        <button type="button" class="replace-btn hidden bg-yellow-100 text-yellow-800 font-semibold px-2 py-1 rounded text-sm" data-row="semester-1">Replace</button>
+                                        <span class="file-name text-sm text-gray-700 truncate" data-row="semester-1"></span>
+                                        <input type="hidden" class="uploaded-url" data-row="semester-1" name="UploadedURL_semester-1" />
+                                        <span class="file-check hidden text-green-600 font-bold ml-2" data-row="semester-1">? Uploaded</span>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -308,25 +344,73 @@ document.addEventListener('DOMContentLoaded', function() {
     // Global object to store draft file URLs
     window.draftFileUrls = {};
 
-    // File check functionality
-    document.addEventListener('change', function(e) {
+    // Upload on file selection: show filename, upload to Supabase, reveal Replace
+    document.addEventListener('change', async function(e) {
         if (e.target && e.target.classList.contains('file-input')) {
             const row = e.target.getAttribute('data-row');
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const uploadLabel = document.querySelector(`label.custom-upload[data-row="${row}"]`);
+            const fileNameSpan = document.querySelector(`.file-name[data-row="${row}"]`);
+            const replaceBtn = document.querySelector(`.replace-btn[data-row="${row}"]`);
+            const uploadedUrlInput = document.querySelector(`input.uploaded-url[data-row="${row}"]`);
             const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
-            if (e.target.files && e.target.files.length > 0 && checkMark) {
-                checkMark.classList.remove('hidden');
-            } else if (checkMark) {
-                checkMark.classList.add('hidden');
+
+            // Show selected filename immediately
+            if (fileNameSpan) fileNameSpan.textContent = file.name;
+
+            try {
+                const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+                const path = `form3_${row}_${Date.now()}_${safeName}`;
+                const publicUrl = await uploadFileToStorage(file, path, uploadLabel);
+                if (replaceBtn) replaceBtn.classList.remove('hidden');
+                if (uploadedUrlInput) uploadedUrlInput.value = publicUrl || '';
+                // store in draft map using the same key format used elsewhere
+                window.draftFileUrls[row] = publicUrl;
+                if (checkMark) { checkMark.classList.remove('hidden'); checkMark.textContent = '✓ Uploaded'; }
+                console.log(`Uploaded row ${row} -> ${publicUrl}`);
+            } catch (err) {
+                alert('File upload failed for row ' + row + ': ' + err.message);
+                if (fileNameSpan) fileNameSpan.textContent = '';
             }
         }
     });
 
-    // Upload file to Supabase Storage
-    async function uploadFileToStorage(file, path) {
+    // Replace button opens file picker
+    document.addEventListener('click', function(e) {
+        if (!e.target) return;
+        if (e.target.classList.contains('replace-btn')) {
+            const row = e.target.getAttribute('data-row');
+            const fileInput = document.querySelector(`input.file-input[data-row='${row}']`);
+            if (fileInput) fileInput.click();
+        }
+    });
+
+    // Upload file to Supabase Storage (with UI update support)
+    async function uploadFileToStorage(file, path, uploadLabel) {
         if (!file) return null;
         const { data, error } = await supabaseClient.storage.from('Institution form3').upload(path, file, { upsert: true });
         if (error) throw error;
         const { data: urlData } = supabaseClient.storage.from('Institution form3').getPublicUrl(path);
+
+        try {
+            if (uploadLabel) {
+                const row = uploadLabel.getAttribute('data-row');
+                const fileNameSpan = document.querySelector(`.file-name[data-row="${row}"]`);
+                const replaceBtn = document.querySelector(`.replace-btn[data-row="${row}"]`);
+                const uploadedUrlInput = document.querySelector(`input.uploaded-url[data-row="${row}"]`);
+                const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
+                if (fileNameSpan) fileNameSpan.textContent = file.name;
+                if (replaceBtn) replaceBtn.classList.remove('hidden');
+                if (uploadedUrlInput) uploadedUrlInput.value = urlData.publicUrl;
+                window.draftFileUrls[row] = urlData.publicUrl;
+                if (checkMark) { checkMark.classList.remove('hidden'); checkMark.textContent = '✓ Uploaded'; }
+            }
+        } catch (uiErr) {
+            console.warn('UI update failed after upload', uiErr);
+        }
+
         return urlData.publicUrl;
     }
 
@@ -402,9 +486,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (draftData[`Upload the scanned file_${i}`]) {
+                const url = draftData[`Upload the scanned file_${i}`];
                 // Store draft file URL for later use during submission
-                window.draftFileUrls[`${formType}-${i}`] = draftData[`Upload the scanned file_${i}`];
-                
+                window.draftFileUrls[`${formType}-${i}`] = url;
+
+                // Populate hidden uploaded-url input and filename display when present
+                const uploadedUrlInput = form.querySelector(`input.uploaded-url[data-row="${formType}-${i}"]`);
+                if (uploadedUrlInput) uploadedUrlInput.value = url;
+                const fileNameSpan = form.querySelector(`.file-name[data-row="${formType}-${i}"]`);
+                if (fileNameSpan) {
+                    try {
+                        const name = decodeURIComponent(url.split('/').pop().split('?')[0]);
+                        fileNameSpan.textContent = name || 'From Draft';
+                    } catch (err) {
+                        fileNameSpan.textContent = 'From Draft';
+                    }
+                }
+
                 const checkMark = document.querySelector(`.file-check[data-row="${formType}-${i}"]`);
                 if (checkMark) {
                     checkMark.classList.remove('hidden');
@@ -581,14 +679,35 @@ document.addEventListener('DOMContentLoaded', function() {
         for (let i = 1; i <= 2; i++) {
             row[`Status_${i}`] = formData.get(`Status_${i}`) || null;
             row[`Description_${i}`] = formData.get(`Description_${i}`) || null;
-            
-            const file = formData.get(`Upload the scanned file_${i}`);
-            if (file && file.size > 0) {
+
+            const uploadedUrlInput = document.querySelector(`input.uploaded-url[data-row="monthly-${i}"]`);
+            const uploadedUrlVal = uploadedUrlInput ? uploadedUrlInput.value : '';
+            const fileInput = document.querySelector(`input.file-input[data-row="monthly-${i}"]`);
+            const fileNow = fileInput && fileInput.files && fileInput.files[0];
+
+            // Validation: treat any status containing 'Completed' as completed
+            if (row[`Status_${i}`] && row[`Status_${i}`].toString().includes('Completed')) {
+                const descTrim = (row[`Description_${i}`] || '').trim();
+                const draftKey = `monthly-${i}`;
+                const draftUrl = window.draftFileUrls[draftKey];
+                const hasFileSelected = fileNow && fileNow.size > 0;
+                if (!descTrim && !uploadedUrlVal && !hasFileSelected && !draftUrl) {
+                    alert('Row ' + i + ': When status is Completed, please provide a description or upload a file.');
+                    const sel = document.querySelector(`select[name="Status_${i}"]`);
+                    if (sel) { sel.scrollIntoView({behavior: 'smooth', block: 'center'}); sel.classList.add('ring-2','ring-red-500'); setTimeout(()=>sel.classList.remove('ring-2','ring-red-500'), 3000); }
+                    return;
+                }
+            }
+
+            // Prefer previously uploaded URL
+            if (uploadedUrlVal) {
+                row[`Upload the scanned file_${i}`] = uploadedUrlVal;
+            } else if (fileNow && fileNow.size > 0) {
                 const ts = Date.now();
-                const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+                const safeName = fileNow.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
                 const path = `form3_monthly_${i}_${ts}_${safeName}`;
                 try {
-                    row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
+                    row[`Upload the scanned file_${i}`] = await uploadFileToStorage(fileNow, path, document.querySelector(`label.custom-upload[data-row='monthly-${i}']`));
                 } catch (err) {
                     window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(err.message);
                     return;
@@ -642,20 +761,38 @@ document.addEventListener('DOMContentLoaded', function() {
         // For semester form (has 1 row)
         row[`Status_1`] = formData.get(`Status_1`) || null;
         row[`Description_1`] = formData.get(`Description_1`) || null;
-        
-        const file = formData.get(`Upload the scanned file_1`);
-        if (file && file.size > 0) {
+
+        const uploadedUrlInputSem = document.querySelector(`input.uploaded-url[data-row="semester-1"]`);
+        const uploadedUrlValSem = uploadedUrlInputSem ? uploadedUrlInputSem.value : '';
+        const fileInputSem = document.querySelector(`input.file-input[data-row="semester-1"]`);
+        const fileSemNow = fileInputSem && fileInputSem.files && fileInputSem.files[0];
+
+        // Validation for Completed-like status
+        if (row[`Status_1`] && row[`Status_1`].toString().includes('Completed')) {
+            const descTrim = (row[`Description_1`] || '').trim();
+            const draftUrl = window.draftFileUrls['semester-1'];
+            const hasFileSelected = fileSemNow && fileSemNow.size > 0;
+            if (!descTrim && !uploadedUrlValSem && !hasFileSelected && !draftUrl) {
+                alert('Row 1: When status is Completed, please provide a description or upload a file.');
+                const sel = document.querySelector(`select[name="Status_1"]`);
+                if (sel) { sel.scrollIntoView({behavior: 'smooth', block: 'center'}); sel.classList.add('ring-2','ring-red-500'); setTimeout(()=>sel.classList.remove('ring-2','ring-red-500'), 3000); }
+                return;
+            }
+        }
+
+        if (uploadedUrlValSem) {
+            row[`Upload the scanned file_1`] = uploadedUrlValSem;
+        } else if (fileSemNow && fileSemNow.size > 0) {
             const ts = Date.now();
-            const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+            const safeName = fileSemNow.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
             const path = `form3_semester_1_${ts}_${safeName}`;
             try {
-                row[`Upload the scanned file_1`] = await uploadFileToStorage(file, path);
+                row[`Upload the scanned file_1`] = await uploadFileToStorage(fileSemNow, path, document.querySelector(`label.custom-upload[data-row='semester-1']`));
             } catch (err) {
                 window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent(err.message);
                 return;
             }
         } else {
-            // Use draft file URL as fallback
             row[`Upload the scanned file_1`] = window.draftFileUrls['semester-1'] || null;
         }
 

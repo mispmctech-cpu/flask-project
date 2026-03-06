@@ -207,26 +207,43 @@ document.addEventListener('DOMContentLoaded', function() {
 			</select></td>
 			<td class="border px-4 py-3"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-2 py-2" placeholder="0-200 chars" /></td>
 			<td class="border px-4 py-3">
-				<label class="custom-upload">
+				<label class="custom-upload" style="display:inline-flex;align-items:center;">
 					Upload
 					<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12"/></svg>
 					<input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="file-input" data-row="${idx}" />
 				</label>
-				<span class="file-check hidden" data-row="${idx}">? Uploaded</span>
+				<span class="file-name ml-2" data-row="${idx}"></span>
+				<button type="button" class="replace-btn hidden ml-3 px-2 py-1 bg-gray-100 rounded" data-row="${idx}">Replace</button>
+				<input type="hidden" class="uploaded-url" name="UploadedURL_${idx}" data-row="${idx}" />
+				<span class="file-check hidden ml-2 text-green-600 font-semibold" data-row="${idx}">✓ Uploaded</span>
 			</td>
 		`;
 		tbody.appendChild(tr);
 	});
 	
-	// Upload function using the already declared supabase client
-	async function uploadFileToStorage(file, path) {
+	// Upload function using the already declared supabase client (updates UI when row provided)
+	async function uploadFileToStorage(file, path, row) {
 		if (!file) return null;
 		const { data, error } = await supabase.storage.from('Institution-files17').upload(path, file, { upsert: true });
 		if (error) throw error;
 		const { data: urlData } = supabase.storage.from('Institution-files17').getPublicUrl(path);
-		return urlData.publicUrl;
+		const publicUrl = urlData.publicUrl;
+		try {
+			if (row) {
+				const nameSpan = document.querySelector('.file-name[data-row="' + row + '"]');
+				if (nameSpan) nameSpan.textContent = file.name;
+				const replaceBtn = document.querySelector('.replace-btn[data-row="' + row + '"]');
+				if (replaceBtn) replaceBtn.classList.remove('hidden');
+				const uploadedInput = document.querySelector('input.uploaded-url[data-row="' + row + '"]');
+				if (uploadedInput) uploadedInput.value = publicUrl;
+				const fileCheck = document.querySelector('.file-check[data-row="' + row + '"]');
+				if (fileCheck) fileCheck.classList.remove('hidden');
+				if (window && window.draftFileUrls) window.draftFileUrls[row] = publicUrl;
+			}
+		} catch (e) {}
+		return publicUrl;
 	}
-	// Form submit
+	// Form submit - prefer already-uploaded URLs and validate Completed rows
 	document.getElementById('form17').addEventListener('submit', async function(e) {
 		e.preventDefault();
 		const form = e.target;
@@ -236,21 +253,34 @@ document.addEventListener('DOMContentLoaded', function() {
 			"Portfolio Member Name:": formData.get('Portfolio Member Name:'),
 			"Month:": formData.get('Month:'),
 		};
-		for (let i = 1; i <= 7; i++) {
+		for (let i = 1; i <= responsibilityRows.length; i++) {
 			row[`Status_${i}`] = formData.get(`Status_${i}`);
 			row[`Description_${i}`] = formData.get(`Description_${i}`);
-			const file = formData.get(`Upload the scanned file_${i}`);
-			if (file && file.size > 0) {
-				const ts = Date.now();
-				const path = `form17file${i}_${ts}_${file.name}`;
-				try {
-					row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
-				} catch (err) {
-					window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
+			const uploadedInput = form.querySelector(`input.uploaded-url[name="UploadedURL_${i}"]`);
+			const uploadedUrl = uploadedInput ? uploadedInput.value : null;
+			if (uploadedUrl) {
+				row[`Upload the scanned file_${i}`] = uploadedUrl;
+			} else {
+				const file = formData.get(`Upload the scanned file_${i}`);
+				if (file && file.size > 0) {
+					const ts = Date.now();
+					const path = `form17file${i}_${ts}_${file.name}`;
+					try {
+						row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path, i);
+					} catch (err) {
+						window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
+						return;
+					}
+				} else {
+					row[`Upload the scanned file_${i}`] = null;
+				}
+			}
+			if (row[`Status_${i}`] === 'Completed') {
+				const desc = (row[`Description_${i}`] || '').trim();
+				if (!desc && !row[`Upload the scanned file_${i}`]) {
+					alert('Row ' + i + ' is marked Completed. Please add a description or upload a file.');
 					return;
 				}
-			} else {
-				row[`Upload the scanned file_${i}`] = null;
 			}
 		}
 		// Submit to Supabase
@@ -262,14 +292,28 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 	});
 	
-	// File upload indicator
-	document.addEventListener('change', function(e) {
+	// immediate upload on select and replace button behavior
+	document.addEventListener('change', async function(e) {
 		if (e.target.classList.contains('file-input')) {
 			const rowId = e.target.getAttribute('data-row');
-			const checkmark = document.querySelector(`[data-row="${rowId}"].file-check`);
-			if (checkmark && e.target.files.length > 0) {
-				checkmark.classList.remove('hidden');
+			const file = e.target.files[0];
+			if (file) {
+				const ts = Date.now();
+				const path = `form17file${rowId}_${ts}_${file.name}`;
+				try {
+					await uploadFileToStorage(file, path, rowId);
+				} catch (err) {
+					window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + rowId + ': ' + err.message)}`;
+				}
 			}
+		}
+	});
+
+	document.addEventListener('click', function(e) {
+		if (e.target.classList && e.target.classList.contains('replace-btn')) {
+			const rowId = e.target.getAttribute('data-row');
+			const fileInput = document.querySelector('.file-input[data-row="' + rowId + '"]');
+			if (fileInput) fileInput.click();
 		}
 	});
 	</script>  <!-- Footer -->

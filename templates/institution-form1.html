@@ -81,7 +81,7 @@
 			<div class="w-full max-w-6xl mx-auto bg-white rounded-2xl card-shadow border border-purple-300 overflow-x-auto p-0">
 				<div class="bg-purple-800 py-8 px-6 text-white text-center w-full rounded-t-2xl">
 					<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2R7bHsdVlhJda1oUOZ1NPc7lvacTuGPvHgg&s" alt="" class="h-16 mb-2" style="max-height:64px; float: left;" />
-					<h1 class="text-2xl md:text-4xl font-extrabold tracking-wide mb-2 drop-shadow">Director – Students Welfare & Admissions</h1>
+					<h1 class="text-2xl md:text-4xl font-extrabold tracking-wide mb-2 drop-shadow">Director ï¿½ Students Welfare & Admissions</h1>
 				</div>
 				<form id="instForm1" class="p-6 md:p-10 space-y-10 w-full">
 			<div class="grid grid-cols-1 md:grid-cols-3 gap-8 bg-purple-50 rounded-xl p-8 card-shadow mb-8">
@@ -195,10 +195,10 @@
 		'Ensure adherence to reservation policies and government norms.',
 		// 10. Outreach and Branding
 		'Lead institutional outreach through school visits, education fairs, and digital campaigns.',
-		'Collaborate with marketing teams to develop brochures, videos, and online content that highlight the college’s strengths.',
+		'Collaborate with marketing teams to develop brochures, videos, and online content that highlight the collegeï¿½s strengths.',
 		'Build relationships with feeder institutions and career counsellors.',
 		// 11. Application and Selection Process
-		'Oversee the entire admissions cycle—from application receipt to final enrolment.',
+		'Oversee the entire admissions cycleï¿½from application receipt to final enrolment.',
 		'Coordinate entrance exams, interviews, and counselling sessions.',
 		'Ensure timely communication with applicants and resolution of queries.',
 		// 12. Data Management and Reporting
@@ -206,7 +206,7 @@
 		'Analyse data to refine recruitment strategies and forecast future intake.',
 		'Prepare reports for internal review and regulatory compliance.',
 		// 13. Application and Selection Process (repeat)
-		'Oversee the entire admissions cycle—from application receipt to final enrolment. (Repeat)',
+		'Oversee the entire admissions cycleï¿½from application receipt to final enrolment. (Repeat)',
 		'Coordinate entrance exams, interviews, and counselling sessions. (Repeat)',
 		'Ensure timely communication with applicants and resolution of queries. (Repeat)',
 		// 14. Data Management and Reporting (repeat)
@@ -222,12 +222,28 @@
 		tr.innerHTML = `
 			<td class="border px-2 py-1 text-center">${idx}</td>
 			<td class="border px-2 py-1">${name}</td>
-			<td class="border px-2 py-1"><select name="Status_${idx}" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
-			<td class="border px-2 py-1"><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
 			<td class="border px-2 py-1">
-				<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded w-full" data-row="${idx}">Upload</button>
-				<span class="file-check hidden text-green-600 font-bold ml-2" data-row="${idx}">?</span>
-				<input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
+				<select name="Status_${idx}" class="w-full border rounded px-1 py-1">
+					<option value="">Select</option>
+					<option>Completed</option>
+					<option>In Progress</option>
+					<option>Not Started</option>
+					<option>Not Applicable</option>
+				</select>
+			</td>
+			<td class="border px-2 py-1">
+				<input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" />
+			</td>
+			<td class="border px-2 py-1">
+				<div class="flex flex-col gap-2">
+					<div class="flex items-center gap-2">
+						<button type="button" class="upload-btn bg-purple-200 hover:bg-purple-300 text-purple-900 font-semibold px-3 py-1 rounded" data-row="${idx}">Upload</button>
+						<button type="button" class="replace-btn hidden bg-yellow-100 text-yellow-800 font-semibold px-2 py-1 rounded text-sm" data-row="${idx}">Replace</button>
+						<span class="file-name text-sm text-gray-700 truncate" data-row="${idx}"></span>
+					</div>
+					<input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="hidden file-input-row" data-row="${idx}" />
+					<input type="hidden" class="uploaded-url" data-row="${idx}" name="UploadedURL_${idx}" />
+				</div>
 			</td>
 		`;
 		tbody1.appendChild(tr);
@@ -238,34 +254,48 @@
 		"https://cbhodgwaazmjszkujrti.supabase.co",
 		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
 	);
-	async function uploadFileToStorage(file, path, bucket, uploadBtn) {
-		if (!file) return null;
-		const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
-		if (error) throw error;
-		// Get public URL
-		const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
-		// Change the upload button to 'Uploaded' after successful upload
-		if (uploadBtn) {
-			const row = uploadBtn.getAttribute('data-row');
-			const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
-			
-			uploadBtn.textContent = 'Uploaded';
-			uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
-			uploadBtn.disabled = true;
-			
-			// Show checkmark
-			if (checkMark) {
-				checkMark.classList.remove('hidden');
+		async function uploadFileToStorage(file, path, bucket, uploadBtn) {
+			if (!file) return null;
+			const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+			if (error) throw error;
+			// Get public URL
+			const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
+
+			// Update UI: show filename, reveal replace button, store uploaded URL
+			if (uploadBtn) {
+				const row = uploadBtn.getAttribute('data-row');
+				const fileNameSpan = document.querySelector(`.file-name[data-row="${row}"]`);
+				const replaceBtn = document.querySelector(`.replace-btn[data-row="${row}"]`);
+				const uploadedUrlInput = document.querySelector(`input.uploaded-url[data-row="${row}"]`);
+
+				uploadBtn.textContent = 'Uploaded';
+				uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded';
+				uploadBtn.disabled = true;
+
+				if (fileNameSpan) fileNameSpan.textContent = file.name;
+				if (replaceBtn) replaceBtn.classList.remove('hidden');
+				if (uploadedUrlInput) uploadedUrlInput.value = urlData.publicUrl;
 			}
+
+			return urlData.publicUrl;
 		}
-		return urlData.publicUrl;
-	}
 // Handle upload button click for all rows
 document.addEventListener('click', function(e) {
-	if (e.target && e.target.classList.contains('upload-btn')) {
+	if (!e.target) return;
+	// Upload button opens file picker
+	if (e.target.classList.contains('upload-btn')) {
 		const row = e.target.getAttribute('data-row');
 		const fileInput = document.querySelector(`input.file-input-row[data-row='${row}']`);
 		if (fileInput) fileInput.click();
+		return;
+	}
+
+	// Replace button also opens file picker to choose a new file
+	if (e.target.classList.contains('replace-btn')) {
+		const row = e.target.getAttribute('data-row');
+		const fileInput = document.querySelector(`input.file-input-row[data-row='${row}']`);
+		if (fileInput) fileInput.click();
+		return;
 	}
 });
 
@@ -276,6 +306,12 @@ document.addEventListener('change', async function(e) {
 		const file = e.target.files[0];
 		if (!file) return;
 		const uploadBtn = document.querySelector(`button.upload-btn[data-row='${row}']`);
+		const fileNameSpan = document.querySelector(`.file-name[data-row='${row}']`);
+		const replaceBtn = document.querySelector(`.replace-btn[data-row='${row}']`);
+
+		// Show selected filename immediately
+		if (fileNameSpan) fileNameSpan.textContent = file.name;
+
 		let bucket, path;
 		if (row == '22') {
 			bucket = 'Institution form1 once in six months';
@@ -285,9 +321,14 @@ document.addEventListener('change', async function(e) {
 			path = `instfile${row}_${Date.now()}_${file.name}`;
 		}
 		try {
-			await uploadFileToStorage(file, path, bucket, uploadBtn);
+			const publicUrl = await uploadFileToStorage(file, path, bucket, uploadBtn);
+			// Ensure replace button visible when upload completes
+			if (replaceBtn) replaceBtn.classList.remove('hidden');
+			// uploaded-url input is set inside uploadFileToStorage
+			console.log(`Uploaded row ${row} -> ${publicUrl}`);
 		} catch (err) {
 			alert('File upload failed for row ' + row + ': ' + err.message);
+			if (fileNameSpan) fileNameSpan.textContent = '';
 		}
 	}
 });
@@ -313,15 +354,42 @@ document.addEventListener('change', async function(e) {
 		};
 		for (let i = 1; i <= 35; i++) {
 			monthlyRow[`Status_${i}`] = formData.get(`Status_${i}`);
-			monthlyRow[`Description_${i}`] = formData.get(`Description_${i}`);
-			// Get the file input for this row
+			monthlyRow[`Description_${i}`] = formData.get(`Description_${i}`) || '';
+
+			// File references
 			const fileInput = document.querySelector(`input.file-input-row[data-row='${i}']`);
+			const uploadedUrlInput = document.querySelector(`input.uploaded-url[data-row='${i}']`);
+			const uploadedUrlVal = uploadedUrlInput ? uploadedUrlInput.value : '';
 			const file = fileInput && fileInput.files[0];
-			if (file && file.size > 0) {
+
+			// Validation: if Completed, require description OR an uploaded file (either selected now or previously uploaded)
+			if (monthlyRow[`Status_${i}`] === 'Completed') {
+				const descTrim = (monthlyRow[`Description_${i}`] || '').trim();
+				const hasFileSelected = file && file.size > 0;
+				if (!descTrim && !uploadedUrlVal && !hasFileSelected) {
+					alert('Row ' + i + ': When status is Completed, please provide a description or upload a file.');
+					const sel = document.querySelector(`select[name="Status_${i}"]`);
+					if (sel) { sel.scrollIntoView({behavior: 'smooth', block: 'center'}); sel.classList.add('ring-2','ring-red-500'); setTimeout(()=>sel.classList.remove('ring-2','ring-red-500'), 3000); }
+					return;
+				}
+			}
+
+			// If we already have an uploaded URL from a prior upload, use it
+			if (uploadedUrlVal) {
+				monthlyRow[`Upload the scanned file_${i}`] = uploadedUrlVal;
+			} else if (file && file.size > 0) {
+				// Upload file now
 				const ts = Date.now();
-				const path = `instfile${i}_${ts}_${file.name}`;
+				let path;
+				let bucket = 'institution form1 monthly';
+				if (i === 22) {
+					bucket = 'Institution form1 once in six months';
+					path = `sixmonthfile1_${ts}_${file.name}`;
+				} else {
+					path = `instfile${i}_${ts}_${file.name}`;
+				}
 				try {
-					monthlyRow[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path, 'institution form1 monthly');
+					monthlyRow[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path, bucket, document.querySelector(`button.upload-btn[data-row='${i}']`));
 				} catch (err) {
 					window.location.href = `notification.html?status=error&msg=${encodeURIComponent('File upload failed for row ' + i + ': ' + err.message)}`;
 					return;

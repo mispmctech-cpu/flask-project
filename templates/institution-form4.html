@@ -45,6 +45,26 @@
                 opacity: 1;
             }
         }
+        .custom-upload {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f7f5f7;
+            color: #7d4c9e;
+            border: 1px solid #d1c1e9;
+            border-radius: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            cursor: pointer;
+        }
+        .file-name {
+            max-width: 140px;
+            display: inline-block;
+            vertical-align: middle;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .replace-btn { cursor: pointer; }
     </style>
     <script>
     // Auto-fill Portfolio Name, Portfolio Member Name, and Month from localStorage if available (like institution-form7.html)
@@ -211,31 +231,89 @@
             <td class="text-center">${row.tat}</td>
             <td class="text-center"><select name="Status_${idx}" class="w-full border rounded px-1 py-1"><option value="">Select</option><option>Completed</option><option>In Progress</option><option>Not Started</option><option>Not Applicable</option></select></td>
             <td><input type="text" name="Description_${idx}" maxlength="200" class="w-full border rounded px-1 py-1" placeholder="0-200 chars" /></td>
-            <td class="text-center"><input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="w-full file-input" data-row="${idx}" /><span class="file-check hidden text-green-600 font-bold" data-row="${idx}">? Uploaded</span></td>
+            <td class="text-center">
+                <div class="flex items-center justify-center gap-2">
+                    <label class="custom-upload" data-row="${idx}">
+                        <input type="file" name="Upload the scanned file_${idx}" accept=".pdf,.jpg,.jpeg,.png" class="file-input hidden" data-row="${idx}" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="#7d4c9e"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" /></svg>
+                    </label>
+                    <button type="button" class="replace-btn hidden bg-yellow-100 text-yellow-800 font-semibold px-2 py-1 rounded text-sm" data-row="${idx}">Replace</button>
+                    <span class="file-name text-sm text-gray-700" data-row="${idx}"></span>
+                    <input type="hidden" class="uploaded-url" data-row="${idx}" name="UploadedURL_${idx}" />
+                    <span class="file-check hidden text-green-600 font-bold" data-row="${idx}">? Uploaded</span>
+                </div>
+            </td>
         `;
         tbody.appendChild(tr);
     }
-    // File upload indicator
-    document.addEventListener('change', function(e) {
+    // Upload on file selection: show filename, upload to Supabase, reveal Replace
+    document.addEventListener('change', async function(e) {
         if (e.target && e.target.classList.contains('file-input')) {
             const row = e.target.getAttribute('data-row');
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const uploadLabel = document.querySelector(`label.custom-upload[data-row="${row}"]`);
+            const fileNameSpan = document.querySelector(`.file-name[data-row="${row}"]`);
+            const replaceBtn = document.querySelector(`.replace-btn[data-row="${row}"]`);
+            const uploadedUrlInput = document.querySelector(`input.uploaded-url[data-row="${row}"]`);
             const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
-            if (e.target.files && e.target.files.length > 0 && checkMark) {
-                checkMark.classList.remove('hidden');
-            } else if (checkMark) {
-                checkMark.classList.add('hidden');
+
+            if (fileNameSpan) fileNameSpan.textContent = file.name;
+
+            try {
+                const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+                const path = `form4_${row}_${Date.now()}_${safeName}`;
+                const publicUrl = await uploadFileToStorage(file, path, uploadLabel);
+                if (replaceBtn) replaceBtn.classList.remove('hidden');
+                if (uploadedUrlInput) uploadedUrlInput.value = publicUrl || '';
+                // store in draft map by numeric index
+                window.draftFileUrls[row] = publicUrl;
+                if (checkMark) { checkMark.classList.remove('hidden'); checkMark.textContent = '✓ Uploaded'; }
+                console.log(`Uploaded row ${row} -> ${publicUrl}`);
+            } catch (err) {
+                alert('File upload failed for row ' + row + ': ' + err.message);
+                if (fileNameSpan) fileNameSpan.textContent = '';
             }
+        }
+    });
+
+    // Replace button opens file picker
+    document.addEventListener('click', function(e) {
+        if (!e.target) return;
+        if (e.target.classList.contains('replace-btn')) {
+            const row = e.target.getAttribute('data-row');
+            const fileInput = document.querySelector(`input.file-input[data-row='${row}']`);
+            if (fileInput) fileInput.click();
         }
     });
     // Supabase config
     const supabaseUrl = "https://cbhodgwaazmjszkujrti.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU";
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
-    async function uploadFileToStorage(file, path) {
+    async function uploadFileToStorage(file, path, uploadLabel) {
         if (!file) return null;
         const { data, error } = await supabaseClient.storage.from('Institution form4').upload(path, file, { upsert: true });
         if (error) throw error;
         const { data: urlData } = supabaseClient.storage.from('Institution form4').getPublicUrl(path);
+
+        try {
+            if (uploadLabel) {
+                const row = uploadLabel.getAttribute('data-row');
+                const fileNameSpan = document.querySelector(`.file-name[data-row="${row}"]`);
+                const replaceBtn = document.querySelector(`.replace-btn[data-row="${row}"]`);
+                const uploadedUrlInput = document.querySelector(`input.uploaded-url[data-row="${row}"]`);
+                const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
+                if (fileNameSpan) fileNameSpan.textContent = file.name;
+                if (replaceBtn) replaceBtn.classList.remove('hidden');
+                if (uploadedUrlInput) uploadedUrlInput.value = urlData.publicUrl;
+                window.draftFileUrls[row] = urlData.publicUrl;
+                if (checkMark) { checkMark.classList.remove('hidden'); checkMark.textContent = '✓ Uploaded'; }
+            }
+        } catch (uiErr) {
+            console.warn('UI update failed after upload', uiErr);
+        }
+
         return urlData.publicUrl;
     }
     
@@ -289,10 +367,18 @@
             }
             
             if (draftData[`Upload the scanned file_${i}`]) {
-                window.draftFileUrls[i] = draftData[`Upload the scanned file_${i}`];
+                const url = draftData[`Upload the scanned file_${i}`];
+                window.draftFileUrls[i] = url;
+                const uploadedUrlInput = document.querySelector(`input.uploaded-url[data-row="${i}"]`);
+                if (uploadedUrlInput) uploadedUrlInput.value = url;
+                const fileNameSpan = document.querySelector(`.file-name[data-row="${i}"]`);
+                if (fileNameSpan) {
+                    try { fileNameSpan.textContent = decodeURIComponent(url.split('/').pop().split('?')[0]) || 'From Draft'; } catch (err) { fileNameSpan.textContent = 'From Draft'; }
+                }
                 const checkMark = document.querySelector(`.file-check[data-row="${i}"]`);
                 if (checkMark) {
                     checkMark.classList.remove('hidden');
+                    checkMark.textContent = '✓ From Draft';
                 }
             }
         }
@@ -447,19 +533,38 @@
         for (let i = 1; i <= 20; i++) {
             row[`Status_${i}`] = formData.get(`Status_${i}`) || null;
             row[`Description_${i}`] = formData.get(`Description_${i}`) || null;
-            const file = formData.get(`Upload the scanned file_${i}`);
-            if (file && file.size > 0) {
+
+            const uploadedUrlInput = document.querySelector(`input.uploaded-url[data-row="${i}"]`);
+            const uploadedUrlVal = uploadedUrlInput ? uploadedUrlInput.value : '';
+            const fileInput = document.querySelector(`input.file-input[data-row="${i}"]`);
+            const fileNow = fileInput && fileInput.files && fileInput.files[0];
+
+            // Validation: if Completed then require description OR file
+            if (row[`Status_${i}`] && row[`Status_${i}`].toString().includes('Completed')) {
+                const descTrim = (row[`Description_${i}`] || '').trim();
+                const draftUrl = window.draftFileUrls[i];
+                const hasFileSelected = fileNow && fileNow.size > 0;
+                if (!descTrim && !uploadedUrlVal && !hasFileSelected && !draftUrl) {
+                    alert('Row ' + i + ': When status is Completed, please provide a description or upload a file.');
+                    const sel = document.querySelector(`select[name="Status_${i}"]`);
+                    if (sel) { sel.scrollIntoView({behavior: 'smooth', block: 'center'}); sel.classList.add('ring-2','ring-red-500'); setTimeout(()=>sel.classList.remove('ring-2','ring-red-500'), 3000); }
+                    return;
+                }
+            }
+
+            if (uploadedUrlVal) {
+                row[`Upload the scanned file_${i}`] = uploadedUrlVal;
+            } else if (fileNow && fileNow.size > 0) {
                 const ts = Date.now();
-                const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+                const safeName = fileNow.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
                 const path = `form4_monthly_${i}_${ts}_${safeName}`;
                 try {
-                    row[`Upload the scanned file_${i}`] = await uploadFileToStorage(file, path);
+                    row[`Upload the scanned file_${i}`] = await uploadFileToStorage(fileNow, path, document.querySelector(`label.custom-upload[data-row='${i}']`));
                 } catch (err) {
                     window.location.href = 'notification.html?status=error&msg=' + encodeURIComponent('File upload failed for row ' + i + ': ' + err.message);
                     return;
                 }
             } else if (window.draftFileUrls[i]) {
-                // Use draft file URL if available
                 row[`Upload the scanned file_${i}`] = window.draftFileUrls[i];
             } else {
                 row[`Upload the scanned file_${i}`] = null;
