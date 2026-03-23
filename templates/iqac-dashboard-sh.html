@@ -181,6 +181,32 @@
         <option value="November">November 2025</option>
         <option value="December">December 2025</option>
       </select>
+      <!-- Percentage filter -->
+      <label for="coreScopePercentageFilter" class="font-medium text-green-700 mr-2">Percentage:</label>
+      <select id="coreScopePercentageFilter" class="p-2 border rounded">
+        <option value="All">All</option>
+        <option value="80plus">80% and above</option>
+        <option value="60to79">60% &ndash; 79%</option>
+        <option value="40to59">40% &ndash; 59%</option>
+        <option value="below40">Below 40%</option>
+        <option value="notsubmitted">Not Submitted</option>
+        <option value="custom">Custom Range&hellip;</option>
+        <option value="hightolow">High to Low &darr;</option>
+        <option value="lowtohigh">Low to High &uarr;</option>
+      </select>
+      <!-- Custom percentage range inputs (shown only when custom is selected) -->
+      <div id="coreScopeCustomRangeWrap" class="hidden flex items-center gap-1">
+        <input type="number" id="coreScopeMinPct" min="0" max="100" placeholder="Min %" class="p-2 border rounded w-20 text-sm" />
+        <span class="text-green-700 font-bold">&ndash;</span>
+        <input type="number" id="coreScopeMaxPct" min="0" max="100" placeholder="Max %" class="p-2 border rounded w-20 text-sm" />
+      </div>
+      <!-- Search bar with autocomplete -->
+      <div class="relative">
+        <input type="text" id="coreScopeSearchInput" placeholder="Search faculty name&hellip;" autocomplete="off"
+          class="p-2 border rounded w-52 pr-8" />
+        <div id="coreScopeSearchSuggestions"
+          class="absolute z-50 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto w-full hidden left-0 top-full mt-1"></div>
+      </div>
       <button id="exportCoreScopeTableBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export core scope table to Excel">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         Export to Excel
@@ -1190,77 +1216,160 @@ function attachExportButtons() {
     window.openExportCoreScopeModal = openExportCoreScopeModal;
     window.closeExportCoreScopeModal = closeExportCoreScopeModal;
 
-    async function exportCoreScopeTableToExcel(mode) {
-      console.group('exportCoreScopeTableToExcel');
-      console.log('invoked with mode=', mode,
-        'dept=', document.getElementById('coreScopeDepartmentFilter')?.value,
-        'month=', document.getElementById('coreScopeMonthFilter')?.value,
-        'designation=', document.getElementById('coreScopeDesignationFilter')?.value);
-      try {
-        closeExportCoreScopeModal();
-        // show overlay
-        const loadingDiv = document.createElement('div');
-        loadingDiv.id = 'exportLoadingOverlay';
-        loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
-        loadingDiv.innerHTML = `<div style="background:white;padding:24px 36px;border-radius:12px;box-shadow:0 6px 28px rgba(0,0,0,0.18);font-weight:600;color:#374151;">Preparing Core Scope export...</div>`;
-        document.body.appendChild(loadingDiv);
-
-        const container = document.getElementById('coreScopeTableContainer');
-        const tables = container ? Array.from(container.querySelectorAll('table')) : [];
-        console.log('DIAG: coreScope export - found tables count =', tables.length);
-        const wb = XLSX.utils.book_new();
-
-        if (tables.length > 0) {
-          tables.forEach((table, idx) => {
-            try {
-              const ws = XLSX.utils.table_to_sheet(table);
-              let name = table.getAttribute('data-sheet-name') || table.id || `CoreScope_${idx+1}`;
-              // Excel sheet names max 31 chars
-              name = name.substring(0, 31);
-              XLSX.utils.book_append_sheet(wb, ws, name);
-            } catch (e) {
-              console.warn('Failed to convert table to sheet', e);
-            }
-          });
-        } else {
-          // Fallback: fetch Core_scope_SH rows from Supabase
-          const month = document.getElementById('coreScopeMonthFilter')?.value || 'January';
-          let query = supabaseClient.from('Core_scope_SH').select('*').eq('Month', month);
-          const dept = document.getElementById('coreScopeDepartmentFilter')?.value;
-          if (dept && dept !== 'All') query = query.eq('Department', dept);
-          const { data, error } = await query;
-          if (error) throw error;
-          if (!data || data.length === 0) {
-            alert('No Core Scope data available to export for selected filters.');
-            return;
+    // Helper: apply the active UI filters to a coreScopeAllRowsData array
+    function applyCoreScopeUIFilters(rows) {
+      const percentFilter = (document.getElementById('coreScopePercentageFilter') || {}).value || 'All';
+      const searchQuery   = ((document.getElementById('coreScopeSearchInput')      || {}).value || '').trim().toLowerCase();
+      const minPct = parseFloat((document.getElementById('coreScopeMinPct') || {}).value);
+      const maxPct = parseFloat((document.getElementById('coreScopeMaxPct') || {}).value);
+      let result = rows.filter(r => {
+        if (percentFilter !== 'All' && percentFilter !== 'hightolow' && percentFilter !== 'lowtohigh') {
+          if (percentFilter === 'notsubmitted') { if (r.percentage !== null) return false; }
+          else if (percentFilter === '80plus')  { if (r.percentage === null || r.percentage < 80) return false; }
+          else if (percentFilter === '60to79')  { if (r.percentage === null || r.percentage < 60 || r.percentage > 79) return false; }
+          else if (percentFilter === '40to59')  { if (r.percentage === null || r.percentage < 40 || r.percentage > 59) return false; }
+          else if (percentFilter === 'below40') { if (r.percentage === null || r.percentage >= 40) return false; }
+          else if (percentFilter === 'custom')  {
+            if (r.percentage === null) return false;
+            if (!isNaN(minPct) && r.percentage < minPct) return false;
+            if (!isNaN(maxPct) && r.percentage > maxPct) return false;
           }
-          // Build worksheet from fetched rows
-          const headers = Object.keys(data[0]).filter(k => k !== 'id');
-          const rows = [headers];
-          data.forEach(r => rows.push(headers.map(h => (r[h] === null || r[h] === undefined) ? '' : r[h])));
-          const ws = XLSX.utils.aoa_to_sheet(rows);
-          XLSX.utils.book_append_sheet(wb, ws, 'CoreScope');
+        }
+        if (searchQuery && !r.facultyName.toLowerCase().includes(searchQuery)) return false;
+        return true;
+      });
+      if (percentFilter === 'hightolow') {
+        result.sort((a, b) => (b.percentage ?? -1) - (a.percentage ?? -1));
+      } else if (percentFilter === 'lowtohigh') {
+        result.sort((a, b) => (a.percentage ?? 101) - (b.percentage ?? 101));
+      }
+      return result;
+    }
+
+    async function exportCoreScopeTableToExcel(scope) {
+      closeExportCoreScopeModal();
+      const loadingDiv = document.createElement('div');
+      loadingDiv.id = 'exportLoadingOverlay';
+      loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+      loadingDiv.innerHTML = `<div style="background:white;padding:32px 48px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <svg class='animate-spin' style='height:48px;width:48px;color:#16a34a;' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+          <circle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'></circle>
+          <path class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'></path>
+        </svg>
+        <div style='font-size:18px;color:#16a34a;font-weight:600;'>Exporting Core Scope data, please wait...</div>
+      </div>`;
+      document.body.appendChild(loadingDiv);
+
+      try {
+        const selectedDept  = window.selectedCoreScopeDepartment || 'All';
+        const selectedDesig = window.selectedCoreScopeDesignation || 'All';
+        const selectedMonth = window.selectedCoreScopeMonth || document.getElementById('coreScopeMonthFilter')?.value || 'January';
+
+        const exportFieldLabels = [
+          'Teaching & Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+          'Teaching & Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+          'Teaching & Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+          'Teaching & Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+          'Student Mentorship & Support: Act as academic mentor and guide 30 students on coursework, projects, and career planning.',
+          'Student Mentorship & Support: Monitor student attendance, performance, and well-being.',
+          'Student Mentorship & Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+          'Student Mentorship & Support: Maintain the Mentor book for assigned mentee.',
+          'Student Mentorship & Support: Consolidate innovative course material, Lab manuals',
+          'Contribute to accreditation processes (NBA),(NAAC) and quality Assurance initiatives.',
+          'Serve on academic and administrative committees.',
+          'ADMINISTRATIVE DUTIES: MAINTAIN ACADEMIC RECORDS, COURSE FILES, LOG BOOK AND STUDENT EVALUATIONS',
+          'Library Utilization'
+        ];
+
+        const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+        let sourceRows = [];
+
+        if (scope === 'current') {
+          sourceRows = window.coreScopeAllRowsData || [];
+        } else {
+          // scope === 'all': fetch fresh data for all S&H departments
+          const [facRes, csRes] = await Promise.all([
+            supabaseClient.from('Faculty').select('*').in('department', shDepartments),
+            supabaseClient.from('Core_scope_SH').select('*').eq('Month', selectedMonth)
+          ]);
+          if (facRes.error) throw facRes.error;
+
+          const allFaculty = facRes.data || [];
+          const allCS      = csRes.data  || [];
+
+          for (const fac of allFaculty) {
+            const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+            const dept        = fac.department || 'Unknown';
+            const designation = fac.Designation || 'N/A';
+            const desigUpper  = designation.toUpperCase();
+
+            let desigDisplay = designation;
+            if (desigUpper === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
+            else if (desigUpper === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
+            else if (desigUpper === 'PROFESSOR') desigDisplay = 'Prof';
+
+            let facNamesToTry = [];
+            if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
+            if (fac.Name) facNamesToTry.push(fac.Name);
+            if (fac.email) facNamesToTry.push(fac.email);
+            facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n||'').toString().trim().toLowerCase()).filter(Boolean)));
+
+            const matches = allCS
+              .filter(r => facNamesToTry.includes((r['Portfolio Member Name']||'').toString().trim().toLowerCase()))
+              .sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
+            const row = matches[0] || null;
+
+            let completedCount = 0;
+            if (row) { for (let i = 1; i <= 13; i++) { const v = (row[`Status_${i}`]||'').toLowerCase(); if (v === 'completed' || v === 'completed and updated') completedCount++; } }
+            const percentage = row ? Math.round((completedCount / 13) * 100) : null;
+
+            const fieldStatuses = [];
+            for (let i = 1; i <= 13; i++) fieldStatuses.push(row ? (row[`Status_${i}`] || '-') : '-');
+
+            sourceRows.push({ dept, designation, desigDisplay, facultyName, percentage, row, fieldStatuses });
+          }
         }
 
-        let filename = 'CoreScope_Monthly';
-        const selMonth = document.getElementById('coreScopeMonthFilter')?.value;
-        if (selMonth) filename += `_${selMonth}`;
-        const selDept = document.getElementById('coreScopeDepartmentFilter')?.value;
-        if (selDept && selDept !== 'All') filename += `_${selDept.replace(/\s+/g, '_')}`;
+        const filtered = applyCoreScopeUIFilters(sourceRows);
+        if (filtered.length === 0) {
+          alert('No records match the current filters. Adjust filters and try again.');
+          return;
+        }
+
+        const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', ...exportFieldLabels];
+        const xlsRows = filtered.map(r => [
+          r.dept,
+          r.desigDisplay,
+          r.facultyName,
+          r.percentage !== null ? `${r.percentage}%` : '0% (Not Submitted)',
+          ...r.fieldStatuses
+        ]);
+
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...xlsRows]);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Core Scope');
+
+        let filename = `CoreScope_SH_${selectedMonth}`;
+        if (scope === 'current') {
+          if (selectedDept  !== 'All') filename += `_${selectedDept.replace(/\s+/g,'_')}`;
+          if (selectedDesig !== 'All') filename += `_${selectedDesig}`;
+        } else {
+          filename += '_All_SH_Departments';
+        }
+        const pf = (document.getElementById('coreScopePercentageFilter')||{}).value;
+        if (pf && pf !== 'All') filename += `_${pf}`;
         filename += '.xlsx';
 
-        console.log('DIAG: coreScope export - writing file:', filename, 'sheets:', Object.keys(wb.Sheets || {}));
         XLSX.writeFile(wb, filename);
-        console.log('DIAG: coreScope export - writeFile completed');
       } catch (err) {
-        console.error('CoreScope export failed', err);
+        console.error('CoreScope SH export failed', err);
         alert('Failed to export Core Scope table. See console for details.');
       } finally {
         const overlay = document.getElementById('exportLoadingOverlay');
         if (overlay) overlay.remove();
       }
     }
-      window.exportCoreScopeTableToExcel = exportCoreScopeTableToExcel;
+    window.exportCoreScopeTableToExcel = exportCoreScopeTableToExcel;
 
     // Diagnostic: confirm button exists and log handler status
     setTimeout(() => {
@@ -1370,216 +1479,220 @@ function attachExportButtons() {
       window.selectedCoreScopeMonth = selectedCoreScopeMonth;
       loadCoreScopeTable();
     });
+
+    // New filter event listeners – re-render client-side, no DB call
+    document.getElementById('coreScopePercentageFilter').addEventListener('change', function() {
+      const wrap = document.getElementById('coreScopeCustomRangeWrap');
+      if (this.value === 'custom') { wrap.classList.remove('hidden'); wrap.classList.add('flex'); }
+      else { wrap.classList.add('hidden'); wrap.classList.remove('flex'); }
+      renderCoreScopeFilteredTable();
+    });
+    document.getElementById('coreScopeMinPct').addEventListener('input', () => renderCoreScopeFilteredTable());
+    document.getElementById('coreScopeMaxPct').addEventListener('input', () => renderCoreScopeFilteredTable());
+
+    // Search bar – filter on input + show autocomplete suggestions
+    const csSearchInput = document.getElementById('coreScopeSearchInput');
+    const csSuggestionsBox = document.getElementById('coreScopeSearchSuggestions');
+    csSearchInput.addEventListener('input', () => {
+      const q = csSearchInput.value.trim().toLowerCase();
+      renderCoreScopeFilteredTable();
+      if (q.length === 0) { csSuggestionsBox.classList.add('hidden'); return; }
+      const names = [...new Set((window.coreScopeAllRowsData || []).map(r => r.facultyName).filter(n => n.toLowerCase().includes(q)))].slice(0, 8);
+      if (names.length === 0) { csSuggestionsBox.classList.add('hidden'); return; }
+      csSuggestionsBox.innerHTML = names.map(n =>
+        `<div class="px-3 py-2 hover:bg-green-50 cursor-pointer text-sm" onclick="document.getElementById('coreScopeSearchInput').value='${n.replace(/'/g,"\\'")}';document.getElementById('coreScopeSearchSuggestions').classList.add('hidden');renderCoreScopeFilteredTable();">${n}</div>`
+      ).join('');
+      csSuggestionsBox.classList.remove('hidden');
+    });
+    document.addEventListener('click', (e) => {
+      if (csSearchInput && csSuggestionsBox && !csSearchInput.contains(e.target) && !csSuggestionsBox.contains(e.target)) {
+        csSuggestionsBox.classList.add('hidden');
+      }
+    });
     
+    // Core Scope SH field labels (13 fields)
+    const coreScopeLabels = [
+      'Teaching & Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+      'Teaching & Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+      'Teaching & Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+      'Teaching & Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+      'Student Mentorship & Support: Act as academic mentor and guide 30 students on coursework, projects, and career planning.',
+      'Student Mentorship & Support: Monitor student attendance, performance, and well-being.',
+      'Student Mentorship & Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+      'Student Mentorship & Support: Maintain the Mentor book for assigned mentee.',
+      'Student Mentorship & Support: Consolidate innovative course material, Lab manuals',
+      'Contribute to accreditation processes (NBA),(NAAC) and quality Assurance initiatives.',
+      'Serve on academic and administrative committees.',
+      'ADMINISTRATIVE DUTIES: MAINTAIN ACADEMIC RECORDS, COURSE FILES, LOG BOOK AND STUDENT EVALUATIONS',
+      'Library Utilization'
+    ];
+    const coreScopeShortLabels = [
+      'Design and deliver lectures and lab sessions',
+      'Develop course materials, lesson plans and assessments',
+      'Incorporating innovative teaching methods including ICT tools',
+      'Prepare Product model and instructional Chart',
+      'Mentoring 30 students on coursework, projects and career planning.',
+      'Monitoring student attendance, performance, and well-being.',
+      'Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+      'Maintain the Mentor book for assigned mentee.',
+      'Consolidate innovative course material & Lab manuals',
+      'Contribute to accreditation processes (NBA, NAAC) and quality Assurance initiatives.',
+      'Serve on academic and administrative committees.',
+      'Maintain academic records, course files, Log Book and student evaluations',
+      'Library Utilization'
+    ];
+
+    // Global data store
+    window.coreScopeAllRowsData = [];
+
     async function loadCoreScopeTable() {
-      console.group('loadCoreScopeTable');
-      console.log('selectedCoreScopeDepartment=', selectedCoreScopeDepartment, 'selectedCoreScopeDesignation=', selectedCoreScopeDesignation, 'selectedCoreScopeMonth=', window.selectedCoreScopeMonth || document.getElementById('coreScopeMonthFilter')?.value);
-      debugger;
       if (!selectedCoreScopeDepartment) {
         document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500">No department selected.</div>';
         return;
       }
-      
-      // Fetch faculty from Faculty table - filter to only S&H departments
+      document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-green-700 py-4">Loading\u2026</div>';
+
       const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
       let facultyQuery = supabaseClient.from('Faculty').select('*').in('department', shDepartments);
-      if (selectedCoreScopeDepartment !== 'All') {
-        facultyQuery = facultyQuery.eq('department', selectedCoreScopeDepartment);
-      }
-      
-      const { data: facultyList, error: facErr } = await facultyQuery;
-      
-      if (facErr || !facultyList || facultyList.length === 0) {
+      if (selectedCoreScopeDepartment !== 'All') facultyQuery = facultyQuery.eq('department', selectedCoreScopeDepartment);
+
+      let coreScopeQuery = supabaseClient.from('Core_scope_SH').select('*').eq('Month', selectedCoreScopeMonth);
+      if (selectedCoreScopeDepartment !== 'All') coreScopeQuery = coreScopeQuery.eq('Department', selectedCoreScopeDepartment);
+
+      const [facRes, csRes] = await Promise.all([facultyQuery, coreScopeQuery]);
+
+      if (facRes.error || !facRes.data || facRes.data.length === 0) {
         document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-red-500">Failed to load faculty data.</div>';
         return;
       }
-      
-      // Fetch Core_scope_SH data - filter by department if not "All", always filter by month
-      let coreScopeQuery = supabaseClient.from('Core_scope_SH').select('*').eq('Month', selectedCoreScopeMonth);
-      if (selectedCoreScopeDepartment !== 'All') {
-        coreScopeQuery = coreScopeQuery.eq('Department', selectedCoreScopeDepartment);
-      }
-      
-      const { data: coreScopeData, error: csErr } = await coreScopeQuery;
-      
-      // Core Scope field labels (15 fields) - Full descriptions from faculty-core-scope.html
-      // Core Scope SH field labels (13 fields) - Full descriptions (excludes rows 10 and 14)
-      const coreScopeLabels = [
-        'Teaching & Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
-        'Teaching & Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
-        'Teaching & Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
-        'Teaching & Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
-        'Student Mentorship & Support: Act as academic mentor and guide 30 students on coursework, projects, and career planning.',
-        'Student Mentorship & Support: Monitor student attendance, performance, and well-being.',
-        'Student Mentorship & Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
-        'Student Mentorship & Support: Maintain the Mentor book for assigned mentee.',
-        'Student Mentorship & Support: Consolidate innovative course material, Lab manuals',
-        'Contribute to accreditation processes (NBA),(NAAC) and quality Assurance initiatives.',
-        'Serve on academic and administrative committees. ',
-        'ADMINISTRATIVE DUTIES : MAINTAIN ACADEMIC RECORDS, COURSE FILES, LOG BOOK AND STUDENT EVALUATIONS',
-        'Library Utilization'
-      ];
-      
-      // Shorter labels for table headers (13 rows for S&H)
-      const coreScopeShortLabels = [
-            'Design and deliver lectures and lab sessions',
-            'Develop course materials, lesson plans and assessments ',
-            'Incorporating innovative teaching methods including ICT tools ',
-            'Prepare Product model and instructional Chart ',
-            'Mentoring 30 students on coursework, projects and career planning.',
-            'Monitoring student attendance, performance, and well-being.',
-            'Provide remedial support and encourage participation in co-curricular and extra- curricular activities.',
-            'Maintain the Mentor book for assigned mentee.',
-            'Consolidate innovative course material & Lab manuals ',
-            'Contribute to accreditation processes (NBA, NAAC) and quality Assurance initiatives.',
-            'Serve on academic and administrative committees.',
-            'Maintain academic records, course files, Log Book and student evaluations',
-            'Library Utilization'
-      ];
-      
-      // Filter faculty by designation if needed
-      let filteredFacultyList = facultyList;
+
+      const coreScopeData = csRes.data || [];
+
+      let filteredFacultyList = facRes.data;
       if (selectedCoreScopeDesignation !== 'All') {
-        filteredFacultyList = facultyList.filter(fac => {
+        filteredFacultyList = filteredFacultyList.filter(fac => {
           const desig = (fac.Designation || '').toUpperCase();
-          if (selectedCoreScopeDesignation === 'AP') return desig === 'AP' || desig === 'ASSISTANT PROFESSOR';
-          if (selectedCoreScopeDesignation === 'ASP') return desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR';
-          if (selectedCoreScopeDesignation === 'Prof') return desig === 'PROF' || desig === 'PROFESSOR';
+          if (selectedCoreScopeDesignation === 'AP')   return desig === 'AP'  || desig === 'ASSISTANT PROFESSOR';
+          if (selectedCoreScopeDesignation === 'ASP')  return desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR';
+          if (selectedCoreScopeDesignation === 'Prof') return desig === 'PROF'|| desig === 'PROFESSOR';
           return false;
         });
       }
-      
-      let html = '';
-      
+
       if (filteredFacultyList.length === 0) {
         document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500">No faculty data found.</div>';
+        window.coreScopeAllRowsData = [];
         return;
       }
-      
-      // Single table header with Designation column - wrapped in scrolling container
-      html += `<div class="overflow-auto mb-6 border rounded-lg shadow-sm" style="max-height: 600px;"><table class="min-w-full text-xs bg-white" style="table-layout: auto;"><thead class="bg-green-700 text-white sticky top-0 z-20"><tr>`;
-      html += `<th class="px-3 py-2 sticky left-0 bg-green-700 z-30" style="min-width: 150px;">Department</th>`;
-      html += `<th class="px-3 py-2 bg-green-700" style="min-width: 120px;">Designation</th>`;
-      html += `<th class="px-3 py-2" style="min-width: 180px;">Faculty Name</th>`;
-      html += `<th class="px-3 py-2" style="min-width: 100px;">Percentage</th>`;
-      html += `<th class="px-3 py-2" style="min-width: 100px;">View</th>`;
-      
-      
-      // Add columns for all 13 status fields with full descriptions as tooltips (S&H form)
-      for (let i = 0; i < 13; i++) {
-        html += `<th class="px-2 py-2" style="min-width: 120px;" title="${coreScopeLabels[i]}">${coreScopeShortLabels[i]}</th>`;
-      }
-      
-      html += `</tr></thead><tbody>`;
-      
-      // Process each faculty
+
+      // Build data store
+      const rowsData = [];
       for (const fac of filteredFacultyList) {
         const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
-        const dept = fac.department || selectedCoreScopeDepartment;
+        const dept        = fac.department || selectedCoreScopeDepartment;
         const designation = fac.Designation || 'N/A';
-        
-        // Normalize designation for display
+
         let desigDisplay = designation;
         const desigUpper = designation.toUpperCase();
         if (desigUpper === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
         else if (desigUpper === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
         else if (desigUpper === 'PROFESSOR') desigDisplay = 'Prof';
-        
-        // Find matching Core_scope data for this faculty
+
         let facNamesToTry = [];
         if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
         if (fac.Name) facNamesToTry.push(fac.Name);
         if (fac.email) facNamesToTry.push(fac.email);
-        facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n || '').toString().trim().toLowerCase()).filter(Boolean)));
-        
-        let matchingRows = [];
-        if (coreScopeData && coreScopeData.length > 0) {
-          matchingRows = coreScopeData.filter(row => {
-            const rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
-            return facNamesToTry.includes(rowName);
-          });
-        }
-        
-        // Get the latest row (prefer updated_at, then input_id/id)
-        const row = chooseLatestRow(matchingRows);
-        
-        // Calculate percentage (fixed denominator: 13 for S&H Core Scope)
+        facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n||'').toString().trim().toLowerCase()).filter(Boolean)));
+
+        const matches = coreScopeData
+          .filter(r => facNamesToTry.includes((r['Portfolio Member Name']||'').toString().trim().toLowerCase()))
+          .sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
+        const row = matches[0] || null;
+
         let completedCount = 0;
-        const totalCount = 13;
         if (row) {
           for (let i = 1; i <= 13; i++) {
-            const statusVal = (row[`Status_${i}`] || '').toString().trim().toLowerCase();
-            if (statusVal === 'completed' || statusVal === 'completed and updated') {
-              completedCount++;
-            }
+            const v = (row[`Status_${i}`] || '').toString().trim().toLowerCase();
+            if (v === 'completed' || v === 'completed and updated') completedCount++;
           }
         }
-        const percentage = Math.round((completedCount / totalCount) * 100);
-        const percentageDisplay = row ? `${percentage}%` : '0% (Not Submitted)';
-        const percentageClass = row ? (percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600') : 'text-red-600';
-        
-        const coreScopeRowId = `corescope-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
-        const coreScopePercentageId = `percentage-${coreScopeRowId}`;
+        const percentage = row ? Math.round((completedCount / 13) * 100) : null;
+
+        const coreScopeRowId  = `corescope-${dept.replace(/[^a-zA-Z0-9]/g,'')}-${facultyName.replace(/[^a-zA-Z0-9]/g,'')}`;
         const coreScopeCacheKey = `core-${coreScopeRowId}`;
         if (row) {
           window.dashboardMappedFormCache = window.dashboardMappedFormCache || {};
           window.dashboardMappedFormCache[coreScopeCacheKey] = {
-            rowContext: {
-              table: 'Core_scope_SH',
-              portfolio: 'Faculty Core Scope - Monthly'
-            },
+            rowContext: { table: 'Core_scope_SH', portfolio: 'Faculty Core Scope - Monthly' },
             details: row
           };
         }
-        
+
+        const fieldStatuses = [];
+        for (let i = 1; i <= 13; i++) fieldStatuses.push(row ? (row[`Status_${i}`] || '-') : '-');
+
+        rowsData.push({ dept, designation, desigDisplay, facultyName, percentage, row, coreScopeCacheKey, fieldStatuses });
+      }
+
+      window.coreScopeAllRowsData = rowsData;
+      renderCoreScopeFilteredTable();
+    }
+
+    // Renders the table using current filter values against window.coreScopeAllRowsData
+    function renderCoreScopeFilteredTable() {
+      const filtered = applyCoreScopeUIFilters(window.coreScopeAllRowsData || []);
+      const total    = (window.coreScopeAllRowsData || []).length;
+
+      if (filtered.length === 0) {
+        document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500 py-4">No records match the selected filters.</div>';
+        return;
+      }
+
+      let html = `<div class="text-xs text-gray-500 mb-2">Showing <strong>${filtered.length}</strong> of <strong>${total}</strong> records</div>`;
+      html += `<div class="overflow-auto mb-6 border rounded-lg shadow-sm" style="max-height:600px;">`;
+      html += `<table class="min-w-full text-xs bg-white" style="table-layout:auto;">`;
+      html += `<thead class="bg-green-700 text-white sticky top-0 z-20"><tr>`;
+      html += `<th class="px-3 py-2 sticky left-0 bg-green-700 z-30" style="min-width:150px;">Department</th>`;
+      html += `<th class="px-3 py-2 bg-green-700" style="min-width:120px;">Designation</th>`;
+      html += `<th class="px-3 py-2" style="min-width:180px;">Faculty Name</th>`;
+      html += `<th class="px-3 py-2" style="min-width:100px;">Percentage</th>`;
+      html += `<th class="px-3 py-2" style="min-width:80px;">View</th>`;
+      for (let i = 0; i < 13; i++) {
+        html += `<th class="px-2 py-2" style="min-width:120px;" title="${coreScopeLabels[i]}">${coreScopeShortLabels[i]}</th>`;
+      }
+      html += `</tr></thead><tbody>`;
+
+      for (const r of filtered) {
+        const pd = r.percentage !== null ? `${r.percentage}%` : '0% (Not Submitted)';
+        const pc = r.percentage === null ? 'text-red-600' :
+          r.percentage >= 80 ? 'text-green-600 font-semibold' :
+          r.percentage >= 60 ? 'text-blue-600 font-semibold' :
+          r.percentage >= 40 ? 'text-yellow-600 font-semibold' : 'text-red-600 font-semibold';
+
         html += `<tr class="hover:bg-gray-50">`;
-        html += `<td class="px-3 py-2 border sticky left-0 bg-white z-10 font-medium">${dept}</td>`;
-        html += `<td class="px-3 py-2 border font-medium">${desigDisplay}</td>`;
-        html += `<td class="px-3 py-2 border font-medium text-green-700">${facultyName}</td>`;
-        html += `<td id="${coreScopePercentageId}" class="px-3 py-2 border ${percentageClass} font-semibold">${percentageDisplay}</td>`;
-        html += `<td class="px-3 py-2 border text-center">${row ? `<button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold" onclick="viewMappedDashboardForm('${coreScopeCacheKey}', 'Faculty Core Scope - Monthly Form')">View</button>` : '<span class="text-gray-400">-</span>'}</td>`;
-        
-        // Add status cells for all 13 fields (S&H Core Scope)
-        for (let i = 1; i <= 13; i++) {
-          const statusVal = row ? (row[`Status_${i}`] || '-') : '-';
-          let display = '-';
-          let statusClass = '';
-          
-          if (row && statusVal && typeof statusVal === 'string') {
+        html += `<td class="px-3 py-2 border sticky left-0 bg-white z-10 font-medium">${r.dept}</td>`;
+        html += `<td class="px-3 py-2 border font-medium">${r.desigDisplay}</td>`;
+        html += `<td class="px-3 py-2 border font-medium text-green-700">${r.facultyName}</td>`;
+        html += `<td class="px-3 py-2 border ${pc}">${pd}</td>`;
+        html += `<td class="px-3 py-2 border text-center">${r.row ? `<button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold" onclick="viewMappedDashboardForm('${r.coreScopeCacheKey}', 'Faculty Core Scope - Monthly Form')">View</button>` : '<span class="text-gray-400">-</span>'}</td>`;
+
+        for (let i = 0; i < 13; i++) {
+          const statusVal = r.fieldStatuses[i];
+          let display = '-', statusClass = 'text-gray-500';
+          if (statusVal && statusVal !== '-') {
             const val = statusVal.trim().toLowerCase();
-            if (val === 'completed') {
-              display = 'Completed';
-              statusClass = 'text-green-600 font-semibold';
-            } else if (val === 'in progress' || val === 'inprogress') {
-              display = 'In Progress';
-              statusClass = 'text-yellow-600 font-semibold';
-            } else if (val === 'yet to be completed' || val === 'not started') {
-              display = 'Yet to be Completed';
-              statusClass = 'text-red-600 font-semibold';
-            } else if (val === 'not applicable' || val === 'na') {
-              display = 'N/A';
-              statusClass = 'text-gray-400';
-            } else if (val === '-' || val === '' || val === null) {
-              display = '-';
-              statusClass = 'text-gray-500';
-            } else {
-              display = statusVal;
-              statusClass = 'text-blue-600 font-semibold';
-            }
-          } else {
-            display = '-';
-            statusClass = 'text-gray-500';
+            if (val === 'completed' || val === 'completed and updated') { display = 'Completed'; statusClass = 'text-green-600 font-semibold'; }
+            else if (val === 'in progress' || val === 'inprogress') { display = 'In Progress'; statusClass = 'text-yellow-600 font-semibold'; }
+            else if (val === 'yet to be completed' || val === 'not started') { display = 'Yet to be Completed'; statusClass = 'text-red-600 font-semibold'; }
+            else if (val === 'not applicable' || val === 'na') { display = 'N/A'; statusClass = 'text-gray-400'; }
+            else { display = statusVal; statusClass = 'text-blue-600 font-semibold'; }
           }
-          
           html += `<td class="px-2 py-2 border ${statusClass}">${display}</td>`;
         }
-        
         html += `</tr>`;
       }
-      
       html += `</tbody></table></div>`;
-      
-      document.getElementById('coreScopeTableContainer').innerHTML = html || '<div class="text-gray-500">No faculty data found.</div>';
+      document.getElementById('coreScopeTableContainer').innerHTML = html;
     }
     // --- END NEW: Core Scope Table ---
 
