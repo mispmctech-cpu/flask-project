@@ -119,6 +119,33 @@
         <option value="November">November 2025</option>
         <option value="December">December 2025</option>
       </select>
+      <!-- Percentage filter -->
+      <label for="coreScopePercentageFilter" class="font-medium text-green-700 mr-2">Percentage:</label>
+      <select id="coreScopePercentageFilter" class="p-2 border rounded">
+        <option value="All">All</option>
+        <option value="80plus">80% and above</option>
+        <option value="60to79">60% – 79%</option>
+        <option value="40to59">40% – 59%</option>
+        <option value="below40">Below 40%</option>
+        <option value="notsubmitted">Not Submitted</option>
+        <option value="custom">Custom Range…</option>
+        <option value="hightolow">High to Low ↓</option>
+        <option value="lowtohigh">Low to High ↑</option>
+      </select>
+      <!-- Custom percentage range inputs (shown only when custom is selected) -->
+      <div id="coreScopeCustomRangeWrap" class="hidden flex items-center gap-1">
+        <input type="number" id="coreScopeMinPct" min="0" max="100" placeholder="Min %" class="p-2 border rounded w-20 text-sm" />
+        <span class="text-green-700 font-bold">–</span>
+        <input type="number" id="coreScopeMaxPct" min="0" max="100" placeholder="Max %" class="p-2 border rounded w-20 text-sm" />
+      </div>
+      <!-- Search bar with autocomplete -->
+      <div class="relative">
+        <input type="text" id="coreScopeSearchInput" placeholder="Search faculty name…" autocomplete="off"
+          class="p-2 border rounded w-52 pr-8" />
+        <div id="coreScopeSearchSuggestions"
+          class="absolute z-50 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto w-full hidden left-0 top-full mt-1"></div>
+      </div>
+
       <button id="exportCoreScopeTableBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export core scope table to Excel">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         Export to Excel
@@ -183,12 +210,43 @@
         <button id="applyWeekFilter" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded text-sm">Apply</button>
         <button id="resetToCurrentWeek" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm">Current Week</button>
       </div>
-      <label for="portfolioStatusFilter" class="font-medium text-orange-700 mr-2">Show:</label>
-      <select id="portfolioStatusFilter" class="p-2 border rounded">
+      <!-- Percentage filter -->
+      <label for="portfolioPercentageFilter" class="font-medium text-orange-700 mr-2">Percentage:</label>
+      <select id="portfolioPercentageFilter" class="p-2 border rounded">
         <option value="All">All</option>
-        <option value="Completed">Completed </option>
-        <option value="Pending">Pending </option>
+        <option value="80plus">80% and above</option>
+        <option value="60to79">60% &ndash; 79%</option>
+        <option value="40to59">40% &ndash; 59%</option>
+        <option value="below40">Below 40%</option>
+        <option value="notsubmitted">Not Submitted</option>
+        <option value="custom">Custom Range&hellip;</option>
       </select>
+      <div id="portfolioCustomRangeWrap" class="hidden flex items-center gap-1">
+        <input type="number" id="portfolioMinPct" min="0" max="100" placeholder="Min %" class="p-2 border rounded w-20 text-sm" />
+        <span class="text-orange-700 font-bold">&ndash;</span>
+        <input type="number" id="portfolioMaxPct" min="0" max="100" placeholder="Max %" class="p-2 border rounded w-20 text-sm" />
+      </div>
+      <!-- Status filter -->
+      
+      <label for="portfolioNameFilter" class="font-medium text-orange-700 mr-2">Portfolio:</label>
+      <select id="portfolioNameFilter" class="p-2 border rounded">
+        <option value="All">All</option>
+        <option value="form1">Training &amp; Placement</option>
+        <option value="form2">Class Advisor</option>
+        <option value="form3">Info &amp; Contribution</option>
+        <option value="form4">Outcome &amp; Exam Cell</option>
+        <option value="form5">Continuous Improvement</option>
+        <option value="form6">T&amp;L Process (IQAC)</option>
+        <option value="form7">Student Support</option>
+        <option value="form8">Facilities &amp; Lab</option>
+      </select>
+      <!-- Search bar -->
+      <div class="relative">
+        <input type="text" id="portfolioSearchInput" placeholder="Search faculty name…" autocomplete="off"
+          class="p-2 border rounded w-52 pr-8" />
+        <div id="portfolioSearchSuggestions"
+          class="absolute z-50 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto w-full hidden left-0 top-full mt-1"></div>
+      </div>
       <button id="exportDepartmentPortfoliosBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export department portfolios to Excel">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
         Export Portfolios Table
@@ -289,12 +347,43 @@ function closeExportCoreScopeModal() {
 }
 
 // Export Core Scope Table to Excel utility
+// Helper: apply the active UI filters (percentage / field-status / search) to a coreScopeAllRowsData array
+function applyCoreScopeUIFilters(rows) {
+  const percentFilter = (document.getElementById('coreScopePercentageFilter') || {}).value || 'All';
+  const searchQuery   = ((document.getElementById('coreScopeSearchInput')      || {}).value || '').trim().toLowerCase();
+  const minPct = parseFloat((document.getElementById('coreScopeMinPct') || {}).value);
+  const maxPct = parseFloat((document.getElementById('coreScopeMaxPct') || {}).value);
+  let result = rows.filter(r => {
+    // For sort-only modes, skip percentage band filtering
+    if (percentFilter !== 'All' && percentFilter !== 'hightolow' && percentFilter !== 'lowtohigh') {
+      if (percentFilter === 'notsubmitted') { if (r.percentage !== null) return false; }
+      else if (percentFilter === '80plus')  { if (r.percentage === null || r.percentage < 80) return false; }
+      else if (percentFilter === '60to79')  { if (r.percentage === null || r.percentage < 60 || r.percentage > 79) return false; }
+      else if (percentFilter === '40to59')  { if (r.percentage === null || r.percentage < 40 || r.percentage > 59) return false; }
+      else if (percentFilter === 'below40') { if (r.percentage === null || r.percentage >= 40) return false; }
+      else if (percentFilter === 'custom')  {
+        if (r.percentage === null) return false;
+        if (!isNaN(minPct) && r.percentage < minPct) return false;
+        if (!isNaN(maxPct) && r.percentage > maxPct) return false;
+      }
+    }
+    // Search filter
+    if (searchQuery && !r.facultyName.toLowerCase().includes(searchQuery)) return false;
+    return true;
+  });
+  // Apply sort for high/low options (null percentages go to the bottom)
+  if (percentFilter === 'hightolow') {
+    result.sort((a, b) => (b.percentage ?? -1) - (a.percentage ?? -1));
+  } else if (percentFilter === 'lowtohigh') {
+    result.sort((a, b) => (a.percentage ?? 101) - (b.percentage ?? 101));
+  }
+  return result;
+}
+
 async function exportCoreScopeTableToExcel(scope) {
-  // scope: 'current' or 'all'
   closeExportCoreScopeModal();
-  
-  // Show loading overlay
-  let loadingDiv = document.createElement('div');
+
+  const loadingDiv = document.createElement('div');
   loadingDiv.id = 'exportLoadingOverlay';
   loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
   loadingDiv.innerHTML = `<div style="background:white;padding:32px 48px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;align-items:center;gap:16px;">
@@ -307,14 +396,13 @@ async function exportCoreScopeTableToExcel(scope) {
   document.body.appendChild(loadingDiv);
 
   try {
-    console.log('🔍 Export Debug - Scope:', scope);
-    console.log('🔍 Filter Values:', {
-      dept: window.selectedCoreScopeDepartment,
-      designation: window.selectedCoreScopeDesignation,
-      month: window.selectedCoreScopeMonth
-    });
-    // Core Scope field labels (15 fields) - Full descriptions
-    const coreScopeLabels = [
+    const selectedDept       = window.selectedCoreScopeDepartment || 'All';
+    const selectedDesig      = window.selectedCoreScopeDesignation || 'All';
+    const selectedMonth      = window.selectedCoreScopeMonth || 'January';
+    const percentFilter      = (document.getElementById('coreScopePercentageFilter') || {}).value || 'All';
+    const searchQuery        = ((document.getElementById('coreScopeSearchInput')      || {}).value || '').trim().toLowerCase();
+
+    const exportFieldLabels = [
       'Teaching & Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
       'Teaching & Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
       'Teaching & Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
@@ -332,201 +420,107 @@ async function exportCoreScopeTableToExcel(scope) {
       'Library Utilization'
     ];
 
-    // Use global variables that track the current filter state
-    let selectedDept = scope === 'current' ? (window.selectedCoreScopeDepartment || 'All') : 'All';
-    let selectedDesignation = scope === 'current' ? (window.selectedCoreScopeDesignation || 'All') : 'All';
-    let selectedMonth = window.selectedCoreScopeMonth || 'January';
-    
-    // Fetch all Faculty data
-    let facultyQuery = supabaseClient.from('Faculty').select('*');
-    if (scope === 'current' && selectedDept && selectedDept !== 'All') {
-      facultyQuery = facultyQuery.eq('department', selectedDept);
+    let sourceRows = [];
+
+    if (scope === 'current') {
+      // Use the already-loaded data store (reflects current dept / designation / month selections)
+      sourceRows = window.coreScopeAllRowsData || [];
+    } else {
+      // scope === 'all': fetch fresh data for all departments
+      const [facRes, csRes, verifyRes, rejectRes] = await Promise.all([
+        supabaseClient.from('Faculty').select('*'),
+        supabaseClient.from('Core_scope').select('*').eq('Month', selectedMonth),
+        supabaseClient.from('Hod-workdone').select('*'),
+        supabaseClient.from('hod-workdone_reject').select('*')
+      ]);
+      if (facRes.error) throw facRes.error;
+
+      const allFaculty  = (facRes.data  || []).filter(f => !isSHDepartment(f.department));
+      const allCS       = (csRes.data   || []).filter(r => !isSHDepartment(r.Department));
+      const verifyMap   = verifyRes.data  || [];
+      const rejectMap   = rejectRes.data  || [];
+
+      for (const fac of allFaculty) {
+        const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+        const dept        = fac.department || 'Unknown';
+        const designation = fac.Designation || 'N/A';
+        const desigUpper  = designation.toUpperCase();
+        if (!['AP','ASSISTANT PROFESSOR','ASP','ASSOCIATE PROFESSOR','PROF','PROFESSOR'].includes(desigUpper)) continue;
+
+        let desigDisplay = designation;
+        if (desigUpper === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
+        else if (desigUpper === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
+        else if (desigUpper === 'PROFESSOR') desigDisplay = 'Prof';
+
+        let facNamesToTry = [];
+        if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
+        if (fac.Name) facNamesToTry.push(fac.Name);
+        if (fac.email) facNamesToTry.push(fac.email);
+        facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n||'').toString().trim().toLowerCase()).filter(Boolean)));
+
+        const matches = allCS
+          .filter(r => facNamesToTry.includes((r['Portfolio Member Name']||'').toString().trim().toLowerCase()))
+          .sort((a,b) => (b.input_id||0) - (a.input_id||0));
+        const row = matches[0] || null;
+
+        let completedCount = 0;
+        if (row) { for (let i=1;i<=15;i++) { const v=(row[`Status_${i}`]||'').toLowerCase(); if(v==='completed'||v==='completed and updated') completedCount++; } }
+        const percentage = row ? Math.round((completedCount/15)*100) : null;
+
+        const verificationStatus = (() => {
+          if (!row || !row.input_id) return 'Not Submitted';
+          const nl = facultyName.toLowerCase();
+          const rej = rejectMap.find(v => v.department===dept && v.portfolio_member_name?.toLowerCase()===nl && ((v.table_name&&v.table_name.toLowerCase().includes('core'))||v.input_id===row.input_id));
+          if (rej) { const d=new Date(rej.rejected_at).toLocaleDateString(); return `Rejected (${d}) - ${rej.Commands||'No reason'}`; }
+          const ver = verifyMap.find(v => v.department===dept && v.portfolio_member_name?.toLowerCase()===nl && ((v.table_name&&v.table_name.toLowerCase().includes('core'))||v.input_id===row.input_id));
+          if (ver) { const d=new Date(ver.verified_at).toLocaleDateString(); return `Verified (${d})`; }
+          return 'Pending Verification';
+        })();
+
+        const fieldStatuses = [];
+        for (let i=1;i<=15;i++) fieldStatuses.push(row ? (row[`Status_${i}`]||'-') : '-');
+
+        sourceRows.push({ dept, designation, desigDisplay, facultyName, percentage, verificationStatus, row, fieldStatuses });
+      }
     }
-    
-    const { data: facultyData, error: facErr } = await facultyQuery;
-    
-    if (facErr) throw facErr;
-    const nonSHFacultyData = (facultyData || []).filter(f => !isSHDepartment(f.department));
-    if (!nonSHFacultyData || nonSHFacultyData.length === 0) {
-      alert('No faculty data found');
+
+    // Apply active UI filters to the chosen source
+    const filtered = applyCoreScopeUIFilters(sourceRows);
+
+    if (filtered.length === 0) {
+      alert('No records match the current filters. Adjust percentage / status / search filters and try again.');
       return;
     }
-    
-    // Fetch Core_scope data filtered by month
-    console.log('🔍 Building query - Month:', selectedMonth, 'Dept:', selectedDept, 'Scope:', scope);
-    let coreScopeQuery = supabaseClient.from('Core_scope').select('*').eq('Month', selectedMonth);
-    if (scope === 'current' && selectedDept && selectedDept !== 'All') {
-      coreScopeQuery = coreScopeQuery.eq('Department', selectedDept);
-      console.log('🔍 Added department filter:', selectedDept);
-    }
-    
-    const { data: coreScopeData, error: csErr } = await coreScopeQuery;
-    if (csErr) {
-      console.error('❌ Query error:', csErr);
-      throw csErr;
-    }
-    const nonSHCoreScopeData = (coreScopeData || []).filter(r => !isSHDepartment(r.Department));
-    console.log('✅ Core_scope data retrieved:', nonSHCoreScopeData?.length, 'records');
-    if (nonSHCoreScopeData && nonSHCoreScopeData.length > 0) {
-      console.log('📊 Sample record:', nonSHCoreScopeData[0]);
-    }
 
-    // Fetch both Hod-workdone and hod-workdone_reject data
-    const [verifyRes, rejectRes] = await Promise.all([
-      supabaseClient.from('Hod-workdone').select('*'),
-      supabaseClient.from('hod-workdone_reject').select('*')
+    const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', ...exportFieldLabels];
+    const xlsRows = filtered.map(r => [
+      r.dept,
+      r.desigDisplay,
+      r.facultyName,
+      r.percentage !== null ? `${r.percentage}%` : '0% (Not Submitted)',
+      ...r.fieldStatuses
     ]);
-    const verifyDataMap = verifyRes.data || [];
-    const rejectDataMap = rejectRes.data || [];
-    
-    // Build headers: Department, Designation, Faculty Name, Percentage, Verification, then 15 status columns with full descriptions
-    const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', 'Verification Status', ...coreScopeLabels];
-    const allRows = [];
 
-    // Process each faculty
-    for (const fac of nonSHFacultyData) {
-      const dept = fac.department || 'Unknown';
-      const designation = fac.Designation || 'N/A';
-      const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
-      
-      // Normalize designation
-      const desig = designation.toUpperCase();
-      if (desig !== 'AP' && desig !== 'ASSISTANT PROFESSOR' && 
-          desig !== 'ASP' && desig !== 'ASSOCIATE PROFESSOR' && 
-          desig !== 'PROF' && desig !== 'PROFESSOR') {
-        continue; // Skip non-teaching staff
-      }
-      
-      // Apply designation filter if scope is 'current'
-      if (scope === 'current' && selectedDesignation !== 'All') {
-        let normalizedDesig = '';
-        if (desig === 'AP' || desig === 'ASSISTANT PROFESSOR') normalizedDesig = 'AP';
-        else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') normalizedDesig = 'ASP';
-        else if (desig === 'PROF' || desig === 'PROFESSOR') normalizedDesig = 'Prof';
-        
-        if (normalizedDesig !== selectedDesignation) {
-          continue; // Skip faculty not matching designation filter
-        }
-      }
-      
-      // Find matching Core_scope data for this faculty
-      let facNamesToTry = [];
-      if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
-      if (fac.Name) facNamesToTry.push(fac.Name);
-      if (fac.email) facNamesToTry.push(fac.email);
-      facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n || '').toString().trim().toLowerCase()).filter(Boolean)));
-      
-      let matchingRows = [];
-      if (nonSHCoreScopeData && nonSHCoreScopeData.length > 0) {
-        matchingRows = nonSHCoreScopeData.filter(row => {
-          const rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
-          return facNamesToTry.includes(rowName);
-        });
-      }
-      
-      // Get the latest row (prefer updated_at, then input_id/id)
-      const row = chooseLatestRow(matchingRows);
-      
-      // Calculate percentage (fixed denominator: 15)
-      let completedCount = 0;
-      const totalCount = 15;
-      if (row) {
-        for (let i = 1; i <= 15; i++) {
-          const statusVal = (row[`Status_${i}`] || '').toString().trim().toLowerCase();
-          if (statusVal === 'completed' || statusVal === 'completed and updated') {
-            completedCount++;
-          }
-          // All statuses (including 'Not Applicable') are included in denominator
-        }
-      }
-      
-      const percentage = row ? (Math.round((completedCount / totalCount) * 100) + '%') : '0% (Not Submitted)';
-      
-      // Check verification status
-      let verificationStatus = 'Not Submitted';
-      if (row && row.input_id) {
-        // Check if rejected first
-        const matchingReject = rejectDataMap.find(v => 
-          v.department === dept &&
-          v.portfolio_member_name?.toLowerCase() === facultyName.toLowerCase() &&
-          ((v.table_name && v.table_name.toLowerCase().includes('core')) || 
-           v.input_id === row.input_id)
-        );
-        
-        if (matchingReject) {
-          const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
-          const reason = matchingReject.Commands || 'No reason';
-          verificationStatus = `Rejected (${rejectDate}) - ${reason}`;
-        } else {
-          // Check if verified
-          const matchingVerify = verifyDataMap.find(v => 
-            v.department === dept &&
-            v.portfolio_member_name?.toLowerCase() === facultyName.toLowerCase() &&
-            ((v.table_name && v.table_name.toLowerCase().includes('core')) || 
-             v.input_id === row.input_id)
-          );
-          
-          if (matchingVerify) {
-            const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
-            verificationStatus = `Verified (${verifyDate})`;
-          } else {
-            verificationStatus = 'Pending Verification';
-          }
-        }
-      }
-      
-      // Build row data
-      const rowData = [dept, designation, facultyName, percentage, verificationStatus];
-      
-      // Add status values for all 15 fields
-      for (let i = 1; i <= 15; i++) {
-        rowData.push(row ? (row[`Status_${i}`] || '-') : 'Not Submitted');
-      }
-      
-      allRows.push(rowData);
-    }
-
-    // Sort by department, then designation, then faculty name
-    allRows.sort((a, b) => {
-      if (a[0] !== b[0]) return a[0].localeCompare(b[0]);
-      if (a[1] !== b[1]) return a[1].localeCompare(b[1]);
-      return a[2].localeCompare(b[2]);
-    });
-
-    // Create workbook and export
-    console.log('✅ Export Summary:', {
-      totalFaculty: nonSHFacultyData.length,
-      filteredFaculty: allRows.length,
-      coreScopeRecords: nonSHCoreScopeData?.length || 0,
-      month: selectedMonth,
-      dept: selectedDept,
-      designation: selectedDesignation
-    });
-    
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...allRows]);
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...xlsRows]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Core Scope');
-    
-    // Build filename with filters
-    let filename = 'CoreScope_Monthly';
+
+    let filename = `CoreScope_${selectedMonth}`;
     if (scope === 'current') {
       if (selectedDept !== 'All') filename += `_${selectedDept}`;
-      if (selectedDesignation !== 'All') filename += `_${selectedDesignation}`;
-      filename += `_${selectedMonth}`;
+      if (selectedDesig !== 'All') filename += `_${selectedDesig}`;
     } else {
       filename += '_All_Departments';
-      filename += `_${selectedMonth}`;
     }
+    const pf = (document.getElementById('coreScopePercentageFilter')||{}).value;
+    if (pf && pf !== 'All') filename += `_${pf}`;
     filename += '.xlsx';
-    
+
     XLSX.writeFile(wb, filename);
-    console.log('📥 File exported:', filename);
-    
   } catch (error) {
     console.error('Export error:', error);
     alert('Failed to export data: ' + error.message);
   } finally {
-    // Remove loading overlay
     const overlay = document.getElementById('exportLoadingOverlay');
     if (overlay) overlay.remove();
   }
@@ -1007,400 +1001,315 @@ function attachExportButtons() {
     }
     
     document.getElementById('exportDepartmentPortfoliosBtn').onclick = async () => {
-      // Export based on current filter (only monthly tables now)
-      const statusFilter = document.getElementById('portfolioStatusFilter');
-      const selectedStatus = statusFilter ? statusFilter.value : 'All';
-      const deptFilter = document.getElementById('portfolioDepartmentFilter');
-      const selectedDept = deptFilter ? deptFilter.value : 'All';
-      
-      // Get month filter value
-      const monthFilter = document.getElementById('portfolioMonthFilter');
-      let selectedMonth = monthFilter ? monthFilter.value : 'January';
-      
-      // Fetch all faculty data
-      const { data, error } = await supabaseClient
-        .from('Faculty')
-        .select('*');
-      if (error || !data || data.length === 0) {
-        alert('Failed to load department portfolios for export.');
+      // Use the data store if already loaded, otherwise trigger a fresh load
+      if (!window.portfolioAllRowsData || window.portfolioAllRowsData.length === 0) {
+        alert('No portfolio data loaded. Please wait for the table to finish loading, then try again.');
         return;
       }
-      // Get all unique departments (exclude S&H variants)
-      let departments = Array.from(new Set(data.map(row => row.department).filter(Boolean))).filter(d => !isSHDepartment(d));
-      if (selectedDept !== 'All') departments = [selectedDept].filter(d => !isSHDepartment(d));
-      // Portfolio headers (only 8 monthly forms)
-      const portfolioHeaders = [
-        { label: "1. Training & Placement", table: 'form1-monthly' },
-        { label: "2. Class Advisor", table: 'form2-monthly' },
-        { label: "3. Info & Contribution", table: 'form3-monthly' },
-        { label: "4. Outcome & Exam Cell", table: 'form4-monthly' },
-        { label: "5. Continuous Improvement", table: 'form5-monthly' },
-        { label: "6. T&L Process (IQAC)", table: 'form6_monthly' },
-        { label: "7. Student Support", table: 'form7-monthly' },
-        { label: "8. Facilities & Lab", table: 'form8-monthly' }
-      ];
-      const headers = ["Department", "Designation", "Faculty Name", "Portfolio Name", "Percentage", "Verification Status"];
-      
-      // Fetch all relevant form data for each portfolio column
-      const formTableNames = portfolioHeaders.map(h => h.table);
-      const formTableData = {};
-      for (const tableName of formTableNames) {
-        let query = supabaseClient.from(tableName).select('*');
-        const { data: tdata } = await query;
-        formTableData[tableName] = tdata || [];
-      }
-      
-      // Fetch both Hod-workdone and hod-workdone_reject data
-      const [verifyRes, rejectRes] = await Promise.all([
-        supabaseClient.from('Hod-workdone').select('*'),
-        supabaseClient.from('hod-workdone_reject').select('*')
-      ]);
-      const verifyDataMap = verifyRes.data || [];
-      const rejectDataMap = rejectRes.data || [];
-      const exportRows = [];
-      for (const dept of departments) {
-        const facultyList = data.filter(fac => (fac.department || 'Unknown') === dept);
-        
-        // Create one row per faculty per portfolio assignment
-        for (const fac of facultyList) {
-          const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
-          const designation = fac.Designation || fac.designation || 'N/A';
-          
-          // Check which portfolios this faculty is assigned to
-          for (const h of portfolioHeaders) {
-            const formKey = h.label.match(/\d+/) ? `form${h.label.match(/\d+/)[0]}` : '';
-            const isAssigned = fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes';
-            
-            if (isAssigned) {
-              const tableName = h.table;
-              // Robust percentage calculation (same as UI)
-              let percentage = 0;
-              let filled = false;
-              const tdata = formTableData[tableName];
-              let bestRow = null;
-              if (tdata && tdata.length > 0) {
-                // Robust faculty name matching with month filtering
-                const filteredRows = tdata.filter(row => {
-                  const rowName = row['Portfolio Member Name:'] || row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
-                  const rowMonth = row['Month'] || row['month'] || row['Month:'] || '';
-                  const nameMatches = rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase();
-                  const deptMatches = (row['Department'] || row['Department:'] || '').toString().trim().toLowerCase() === dept.toString().trim().toLowerCase();
-                  const monthMatches = rowMonth.toString().trim().toLowerCase() === selectedMonth.toLowerCase();
-                  return nameMatches && deptMatches && monthMatches;
-                });
-                if (filteredRows.length > 0) {
-                  filled = true;
-                  bestRow = chooseLatestRow(filteredRows);
-                }
-              }
-              if (bestRow) {
-                const statusKeys = Object.keys(bestRow).filter(k => k.startsWith('Status_') || k.startsWith('Status-'));
-                const totalCount = statusKeys.length;
-                let completedCount = 0;
-                for (const key of statusKeys) {
-                  const val = (bestRow[key] || '').toString().trim().toLowerCase();
-                  if (val === 'completed' || val === 'completed and updated') {
-                    completedCount++;
-                  }
-                  // All statuses (including 'Not Applicable') are included in denominator
-                }
-                percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-              } else {
-                percentage = 0;
-              }
-              
-              // Filter by status
-              if (selectedStatus === 'Completed' && !filled) continue;
-              if (selectedStatus === 'Pending' && filled) continue;
-              
-              // Check verification status
-              let verificationStatus = 'Not Submitted';
-              if (bestRow && bestRow.input_id) {
-                const formNumber = tableName.match(/form\d+/)?.[0] || tableName;
-                
-                // Check if rejected first
-                const matchingReject = rejectDataMap.find(v => 
-                  v.department === dept &&
-                  v.portfolio_member_name?.toLowerCase() === facultyName.toLowerCase() &&
-                  ((v.table_name && v.table_name.toLowerCase().includes(formNumber.toLowerCase())) || 
-                   v.input_id === bestRow.input_id)
-                );
-                
-                if (matchingReject) {
-                  const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
-                  const reason = matchingReject.Commands || 'No reason';
-                  verificationStatus = `Rejected (${rejectDate}) - ${reason}`;
-                } else {
-                  // Check if verified
-                  const matchingVerify = verifyDataMap.find(v => 
-                    v.department === dept &&
-                    v.portfolio_member_name?.toLowerCase() === facultyName.toLowerCase() &&
-                    ((v.table_name && v.table_name.toLowerCase().includes(formNumber.toLowerCase())) || 
-                     v.input_id === bestRow.input_id)
-                  );
-                  
-                  if (matchingVerify) {
-                    const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
-                    verificationStatus = `Verified (${verifyDate})`;
-                  } else {
-                    verificationStatus = 'Pending Verification';
-                  }
-                }
-              }
-              
-              // Create row: Department, Designation, Faculty Name, Portfolio Name, Percentage, Verification
-              const percentageDisplay = filled ? `${percentage}%` : `0% (Not Submitted)`;
-              exportRows.push([dept, designation, facultyName, h.label, percentageDisplay, verificationStatus]);
-            }
+
+      // Apply the same filters as renderPortfolioFilteredTable
+      const percentFilter = (document.getElementById('portfolioPercentageFilter') || {}).value || 'All';
+      const statusFilter  = (document.getElementById('portfolioStatusFilter')     || {}).value || 'All';
+      const portFilter    = (document.getElementById('portfolioNameFilter')        || {}).value || 'All';
+      const searchQuery   = ((document.getElementById('portfolioSearchInput')      || {}).value || '').trim().toLowerCase();
+      const minPct = parseFloat((document.getElementById('portfolioMinPct') || {}).value);
+      const maxPct = parseFloat((document.getElementById('portfolioMaxPct') || {}).value);
+      const selectedMonth = (document.getElementById('portfolioMonthFilter') || {}).value || 'January';
+      const selectedDept  = (document.getElementById('portfolioDepartmentFilter') || {}).value || 'All';
+
+      const filtered = window.portfolioAllRowsData.filter(r => {
+        if (percentFilter !== 'All') {
+          if (percentFilter === 'notsubmitted') { if (r.percentage !== null) return false; }
+          else if (percentFilter === '80plus')  { if (r.percentage === null || r.percentage < 80) return false; }
+          else if (percentFilter === '60to79')  { if (r.percentage === null || r.percentage < 60 || r.percentage > 79) return false; }
+          else if (percentFilter === '40to59')  { if (r.percentage === null || r.percentage < 40 || r.percentage > 59) return false; }
+          else if (percentFilter === 'below40') { if (r.percentage === null || r.percentage >= 40) return false; }
+          else if (percentFilter === 'custom')  {
+            if (r.percentage === null) return false;
+            if (!isNaN(minPct) && r.percentage < minPct) return false;
+            if (!isNaN(maxPct) && r.percentage > maxPct) return false;
           }
         }
-      }
-      
-      // Sort export rows: first by department, then by portfolio number (1-8)
-      exportRows.sort((a, b) => {
-        // First sort by department (index 0)
-        if (a[0] !== b[0]) {
-          return a[0].localeCompare(b[0]);
+        if (statusFilter !== 'All') {
+          if (!r.row || r.fieldStatuses.length === 0) return false;
+          const match = r.fieldStatuses.every(s => {
+            const v = (s || '').trim().toLowerCase();
+            if (statusFilter === 'Completed')        return v === 'completed' || v === 'completed and updated';
+            if (statusFilter === 'InProgress')       return v === 'in progress' || v === 'inprogress';
+            if (statusFilter === 'NA')               return v === 'not applicable' || v === 'na';
+            if (statusFilter === 'YetToBeCompleted') return v === 'yet to be completed' || v === 'not started';
+            return false;
+          });
+          if (!match) return false;
         }
-        // Then sort by portfolio number (extract from index 3 - Portfolio Name)
-        const aNum = parseInt(a[3].match(/^\d+/)?.[0] || '99');
-        const bNum = parseInt(b[3].match(/^\d+/)?.[0] || '99');
-        return aNum - bNum;
+        if (portFilter !== 'All' && r.formKey !== portFilter) return false;
+        if (searchQuery && !r.facultyName.toLowerCase().includes(searchQuery)) return false;
+        return true;
       });
-      
+
+      if (filtered.length === 0) {
+        alert('No records match the active filters — nothing to export.');
+        return;
+      }
+
+      const headers = ['Department', 'Designation', 'Faculty Name', 'Portfolio Name', 'Percentage'];
+      const exportRows = filtered.map(r => [
+        r.dept,
+        r.designation,
+        r.facultyName,
+        r.portfolioName,
+        r.percentage !== null ? `${r.percentage}%` : '0% (Not Submitted)'
+      ]);
+
       const ws = XLSX.utils.aoa_to_sheet([headers, ...exportRows]);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Portfolios');
-      XLSX.writeFile(wb, `IQAC_Portfolios_${selectedMonth}_${selectedDept}.xlsx`);
+      const filterTag = [
+        selectedDept !== 'All' ? selectedDept : 'AllDepts',
+        selectedMonth,
+        portFilter !== 'All' ? portFilter : '',
+        statusFilter !== 'All' ? statusFilter : ''
+      ].filter(Boolean).join('_');
+      XLSX.writeFile(wb, `IQAC_Portfolios_${filterTag}.xlsx`);
     };
   }, 500);
 }
   // Fetch and render department portfolios table (IQAC)
-    async function loadDepartmentPortfoliosIQAC() {
-      // Fetch all faculty
-      const { data, error } = await supabaseClient
-        .from('Faculty')
-        .select('*');
-      if (error || !data || data.length === 0) {
-        document.getElementById('departmentPortfoliosContainer').innerHTML = '<div class="text-red-500">Failed to load department portfolios.</div>';
-        return;
-      }
-      // Get all unique departments (exclude S&H variants)
-      const departments = Array.from(new Set(data.map(row => row.department).filter(Boolean))).filter(d => !isSHDepartment(d));
-      // Setup department filter dropdown
-      const deptFilter = document.getElementById('portfolioDepartmentFilter');
-      if (!deptFilter.dataset.initialized) {
-        deptFilter.innerHTML = '<option value="All">All Departments</option>' + departments.map(d => `<option value="${d}">${d}</option>`).join('');
-        deptFilter.dataset.initialized = 'true';
-      }
-      // Setup status filter dropdown
-      const statusFilter = document.getElementById('portfolioStatusFilter');
-      // Get selected filter values (re-read each time for correct filtering)
-      const selectedDept = deptFilter.options[deptFilter.selectedIndex]?.value || 'All';
-      const selectedStatus = statusFilter.options[statusFilter.selectedIndex]?.value || 'All';
-      
-      // Get month filter value
-      const monthFilter = document.getElementById('portfolioMonthFilter');
-      let selectedMonth = monthFilter.options[monthFilter.selectedIndex]?.value || 'January';
+  async function loadDepartmentPortfoliosIQAC() {
+    document.getElementById('departmentPortfoliosContainer').innerHTML = '<div class="text-orange-700 py-4">Loading…</div>';
 
-  // Portfolio headers and their corresponding monthly tables (only 8 monthly forms)
-  const portfolioHeaders = [
-    { label: "1. Training & Placement", table: 'form1-monthly' },
-    { label: "2. Class Advisor", table: 'form2-monthly' },
-    { label: "3. Info & Contribution", table: 'form3-monthly' },
-    { label: "4. Outcome & Exam Cell", table: 'form4-monthly' },
-    { label: "5. Continuous Improvement", table: 'form5-monthly' },
-    { label: "6. T&L Process (IQAC)", table: 'form6_monthly' },
-    { label: "7. Student Support", table: 'form7-monthly' },
-    { label: "8. Facilities & Lab", table: 'form8-monthly' }
-  ];
-  let html = '';
-  html += '<h3 class="text-xl font-bold text-orange-500 mb-2">Department Portfolios</h3>';
-  html += '<div style="overflow-x:auto; max-height:600px; overflow-y:auto; border:1px solid #9ca3af; border-radius:8px;">';
-  html += '<table class="w-full text-sm bg-white" style="border-collapse:collapse;">';
-  html += '<thead class="bg-orange-100 text-orange-700" style="position:sticky; top:0; z-index:10;">';
-  html += '<tr>';
-  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:120px;">Department</th>';
-  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:100px;">Designation</th>';
-  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:180px;">Faculty Name</th>';
-  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:200px;">Portfolio Name</th>';
-  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:150px;">Percentage</th>';
-  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:100px;">View</th>';
-  
-  html += '</tr></thead>';
-  html += '<tbody>';
-  
-  // Build rows: one row per faculty per portfolio
-  const tableRows = [];
-  for (const dept of departments) {
-    if (selectedDept !== 'All' && dept !== selectedDept) continue;
-    const facultyList = data.filter(fac => (fac.department || 'Unknown') === dept);
-    
-    for (const fac of facultyList) {
-      const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
-      const designation = fac.Designation || fac.designation || 'N/A';
-      
-      // Check which portfolios this faculty is assigned to
-      for (const h of portfolioHeaders) {
-        const formKey = h.label.match(/\d+/) ? `form${h.label.match(/\d+/)[0]}` : '';
-        const isAssigned = fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes';
-        
-        if (isAssigned) {
-          const rowId = `${dept.replace(/[^a-zA-Z0-9]/g, '')}-${formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
-          tableRows.push({
-            dept,
-            designation,
-            facultyName,
-            portfolioName: h.label,
-            tableName: h.table,
-            formKey,
-            rowId,
-            viewCellId: `view-${rowId}`
+    const { data, error } = await supabaseClient.from('Faculty').select('*');
+    if (error || !data || data.length === 0) {
+      document.getElementById('departmentPortfoliosContainer').innerHTML = '<div class="text-red-500">Failed to load department portfolios.</div>';
+      return;
+    }
+
+    const departments = Array.from(new Set(data.map(row => row.department).filter(Boolean))).filter(d => !isSHDepartment(d));
+    const deptFilter = document.getElementById('portfolioDepartmentFilter');
+    if (!deptFilter.dataset.initialized) {
+      deptFilter.innerHTML = '<option value="All">All Departments</option>' + departments.map(d => `<option value="${d}">${d}</option>`).join('');
+      deptFilter.dataset.initialized = 'true';
+    }
+    const selectedDept  = deptFilter.value || 'All';
+    const monthFilter   = document.getElementById('portfolioMonthFilter');
+    const selectedMonth = monthFilter?.value || 'January';
+
+    const portfolioHeaders = [
+      { label: '1. Training & Placement',   table: 'form1-monthly',  formKey: 'form1' },
+      { label: '2. Class Advisor',           table: 'form2-monthly',  formKey: 'form2' },
+      { label: '3. Info & Contribution',     table: 'form3-monthly',  formKey: 'form3' },
+      { label: '4. Outcome & Exam Cell',     table: 'form4-monthly',  formKey: 'form4' },
+      { label: '5. Continuous Improvement',  table: 'form5-monthly',  formKey: 'form5' },
+      { label: '6. T&L Process (IQAC)',      table: 'form6_monthly',  formKey: 'form6' },
+      { label: '7. Student Support',         table: 'form7-monthly',  formKey: 'form7' },
+      { label: '8. Facilities & Lab',        table: 'form8-monthly',  formKey: 'form8' }
+    ];
+
+    // Fetch all 8 tables in parallel
+    const formDataResults = await Promise.all(
+      portfolioHeaders.map(h => supabaseClient.from(h.table).select('*'))
+    );
+
+    const rowsData = [];
+    for (const dept of departments) {
+      if (selectedDept !== 'All' && dept !== selectedDept) continue;
+      const facultyList = data.filter(fac => (fac.department || 'Unknown') === dept && !isSHDepartment(fac.department));
+
+      for (const fac of facultyList) {
+        const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+        const designation = fac.Designation || fac.designation || 'N/A';
+
+        for (let hi = 0; hi < portfolioHeaders.length; hi++) {
+          const h = portfolioHeaders[hi];
+          const isAssigned = fac[h.formKey] && fac[h.formKey].trim().toLowerCase() === 'yes';
+          if (!isAssigned) continue;
+
+          const rowId = `${dept.replace(/[^a-zA-Z0-9]/g, '')}-${h.formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
+          const formData = formDataResults[hi].data || [];
+          const filteredRows = formData.filter(dataRow => {
+            const rowName  = dataRow['Portfolio Member Name:'] || dataRow['Portfolio Member Name'] || dataRow['Portfolio Memeber Name'] || dataRow['faculty_name'] || dataRow['Faculty Name'] || dataRow['Name'] || '';
+            const rowMonth = dataRow['Month'] || dataRow['month'] || dataRow['Month:'] || '';
+            return rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase()
+              && rowMonth.toString().trim().toLowerCase() === selectedMonth.toLowerCase();
           });
-        }
-      }
-    }
-  }
-  
-  // Sort rows: first by department, then by portfolio number (1-8)
-  tableRows.sort((a, b) => {
-    // First sort by department
-    if (a.dept !== b.dept) {
-      return a.dept.localeCompare(b.dept);
-    }
-    // Then sort by portfolio number (extract number from portfolioName like "1. Training & Placement")
-    const aNum = parseInt(a.portfolioName.match(/^\d+/)?.[0] || '99');
-    const bNum = parseInt(b.portfolioName.match(/^\d+/)?.[0] || '99');
-    return aNum - bNum;
-  });
-  
-  // Render rows
-  for (const row of tableRows) {
-    html += `<tr class="hover:bg-gray-50">`;
-    html += `<td class="px-3 py-2 border border-gray-400" style="min-width:120px;">${row.dept}</td>`;
-    html += `<td class="px-3 py-2 border border-gray-400" style="min-width:100px;">${row.designation}</td>`;
-    html += `<td class="px-3 py-2 border border-gray-400" style="min-width:180px;">${row.facultyName}</td>`;
-    html += `<td class="px-3 py-2 border border-gray-400" style="min-width:200px;">${row.portfolioName}</td>`;
-    html += `<td class="px-3 py-2 border border-gray-400" style="min-width:150px;" id="percent-${row.rowId}">Loading...</td>`;
-    html += `<td class="px-3 py-2 border border-gray-400 text-center" style="min-width:100px;" id="${row.viewCellId}"><span class="text-gray-400">-</span></td>`;
-    
-    html += `</tr>`;
-  }
-  
-  html += '</tbody></table></div>';
-  document.getElementById('departmentPortfoliosContainer').innerHTML = html;
+          const bestRow = filteredRows.length > 0 ? chooseLatestRow(filteredRows) : null;
 
-      // Async percentage calculation for each faculty-portfolio combination
-      for (const row of tableRows) {
-        (async () => {
-          let filled = false;
-          let percentage = 0;
-          let query = supabaseClient.from(row.tableName).select('*').eq('Department', row.dept);
-          const { data: formData, error } = await query;
-          let bestRow = null;
-          if (!error && formData && formData.length > 0) {
-            // Robust faculty name matching with month filtering
-            const filteredRows = formData.filter(dataRow => {
-              const rowName = dataRow['Portfolio Member Name:'] || dataRow['Portfolio Member Name'] || dataRow['Portfolio Memeber Name'] || dataRow['faculty_name'] || dataRow['Faculty Name'] || dataRow['Name'] || '';
-              // Check month field (Month, month, or Month:)
-              const rowMonth = dataRow['Month'] || dataRow['month'] || dataRow['Month:'] || '';
-              const nameMatches = rowName.toString().trim().toLowerCase() === row.facultyName.toString().trim().toLowerCase();
-              const monthMatches = rowMonth.toString().trim().toLowerCase() === selectedMonth.toLowerCase();
-              return nameMatches && monthMatches;
-            });
-            if (filteredRows.length > 0) {
-              filled = true;
-              // Use the latest row (prefer updated_at, then input_id/id)
-              bestRow = chooseLatestRow(filteredRows);
-            }
-          }
-          // Calculate percentage if bestRow exists (dynamic denominator)
+          let percentage = null;
+          const fieldStatuses = [];
           if (bestRow) {
             const statusKeys = Object.keys(bestRow).filter(k => k.startsWith('Status_') || k.startsWith('Status-'));
-            const totalCount = statusKeys.length;
             let completedCount = 0;
             for (const key of statusKeys) {
               const val = (bestRow[key] || '').toString().trim().toLowerCase();
-              if (val === 'completed' || val === 'completed and updated') {
-                completedCount++;
-              }
-              // All statuses (including 'Not Applicable') are included in denominator
+              if (val === 'completed' || val === 'completed and updated') completedCount++;
+              fieldStatuses.push(bestRow[key] || '-');
             }
-            percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-          } else {
-            percentage = 0;
-          }
-          
-          // Update the percentage cell
-          let percentCell = document.getElementById(`percent-${row.rowId}`);
-          let viewCell = document.getElementById(row.viewCellId);
-          if (percentCell) {
-            // Apply status filter
-            if (selectedStatus === 'Completed' && !filled) {
-              percentCell.parentElement.style.display = 'none';
-              return;
-            }
-            if (selectedStatus === 'Pending' && filled) {
-              percentCell.parentElement.style.display = 'none';
-              return;
-            }
-            
-            // Display percentage with color coding (this will be overwritten if verified)
-            if (filled) {
-              percentCell.innerHTML = `<span class="font-semibold ${percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600'}">${percentage}%</span>`;
-            } else {
-              percentCell.innerHTML = `<span class="text-red-600 font-semibold">0% (Not Submitted)</span>`;
-            }
+            percentage = statusKeys.length > 0 ? Math.round((completedCount / statusKeys.length) * 100) : 0;
           }
 
-          if (viewCell) {
-            if (bestRow) {
-              const mapperPortfolio = getDepartmentPortfolioMapperName(row.formKey, row.portfolioName);
-              const cacheKey = `dept-${row.rowId}-${bestRow.input_id || bestRow.id || 'latest'}`;
-              window.dashboardMappedFormCache = window.dashboardMappedFormCache || {};
-              window.dashboardMappedFormCache[cacheKey] = {
-                rowContext: {
-                  table: row.tableName,
-                  portfolio: mapperPortfolio
-                },
-                details: bestRow
-              };
-              viewCell.innerHTML = `<button class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-xs font-semibold" onclick="viewMappedDashboardForm('${cacheKey}', 'Department Portfolio Form')">View</button>`;
-            } else {
-              viewCell.innerHTML = '<span class="text-gray-400">-</span>';
-            }
+          // Cache for view modal
+          let cacheKey = null;
+          if (bestRow) {
+            const mapperPortfolio = getDepartmentPortfolioMapperName(h.formKey, h.label);
+            cacheKey = `dept-${rowId}-${bestRow.input_id || bestRow.id || 'latest'}`;
+            window.dashboardMappedFormCache = window.dashboardMappedFormCache || {};
+            window.dashboardMappedFormCache[cacheKey] = {
+              rowContext: { table: h.table, portfolio: mapperPortfolio },
+              details: bestRow
+            };
           }
-          
-          // Verification/validation scores are intentionally not displayed here.
-          // Keep the percentage shown as the submitted (calculated) score.
-        })();
+
+          rowsData.push({ dept, designation, facultyName, portfolioName: h.label, formKey: h.formKey, rowId, cacheKey, percentage, fieldStatuses, row: bestRow });
+        }
       }
-
-      // Add filter event listeners (department, month, and status filters)
-  monthFilter.onchange = deptFilter.onchange = statusFilter.onchange = () => loadDepartmentPortfoliosIQAC();
-  
-  // Setup date filter event listeners
-  if (!document.getElementById('applyWeekFilter').dataset.listenerAdded) {
-    document.getElementById('applyWeekFilter').addEventListener('click', () => {
-      loadDepartmentPortfoliosIQAC();
-    });
-    
-    document.getElementById('resetToCurrentWeek').addEventListener('click', () => {
-      setCurrentWeekDates();
-      loadDepartmentPortfoliosIQAC();
-    });
-    
-    document.getElementById('weekStartDate').addEventListener('change', () => {
-      loadDepartmentPortfoliosIQAC();
-    });
-    
-    document.getElementById('weekEndDate').addEventListener('change', () => {
-      loadDepartmentPortfoliosIQAC();
-    });
-    
-    document.getElementById('applyWeekFilter').dataset.listenerAdded = 'true';
-  }
     }
+
+    // Sort: by dept, then portfolio number
+    rowsData.sort((a, b) => {
+      if (a.dept !== b.dept) return a.dept.localeCompare(b.dept);
+      const aNum = parseInt(a.portfolioName.match(/^\d+/)?.[0] || '99');
+      const bNum = parseInt(b.portfolioName.match(/^\d+/)?.[0] || '99');
+      return aNum - bNum;
+    });
+
+    window.portfolioAllRowsData = rowsData;
+    renderPortfolioFilteredTable();
+
+    // Event listeners – dept/month reload data; other filters just re-render
+    monthFilter.onchange = deptFilter.onchange = () => loadDepartmentPortfoliosIQAC();
+
+    const reRenderIds = ['portfolioPercentageFilter', 'portfolioStatusFilter', 'portfolioNameFilter'];
+    reRenderIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && !el.dataset.portfolioListenerAdded) {
+        el.addEventListener('change', function() {
+          if (id === 'portfolioPercentageFilter') {
+            const wrap = document.getElementById('portfolioCustomRangeWrap');
+            if (this.value === 'custom') { wrap.classList.remove('hidden'); wrap.classList.add('flex'); }
+            else { wrap.classList.add('hidden'); wrap.classList.remove('flex'); }
+          }
+          renderPortfolioFilteredTable();
+        });
+        el.dataset.portfolioListenerAdded = 'true';
+      }
+    });
+    ['portfolioMinPct', 'portfolioMaxPct'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && !el.dataset.portfolioListenerAdded) {
+        el.addEventListener('input', () => renderPortfolioFilteredTable());
+        el.dataset.portfolioListenerAdded = 'true';
+      }
+    });
+    const psSearch = document.getElementById('portfolioSearchInput');
+    const psSugg   = document.getElementById('portfolioSearchSuggestions');
+    if (psSearch && !psSearch.dataset.portfolioListenerAdded) {
+      psSearch.addEventListener('input', () => {
+        const q = psSearch.value.trim().toLowerCase();
+        renderPortfolioFilteredTable();
+        if (!q) { psSugg.classList.add('hidden'); return; }
+        const names = [...new Set((window.portfolioAllRowsData || []).map(r => r.facultyName).filter(n => n.toLowerCase().includes(q)))].slice(0, 8);
+        if (!names.length) { psSugg.classList.add('hidden'); return; }
+        psSugg.innerHTML = names.map(n =>
+          `<div class="px-3 py-2 hover:bg-orange-50 cursor-pointer text-sm" onclick="document.getElementById('portfolioSearchInput').value='${n.replace(/'/g, "\\'") }';document.getElementById('portfolioSearchSuggestions').classList.add('hidden');renderPortfolioFilteredTable();">${n}</div>`
+        ).join('');
+        psSugg.classList.remove('hidden');
+      });
+      psSearch.dataset.portfolioListenerAdded = 'true';
+      document.addEventListener('click', e => {
+        if (!psSearch.contains(e.target) && !psSugg.contains(e.target)) psSugg.classList.add('hidden');
+      }, { once: false });
+    }
+
+    // Keep hidden week filter wiring (unchanged)
+    if (!document.getElementById('applyWeekFilter').dataset.listenerAdded) {
+      document.getElementById('applyWeekFilter').addEventListener('click', () => loadDepartmentPortfoliosIQAC());
+      document.getElementById('resetToCurrentWeek').addEventListener('click', () => { setCurrentWeekDates(); loadDepartmentPortfoliosIQAC(); });
+      document.getElementById('weekStartDate').addEventListener('change', () => loadDepartmentPortfoliosIQAC());
+      document.getElementById('weekEndDate').addEventListener('change', () => loadDepartmentPortfoliosIQAC());
+      document.getElementById('applyWeekFilter').dataset.listenerAdded = 'true';
+    }
+  }
+
+  function renderPortfolioFilteredTable() {
+    const rows          = window.portfolioAllRowsData || [];
+    const percentFilter = (document.getElementById('portfolioPercentageFilter') || {}).value || 'All';
+    const statusFilter  = (document.getElementById('portfolioStatusFilter')     || {}).value || 'All';
+    const portFilter    = (document.getElementById('portfolioNameFilter')        || {}).value || 'All';
+    const searchQuery   = ((document.getElementById('portfolioSearchInput')      || {}).value || '').trim().toLowerCase();
+    const minPct = parseFloat((document.getElementById('portfolioMinPct') || {}).value);
+    const maxPct = parseFloat((document.getElementById('portfolioMaxPct') || {}).value);
+
+    const filtered = rows.filter(r => {
+      // Percentage
+      if (percentFilter !== 'All') {
+        if (percentFilter === 'notsubmitted') { if (r.percentage !== null) return false; }
+        else if (percentFilter === '80plus')  { if (r.percentage === null || r.percentage < 80) return false; }
+        else if (percentFilter === '60to79')  { if (r.percentage === null || r.percentage < 60 || r.percentage > 79) return false; }
+        else if (percentFilter === '40to59')  { if (r.percentage === null || r.percentage < 40 || r.percentage > 59) return false; }
+        else if (percentFilter === 'below40') { if (r.percentage === null || r.percentage >= 40) return false; }
+        else if (percentFilter === 'custom')  {
+          if (r.percentage === null) return false;
+          if (!isNaN(minPct) && r.percentage < minPct) return false;
+          if (!isNaN(maxPct) && r.percentage > maxPct) return false;
+        }
+      }
+      // Status – all fields must match
+      if (statusFilter !== 'All') {
+        if (!r.row || r.fieldStatuses.length === 0) return false;
+        const match = r.fieldStatuses.every(s => {
+          const v = (s || '').trim().toLowerCase();
+          if (statusFilter === 'Completed')        return v === 'completed' || v === 'completed and updated';
+          if (statusFilter === 'InProgress')       return v === 'in progress' || v === 'inprogress';
+          if (statusFilter === 'NA')               return v === 'not applicable' || v === 'na';
+          if (statusFilter === 'YetToBeCompleted') return v === 'yet to be completed' || v === 'not started';
+          return false;
+        });
+        if (!match) return false;
+      }
+      // Portfolio name
+      if (portFilter !== 'All' && r.formKey !== portFilter) return false;
+      // Search
+      if (searchQuery && !r.facultyName.toLowerCase().includes(searchQuery)) return false;
+      return true;
+    });
+
+    const container = document.getElementById('departmentPortfoliosContainer');
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="text-gray-500 py-4">No records match the selected filters.</div>';
+      return;
+    }
+
+    let html = `<div class="text-xs text-gray-500 mb-2">Showing <strong>${filtered.length}</strong> of <strong>${rows.length}</strong> records</div>`;
+    html += '<h3 class="text-xl font-bold text-orange-500 mb-2">Department Portfolios</h3>';
+    html += '<div style="overflow-x:auto; max-height:600px; overflow-y:auto; border:1px solid #9ca3af; border-radius:8px;">';
+    html += '<table class="w-full text-sm bg-white" style="border-collapse:collapse;">';
+    html += '<thead class="bg-orange-100 text-orange-700" style="position:sticky; top:0; z-index:10;"><tr>';
+    html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:120px;">Department</th>';
+    html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:100px;">Designation</th>';
+    html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:180px;">Faculty Name</th>';
+    html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:200px;">Portfolio Name</th>';
+    html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:150px;">Percentage</th>';
+    html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:100px;">View</th>';
+    html += '</tr></thead><tbody>';
+
+    for (const r of filtered) {
+      const pd = r.percentage !== null ? `${r.percentage}%` : '0% (Not Submitted)';
+      const pc = r.percentage === null ? 'text-red-600' :
+        r.percentage >= 80 ? 'text-green-600 font-semibold' :
+        r.percentage >= 60 ? 'text-blue-600 font-semibold' :
+        r.percentage >= 40 ? 'text-yellow-600 font-semibold' : 'text-red-600 font-semibold';
+      html += `<tr class="hover:bg-gray-50">`;
+      html += `<td class="px-3 py-2 border border-gray-400">${r.dept}</td>`;
+      html += `<td class="px-3 py-2 border border-gray-400">${r.designation}</td>`;
+      html += `<td class="px-3 py-2 border border-gray-400">${r.facultyName}</td>`;
+      html += `<td class="px-3 py-2 border border-gray-400">${r.portfolioName}</td>`;
+      html += `<td class="px-3 py-2 border border-gray-400 ${pc}">${pd}</td>`;
+      html += `<td class="px-3 py-2 border border-gray-400 text-center">${r.cacheKey ? `<button class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-xs font-semibold" onclick="viewMappedDashboardForm('${r.cacheKey}', 'Department Portfolio Form')">View</button>` : '<span class="text-gray-400">-</span>'}</td>`;
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+  }
     
     // Helper function to set current week dates
     function setCurrentWeekDates() {
@@ -1494,15 +1403,51 @@ function attachExportButtons() {
     let allCoreScopeDepartments = [];
     let selectedCoreScopeDepartment = '';
     let selectedCoreScopeDesignation = 'All';
-    
+
+    // Global row data store so filters can re-render without re-fetching
+    window.coreScopeAllRowsData = [];
+
     // Make variables globally accessible
     window.selectedCoreScopeDepartment = selectedCoreScopeDepartment;
     window.selectedCoreScopeDesignation = selectedCoreScopeDesignation;
-    
+
+    const coreScopeLabels = [
+      'Teaching & Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+      'Teaching & Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+      'Teaching & Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+      'Teaching & Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+      'Student Mentorship & Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
+      'Student Mentorship & Support: Monitor student attendance, performance, and well-being.',
+      'Student Mentorship & Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+      'Student Mentorship & Support: Maintain the Mentor book for assigned mentee.',
+      'Student Mentorship & Support: Consolidate innovative course material, Lab manuals',
+      'Research and Development: Present at conferences.',
+      'Research and Development: Guide student research and final-year projects',
+      'Institutional Development: Participate in curriculum development and revision through Board of Studies.',
+      'Institutional Development: Serve on academic and administrative committees.',
+      'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
+      'Library Utilization'
+    ];
+    const coreScopeShortLabels = [
+      'Design and deliver lectures and lab sessions',
+      'Develop course materials, lesson plans and assessments',
+      'Incorporating innovative teaching methods including ICT tools',
+      'Prepare Product model and instructional Chart',
+      'Mentoring 30 students on coursework, projects and career planning.',
+      'Monitoring student attendance, performance, and well-being.',
+      'Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+      'Maintain the Mentor book for assigned mentee.',
+      'Consolidate innovative course material & Lab manuals',
+      'Participate in curriculum development and revision through BOS',
+      'Contribute to accreditation processes (NBA, NAAC) and quality Assurance initiatives.',
+      'Serve on academic and administrative committees.',
+      'Assist in exam duties, QP setting, Invigilation and evaluation.',
+      'Submit the FPBA (Faculty performance Based Appraisal) with the documents',
+      'Library Utilization'
+    ];
+
     async function loadCoreScopeDepartments() {
-      const { data, error } = await supabaseClient
-        .from('Faculty')
-        .select('department');
+      const { data, error } = await supabaseClient.from('Faculty').select('department');
       if (error || !data) return;
       const depts = Array.from(new Set(data.map(row => row.department).filter(Boolean))).filter(d => !isSHDepartment(d));
       allCoreScopeDepartments = depts;
@@ -1517,88 +1462,108 @@ function attachExportButtons() {
         loadCoreScopeTable();
       });
     }
-    
+
     document.getElementById('coreScopeDesignationFilter').addEventListener('change', () => {
       selectedCoreScopeDesignation = document.getElementById('coreScopeDesignationFilter').value;
       window.selectedCoreScopeDesignation = selectedCoreScopeDesignation;
       loadCoreScopeTable();
     });
-    
     document.getElementById('coreScopeMonthFilter').addEventListener('change', () => {
       selectedCoreScopeMonth = document.getElementById('coreScopeMonthFilter').value;
       window.selectedCoreScopeMonth = selectedCoreScopeMonth;
       loadCoreScopeTable();
     });
-    
+    // New filter event listeners – these only re-render, no DB call needed
+    document.getElementById('coreScopePercentageFilter').addEventListener('change', function() {
+      const wrap = document.getElementById('coreScopeCustomRangeWrap');
+      if (this.value === 'custom') { wrap.classList.remove('hidden'); wrap.classList.add('flex'); }
+      else { wrap.classList.add('hidden'); wrap.classList.remove('flex'); }
+      renderCoreScopeFilteredTable();
+    });
+    document.getElementById('coreScopeMinPct').addEventListener('input', () => renderCoreScopeFilteredTable());
+    document.getElementById('coreScopeMaxPct').addEventListener('input', () => renderCoreScopeFilteredTable());
+
+    // Search bar – filter on input + show suggestions
+    const csSearchInput = document.getElementById('coreScopeSearchInput');
+    const csSuggestionsBox = document.getElementById('coreScopeSearchSuggestions');
+    csSearchInput.addEventListener('input', () => {
+      const q = csSearchInput.value.trim().toLowerCase();
+      renderCoreScopeFilteredTable();
+      // Build autocomplete suggestions
+      if (q.length === 0) { csSuggestionsBox.classList.add('hidden'); return; }
+      const names = [...new Set((window.coreScopeAllRowsData || []).map(r => r.facultyName).filter(n => n.toLowerCase().includes(q)))].slice(0, 8);
+      if (names.length === 0) { csSuggestionsBox.classList.add('hidden'); return; }
+      csSuggestionsBox.innerHTML = names.map(n =>
+        `<div class="px-3 py-2 hover:bg-green-50 cursor-pointer text-sm" onclick="document.getElementById('coreScopeSearchInput').value='${n.replace(/'/g,"\\'")}';document.getElementById('coreScopeSearchSuggestions').classList.add('hidden');renderCoreScopeFilteredTable();">${n}</div>`
+      ).join('');
+      csSuggestionsBox.classList.remove('hidden');
+    });
+    document.addEventListener('click', (e) => {
+      if (!csSearchInput.contains(e.target) && !csSuggestionsBox.contains(e.target)) {
+        csSuggestionsBox.classList.add('hidden');
+      }
+    });
+
+    // Determines the verification status label for a faculty row
+    function getCoreScopeVerificationStatus(dept, facultyName, row, verifyDataMap, rejectDataMap) {
+      if (!row || !row.input_id) return 'Not Submitted';
+      const nameLow = facultyName.toLowerCase();
+      const matchReject = rejectDataMap.find(v =>
+        v.department === dept &&
+        v.portfolio_member_name?.toLowerCase() === nameLow &&
+        ((v.table_name && v.table_name.toLowerCase().includes('core')) || v.input_id === row.input_id)
+      );
+      if (matchReject) {
+        const d = new Date(matchReject.rejected_at).toLocaleDateString();
+        return `Rejected (${d}) - ${matchReject.Commands || 'No reason'}`;
+      }
+      const matchVerify = verifyDataMap.find(v =>
+        v.department === dept &&
+        v.portfolio_member_name?.toLowerCase() === nameLow &&
+        ((v.table_name && v.table_name.toLowerCase().includes('core')) || v.input_id === row.input_id)
+      );
+      if (matchVerify) {
+        const d = new Date(matchVerify.verified_at).toLocaleDateString();
+        return `Verified (${d})`;
+      }
+      return 'Pending Verification';
+    }
+
     async function loadCoreScopeTable() {
       if (!selectedCoreScopeDepartment) {
         document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500">No department selected.</div>';
         return;
       }
-      
-      // Fetch faculty from Faculty table - filter by department if not "All"
+      document.getElementById('coreScopeTableContainer').innerHTML =
+        '<div class="text-green-700 py-4">Loading…</div>';
+
+      // Fetch all needed data in parallel
       let facultyQuery = supabaseClient.from('Faculty').select('*');
-      if (selectedCoreScopeDepartment !== 'All') {
-        facultyQuery = facultyQuery.eq('department', selectedCoreScopeDepartment);
-      }
-      
-      const { data: facultyList, error: facErr } = await facultyQuery;
-      
-      if (facErr || !facultyList || facultyList.length === 0) {
+      if (selectedCoreScopeDepartment !== 'All') facultyQuery = facultyQuery.eq('department', selectedCoreScopeDepartment);
+
+      let coreScopeQuery = supabaseClient.from('Core_scope').select('*').eq('Month', selectedCoreScopeMonth);
+      if (selectedCoreScopeDepartment !== 'All') coreScopeQuery = coreScopeQuery.eq('Department', selectedCoreScopeDepartment);
+
+      const [facRes, csRes, verifyRes, rejectRes] = await Promise.all([
+        facultyQuery,
+        coreScopeQuery,
+        supabaseClient.from('Hod-workdone').select('*'),
+        supabaseClient.from('hod-workdone_reject').select('*')
+      ]);
+
+      if (facRes.error || !facRes.data || facRes.data.length === 0) {
         document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-red-500">Failed to load faculty data.</div>';
         return;
       }
-      
-      // Fetch Core_scope data - filter by department if not "All", always filter by month
-      let coreScopeQuery = supabaseClient.from('Core_scope').select('*').eq('Month', selectedCoreScopeMonth);
-      if (selectedCoreScopeDepartment !== 'All') {
-        coreScopeQuery = coreScopeQuery.eq('Department', selectedCoreScopeDepartment);
-      }
-      
-      const { data: coreScopeData, error: csErr } = await coreScopeQuery;
-      
-      // Core Scope field labels (15 fields) - Full descriptions from faculty-core-scope.html
-      const coreScopeLabels = [
-        'Teaching & Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
-        'Teaching & Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
-        'Teaching & Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
-        'Teaching & Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
-        'Student Mentorship & Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
-        'Student Mentorship & Support: Monitor student attendance, performance, and well-being.',
-        'Student Mentorship & Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
-        'Student Mentorship & Support: Maintain the Mentor book for assigned mentee.',
-        'Student Mentorship & Support: Consolidate innovative course material, Lab manuals',
-        'Research and Development: Present at conferences.',
-        'Research and Development: Guide student research and final-year projects',
-        'Institutional Development: Participate in curriculum development and revision through Board of Studies.',
-        'Institutional Development: Serve on academic and administrative committees.',
-      'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
-      'Library Utilization'
-      ];
-      
-      // Shorter labels for table headers
-      const coreScopeShortLabels = [
-            'Design and deliver lectures and lab sessions',
-            'Develop course materials, lesson plans and assessments ',
-            'Incorporating innovative teaching methods including ICT tools ',
-            'Prepare Product model and instructional Chart ',
-            'Mentoring 30 students on coursework, projects and career planning.',
-            'Monitoring student attendance, performance, and well-being.',
-            'Provide remedial support and encourage participation in co-curricular and extra- curricular activities.',
-            'Maintain the Mentor book for assigned mentee.',
-            'Consolidate innovative course material & Lab manuals ',
-            'Participate in curriculum development and revision through BOS',
-            'Contribute to accreditation processes (NBA, NAAC) and quality Assurance initiatives.',
-            'Serve on academic and administrative committees.',
-            'Assist in exam duties, QP setting, Invigilation and evaluation.',
-            'Submit the FPBA (Faculty performance Based Appraisal) with the documents',
-            'Library Utilization'
-      ];
-      
-      // Filter faculty by designation if needed
-      let filteredFacultyList = facultyList;
+
+      const coreScopeData = csRes.data || [];
+      const verifyDataMap = verifyRes.data || [];
+      const rejectDataMap = rejectRes.data || [];
+
+      // Apply designation + S&H filters
+      let filteredFacultyList = (facRes.data || []).filter(fac => !isSHDepartment(fac.department));
       if (selectedCoreScopeDesignation !== 'All') {
-        filteredFacultyList = facultyList.filter(fac => {
+        filteredFacultyList = filteredFacultyList.filter(fac => {
           const desig = (fac.Designation || '').toUpperCase();
           if (selectedCoreScopeDesignation === 'AP') return desig === 'AP' || desig === 'ASSISTANT PROFESSOR';
           if (selectedCoreScopeDesignation === 'ASP') return desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR';
@@ -1607,144 +1572,129 @@ function attachExportButtons() {
         });
       }
 
-      // Exclude S&H departments from Core Scope display
-      filteredFacultyList = filteredFacultyList.filter(fac => !isSHDepartment(fac.department));
-      
-      let html = '';
-      
       if (filteredFacultyList.length === 0) {
         document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500">No faculty data found.</div>';
+        window.coreScopeAllRowsData = [];
         return;
       }
-      
-      // Single table header with Designation column - wrapped in scrolling container
-      html += `<div class="overflow-auto mb-6 border rounded-lg shadow-sm" style="max-height: 600px;"><table class="min-w-full text-xs bg-white" style="table-layout: auto;"><thead class="bg-green-700 text-white sticky top-0 z-20"><tr>`;
-      html += `<th class="px-3 py-2 sticky left-0 bg-green-700 z-30" style="min-width: 150px;">Department</th>`;
-      html += `<th class="px-3 py-2 bg-green-700" style="min-width: 120px;">Designation</th>`;
-      html += `<th class="px-3 py-2" style="min-width: 180px;">Faculty Name</th>`;
-      html += `<th class="px-3 py-2" style="min-width: 100px;">Percentage</th>`;
-      html += `<th class="px-3 py-2" style="min-width: 100px;">View</th>`;
-      
-      // Add columns for all 15 status fields with full descriptions as tooltips
-      for (let i = 0; i < 15; i++) {
-        html += `<th class="px-2 py-2" style="min-width: 120px;" title="${coreScopeLabels[i]}">${coreScopeShortLabels[i]}</th>`;
-      }
-      
-      html += `</tr></thead><tbody>`;
-      
-      // Process each faculty
+
+      // Build row data store
+      const rowsData = [];
       for (const fac of filteredFacultyList) {
         const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
         const dept = fac.department || selectedCoreScopeDepartment;
         const designation = fac.Designation || 'N/A';
-        
-        // Normalize designation for display
+
         let desigDisplay = designation;
         const desigUpper = designation.toUpperCase();
         if (desigUpper === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
         else if (desigUpper === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
         else if (desigUpper === 'PROFESSOR') desigDisplay = 'Prof';
-        
-        // Find matching Core_scope data for this faculty
+
+        // Match Core_scope submission
         let facNamesToTry = [];
         if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
         if (fac.Name) facNamesToTry.push(fac.Name);
         if (fac.email) facNamesToTry.push(fac.email);
         facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n || '').toString().trim().toLowerCase()).filter(Boolean)));
-        
-        let matchingRows = [];
-        if (coreScopeData && coreScopeData.length > 0) {
-          matchingRows = coreScopeData.filter(row => {
-            const rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
-            return facNamesToTry.includes(rowName);
-          });
-        }
-        
-        // Get the latest row (by input_id)
-        let row = null;
-        if (matchingRows.length > 0) {
-          matchingRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
-          row = matchingRows[0];
-        }
-        
-        // Calculate percentage (fixed denominator: 15)
+
+        let matchingRows = coreScopeData.filter(r => facNamesToTry.includes((r['Portfolio Member Name'] || '').toString().trim().toLowerCase()));
+        matchingRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
+        const row = matchingRows[0] || null;
+
+        // Percentage
         let completedCount = 0;
-        const totalCount = 15;
         if (row) {
           for (let i = 1; i <= 15; i++) {
-            const statusVal = (row[`Status_${i}`] || '').toString().trim().toLowerCase();
-            if (statusVal === 'completed' || statusVal === 'completed and updated') {
-              completedCount++;
-            }
+            const v = (row[`Status_${i}`] || '').toString().trim().toLowerCase();
+            if (v === 'completed' || v === 'completed and updated') completedCount++;
           }
         }
-        const percentage = Math.round((completedCount / totalCount) * 100);
-        const percentageDisplay = row ? `${percentage}%` : '0% (Not Submitted)';
-        const percentageClass = row ? (percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600') : 'text-red-600';
-        
-        // Check verification in Hod-workdone table
+        const percentage = row ? Math.round((completedCount / 15) * 100) : null;
+
+        // Verification status
+        const verificationStatus = getCoreScopeVerificationStatus(dept, facultyName, row, verifyDataMap, rejectDataMap);
+
+        // Cache form for view modal
         const coreScopeRowId = `corescope-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
-        const coreScopePercentageId = `percentage-${coreScopeRowId}`;
         const coreScopeCacheKey = `core-${coreScopeRowId}`;
         if (row) {
           window.dashboardMappedFormCache = window.dashboardMappedFormCache || {};
           window.dashboardMappedFormCache[coreScopeCacheKey] = {
-            rowContext: {
-              table: 'Core_scope',
-              portfolio: 'Faculty Core Scope (Monthly)'
-            },
+            rowContext: { table: 'Core_scope', portfolio: 'Faculty Core Scope (Monthly)' },
             details: row
           };
         }
-        
-        html += `<tr class="hover:bg-gray-50">`;
-        html += `<td class="px-3 py-2 border sticky left-0 bg-white z-10 font-medium">${dept}</td>`;
-        html += `<td class="px-3 py-2 border font-medium">${desigDisplay}</td>`;
-        html += `<td class="px-3 py-2 border font-medium text-green-700">${facultyName}</td>`;
-        html += `<td id="${coreScopePercentageId}" class="px-3 py-2 border ${percentageClass} font-semibold">${percentageDisplay}</td>`;
-        html += `<td class="px-3 py-2 border text-center">${row ? `<button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold" onclick="viewMappedDashboardForm('${coreScopeCacheKey}', 'Faculty Core Scope - Monthly Form')">View</button>` : '<span class="text-gray-400">-</span>'}</td>`;
-        
-        // Add status cells for all 15 fields
+
+        // Collect per-field statuses
+        const fieldStatuses = [];
         for (let i = 1; i <= 15; i++) {
-          const statusVal = row ? (row[`Status_${i}`] || '-') : '-';
-          let display = '-';
-          let statusClass = '';
-          
-          if (row && statusVal && typeof statusVal === 'string') {
+          fieldStatuses.push(row ? (row[`Status_${i}`] || '-') : '-');
+        }
+
+        rowsData.push({ dept, designation, desigDisplay, facultyName, percentage, verificationStatus, row, coreScopeCacheKey, fieldStatuses });
+      }
+
+      window.coreScopeAllRowsData = rowsData;
+      renderCoreScopeFilteredTable();
+    }
+
+    // Renders the table using the current filter values against window.coreScopeAllRowsData
+    function renderCoreScopeFilteredTable() {
+      const filtered = applyCoreScopeUIFilters(window.coreScopeAllRowsData || []);
+      const rows = window.coreScopeAllRowsData || [];
+
+      if (filtered.length === 0) {
+        document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500 py-4">No records match the selected filters.</div>';
+        return;
+      }
+
+      // Build HTML
+      let html = `<div class="text-xs text-gray-500 mb-2">Showing <strong>${filtered.length}</strong> of <strong>${rows.length}</strong> records</div>`;
+      html += `<div class="overflow-auto mb-6 border rounded-lg shadow-sm" style="max-height:600px;">`;
+      html += `<table class="min-w-full text-xs bg-white" style="table-layout:auto;">`;
+      html += `<thead class="bg-green-700 text-white sticky top-0 z-20"><tr>`;
+      html += `<th class="px-3 py-2 sticky left-0 bg-green-700 z-30" style="min-width:150px;">Department</th>`;
+      html += `<th class="px-3 py-2 bg-green-700" style="min-width:110px;">Designation</th>`;
+      html += `<th class="px-3 py-2" style="min-width:180px;">Faculty Name</th>`;
+      html += `<th class="px-3 py-2" style="min-width:100px;">Percentage</th>`;
+      html += `<th class="px-3 py-2" style="min-width:80px;">View</th>`;
+      for (let i = 0; i < 15; i++) {
+        html += `<th class="px-2 py-2" style="min-width:120px;" title="${coreScopeLabels[i]}">${coreScopeShortLabels[i]}</th>`;
+      }
+      html += `</tr></thead><tbody>`;
+
+      for (const r of filtered) {
+        const percentageDisplay = r.percentage !== null ? `${r.percentage}%` : '0% (Not Submitted)';
+        const percentageClass = r.percentage === null ? 'text-red-600' :
+          r.percentage >= 80 ? 'text-green-600 font-semibold' :
+          r.percentage >= 60 ? 'text-blue-600 font-semibold' :
+          r.percentage >= 40 ? 'text-yellow-600 font-semibold' : 'text-red-600 font-semibold';
+
+        html += `<tr class="hover:bg-gray-50">`;
+        html += `<td class="px-3 py-2 border sticky left-0 bg-white z-10 font-medium">${r.dept}</td>`;
+        html += `<td class="px-3 py-2 border font-medium">${r.desigDisplay}</td>`;
+        html += `<td class="px-3 py-2 border font-medium text-green-700">${r.facultyName}</td>`;
+        html += `<td class="px-3 py-2 border ${percentageClass}">${percentageDisplay}</td>`;
+        html += `<td class="px-3 py-2 border text-center">${r.row ? `<button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold" onclick="viewMappedDashboardForm('${r.coreScopeCacheKey}', 'Faculty Core Scope - Monthly Form')">View</button>` : '<span class="text-gray-400">-</span>'}</td>`;
+
+        for (let i = 0; i < 15; i++) {
+          const statusVal = r.fieldStatuses[i];
+          let display = '-', statusClass = 'text-gray-500';
+          if (statusVal && statusVal !== '-') {
             const val = statusVal.trim().toLowerCase();
-            if (val === 'completed') {
-              display = 'Completed';
-              statusClass = 'text-green-600 font-semibold';
-            } else if (val === 'in progress' || val === 'inprogress') {
-              display = 'In Progress';
-              statusClass = 'text-yellow-600 font-semibold';
-            } else if (val === 'yet to be completed' || val === 'not started') {
-              display = 'Yet to be Completed';
-              statusClass = 'text-red-600 font-semibold';
-            } else if (val === 'not applicable' || val === 'na') {
-              display = 'N/A';
-              statusClass = 'text-gray-400';
-            } else if (val === '-' || val === '' || val === null) {
-              display = '-';
-              statusClass = 'text-gray-500';
-            } else {
-              display = statusVal;
-              statusClass = 'text-blue-600 font-semibold';
-            }
-          } else {
-            display = '-';
-            statusClass = 'text-gray-500';
+            if (val === 'completed' || val === 'completed and updated') { display = 'Completed'; statusClass = 'text-green-600 font-semibold'; }
+            else if (val === 'in progress' || val === 'inprogress') { display = 'In Progress'; statusClass = 'text-yellow-600 font-semibold'; }
+            else if (val === 'yet to be completed' || val === 'not started') { display = 'Yet to be Completed'; statusClass = 'text-red-600 font-semibold'; }
+            else if (val === 'not applicable' || val === 'na') { display = 'N/A'; statusClass = 'text-gray-400'; }
+            else { display = statusVal; statusClass = 'text-blue-600 font-semibold'; }
           }
-          
           html += `<td class="px-2 py-2 border ${statusClass}">${display}</td>`;
         }
-        
         html += `</tr>`;
       }
-      
       html += `</tbody></table></div>`;
-      
-      document.getElementById('coreScopeTableContainer').innerHTML = html || '<div class="text-gray-500">No faculty data found.</div>';
+      document.getElementById('coreScopeTableContainer').innerHTML = html;
     }
     // --- END NEW: Core Scope Table ---
 
