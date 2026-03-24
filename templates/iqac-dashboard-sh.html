@@ -8,8 +8,27 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <script src="/static/javascript/form-modal-mapper.js"></script>
-  <!-- SheetJS for Excel export -->
-  <script src="/static/vendor/xlsx-js-style.min.js"></script>
+  <!-- SheetJS (xlsx-js-style) for Excel export with cell colour support -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx-js-style.min.js"></script>
+  <script>
+    // Fallback: if jsdelivr was blocked, try unpkg then local vendor copy
+    if (!window.XLSX || !window.XLSX.utils) {
+      (function(){
+        var fallbacks = [
+          'https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx-js-style.min.js',
+          '/static/vendor/xlsx-js-style.min.js'
+        ];
+        function tryNext(i){
+          if(i >= fallbacks.length) return;
+          var s = document.createElement('script');
+          s.src = fallbacks[i];
+          s.onerror = function(){ tryNext(i+1); };
+          document.head.appendChild(s);
+        }
+        tryNext(0);
+      })();
+    }
+  </script>
   <!-- html2pdf for PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
   <style>
@@ -1246,6 +1265,19 @@ function attachExportButtons() {
       });
     }
 
+    // Wait until window.XLSX is ready (CDN or fallback may still be loading)
+    function waitForXLSX(ms) {
+      return new Promise(function(resolve, reject) {
+        if (window.XLSX && window.XLSX.utils) return resolve();
+        var waited = 0;
+        var interval = setInterval(function() {
+          waited += 50;
+          if (window.XLSX && window.XLSX.utils) { clearInterval(interval); return resolve(); }
+          if (waited >= (ms || 10000)) { clearInterval(interval); reject(new Error('XLSX library did not load in time. Please refresh the page and try again.')); }
+        }, 50);
+      });
+    }
+
     async function exportCoreScopeTableToExcel(scope) {
       closeExportCoreScopeModal();
       const loadingDiv = document.createElement('div');
@@ -1261,6 +1293,7 @@ function attachExportButtons() {
       document.body.appendChild(loadingDiv);
 
       try {
+        await waitForXLSX();
         const selectedDept  = window.selectedCoreScopeDepartment || 'All';
         const selectedDesig = window.selectedCoreScopeDesignation || 'All';
         const selectedMonth = window.selectedCoreScopeMonth || document.getElementById('coreScopeMonthFilter')?.value || 'January';
