@@ -9,7 +9,7 @@
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <script src="/static/javascript/form-modal-mapper.js"></script>
   <!-- SheetJS for Excel export -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="/static/vendor/xlsx-js-style.min.js"></script>
   <!-- html2pdf for PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
   <style>
@@ -191,8 +191,6 @@
         <option value="below40">Below 40%</option>
         <option value="notsubmitted">Not Submitted</option>
         <option value="custom">Custom Range&hellip;</option>
-        <option value="hightolow">High to Low &darr;</option>
-        <option value="lowtohigh">Low to High &uarr;</option>
       </select>
       <!-- Custom percentage range inputs (shown only when custom is selected) -->
       <div id="coreScopeCustomRangeWrap" class="hidden flex items-center gap-1">
@@ -200,6 +198,14 @@
         <span class="text-green-700 font-bold">&ndash;</span>
         <input type="number" id="coreScopeMaxPct" min="0" max="100" placeholder="Max %" class="p-2 border rounded w-20 text-sm" />
       </div>
+      <!-- Sort control -->
+      <label for="coreScopeSortOrder" class="font-medium text-green-700 mr-2">Sort:</label>
+      <select id="coreScopeSortOrder" class="p-2 border rounded">
+        <option value="none">Default</option>
+        <option value="hightolow">High → Low</option>
+        <option value="lowtohigh">Low → High</option>
+      </select>
+
       <!-- Search bar with autocomplete -->
       <div class="relative">
         <input type="text" id="coreScopeSearchInput" placeholder="Search faculty name&hellip;" autocomplete="off"
@@ -727,7 +733,7 @@ async function exportYearlyCurrentDepartment() {
     const overlay = document.getElementById('exportLoadingOverlay');
     if (overlay) overlay.remove();
   }
-}
+
 
 // Attach export button listeners after tables are rendered
 function attachExportButtons() {
@@ -1222,8 +1228,8 @@ function attachExportButtons() {
       const searchQuery   = ((document.getElementById('coreScopeSearchInput')      || {}).value || '').trim().toLowerCase();
       const minPct = parseFloat((document.getElementById('coreScopeMinPct') || {}).value);
       const maxPct = parseFloat((document.getElementById('coreScopeMaxPct') || {}).value);
-      let result = rows.filter(r => {
-        if (percentFilter !== 'All' && percentFilter !== 'hightolow' && percentFilter !== 'lowtohigh') {
+      return rows.filter(r => {
+        if (percentFilter !== 'All') {
           if (percentFilter === 'notsubmitted') { if (r.percentage !== null) return false; }
           else if (percentFilter === '80plus')  { if (r.percentage === null || r.percentage < 80) return false; }
           else if (percentFilter === '60to79')  { if (r.percentage === null || r.percentage < 60 || r.percentage > 79) return false; }
@@ -1238,12 +1244,6 @@ function attachExportButtons() {
         if (searchQuery && !r.facultyName.toLowerCase().includes(searchQuery)) return false;
         return true;
       });
-      if (percentFilter === 'hightolow') {
-        result.sort((a, b) => (b.percentage ?? -1) - (a.percentage ?? -1));
-      } else if (percentFilter === 'lowtohigh') {
-        result.sort((a, b) => (a.percentage ?? 101) - (b.percentage ?? 101));
-      }
-      return result;
     }
 
     async function exportCoreScopeTableToExcel(scope) {
@@ -1331,6 +1331,14 @@ function attachExportButtons() {
         }
 
         const filtered = applyCoreScopeUIFilters(sourceRows);
+        // Apply current sort order so exported rows match the table
+        const sortVal = (document.getElementById('coreScopeSortOrder') || {}).value || 'none';
+        if (sortVal === 'hightolow') {
+          filtered.sort((a, b) => (b.percentage ?? -1) - (a.percentage ?? -1));
+        } else if (sortVal === 'lowtohigh') {
+          filtered.sort((a, b) => (a.percentage ?? 101) - (b.percentage ?? 101));
+        }
+
         if (filtered.length === 0) {
           alert('No records match the current filters. Adjust filters and try again.');
           return;
@@ -1349,6 +1357,27 @@ function attachExportButtons() {
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Core Scope');
 
+        // Apply percentage-based fill colors to the Percentage column (D)
+        // 0-25: red, 26-50: orange, 51-75: yellow, 76-100: green
+        try {
+          for (let i = 0; i < filtered.length; i++) {
+            const pct = filtered[i].percentage;
+            const rowNum = i + 2;
+            const cellAddr = 'D' + rowNum;
+            const cell = ws[cellAddr];
+            if (!cell) continue;
+            if (pct === null || pct === undefined || isNaN(pct)) continue;
+            let color = '';
+            if (pct <= 25) color = 'FF0000';
+            else if (pct <= 50) color = 'FFA500';
+            else if (pct <= 75) color = 'FFFF00';
+            else color = '16A34A';
+            cell.s = { fill: { patternType: 'solid', fgColor: { rgb: color } } };
+          }
+        } catch (e) {
+          console.warn('Could not apply cell styles to Core Scope SH export:', e);
+        }
+
         let filename = `CoreScope_SH_${selectedMonth}`;
         if (scope === 'current') {
           if (selectedDept  !== 'All') filename += `_${selectedDept.replace(/\s+/g,'_')}`;
@@ -1357,7 +1386,9 @@ function attachExportButtons() {
           filename += '_All_SH_Departments';
         }
         const pf = (document.getElementById('coreScopePercentageFilter')||{}).value;
+        const sf = (document.getElementById('coreScopeSortOrder')||{}).value || 'none';
         if (pf && pf !== 'All') filename += `_${pf}`;
+        if (sf && sf !== 'none') filename += `_${sf}`;
         filename += '.xlsx';
 
         XLSX.writeFile(wb, filename);
@@ -1489,6 +1520,12 @@ function attachExportButtons() {
     });
     document.getElementById('coreScopeMinPct').addEventListener('input', () => renderCoreScopeFilteredTable());
     document.getElementById('coreScopeMaxPct').addEventListener('input', () => renderCoreScopeFilteredTable());
+    // Sort control listener
+    const sortEl = document.getElementById('coreScopeSortOrder');
+    if (sortEl && !sortEl.dataset.listenerAdded) {
+      sortEl.addEventListener('change', () => renderCoreScopeFilteredTable());
+      sortEl.dataset.listenerAdded = 'true';
+    }
 
     // Search bar – filter on input + show autocomplete suggestions
     const csSearchInput = document.getElementById('coreScopeSearchInput');
@@ -1642,6 +1679,14 @@ function attachExportButtons() {
     function renderCoreScopeFilteredTable() {
       const filtered = applyCoreScopeUIFilters(window.coreScopeAllRowsData || []);
       const total    = (window.coreScopeAllRowsData || []).length;
+
+      // Apply separate sort control if selected
+      const sortVal = (document.getElementById('coreScopeSortOrder') || {}).value || 'none';
+      if (sortVal === 'hightolow') {
+        filtered.sort((a, b) => (b.percentage ?? -1) - (a.percentage ?? -1));
+      } else if (sortVal === 'lowtohigh') {
+        filtered.sort((a, b) => (a.percentage ?? 101) - (b.percentage ?? 101));
+      }
 
       if (filtered.length === 0) {
         document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500 py-4">No records match the selected filters.</div>';
