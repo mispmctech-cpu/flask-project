@@ -270,6 +270,27 @@
         <option value="November">November 2025</option>
         <option value="December">December 2025</option>
       </select>
+      <label for="summaryPercentageFilter" class="font-medium text-blue-700 mr-2">Overall Rating (%):</label>
+      <select id="summaryPercentageFilter" class="p-2 border rounded">
+        <option value="All">All</option>
+        <option value="80plus">80% and above</option>
+        <option value="60to79">60% – 79%</option>
+        <option value="40to59">40% – 59%</option>
+        <option value="below40">Below 40%</option>
+        <option value="notsubmitted">Not Submitted</option>
+        <option value="custom">Custom Range…</option>
+      </select>
+      <div id="summaryCustomRangeWrap" class="hidden flex items-center gap-1">
+        <input type="number" id="summaryMinPct" min="0" max="100" placeholder="Min %" class="p-2 border rounded w-20 text-sm" />
+        <span class="text-blue-700 font-bold">–</span>
+        <input type="number" id="summaryMaxPct" min="0" max="100" placeholder="Max %" class="p-2 border rounded w-20 text-sm" />
+      </div>
+      <label for="summarySortOrder" class="font-medium text-blue-700 mr-2">Sort by Overall Rating:</label>
+      <select id="summarySortOrder" class="p-2 border rounded">
+        <option value="none">Default</option>
+        <option value="hightolow">High → Low</option>
+        <option value="lowtohigh">Low → High</option>
+      </select>
       <button id="exportSummaryTableBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export summary table to Excel">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
         Export Summary Table
@@ -2498,7 +2519,21 @@ function attachExportButtons() {
         selectedSummaryMonth = document.getElementById('summaryMonthFilter').value;
         renderConsolidatedSummaryTable();
       });
-      
+
+      // Overall Rating filter + sort listeners
+      const summaryPctEl = document.getElementById('summaryPercentageFilter');
+      if (summaryPctEl) {
+        summaryPctEl.addEventListener('change', function() {
+          const wrap = document.getElementById('summaryCustomRangeWrap');
+          if (this.value === 'custom') { wrap.classList.remove('hidden'); wrap.classList.add('flex'); }
+          else { wrap.classList.add('hidden'); wrap.classList.remove('flex'); }
+          renderConsolidatedSummaryTable();
+        });
+      }
+      const sMin = document.getElementById('summaryMinPct'); if (sMin) sMin.addEventListener('input', () => renderConsolidatedSummaryTable());
+      const sMax = document.getElementById('summaryMaxPct'); if (sMax) sMax.addEventListener('input', () => renderConsolidatedSummaryTable());
+      const sSort = document.getElementById('summarySortOrder'); if (sSort && !sSort.dataset.listenerAdded) { sSort.addEventListener('change', () => renderConsolidatedSummaryTable()); sSort.dataset.listenerAdded = 'true'; }
+
       // Export buttons
       document.getElementById('exportSummaryTableBtn').onclick = exportSummaryTableToExcel;
       const pdfBtn = document.getElementById('exportSummaryTablePdfBtn');
@@ -2689,9 +2724,64 @@ function attachExportButtons() {
           });
         }
         
-        // Sort by department alphabetically
-        summaryRows.sort((a, b) => a.dept.localeCompare(b.dept));
-        
+        // Apply Overall Rating filter and sort
+        (function applySummaryFiltersAndSort() {
+          const percentFilter = (document.getElementById('summaryPercentageFilter') || {}).value || 'All';
+          const minPct = parseFloat((document.getElementById('summaryMinPct') || {}).value);
+          const maxPct = parseFloat((document.getElementById('summaryMaxPct') || {}).value);
+          const sortVal = (document.getElementById('summarySortOrder') || {}).value || 'none';
+
+          function computeOverallPercent(row) {
+            if (row._overallPercent !== undefined) return row._overallPercent;
+            const rating = calculateFacultyRating(
+              row.coreScopePercent,
+              row.yearlyPercent,
+              row.instPortfolio1Percent,
+              row.instPortfolio2Percent
+            );
+            const avg = rating ? parseFloat(rating.average) : NaN;
+            const val = !isNaN(avg) ? Math.round(avg) : null;
+            row._overallPercent = val;
+            return val;
+          }
+
+          let filtered = summaryRows.filter(r => {
+            const pct = computeOverallPercent(r);
+            if (percentFilter !== 'All') {
+              if (percentFilter === 'notsubmitted') { if (pct !== null) return false; }
+              else if (percentFilter === '80plus')  { if (pct === null || pct < 80) return false; }
+              else if (percentFilter === '60to79')  { if (pct === null || pct < 60 || pct > 79) return false; }
+              else if (percentFilter === '40to59')  { if (pct === null || pct < 40 || pct > 59) return false; }
+              else if (percentFilter === 'below40') { if (pct === null || pct >= 40) return false; }
+              else if (percentFilter === 'custom')  {
+                if (pct === null) return false;
+                if (!isNaN(minPct) && pct < minPct) return false;
+                if (!isNaN(maxPct) && pct > maxPct) return false;
+              }
+            }
+            return true;
+          });
+
+          if (sortVal === 'hightolow') {
+            filtered.sort((a, b) => {
+              const pa = computeOverallPercent(a);
+              const pb = computeOverallPercent(b);
+              return (pb === null ? -1 : pb) - (pa === null ? -1 : pa);
+            });
+          } else if (sortVal === 'lowtohigh') {
+            filtered.sort((a, b) => {
+              const pa = computeOverallPercent(a);
+              const pb = computeOverallPercent(b);
+              return (pa === null ? 101 : pa) - (pb === null ? 101 : pb);
+            });
+          } else {
+            filtered.sort((a, b) => a.dept.localeCompare(b.dept));
+          }
+
+          summaryRows.length = 0;
+          Array.prototype.push.apply(summaryRows, filtered);
+        })();
+
         // Render table
         let html = '<div class="overflow-auto border rounded-lg shadow-sm" style="max-height: 600px;">';
         html += '<table class="min-w-full text-sm bg-white"><thead class="bg-yellow-200 text-black sticky top-0 z-20"><tr>';
@@ -2933,22 +3023,100 @@ function attachExportButtons() {
           });
         }
         
-        // Create workbook and export
-        const ws = XLSX.utils.json_to_sheet(excelData);
+        // Apply Overall Rating UI filter + sort to exported rows
+        (function applyExportSummaryFilters() {
+          const percentFilter = (document.getElementById('summaryPercentageFilter') || {}).value || 'All';
+          const minPct = parseFloat((document.getElementById('summaryMinPct') || {}).value);
+          const maxPct = parseFloat((document.getElementById('summaryMaxPct') || {}).value);
+          const sortVal = (document.getElementById('summarySortOrder') || {}).value || 'none';
+          function parsePct(s) { if (!s || s === '-') return null; const n = parseInt(String(s).replace(/[^0-9\-]/g,''),10); return Number.isFinite(n)?n:null; }
+
+          let filtered = excelData.filter(r => {
+            const pct = parsePct(r['Overall Rating (%)']);
+            if (percentFilter !== 'All') {
+              if (percentFilter === 'notsubmitted') { if (pct !== null) return false; }
+              else if (percentFilter === '80plus')  { if (pct === null || pct < 80) return false; }
+              else if (percentFilter === '60to79')  { if (pct === null || pct < 60 || pct > 79) return false; }
+              else if (percentFilter === '40to59')  { if (pct === null || pct < 40 || pct > 59) return false; }
+              else if (percentFilter === 'below40') { if (pct === null || pct >= 40) return false; }
+              else if (percentFilter === 'custom')  {
+                if (pct === null) return false;
+                if (!isNaN(minPct) && pct < minPct) return false;
+                if (!isNaN(maxPct) && pct > maxPct) return false;
+              }
+            }
+            return true;
+          });
+          if (sortVal === 'hightolow') {
+            filtered.sort((a,b) => { const pa=parsePct(a['Overall Rating (%)']); const pb=parsePct(b['Overall Rating (%)']); return (pb===null?-1:pb)-(pa===null?-1:pa); });
+          } else if (sortVal === 'lowtohigh') {
+            filtered.sort((a,b) => { const pa=parsePct(a['Overall Rating (%)']); const pb=parsePct(b['Overall Rating (%)']); return (pa===null?101:pa)-(pb===null?101:pb); });
+          } else {
+            filtered.sort((a,b) => (a['Department']||'').localeCompare(b['Department']||''));
+          }
+          excelData.length = 0;
+          Array.prototype.push.apply(excelData, filtered);
+        })();
+
+        // Ensure XLSX is loaded
+        await waitForXLSX();
+
+        // Build AOA from rendered table (preserves UI order) with fallback to excelData
+        const container = document.getElementById('summaryTableContainer');
+        const headers = ['Department','Designation','Faculty Name','Faculty Email','Faculty Core Scope Monthly','Faculty Mandatory Scope (Yearly)','Institution Portfolio-1','Institution Portfolio-2','Overall Rating (%)','Stars'];
+        let aoa = [];
+        if (container) {
+          const table = container.querySelector('table');
+          if (table) {
+            aoa.push(headers);
+            Array.from(table.querySelectorAll('tbody tr')).forEach(tr => {
+              const tds = Array.from(tr.querySelectorAll('td'));
+              const dept = (tds[0]&&tds[0].innerText.trim())||'';
+              const designation = (tds[1]&&tds[1].innerText.trim())||'';
+              const facultyName = (tds[2]&&tds[2].innerText.trim())||'';
+              const coreScope = (tds[3]&&tds[3].innerText.trim())||'';
+              const yearly = (tds[4]&&tds[4].innerText.trim())||'';
+              const inst1 = (tds[5]&&tds[5].innerText.trim())||'';
+              const inst2 = (tds[6]&&tds[6].innerText.trim())||'';
+              const overallText = (tds[7]&&tds[7].innerText.trim())||'';
+              const overallMatch = overallText.match(/(\d+)%/);
+              const overall = overallMatch ? (overallMatch[1]+'%') : overallText;
+              aoa.push([dept,designation,facultyName,'',coreScope,yearly,inst1,inst2,overall,'']);
+            });
+          }
+        }
+        if (aoa.length <= 1) {
+          aoa = [headers];
+          excelData.forEach(r => aoa.push([r['Department']||'',r['Designation']||'',r['Faculty Name']||'',r['Faculty Email']||'',r['Faculty Core Scope Monthly']||'',r['Faculty Mandatory Scope (Yearly)']||'',r['Institution Portfolio-1']||'',r['Institution Portfolio-2']||'',r['Overall Rating (%)']||'',r['Stars']||'']));
+        }
+
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Consolidated Summary');
-        
+
         // Auto-size columns
         const maxWidth = 50;
-        const colWidths = Object.keys(excelData[0] || {}).map(key => {
-          const maxLen = Math.max(
-            key.length,
-            ...excelData.map(row => (row[key] || '').toString().length)
-          );
+        const colWidths = aoa[0].map((h, ci) => {
+          const maxLen = Math.max(h.length, ...aoa.slice(1).map(r => (r[ci]||'').toString().length));
           return { wch: Math.min(maxLen + 2, maxWidth) };
         });
         ws['!cols'] = colWidths;
-        
+
+        // Apply percentage-based cell fill colors to Overall Rating (%) column
+        const overallColIndex = headers.indexOf('Overall Rating (%)');
+        function colIdxToLetter(idx) { let s=''; while(idx>=0){s=String.fromCharCode(65+(idx%26))+s;idx=Math.floor(idx/26)-1;} return s; }
+        for (let r = 1; r < aoa.length; r++) {
+          const m = (aoa[r][overallColIndex]||'').toString().match(/(\d+)%/);
+          const pct = m ? parseInt(m[1],10) : null;
+          let color = null;
+          if (pct !== null) { if (pct<=25) color='FF0000'; else if (pct<=50) color='FFA500'; else if (pct<=75) color='FFFF00'; else color='16A34A'; }
+          if (color) {
+            const cellRef = colIdxToLetter(overallColIndex)+(r+1);
+            if (!ws[cellRef]) ws[cellRef] = { t:'s', v:aoa[r][overallColIndex] };
+            ws[cellRef].s = { fill:{ patternType:'solid', fgColor:{ rgb:color } } };
+          }
+        }
+
         const fileName = `Consolidated_Summary_SH_${selectedSummaryDepartment}_${selectedSummaryMonth}_${new Date().toISOString().split('T')[0]}.xlsx`;
         XLSX.writeFile(wb, fileName);
         
