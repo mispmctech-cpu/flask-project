@@ -934,7 +934,7 @@
     let summaryFacultyForPdf = [];
 
     // Calculate faculty rating with 5-star system
-    function calculateFacultyRating(coreScopePercent, yearlyPercent, deptPortfolio1Percent, deptPortfolio2Percent, instPortfolio1Percent, instPortfolio2Percent) {
+    function calculateFacultyRating(coreScopePercent, deptPortfolio1Percent, deptPortfolio2Percent, instPortfolio1Percent, instPortfolio2Percent) {
       const parsePercent = (val) => {
         if (val === '-' || val === null) return 0;
         return parseFloat(val.toString().replace('%', '')) || 0;
@@ -942,7 +942,6 @@
 
       const values = [
         parsePercent(coreScopePercent),
-        parsePercent(yearlyPercent),
         parsePercent(deptPortfolio1Percent),
         parsePercent(deptPortfolio2Percent),
         parsePercent(instPortfolio1Percent),
@@ -1028,13 +1027,6 @@
           .eq('Month', selectedSummaryMonth)
           .eq('Department', department);
 
-        // Fetch Yearly Mandatory Scope data (AP_SH, ASP_SH, Prof_SH)
-        const [apRes, aspRes, profRes] = await Promise.all([
-          supabaseClient.from('AP_SH_Yearly').select('*').eq('Month', selectedSummaryMonth).eq('Department', department),
-          supabaseClient.from('ASP_SH_Yearly').select('*').eq('Month', selectedSummaryMonth).eq('Department', department),
-          supabaseClient.from('Prof_SH_Yearly').select('*').eq('Month', selectedSummaryMonth).eq('Department', department)
-        ]);
-
         // Fetch department portfolio data for all 8 forms (S&H)
         const deptPortfolioPromises = deptPortfolioFormMapSH.map(form =>
           supabaseClient.from(form.table).select('*').eq('Month', selectedSummaryMonth)
@@ -1088,30 +1080,6 @@
                 }
               }
               coreScopePercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
-            }
-          }
-
-          // Calculate Mandatory Scope Yearly % (S&H: AP=5, ASP=6, Prof=6)
-          let yearlyPercent = '-';
-          let yearlyData = desigDisplay === 'AP' ? apRes.data : desigDisplay === 'ASP' ? aspRes.data : profRes.data;
-          if (yearlyData && yearlyData.length > 0) {
-            const yearlyMatches = yearlyData.filter(r =>
-              (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
-            );
-            const yearlyRow = yearlyMatches.length > 0
-              ? yearlyMatches.sort((a, b) => (b.input_id || b.id || 0) - (a.input_id || a.id || 0))[0]
-              : null;
-            if (yearlyRow) {
-              let completedCount = 0;
-              // S&H Designation-specific field counts: AP=5, ASP=6, Prof=6
-              let totalCount = desigDisplay === 'AP' ? 5 : 6;
-              for (let i = 1; i <= totalCount; i++) {
-                const status = (yearlyRow[`Status_${i}`] || '').toString().trim().toLowerCase();
-                if (status === 'completed' || status === 'completed and updated') {
-                  completedCount++;
-                }
-              }
-              yearlyPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
             }
           }
 
@@ -1219,7 +1187,6 @@
             designation: desigDisplay,
             facultyName,
             coreScopePercent,
-            yearlyPercent,
             deptPortfolio1Percent,
             deptPortfolio2Percent,
             instPortfolio1Percent,
@@ -1244,7 +1211,6 @@
         html += '<th class="px-3 py-2 bg-yellow-200 text-black">Desig</th>';
         html += '<th class="px-3 py-2 bg-yellow-200 text-black">Faculty Name</th>';
         html += '<th class="px-3 py-2 bg-yellow-200 text-black">Faculty Core Scope Monthly</th>';
-        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Faculty Mandatory Scope (Yearly)</th>';
         html += '<th class="px-3 py-2 bg-yellow-200 text-black">Department Portfolio Scope-1</th>';
         html += '<th class="px-3 py-2 bg-yellow-200 text-black">Department Portfolio Scope-2</th>';
         html += '<th class="px-3 py-2 bg-yellow-200 text-black">Institution Portfolio-1</th>';
@@ -1256,7 +1222,6 @@
         for (const row of summaryRows) {
           const rating = calculateFacultyRating(
             row.coreScopePercent,
-            row.yearlyPercent,
             row.deptPortfolio1Percent,
             row.deptPortfolio2Percent,
             row.instPortfolio1Percent,
@@ -1269,7 +1234,6 @@
           html += `<td class="px-2 py-2 border text-center">${row.designation}</td>`;
           html += `<td class="px-2 py-2 border">${row.facultyName}</td>`;
           html += `<td id="summary-core-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.coreScopePercent}</td>`;
-          html += `<td id="summary-yearly-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.yearlyPercent}</td>`;
           html += `<td id="summary-dept1-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.deptPortfolio1Percent}</td>`;
           html += `<td id="summary-dept2-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.deptPortfolio2Percent}</td>`;
           html += `<td id="summary-inst1-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.instPortfolio1Percent}</td>`;
@@ -1439,18 +1403,12 @@
           .eq('Month', selectedSummaryMonth)
           .eq('Department', department);
 
-        const [apRes, aspRes, profRes] = await Promise.all([
-          supabaseClient.from('AP_SH_Yearly').select('*').eq('Month', selectedSummaryMonth).eq('Department', department),
-          supabaseClient.from('ASP_SH_Yearly').select('*').eq('Month', selectedSummaryMonth).eq('Department', department),
-          supabaseClient.from('Prof_SH_Yearly').select('*').eq('Month', selectedSummaryMonth).eq('Department', department)
-        ]);
-
         // Build Excel data
         const excelData = [
-          ['Consolidated Faculty Performance Summary (S&H)', '', '', '', '', '', '', '', '', ''],
-          ['Department:', department, 'Month:', selectedSummaryMonth, '', '', '', '', '', ''],
+          ['Consolidated Faculty Performance Summary (S&H)', '', '', '', '', '', '', '', ''],
+          ['Department:', department, 'Month:', selectedSummaryMonth, '', '', '', '', ''],
           [],
-          ['Department', 'Designation', 'Faculty Name', 'Core Scope', 'Yearly Scope', 'Dept Portfolio-1', 'Dept Portfolio-2', 'Inst Portfolio-1', 'Inst Portfolio-2', 'Overall Rating']
+          ['Department', 'Designation', 'Faculty Name', 'Core Scope', 'Dept Portfolio-1', 'Dept Portfolio-2', 'Inst Portfolio-1', 'Inst Portfolio-2', 'Overall Rating']
         ];
 
         for (const fac of allFaculty) {
@@ -1491,34 +1449,11 @@
             }
           }
 
-          let yearlyPercent = '-';
-          let yearlyData = desigDisplay === 'AP' ? apRes.data : desigDisplay === 'ASP' ? aspRes.data : profRes.data;
-          if (yearlyData && yearlyData.length > 0) {
-            const yearlyMatches = yearlyData.filter(r =>
-              (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
-            );
-            const yearlyRow = yearlyMatches.length > 0
-              ? yearlyMatches.sort((a, b) => (b.input_id || b.id || 0) - (a.input_id || a.id || 0))[0]
-              : null;
-            if (yearlyRow) {
-              let completedCount = 0;
-              let totalCount = desigDisplay === 'AP' ? 5 : 6;
-              for (let i = 1; i <= totalCount; i++) {
-                const status = (yearlyRow[`Status_${i}`] || '').toString().trim().toLowerCase();
-                if (status === 'completed' || status === 'completed and updated') {
-                  completedCount++;
-                }
-              }
-              yearlyPercent = Math.round((completedCount / totalCount) * 100) + '%';
-            }
-          }
-
           excelData.push([
             department,
             desigDisplay,
             facultyName,
             coreScopePercent,
-            yearlyPercent,
             '-',
             '-',
             '-',
@@ -1594,13 +1529,12 @@
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[2]};background:#FEF3C7;color:#000;">DESIGNATION</th>`;
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[3]};background:#FEF3C7;color:#000;">FACULTY NAME</th>`;
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[4]};background:#FEF3C7;color:#000;">FACULTY CORE SCOPE MONTHLY</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[5]};background:#FEF3C7;color:#000;">FACULTY MANDATORY SCOPE (YEARLY)</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[6]};background:#FEF3C7;color:#000;">DEPARTMENT PORTFOLIO SCOPE-1</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[7]};background:#FEF3C7;color:#000;">DEPARTMENT PORTFOLIO SCOPE-2</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[8]};background:#FEF3C7;color:#000;">INSTITUTION PORTFOLIO-1</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[9]};background:#FEF3C7;color:#000;">INSTITUTION PORTFOLIO-2</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[10]};background:#FEF3C7;color:#000;">OVERALL RATING</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[11]};background:#FEF3C7;color:#000;">FACULTY SIGNATURE</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[5]};background:#FEF3C7;color:#000;">DEPARTMENT PORTFOLIO SCOPE-1</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[6]};background:#FEF3C7;color:#000;">DEPARTMENT PORTFOLIO SCOPE-2</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[7]};background:#FEF3C7;color:#000;">INSTITUTION PORTFOLIO-1</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[8]};background:#FEF3C7;color:#000;">INSTITUTION PORTFOLIO-2</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[9]};background:#FEF3C7;color:#000;">OVERALL RATING</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[10]};background:#FEF3C7;color:#000;">FACULTY SIGNATURE</th>`;
         theadHTML += '</tr>';
 
         // Start table
