@@ -2400,7 +2400,7 @@ function attachExportButtons() {
     let selectedSummaryMonth = 'January';
 
     // Function to calculate faculty rating
-    function calculateFacultyRating(coreScopePercent, yearlyPercent, deptPortfolio1, deptPortfolio2, instPortfolio1, instPortfolio2) {
+    function calculateFacultyRating(coreScopePercent, deptPortfolio1, deptPortfolio2, instPortfolio1, instPortfolio2) {
       let validScores = [];
       
       // Helper function to parse percentage
@@ -2415,9 +2415,6 @@ function attachExportButtons() {
       
       // Mandatory scopes - core scope always included (0 if not filled)
       validScores.push(parsePercent(coreScopePercent, true));
-      // Yearly scope: include only if submitted; do not force 0 when missing
-      const parsedYearly = parsePercent(yearlyPercent, false);
-      if (parsedYearly !== null) validScores.push(parsedYearly);
       
       // Optional portfolios - only include if allocated (0 if allocated but not filled)
       [deptPortfolio1, deptPortfolio2, instPortfolio1, instPortfolio2].forEach(score => {
@@ -2580,19 +2577,6 @@ function attachExportButtons() {
         }
         const { data: coreScopeData } = await coreScopeQuery;
         
-        // Fetch Yearly Mandatory Scope data (AP, ASP, Prof)
-        let apQuery = supabaseClient.from('AP(Yearly)').select('*').eq('Month', selectedSummaryMonth);
-        let aspQuery = supabaseClient.from('ASP(Yearly)').select('*').eq('Month', selectedSummaryMonth);
-        let profQuery = supabaseClient.from('Prof(Yearly)').select('*').eq('Month', selectedSummaryMonth);
-        
-        if (selectedSummaryDepartment !== 'All') {
-          apQuery = apQuery.eq('Department', selectedSummaryDepartment);
-          aspQuery = aspQuery.eq('Department', selectedSummaryDepartment);
-          profQuery = profQuery.eq('Department', selectedSummaryDepartment);
-        }
-        
-        const [apRes, aspRes, profRes] = await Promise.all([apQuery, aspQuery, profQuery]);
-        
         // Fetch department portfolio data for all 8 forms
         const deptPortfolioPromises = deptPortfolioFormMap.map(form => 
           supabaseClient.from(form.table).select('*').eq('Month', selectedSummaryMonth)
@@ -2649,28 +2633,6 @@ function attachExportButtons() {
                 // All statuses (including 'Not Applicable', null, empty) are included in denominator
               }
               coreScopePercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
-            }
-          }
-          
-          // Calculate Mandatory Scope Yearly %
-          let yearlyPercent = '-';
-          let yearlyData = desigDisplay === 'AP' ? apRes.data : desigDisplay === 'ASP' ? aspRes.data : profRes.data;
-          if (yearlyData && yearlyData.length > 0) {
-            const yearlyMatches = yearlyData.filter(r => 
-              (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
-            );
-            const yearlyRow = chooseLatestRow(yearlyMatches);
-            if (yearlyRow) {
-              let completedCount = 0;
-              // Designation-specific field counts: AP=8, ASP=9, Prof=9
-              let totalCount = desigDisplay === 'AP' ? 8 : 9;
-              for (let i = 1; i <= totalCount; i++) {
-                const status = (yearlyRow[`Status_${i}`] || '').toString().trim().toLowerCase();
-                if (status === 'completed' || status === 'completed and updated') {
-                  completedCount++;
-                }
-              }
-              yearlyPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
             }
           }
           
@@ -2784,7 +2746,6 @@ function attachExportButtons() {
             designation: desigDisplay,
             facultyName,
             coreScopePercent,
-            yearlyPercent,
             deptPortfolio1Percent,
             deptPortfolio2Percent,
             instPortfolio1Percent,
@@ -2805,7 +2766,6 @@ function attachExportButtons() {
             if (row._overallPercent !== undefined) return row._overallPercent;
             const rating = calculateFacultyRating(
               row.coreScopePercent,
-              row.yearlyPercent,
               row.deptPortfolio1Percent,
               row.deptPortfolio2Percent,
               row.instPortfolio1Percent,
@@ -2865,7 +2825,6 @@ function attachExportButtons() {
         html += '<th class="px-3 py-2 bg-yellow-200">Desig</th>';
         html += '<th class="px-3 py-2 bg-yellow-200">Faculty Name</th>';
         html += '<th class="px-3 py-2 bg-yellow-200">Faculty Core Scope Monthly</th>';
-        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Faculty Mandatory Scope (Yearly)</th>';
         html += '<th class="px-3 py-2 bg-yellow-200 text-black">Department Portfolio Scope-1</th>';
         html += '<th class="px-3 py-2 bg-yellow-200 text-black">Department Portfolio Scope-2</th>';
         html += '<th class="px-3 py-2 bg-yellow-200 text-black">Institution Portfolio-1</th>';
@@ -2879,7 +2838,6 @@ function attachExportButtons() {
           // Calculate faculty rating
           const rating = calculateFacultyRating(
             row.coreScopePercent,
-            row.yearlyPercent,
             row.deptPortfolio1Percent,
             row.deptPortfolio2Percent,
             row.instPortfolio1Percent,
@@ -2892,7 +2850,6 @@ function attachExportButtons() {
           html += `<td class="px-2 py-2 border text-center">${row.designation}</td>`;
           html += `<td class="px-2 py-2 border">${row.facultyName}</td>`;
           html += `<td id="summary-core-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.coreScopePercent}</td>`;
-          html += `<td id="summary-yearly-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.yearlyPercent}</td>`;
           html += `<td id="summary-dept1-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.deptPortfolio1Percent}</td>`;
           html += `<td id="summary-dept2-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.deptPortfolio2Percent}</td>`;
           html += `<td id="summary-inst1-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.instPortfolio1Percent}</td>`;
@@ -2936,19 +2893,6 @@ function attachExportButtons() {
           coreScopeQuery = coreScopeQuery.eq('Department', selectedSummaryDepartment);
         }
         const { data: coreScopeData } = await coreScopeQuery;
-        
-        // Fetch Yearly Mandatory Scope data (AP, ASP, Prof)
-        let apQuery = supabaseClient.from('AP(Yearly)').select('*').eq('Month', selectedSummaryMonth);
-        let aspQuery = supabaseClient.from('ASP(Yearly)').select('*').eq('Month', selectedSummaryMonth);
-        let profQuery = supabaseClient.from('Prof(Yearly)').select('*').eq('Month', selectedSummaryMonth);
-        
-        if (selectedSummaryDepartment !== 'All') {
-          apQuery = apQuery.eq('Department', selectedSummaryDepartment);
-          aspQuery = aspQuery.eq('Department', selectedSummaryDepartment);
-          profQuery = profQuery.eq('Department', selectedSummaryDepartment);
-        }
-        
-        const [apRes, aspRes, profRes] = await Promise.all([apQuery, aspQuery, profQuery]);
         
         // Fetch department portfolio data for all 8 forms
         const deptPortfolioPromises = deptPortfolioFormMap.map(form => 
@@ -3005,28 +2949,6 @@ function attachExportButtons() {
                 // All statuses (including 'Not Applicable', null, empty) are included in denominator
               }
               coreScopePercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
-            }
-          }
-          
-          // Calculate Mandatory Scope Yearly %
-          let yearlyPercent = '-';
-          let yearlyData = desigDisplay === 'AP' ? apRes.data : desigDisplay === 'ASP' ? aspRes.data : profRes.data;
-          if (yearlyData && yearlyData.length > 0) {
-            const yearlyMatches = yearlyData.filter(r => 
-              (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
-            );
-            const yearlyRow = chooseLatestRow(yearlyMatches);
-            if (yearlyRow) {
-              let completedCount = 0;
-              // Designation-specific field counts: AP=8, ASP=9, Prof=9
-              let totalCount = desigDisplay === 'AP' ? 8 : 9;
-              for (let i = 1; i <= totalCount; i++) {
-                const status = (yearlyRow[`Status_${i}`] || '').toString().trim().toLowerCase();
-                if (status === 'completed' || status === 'completed and updated') {
-                  completedCount++;
-                }
-              }
-              yearlyPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
             }
           }
           
@@ -3134,7 +3056,6 @@ function attachExportButtons() {
           // Calculate rating
           const rating = calculateFacultyRating(
             coreScopePercent,
-            yearlyPercent,
             deptPortfolio1Percent,
             deptPortfolio2Percent,
             instPortfolio1Percent,
@@ -3147,7 +3068,6 @@ function attachExportButtons() {
             'Faculty Name': facultyName,
             'Faculty Email': fac.email || '',
             'Faculty Core Scope Monthly': coreScopePercent,
-            'Faculty Mandatory Scope (Yearly)': yearlyPercent,
             'Department Portfolio Scope-1': deptPortfolio1Percent,
             'Department Portfolio Scope-2': deptPortfolio2Percent,
             'Institution Portfolio-1': instPortfolio1Percent,
@@ -3209,7 +3129,7 @@ function attachExportButtons() {
         // Prefer exporting the currently rendered table (preserves UI filters and order)
         const container = document.getElementById('summaryTableContainer');
         let aoa = [];
-        const headers = ['Department','Designation','Faculty Name','Faculty Email','Faculty Core Scope Monthly','Faculty Mandatory Scope (Yearly)','Department Portfolio Scope-1','Department Portfolio Scope-2','Institution Portfolio-1','Institution Portfolio-2','Overall Rating (%)','Stars'];
+        const headers = ['Department','Designation','Faculty Name','Faculty Email','Faculty Core Scope Monthly','Department Portfolio Scope-1','Department Portfolio Scope-2','Institution Portfolio-1','Institution Portfolio-2','Overall Rating (%)','Stars'];
 
         if (container) {
           const table = container.querySelector('table');
@@ -3223,20 +3143,19 @@ function attachExportButtons() {
               const designation = (tds[1] && tds[1].innerText.trim()) || '';
               const facultyName = (tds[2] && tds[2].innerText.trim()) || '';
               const coreScope = (tds[3] && tds[3].innerText.trim()) || '';
-              const yearly = (tds[4] && tds[4].innerText.trim()) || '';
-              const dept1 = (tds[5] && tds[5].innerText.trim()) || '';
-              const dept2 = (tds[6] && tds[6].innerText.trim()) || '';
-              const inst1 = (tds[7] && tds[7].innerText.trim()) || '';
-              const inst2 = (tds[8] && tds[8].innerText.trim()) || '';
+              const dept1 = (tds[4] && tds[4].innerText.trim()) || '';
+              const dept2 = (tds[5] && tds[5].innerText.trim()) || '';
+              const inst1 = (tds[6] && tds[6].innerText.trim()) || '';
+              const inst2 = (tds[7] && tds[7].innerText.trim()) || '';
               // Overall rating cell may contain stars and percent; extract percent
-              const overallCellText = (tds[9] && tds[9].innerText.trim()) || '';
+              const overallCellText = (tds[8] && tds[8].innerText.trim()) || '';
               const overallMatch = overallCellText.match(/(\d+)%/);
               const overall = overallMatch ? (overallMatch[1] + '%') : overallCellText;
               // Stars may be available in the same cell or omitted
               const starsMatch = overallCellText.match(/(\d+)\s*stars/);
               const stars = starsMatch ? (starsMatch[1] + ' stars') : '';
 
-              aoa.push([dept, designation, facultyName, '', coreScope, yearly, dept1, dept2, inst1, inst2, overall, stars]);
+              aoa.push([dept, designation, facultyName, '', coreScope, dept1, dept2, inst1, inst2, overall, stars]);
             });
           }
         }
@@ -3251,7 +3170,6 @@ function attachExportButtons() {
               row['Faculty Name'] || '',
               row['Faculty Email'] || '',
               row['Faculty Core Scope Monthly'] || '',
-              row['Faculty Mandatory Scope (Yearly)'] || '',
               row['Department Portfolio Scope-1'] || '',
               row['Department Portfolio Scope-2'] || '',
               row['Institution Portfolio-1'] || '',
@@ -3549,20 +3467,19 @@ function attachExportButtons() {
         let html = '';
 
         // Build table header template
-        const colWidths = ['3%', '5%', '8%', '12%', '7%', '8%', '8%', '8%', '8%', '8%', '10%', '10%', '5%'];
+        const colWidths = ['3%', '5%', '8%', '12%', '7%', '9%', '9%', '9%', '9%', '10%', '10%', '5%'];
         let theadHTML = '<tr style="background:#FEF3C7;color:#000;">';
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[0]};">SNO</th>`;
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[1]};">DEPT</th>`;
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[2]};">DESIG</th>`;
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[3]};">FACULTY NAME</th>`;
         theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[4]};">FACULTY CORE SCOPE MONTHLY</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[5]};">FACULTY MANDATORY SCOPE (YEARLY)</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[6]};">DEPARTMENT PORTFOLIO SCOPE-1</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[7]};">DEPARTMENT PORTFOLIO SCOPE-2</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[8]};">INSTITUTION PORTFOLIO-1</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[9]};">INSTITUTION PORTFOLIO-2</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[10]};">OVERALL RATING</th>`;
-        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[11]};">FACULTY SIGNATURE</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[5]};">DEPARTMENT PORTFOLIO SCOPE-1</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[6]};">DEPARTMENT PORTFOLIO SCOPE-2</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[7]};">INSTITUTION PORTFOLIO-1</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[8]};">INSTITUTION PORTFOLIO-2</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[9]};">OVERALL RATING</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[10]};">FACULTY SIGNATURE</th>`;
         theadHTML += '</tr>';
 
         // Group selectedRows by department (preserve order)
@@ -3605,7 +3522,7 @@ function attachExportButtons() {
             for (let i = 0; i < cells.length; i++) {
               html += `<td style="border:1px solid #999;padding:3px;text-align:center;width:${colWidths[i + 1]};">${cells[i].innerHTML}</td>`;
             }
-            html += `<td style="border:1px solid #999;padding:8px 3px;text-align:center;width:${colWidths[11]};height:30px;"></td>`;
+            html += `<td style="border:1px solid #999;padding:8px 3px;text-align:center;width:${colWidths[10]};height:30px;"></td>`;
             html += '</tr>';
 
             // Page break after every 8 rows within this department
