@@ -201,4 +201,17 @@
     window.checkFormAccess = checkFormAccess;
     window.getFormIdFromPage = getFormIdFromPage;
 
+<<<<<<< HEAD
+=======
+    // Load file-preview helper (adds view/replace preview to file inputs)
+    try {
+        const fpScript = document.createElement('script');
+        fpScript.src = '../static/javascript/file-preview.js';
+        fpScript.defer = true;
+        document.head.appendChild(fpScript);
+    } catch (e) {
+        console.error('Failed to load file-preview helper:', e);
+    }
+
+>>>>>>> a936322 (Add file preview helper and include form-access-control across templates)
 })();
