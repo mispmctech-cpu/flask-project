@@ -284,6 +284,39 @@ def management_dashboard():
 def iqac_dashboard():
     return render_template('iqac.html')
 
+
+@app.route('/api/faculty-list')
+@login_required(role='iqac')
+def api_faculty_list():
+    """Return a JSON list of faculty members from the Faculty table.
+    Each item: { id: <input_id>, name: <Name>, department: <department>, email: <email> }
+    """
+    try:
+        import requests
+        headers = {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': f'Bearer {SUPABASE_ANON_KEY}',
+            'Content-Type': 'application/json'
+        }
+        # Request name, input_id, department, email
+        url = f"{SUPABASE_URL}/rest/v1/Faculty?select=input_id,Name,department,email&order=Name.asc"
+        resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code != 200:
+            return jsonify({'success': False, 'error': f'HTTP {resp.status_code}: {resp.text}'}), 500
+        data = resp.json()
+        # Map to expected format
+        out = []
+        for row in data:
+            out.append({
+                'id': row.get('input_id'),
+                'name': row.get('Name') or row.get('name') or '',
+                'department': row.get('department'),
+                'email': row.get('email')
+            })
+        return jsonify(out)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/admin-dashboard.html')
 @login_required(role='admin')
 def admin_dashboard():
