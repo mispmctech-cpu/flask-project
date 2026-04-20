@@ -11,6 +11,7 @@ import random
 import string
 from datetime import datetime, timedelta
 import threading
+import requests
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
@@ -22,7 +23,7 @@ os.makedirs(os.path.join(app.root_path, app.config['UPLOAD_FOLDER']), exist_ok=T
 SMTP_SERVER = "smtp.gmail.com"  
 SMTP_PORT = 587
 EMAIL_ADDRESS = "mis.pmctech@gmail.com"
-EMAIL_PASSWORD = "zuyr aofpkddqwsmq"
+EMAIL_PASSWORD = "unvidickusetxkun"
 
 # In-memory storage for verification codes (in production, use Redis or database)
 verification_codes = {}
@@ -497,8 +498,6 @@ def forgot_password():
         cleanup_expired_codes()
         
         # Check if user exists based on role
-        import requests
-        
         headers = {
             'apikey': SUPABASE_ANON_KEY,
             'Authorization': f'Bearer {SUPABASE_ANON_KEY}',
