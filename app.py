@@ -286,6 +286,12 @@ def iqac_dashboard():
     return render_template('iqac.html')
 
 
+@app.route('/faculty-report.html')
+@login_required(role='iqac')
+def faculty_report():
+    return render_template('faculty-report.html')
+
+
 @app.route('/api/faculty-list')
 @login_required(role='iqac')
 def api_faculty_list():
