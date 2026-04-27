@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category 2: Academics Report - PMC Tech</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pmcPurple: "#6a2c91",
+                        pmcPurpleDark: "#501e73",
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .print-container { box-shadow: none !important; border: none !important; }
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(106, 44, 145, 0.3);
+            border-color: #6a2c91;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Navigation -->
+    <header class="bg-blue-600 text-white w-full no-print">
+        <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+            <div class="flex items-center">
+                <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 rounded shadow bg-white p-1" />
+            </div>
+            <nav class="flex gap-6 text-base font-medium items-center">
+              <!--  <a id="backLink" href="hod.html" class="hover:underline">← Back</a> -->
+            </nav>
+        </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto py-8 px-4">
+        <!-- Action Buttons -->
+        <div class="flex justify-end gap-3 mb-4 no-print">
+            <button onclick="window.print()" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition">
+                <i class="fas fa-print mr-2"></i>Print
+            </button>
+            <button onclick="submitAcademics()" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition">
+                <i class="fas fa-save mr-2"></i>Submit Report
+            </button>
+        </div>
+
+        <!-- Report Form -->
+        <div class="bg-white rounded-xl shadow-lg p-8 print-container border border-gray-200">
+            <!-- Header Section -->
+            <div class="flex items-start justify-between border-2 border-black p-4 mb-0">
+                <div class="flex-1">
+                    <h1 class="text-xl font-bold text-center">Category 2: Academics Report</h1>
+                    <p class="text-center text-sm">Academic Year: 2025-26 Even Semester</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2R7bHsdVlhJda1oUOZ1NPc7lvacTuGPvHgg&s" alt="PMC Logo" class="h-16" />
+                    <div class="text-xs text-right">
+                        <p class="font-semibold text-blue-600">Autonomous Institution</p>
+                        <p>NAAC Accredited</p>
+                        <p>NBA Accredited</p>
+                        <p>ISO 9001:2015 Certified</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Department Info -->
+            <div class="border-2 border-black border-t-0 p-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex items-center gap-2">
+                        <label class="font-semibold whitespace-nowrap">Department of</label>
+                        <input type="text" id="departmentName" class="flex-1 border-b-2 border-gray-400 px-2 py-1 bg-transparent" readonly />
+                    </div>
+                    <div class="text-right text-sm font-medium text-blue-600">PMC/IQAC/DR/Form-2</div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mt-3">
+                    <div class="flex items-center gap-2">
+                        <label class="font-semibold whitespace-nowrap">Name of the HOD:</label>
+                        <input type="text" id="hodName" class="flex-1 border-b-2 border-gray-400 px-2 py-1 bg-transparent" readonly />
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 mt-3">
+                    <label class="font-semibold">Date:</label>
+                    <input type="date" id="reportDate" class="border-b-2 border-gray-400 px-2 py-1 bg-transparent" />
+                </div>
+            </div>
+
+            <!-- Add Class/Year Section -->
+            <div class="mt-6 mb-4 p-4 bg-gray-50 rounded-lg border no-print">
+                <h3 class="font-semibold text-blue-600 mb-3">Add Class Timetable</h3>
+                <div class="flex flex-wrap gap-3 items-end">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                        <select id="addYear" class="px-3 py-2 border rounded-lg">
+                            <option value="">Select Year</option>
+                            <option value="I Year">I Year</option>
+                            <option value="II Year">II Year</option>
+                            <option value="III Year">III Year</option>
+                            <option value="IV Year">IV Year</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Section</label>
+                        <select id="addSection" class="px-3 py-2 border rounded-lg">
+                            <option value="">Select Section</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                        </select>
+                    </div>
+                    <button type="button" onclick="addAcademicTable()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition">
+                        <i class="fas fa-plus mr-2"></i>Add Table
+                    </button>
+                </div>
+            </div>
+
+            <!-- Academic Tables Container -->
+            <div id="academicsContainer" class="space-y-6">
+                <!-- Tables will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script>
+        const supabase = window.supabase.createClient(
+            "https://cbhodgwaazmjszkujrti.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+        );
+
+        // Get department from URL or localStorage
+        function getQueryParam(name) {
+            const url = new URL(window.location.href);
+            return url.searchParams.get(name);
+        }
+
+        const department = getQueryParam('department') || localStorage.getItem('department') || '';
+        const fromFaculty = getQueryParam('from') === 'faculty';
+        const facultyEmail = getQueryParam('email') || '';
+
+        // Auto-fill department and HOD name
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Set back link (only if element exists)
+            const backLink = document.getElementById('backLink');
+            if (backLink) {
+                if (fromFaculty && facultyEmail) {
+                    backLink.href = `faculty-profile.html?email=${encodeURIComponent(facultyEmail)}`;
+                    backLink.textContent = '← Back to Profile';
+                } else {
+                    backLink.href = `hod.html?department=${encodeURIComponent(department)}&as=hod`;
+                    backLink.textContent = '← Back to HOD';
+                }
+            }
+
+            document.getElementById('departmentName').value = department;
+            document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
+
+            // Fetch HOD name from localStorage first, then from database
+            let hodName = localStorage.getItem('hodName');
+            
+            if (!hodName && department) {
+                const { data, error } = await supabase
+                    .from('HOD')
+                    .select('Name')
+                    .eq('department', department)
+                    .maybeSingle();
+                
+                if (data && data.Name) {
+                    hodName = data.Name;
+                    localStorage.setItem('hodName', hodName);
+                }
+            }
+            
+            if (hodName) {
+                document.getElementById('hodName').value = hodName;
+            }
+        });
+
+        let tableCount = 0;
+        const addedTables = [];
+
+        function addAcademicTable() {
+            const year = document.getElementById('addYear').value;
+            const section = document.getElementById('addSection').value;
+
+            if (!year || !section) {
+                alert('Please select both Year and Section');
+                return;
+            }
+
+            // Check if this combination already exists
+            const key = `${year}-${section}`;
+            if (addedTables.includes(key)) {
+                alert('This Year/Section table already exists!');
+                return;
+            }
+
+            addedTables.push(key);
+            tableCount++;
+
+            const container = document.getElementById('academicsContainer');
+            const headerText = `${year} ${department} ${section}`;
+
+            const tableDiv = document.createElement('div');
+            tableDiv.className = 'academic-table';
+            tableDiv.setAttribute('data-year', year);
+            tableDiv.setAttribute('data-section', section);
+            tableDiv.setAttribute('data-index', tableCount);
+            tableDiv.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-semibold text-blue-600 border-l-4 border-blue-600 pl-2">${headerText}</h3>
+                    <button type="button" onclick="removeTable(this, '${key}')" class="text-red-500 hover:text-red-700 text-sm no-print">
+                        <i class="fas fa-trash mr-1"></i>Remove
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse border-2 border-black text-sm">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th colspan="5" class="border border-black px-3 py-2 text-center font-bold">${headerText}</th>
+                            </tr>
+                            <tr class="bg-gray-100">
+                                <th class="border border-black px-3 py-2 w-16">Hour</th>
+                                <th class="border border-black px-3 py-2">Subject Name</th>
+                                <th class="border border-black px-3 py-2">Faculty Name</th>
+                                <th class="border border-black px-3 py-2">Topics Covered</th>
+                                <th class="border border-black px-3 py-2">Teaching Aid / Pedagogy used</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${generateHourRows(tableCount)}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.appendChild(tableDiv);
+
+            // Reset dropdowns
+            document.getElementById('addYear').value = '';
+            document.getElementById('addSection').value = '';
+        }
+
+        function generateHourRows(tableIndex) {
+            let rows = '';
+            for (let hour = 1; hour <= 8; hour++) {
+                rows += `
+                    <tr>
+                        <td class="border border-black px-2 py-2 text-center font-medium">${hour}</td>
+                        <td class="border border-black px-2 py-2">
+                            <input type="text" name="subject_${tableIndex}_${hour}" class="w-full px-2 py-1 border rounded text-sm" placeholder="Subject name" />
+                        </td>
+                        <td class="border border-black px-2 py-2">
+                            <input type="text" name="faculty_name_${tableIndex}_${hour}" class="w-full px-2 py-1 border rounded text-sm" placeholder="Faculty name" />
+                        </td>
+                        <td class="border border-black px-2 py-2">
+                            <input type="text" name="topics_${tableIndex}_${hour}" class="w-full px-2 py-1 border rounded text-sm" placeholder="Topics covered" />
+                        </td>
+                        <td class="border border-black px-2 py-2">
+                            <input type="text" name="teaching_aid_${tableIndex}_${hour}" class="w-full px-2 py-1 border rounded text-sm" placeholder="Teaching aid / Pedagogy" />
+                        </td>
+                    </tr>
+                `;
+            }
+            return rows;
+        }
+
+        function removeTable(btn, key) {
+            const tableDiv = btn.closest('.academic-table');
+            tableDiv.remove();
+            const index = addedTables.indexOf(key);
+            if (index > -1) {
+                addedTables.splice(index, 1);
+            }
+        }
+
+        async function submitAcademics() {
+            const tables = document.querySelectorAll('.academic-table');
+            
+            if (tables.length === 0) {
+                alert('Please add at least one class timetable before submitting.');
+                return;
+            }
+
+            const reportData = {
+                department: department,
+                hod_name: document.getElementById('hodName').value,
+                report_date: document.getElementById('reportDate').value,
+                academics: []
+            };
+
+            tables.forEach(table => {
+                const year = table.getAttribute('data-year');
+                const section = table.getAttribute('data-section');
+                const index = table.getAttribute('data-index');
+
+                const academicEntry = {
+                    class_section: `${year} / ${department} / ${section}`,
+                    year: year,
+                    class_name: department,
+                    section: section,
+                    timetable: []
+                };
+
+                for (let hour = 1; hour <= 8; hour++) {
+                    const subject = document.querySelector(`input[name="subject_${index}_${hour}"]`);
+                    const facultyName = document.querySelector(`input[name="faculty_name_${index}_${hour}"]`);
+                    const topics = document.querySelector(`input[name="topics_${index}_${hour}"]`);
+                    const teachingAid = document.querySelector(`input[name="teaching_aid_${index}_${hour}"]`);
+
+                    academicEntry.timetable.push({
+                        hour: hour,
+                        subject: subject ? subject.value : '',
+                        faculty_name: facultyName ? facultyName.value : '',
+                        topics_covered: topics ? topics.value : '',
+                        teaching_aid: teachingAid ? teachingAid.value : ''
+                    });
+                }
+
+                reportData.academics.push(academicEntry);
+            });
+
+            try {
+                const { data, error } = await supabase
+                    .from('academic_reports')
+                    .insert([{
+                        department: reportData.department,
+                        hod_name: reportData.hod_name,
+                        report_date: reportData.report_date,
+                        academics: reportData.academics,
+                        verification_status: 'pending',
+                        verified_by: null,
+                        verification_date: null,
+                        verification_comments: null
+                    }]);
+
+                if (error) throw error;
+
+                alert('Academics Report submitted successfully!');
+                // Redirect based on where user came from
+                if (fromFaculty && facultyEmail) {
+                    window.location.href = `faculty-profile.html?email=${encodeURIComponent(facultyEmail)}`;
+                } else {
+                    window.location.href = `hod.html?department=${encodeURIComponent(department)}&as=hod`;
+                }
+            } catch (err) {
+                alert('Failed to submit report: ' + err.message);
+            }
+        }
+    </script>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-8 no-print">
+        <p class="text-sm">
+            &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline">PMC TECH</a><br>
+            <span class="text-xs opacity-80">A Student driven Software!</span>
+        </p>
+    </footer>
+</body>
+</html>

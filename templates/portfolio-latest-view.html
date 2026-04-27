@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Portfolio Latest Submissions View</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script src="../static/javascript/form-modal-mapper.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <div class="w-full bg-purple-800 py-4 flex items-center">
+        <img src="https://www.pmctech.org/images/gallery/logo1.jpg" alt="PMC Tech Logo" class="h-14 ml-8" style="max-height:56px;" />
+        <h1 class="text-white text-2xl font-bold ml-8">Portfolio Latest Submissions</h1>
+    </div>
+    <div class="flex-1 flex flex-col items-center justify-center py-8 px-2">
+        <div class="w-full max-w-5xl mx-auto bg-white rounded-2xl card-shadow border border-purple-300 overflow-x-auto p-8 mb-12">
+            <table class="w-full text-sm table-fixed">
+                <thead class="bg-orange-400">
+                    <tr>
+                        <th class="border px-2 py-2 font-bold text-white">Form</th>
+                        <th class="border px-2 py-2 font-bold text-white">Portfolio Member Name (Last Submission)</th>
+                        <th class="border px-2 py-2 font-bold text-white">View</th>
+                    </tr>
+                </thead>
+                <tbody id="portfolio-latest-table-body">
+                    <!-- JS will render 17 rows here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+    // Supabase setup
+    const supabase = window.supabase.createClient(
+        "https://cbhodgwaazmjszkujrti.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+    // Table mapping for all 17 forms
+    const formTableMap = [
+        { name: "Form 1", table: "Institution-form1-monthly" },
+        { name: "Form 2", table: "Institution-form2" },
+        { name: "Form 3", table: "Institution-form3" },
+        { name: "Form 4", table: "Institution-form4" },
+        { name: "Form 5", table: "Institution-form5" },
+        { name: "Form 6", table: "Institution-form6-monthly" },
+        { name: "Form 7", table: "Institution-form7-monthly" },
+        { name: "Form 8", table: "Institution-form8" },
+        { name: "Form 9", table: "Institution-form9" },
+        { name: "Form 10", table: "Institution-form10" },
+        { name: "Form 11", table: "Institution-form11" },
+        { name: "Form 12", table: "Institution-form12" },
+        { name: "Form 13", table: "Institution-form13-monthly" },
+        { name: "Form 14", table: "Institution-form14-monthly" },
+        { name: "Form 15", table: "Institution-form15" },
+        { name: "Form 16", table: "Institution-form16" },
+        { name: "Form 17", table: "Institution-form17" }
+    ];
+    async function fetchLatestPortfolioNames() {
+        const tbody = document.getElementById('portfolio-latest-table-body');
+        tbody.innerHTML = '';
+        for (const form of formTableMap) {
+            let latestName = '';
+            let latestRow = null;
+            try {
+                const { data, error } = await supabase
+                    .from(form.table)
+                    .select('Portfolio Member Name:,*')
+                    .order('id', { ascending: false })
+                    .limit(1);
+                if (data && data.length > 0) {
+                    latestName = data[0]["Portfolio Member Name:"] || '';
+                    latestRow = data[0];
+                }
+            } catch (err) {
+                latestName = 'Error';
+            }
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="border px-2 py-2">${form.name}</td>
+                <td class="border px-2 py-2">${latestName}</td>
+                <td class="border px-2 py-2 text-center">
+                    <button class="bg-purple-800 text-white px-4 py-1 rounded view-btn" data-form="${form.name}" data-table="${form.table}" data-row='${latestRow ? JSON.stringify(latestRow) : ''}'>View</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+    }
+    fetchLatestPortfolioNames();
+    // View button logic using form-modal-mapper.js
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('view-btn')) {
+            const rowData = e.target.getAttribute('data-row');
+            const formName = e.target.getAttribute('data-form');
+            if (rowData && window.showFormModal) {
+                window.showFormModal(formName, JSON.parse(rowData));
+            } else {
+                alert('No data available to view.');
+            }
+        }
+    });
+    </script>
+</body>
+</html>

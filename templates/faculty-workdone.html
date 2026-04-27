@@ -1,0 +1,245 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faculty Workdone</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+</head>
+<body class="bg-pmcBg min-h-screen">
+  <header class="bg-purple-700 text-white shadow-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+      <a href="faculty-profile.html" class="flex items-center">
+        <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 mr-4 rounded shadow" />
+      </a>
+      <h1 class="text-2xl font-bold">My Workdone</h1>
+      <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+        </svg>
+      </button>
+    </div>
+  </header>
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <label class="font-semibold text-black">Department:</label>
+        <span id="deptDisplay" class="ml-2"></span>
+      </div>
+      <div>
+        <input id="workdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-purple-700" placeholder="Search by Portfolio or Member" oninput="filterWorkdoneTable()" />
+      </div>
+    </div>
+    <div id="errorBox" class="hidden mb-4 p-3 rounded bg-red-100 text-red-700 font-semibold"></div>
+    <div id="loadingBox" class="mb-4 p-3 rounded bg-blue-100 text-blue-800 font-semibold">Loading data, please wait...</div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white shadow-lg text-sm border border-gray-300">
+        <thead class="bg-gradient-to-r from-purple-700 to-purple-500 text-white">
+          <tr>
+            <th class="p-3 border-b border-gray-300">Department</th>
+            <th class="p-3 border-b border-gray-300">Portfolio Name</th>
+            <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
+            <th class="p-3 border-b border-gray-300">Status</th>
+            <th class="p-3 border-b border-gray-300">Documents Uploaded</th>
+            <th class="p-3 border-b border-gray-300">Verify</th>
+          </tr>
+        </thead>
+        <tbody id="workdoneTable" class="divide-y divide-gray-200"></tbody>
+      </table>
+    </div>
+  </main>
+  <script>
+    // Supabase client
+    const supabaseClient = window.supabase.createClient(
+      "https://cbhodgwaazmjszkujrti.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+    // All form tables to fetch
+    const formTables = [
+      {table: 'form1-once in a year', portfolio: 'Students Performance in Training & Placement Member'},
+      {table: 'form1-Weekly', portfolio: 'Students Performance in Training & Placement Member'},
+      {table: 'form1-once in 15 days', portfolio: 'Students Performance in Training & Placement Member'},
+      {table: 'form1-once in a semester', portfolio: 'Students Performance in Training & Placement Member'},
+      {table: 'form2-daily', portfolio: 'Class Advisor'},
+      {table: 'form2-weekly', portfolio: 'Class Advisor'},
+      {table: 'form2-once in a month', portfolio: 'Class Advisor'},
+      {table: 'form2-once in a semester', portfolio: 'Class Advisor'},
+      {table: 'form3-Weekly', portfolio: 'Faculty Information & Contribution Member'},
+      {table: 'form3- once in 15 days', portfolio: 'Faculty Information & Contribution Member'},
+      {table: 'form3-once in a semester', portfolio: 'Faculty Information & Contribution Member'},
+      {table: 'form4-Weekly', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell)'},
+      {table: 'form4-once in a month', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell)'},
+      {table: 'form4-once in a semester', portfolio: 'Course Outcome & Program Outcome Member (Exam Cell)'},
+      {table: 'form5-weekly', portfolio: 'Continuous Improvement Member (Program Member)'},
+      {table: 'form5-Once in a 3 Months', portfolio: 'Continuous Improvement Member (Program Member)'},
+      {table: 'form5-once in a semester', portfolio: 'Continuous Improvement Member (Program Member)'},
+      {table: 'form6-once in a semester', portfolio: 'Teaching & Learning Process Member (IQAC)'},
+      {table: 'form7-Once in a Semester', portfolio: 'Student Support System Member (Discipline & Extra Curricular)'},
+      {table: 'form7-Once in 2 Months', portfolio: 'Student Support System Member (Discipline & Extra Curricular)'},
+      {table: 'form7-Weekly', portfolio: 'Student Support System Member (Discipline & Extra Curricular)'},
+      {table: 'form8-weekly', portfolio: 'Facilities & Technical Support Member (Lab Member)'},
+      {table: 'form8-once in 3 Months', portfolio: 'Facilities & Technical Support Member (Lab Member)'},
+      {table: 'form8-Once in Semester', portfolio: 'Facilities & Technical Support Member (Lab Member)'}
+    ];
+
+    // Get faculty name and department from Faculty table using logged-in email
+    async function getFacultyInfo() {
+      const email = localStorage.getItem('email') || '';
+      if (!email) return {};
+      const { data, error } = await supabaseClient
+        .from('Faculty')
+        .select('Name, department')
+        .eq('email', email)
+        .single();
+      if (error || !data) return {};
+      return { name: data.Name, department: data.department };
+    }
+
+    // Helper for case-insensitive, trimmed compare
+    function eq(a, b) {
+      return (a||'').toString().trim().toLowerCase() === (b||'').toString().trim().toLowerCase();
+    }
+
+    async function loadWorkdone() {
+      let allRows = [];
+      let errors = [];
+      document.getElementById('loadingBox').style.display = '';
+      const faculty = await getFacultyInfo();
+      if (!faculty.name || !faculty.department) {
+        document.getElementById('errorBox').textContent = 'Faculty info not found.';
+        document.getElementById('errorBox').classList.remove('hidden');
+        document.getElementById('loadingBox').style.display = 'none';
+        return;
+      }
+      document.getElementById('deptDisplay').textContent = faculty.department;
+      for (const entry of formTables) {
+        const { table, portfolio } = entry;
+        let result;
+        try {
+          result = await supabaseClient.from(table).select('*');
+        } catch (e) {
+          errors.push(`Table ${table}: JS Exception: ${e}`);
+          continue;
+        }
+        let { data, error } = result || {};
+        if (error) {
+          errors.push(`Table ${table}: ${error.message || error}`);
+          continue;
+        }
+        if (!data) continue;
+        for (const row of data) {
+          // Try all possible department keys
+          let rowDept = row['Department'] || row['Department:'] || row['department'] || row['department:'] || '';
+          // Try all possible member name keys
+          let rowName = row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['Portfolio Member Name:'] || row['Portfolio Memeber Name:'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+          // Only show if department and member name match faculty
+          if (!eq(rowDept, faculty.department) || !eq(rowName, faculty.name)) continue;
+          // Status logic: if all status fields are 'Completed' or 'Upload', then status is 'Completed',
+          // except if any field is 'Not Applicable', then it should not be considered completed
+          let status = 'Pending';
+          const statusFields = Object.keys(row).filter(k => k.toLowerCase().includes('status'));
+          if (
+            statusFields.length > 0 &&
+            statusFields.every(k => {
+              const val = (row[k] || '').toLowerCase();
+              return (val.includes('completed') || val.includes('upload'));
+            }) &&
+            !statusFields.some(k => (row[k] || '').toLowerCase().includes('not applicable'))
+          ) {
+            status = 'Completed';
+          }
+          // Add frequency (weekly, monthly, etc.) to portfolio name for display
+          let frequency = '';
+          if (table.toLowerCase().includes('weekly')) frequency = ' (Weekly)';
+          else if (table.toLowerCase().includes('month')) frequency = ' (Monthly)';
+          else if (table.toLowerCase().includes('semester')) frequency = ' (Semester)';
+          else if (table.toLowerCase().includes('year')) frequency = ' (Yearly)';
+          else if (table.toLowerCase().includes('day')) frequency = ' (Daily)';
+          else if (table.toLowerCase().includes('3')) frequency = ' (Once in 3 Months)';
+          else if (table.toLowerCase().includes('15')) frequency = ' (Once in 15 Days)';
+          else if (table.toLowerCase().includes('2')) frequency = ' (Once in 2 Months)';
+          // Collect all uploaded document URLs from the row
+          let docLinks = [];
+          for (const key of Object.keys(row)) {
+            if (typeof row[key] === 'string' && row[key].startsWith('http') && (key.toLowerCase().includes('upload') || key.toLowerCase().includes('file'))) {
+              docLinks.push({ url: row[key], name: key });
+            }
+          }
+          let docsHtml = docLinks.length > 0
+            ? docLinks.map((doc, idx) => `
+                <div class="flex items-center mb-1">
+                  <span class="font-semibold mr-1">${idx + 1}.</span>
+                  <a href="${doc.url}" target="_blank" title="View" class="inline-block mx-1 text-blue-600 hover:text-blue-900" style="vertical-align:middle">
+                    <svg xmlns='http://www.w3.org/2000/svg' class='inline w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 0c0 5-9 9-9 9s-9-4-9-9a9 9 0 1118 0z' /></svg>
+                  </a>
+                  <a href="${doc.url}" download title="Download" class="inline-block mx-1 text-green-600 hover:text-green-900" style="vertical-align:middle">
+                    <svg xmlns='http://www.w3.org/2000/svg' class='inline w-5 h-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4' /></svg>
+                  </a>
+                </div>`).join('')
+            : '<span class="text-gray-400">No documents</span>';
+          allRows.push({
+            department: rowDept || '',
+            portfolio: portfolio + frequency,
+            member: rowName || '',
+            status,
+            documents: docsHtml,
+            verify: `<button class='bg-green-500 hover:bg-green-700 text-white px-3 py-1 rounded' onclick='verifyRow(this)'>Verify</button>`
+          });
+        }
+      }
+      document.getElementById('loadingBox').style.display = 'none';
+      if (errors.length > 0) {
+        const errorBox = document.getElementById('errorBox');
+        errorBox.textContent = errors.join('\n');
+        errorBox.classList.remove('hidden');
+      } else {
+        document.getElementById('errorBox').classList.add('hidden');
+      }
+      if (allRows.length === 0 && errors.length === 0) {
+        document.getElementById('workdoneTable').innerHTML = `<tr><td colspan='5' class='text-center text-gray-400 p-4'>No records found for your department/portfolio.</td></tr>`;
+      } else {
+        renderWorkdoneTable(allRows);
+      }
+    }
+    function renderWorkdoneTable(rows) {
+      const tbody = document.getElementById('workdoneTable');
+      tbody.innerHTML = rows.map((r) => `
+        <tr class="hover:bg-purple-50 transition border-b border-gray-200">
+          <td class='p-3 border-r border-gray-200'>${r.department}</td>
+          <td class='p-3 border-r border-gray-200'>${r.portfolio}</td>
+          <td class='p-3 border-r border-gray-200'>${r.member}</td>
+          <td class='p-3 border-r border-gray-200'>${r.status}</td>
+          <td class='p-3 border-r border-gray-200'>${r.documents || '<span class=\"text-gray-400\">No documents</span>'}</td>
+          <td class='p-3 text-center'>${r.verify}</td>
+        </tr>
+      `).join('') || `<tr><td colspan='6' class='text-center text-gray-400 p-4'>No records found.</td></tr>`;
+    }
+    function filterWorkdoneTable() {
+      const search = document.getElementById('workdoneSearch').value.toLowerCase();
+      const rows = Array.from(document.querySelectorAll('#workdoneTable tr'));
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(search) ? '' : 'none';
+      });
+    }
+    function verifyRow(btn) {
+      btn.textContent = 'Verified';
+      btn.classList.remove('bg-green-500', 'hover:bg-green-700');
+      btn.classList.add('bg-blue-500');
+      btn.disabled = true;
+      // You can add logic here to update verification status in Supabase if needed
+    }
+    loadWorkdone();
+
+  </script>
+  <!-- Footer -->
+  <footer class="bg-gray-100 text-center py-4 mt-8 border-t border-gray-300">
+    <p class="text-gray-500 text-sm">
+      &copy; All Rights Reserved
+      <a href="https://pmctech.org" target="_blank" class="text-gray-500 hover:text-gray-700 underline">PMC TECH</a>, IV CSE 2022-2026.<br/>
+    </p>
+  </footer>
+
+</body>
+</html>

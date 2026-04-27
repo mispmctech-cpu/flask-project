@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Faculty Level File Upload - Form 7 (Monthly)</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<!-- Font Awesome for icons -->
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+	<!-- Prevent Double Submit Protection -->
+	<script src="../static/javascript/prevent-double-submit.js"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+	<style>
+		th, td {
+			font-size: 1rem;
+		}
+		input:focus, select:focus {
+			outline: none;
+			box-shadow: 0 0 0 2px #a78bfa33;
+			border-color: #a78bfa;
+		}
+		.bg-orange-400 {
+			background: linear-gradient(90deg, #f59e42 0%, #fbbf24 100%);
+		}
+		.bg-purple-800 {
+			background: linear-gradient(90deg, #6d28d9 0%, #7c3aed 100%);
+		}
+		input[type="file"]::-webkit-file-upload-button {
+			background: #ede9fe;
+			color: #6d28d9;
+			border: 1px solid #a78bfa;
+			border-radius: 0.5rem;
+			padding: 0.25rem 1rem;
+			font-weight: 500;
+			transition: background 0.2s;
+		}
+		input[type="file"]::-webkit-file-upload-button:hover {
+			background: #c4b5fd;
+			color: #fff;
+		}
+		input[type="file"]::file-selector-button {
+			background: #ede9fe;
+			color: #6d28d9;
+			border: 1px solid #a78bfa;
+			border-radius: 0.5rem;
+			padding: 0.25rem 1rem;
+			font-weight: 500;
+			transition: background 0.2s;
+		}
+		input[type="file"]::file-selector-button:hover {
+			background: #c4b5fd;
+			color: #fff;
+		}
+		select {
+			background: #f3f4f6;
+		}
+		label {
+			letter-spacing: 0.01em;
+		}
+		.table-section-title {
+			font-size: 1.1rem;
+			font-weight: 700;
+			letter-spacing: 0.04em;
+			color: #fff;
+			background: linear-gradient(90deg, #f59e42 0%, #fbbf24 100%);
+			padding-left: 1rem;
+		}
+		@media (max-width: 900px) {
+			th, td { font-size: 0.95rem; }
+		}
+		@media (max-width: 600px) {
+			th, td { font-size: 0.9rem; }
+		}
+	</style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+	<div class="flex-1 flex items-center justify-center py-8 px-2">
+		<div class="w-full max-w-6xl mx-auto bg-white rounded-2xl card-shadow border border-purple-300 overflow-x-auto p-0">
+			<div class="bg-purple-800 py-8 px-6 text-white text-center w-full rounded-t-2xl">
+				<h1 class="text-3xl md:text-4xl font-black tracking-wide">Student Support System Member (Discipline & Extra Curricular)</h1>
+				<p class="mt-2 text-lg opacity-90">Monthly File Upload Form</p>
+			</div>
+			<form id="facultyForm7" class="p-6 md:p-10 space-y-10 w-full">
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-8 bg-purple-50 rounded-xl p-8 card-shadow mb-8">
+					<div>
+						<label class="block text-gray-700 font-semibold mb-2">Department</label>
+						<input type="text" name="Department" required 
+							class="w-full px-4 py-3 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition bg-white">
+					</div>
+					<div>
+						<label class="block text-gray-700 font-semibold mb-2">Portfolio Name</label>
+						<input type="text" name="Portfolio Name" required 
+							class="w-full px-4 py-3 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition bg-white">
+					</div>
+					<div>
+						<label class="block text-gray-700 font-semibold mb-2">Portfolio Member Name</label>
+						<input type="text" name="Portfolio Member Name" required 
+							class="w-full px-4 py-3 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition bg-white">
+					</div>
+					<div>
+						<label class="block text-gray-700 font-semibold mb-2">Month</label>
+						<select name="Month" required 
+							class="w-full px-4 py-3 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
+							<option value="">Select Month</option>
+							<option value="January">January</option>
+							<option value="February">February</option>
+							<option value="March">March</option>
+							<option value="April">April</option>
+							<option value="May">May</option>
+							<option value="June">June</option>
+							<option value="July">July</option>
+							<option value="August">August</option>
+							<option value="September">September</option>
+							<option value="October">October</option>
+							<option value="November">November</option>
+							<option value="December">December</option>
+						</select>
+					</div>
+					<div>
+						<label class="block text-gray-700 font-semibold mb-2">Week no</label>
+						<input type="number" name="Week no" required 
+							class="w-full px-4 py-3 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition bg-white">
+					</div>
+					<div>
+						<label class="block text-gray-700 font-semibold mb-2">Week Starting Date</label>
+						<input type="date" name="Week Starting Date" required 
+							class="w-full px-4 py-3 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition bg-white">
+					</div>
+					<div>
+						<label class="block text-gray-700 font-semibold mb-2">Week Ending Date</label>
+						<input type="date" name="Week Ending Date" required 
+							class="w-full px-4 py-3 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition bg-white">
+					</div>
+				</div>
+
+				<div class="overflow-x-auto rounded-xl card-shadow border border-purple-100 bg-white w-full p-4">
+					<table class="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden">
+						<thead>
+							<tr class="bg-orange-400 text-white table-section-title">
+								<th class="border px-3 py-3 text-center" style="width: 5%;">S.No</th>
+								<th class="border px-3 py-3 text-left" style="width: 30%;">Name of the File</th>
+								<th class="border px-3 py-3 text-left" style="width: 12%;">TAT</th>
+								<th class="border px-3 py-3 text-left" style="width: 18%;">Status</th>
+								<th class="border px-3 py-3 text-left" style="width: 15%;">Upload</th>
+								<th class="border px-3 py-3 text-left" style="width: 20%;">Description</th>
+							</tr>
+						</thead>
+						<tbody id="faculty-table-body">
+							<!-- Rows will be dynamically generated by JavaScript -->
+						</tbody>
+					</table>
+				</div>
+
+				<div class="flex justify-center mt-10">
+					<button type="submit" class="bg-gradient-to-r from-purple-600 to-purple-800 text-white font-bold py-4 px-12 rounded-full shadow-2xl hover:shadow-purple-500/50 hover:scale-105 transform transition duration-200 text-lg tracking-wide">
+						Submit Form
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+	<script src="https://unpkg.com/@supabase/supabase-js"></script>
+	<script>
+	// Autofetch using localStorage
+	document.addEventListener('DOMContentLoaded', function() {
+		var dept = localStorage.getItem('department') || '';
+		var portfolio = localStorage.getItem('selectedPortfolio') || '';
+		var member = localStorage.getItem('selectedMemberName') || '';
+		var month = localStorage.getItem('selectedMonth') || '';
+		const form = document.getElementById('facultyForm7');
+		if (form) {
+			const deptField = form.querySelector('input[name="Department"]');
+			if (deptField && dept) {
+				deptField.value = dept;
+			}
+			const portfolioField = form.querySelector('input[name="Portfolio Name"]');
+			if (portfolioField && portfolio) {
+				portfolioField.value = portfolio;
+			}
+			const memberField = form.querySelector('input[name="Portfolio Member Name"]');
+			if (memberField && member) {
+				memberField.value = member;
+			}
+			const monthField = form.querySelector('select[name="Month"]');
+			if (monthField && month) {
+				for (let i = 0; i < monthField.options.length; i++) {
+					if (monthField.options[i].value === month) {
+						monthField.selectedIndex = i;
+						break;
+					}
+				}
+			}
+		}
+	});
+
+	// Table data from image (9 rows)
+	const tableData = [
+		{ name: 'Mentor File', tat: 'Weekly', status: 'Sample mentor Note updated' },
+		{ name: 'Disciplinary Actions File', tat: 'Weekly', status: 'Index of Disciplinary Letters' },
+		{ name: 'Extra-Curricular Activities & Achievements File (Sports, Yoga & Cultural etc.,)', tat: 'Twice in a Month', status: 'Index of activities' },
+		{ name: 'National Festival celebration & Participation File', tat: 'Twice in a Month', status: 'Index of activities' },
+		{ name: 'Extension Activities File', tat: 'Twice in a Month', status: 'Index of activities' },
+		{ name: 'Students Feedback on Faculty File', tat: 'Once in 2 Months', status: 'Consolidated Feedback report' },
+		{ name: 'Feedback Analysis & Action Taken Report File', tat: 'Once in 2 Months', status: 'Consolidated Action taken report' },
+		{ name: 'Students Grievance Redressal file (Academic & Non Academic)', tat: 'Once in 2 Months', status: 'Consolidated grievances addressed with action taken' },
+		{ name: 'Self-Learning Facilities file', tat: 'Once in a Semester', status: 'Index – List of facilities' }
+	];
+
+	// Render table rows
+	const tbody = document.getElementById('faculty-table-body');
+	tableData.forEach((row, i) => {
+		const idx = i + 1;
+		const tr = document.createElement('tr');
+		tr.innerHTML = `
+			<td class="border px-2 py-1 text-center">${idx}</td>
+			<td class="border px-2 py-1">${row.name}</td>
+			<td class="border px-2 py-1">${row.tat}</td>
+			<td class="border px-2 py-1">
+				<select name="Status_${idx}" required class="w-full px-2 py-1 border border-gray-300 rounded">
+					<option value="">Select Status</option>
+					<option value="Completed">Completed</option>
+					<option value="Under Process">Under Process</option>
+					<option value="Yet to be Completed">Yet to be Completed</option>
+					<option value="Not Applicable">Not Applicable</option>
+				</select>
+			</td>
+			<td class="border px-2 py-1">
+				<input type="file" class="file-input-row hidden" data-row="${idx}" accept=".pdf,.jpg,.jpeg,.png">
+				<button type="button" class="upload-btn bg-purple-100 text-purple-800 font-semibold px-3 py-1 rounded w-full hover:bg-purple-200 transition" data-row="${idx}">Upload</button>
+				<span class="file-check hidden text-green-600 text-xl ml-2" data-row="${idx}">✓</span>
+			</td>
+			<td class="border px-2 py-1">
+				<input type="text" name="Description_${idx}" placeholder="${row.status}" class="w-full px-2 py-1 border border-gray-300 rounded">
+			</td>
+		`;
+		tbody.appendChild(tr);
+	});
+
+	// Supabase setup
+	const supabase = window.supabase.createClient(
+		"https://cbhodgwaazmjszkujrti.supabase.co",
+		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+	);
+
+	async function uploadFileToStorage(file, path, bucket, uploadBtn) {
+		if (!file) return null;
+		const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+		if (error) throw error;
+		// Get public URL
+		const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
+		// Change the upload button to 'Uploaded' after successful upload
+		if (uploadBtn) {
+			const row = uploadBtn.getAttribute('data-row');
+			const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
+			
+			uploadBtn.textContent = 'Uploaded';
+			uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
+			uploadBtn.disabled = true;
+			
+			// Show checkmark
+			if (checkMark) {
+				checkMark.classList.remove('hidden');
+			}
+		}
+		return urlData.publicUrl;
+	}
+
+	// Handle upload button click
+	document.addEventListener('click', function(e) {
+		if (e.target && e.target.classList.contains('upload-btn')) {
+			const row = e.target.getAttribute('data-row');
+			const fileInput = document.querySelector(`input.file-input-row[data-row='${row}']`);
+			if (fileInput) fileInput.click();
+		}
+	});
+
+	// Handle file selection and upload
+	document.addEventListener('change', async function(e) {
+		if (e.target && e.target.classList.contains('file-input-row')) {
+			const row = e.target.getAttribute('data-row');
+			const file = e.target.files[0];
+			if (!file) return;
+			const uploadBtn = document.querySelector(`button.upload-btn[data-row='${row}']`);
+			const bucket = 'form5-files';
+			const path = `facultyfile${row}_${Date.now()}_${file.name}`;
+			try {
+				await uploadFileToStorage(file, path, bucket, uploadBtn);
+			} catch (err) {
+				alert('Error uploading file: ' + err.message);
+			}
+		}
+	});
+
+	// Form submission
+	document.getElementById('facultyForm7').addEventListener('submit', async function(e) {
+		e.preventDefault();
+		
+		// Save autofetch values to localStorage for next time
+		try {
+			var autofetchForm = e.target;
+			var dept = autofetchForm.querySelector('input[name="Department"]').value;
+			var portfolio = autofetchForm.querySelector('input[name="Portfolio Name"]').value;
+			var member = autofetchForm.querySelector('input[name="Portfolio Member Name"]').value;
+			var month = autofetchForm.querySelector('select[name="Month"]').value;
+			localStorage.setItem('department', dept);
+			localStorage.setItem('selectedPortfolio', portfolio);
+			localStorage.setItem('selectedMemberName', member);
+			localStorage.setItem('selectedMonth', month);
+		} catch (err) { /* ignore */ }
+
+		const form = e.target;
+		const formData = new FormData(form);
+		
+		// Build the data object matching the schema
+		const dataRow = {
+			'Department': formData.get('Department'),
+			'Portfolio Name': formData.get('Portfolio Name'),
+			'Portfolio Member Name': formData.get('Portfolio Member Name'),
+			'Month': formData.get('Month'),
+			'Week no': parseInt(formData.get('Week no')),
+			'Week Starting Date': formData.get('Week Starting Date'),
+			'Week Ending Date': formData.get('Week Ending Date')
+		};
+
+		// Process all 9 rows
+		for (let i = 1; i <= 9; i++) {
+			const statusKey = `Status_${i}`;
+			const descKey = `Description_${i}`;
+			const fileKey = `Upload The Scanned File_${i}`;
+			
+			dataRow[statusKey] = formData.get(statusKey) || '';
+			dataRow[descKey] = formData.get(descKey) || '';
+			
+			// Get file URL from uploaded file
+			const fileInput = document.querySelector(`input.file-input-row[data-row='${i}']`);
+			if (fileInput && fileInput.files.length > 0) {
+				const file = fileInput.files[0];
+				const bucket = 'form5-files';
+				const path = `facultyfile${i}_${Date.now()}_${file.name}`;
+				try {
+					const fileUrl = await uploadFileToStorage(file, path, bucket, null);
+					dataRow[fileKey] = fileUrl || '';
+				} catch (err) {
+					console.error('Error uploading file:', err);
+					dataRow[fileKey] = '';
+				}
+			} else {
+				dataRow[fileKey] = '';
+			}
+		}
+
+		// Submit to Supabase
+		const { data, error } = await supabase.from('form7-monthly').insert([dataRow]);
+		if (error) {
+			alert('Error submitting form: ' + error.message);
+			return;
+		}
+
+		window.location.href = 'notification.html?status=success';
+	});
+	</script>
+	<!-- Footer -->
+	<footer class="text-center py-4 mt-8">
+		<p class="text-sm">
+			<strong class="text-purple-700">Murugappa Polytechnic College</strong><br>
+			<span class="text-gray-600">An Autonomous Institution | ISO 9001:2015 Certified</span><br>
+			<span class="text-gray-500">Chennai - 600 062, Tamil Nadu, India</span><br>
+			<span class="text-gray-500">📞 +91-44-XXXXXXXX | ✉️ info@mpc.edu.in</span>
+		</p>
+	</footer>
+    <!-- Form Access Control - checks if form is open/closed -->
+    <script src="../static/javascript/form-access-control.js"></script>
+</body>
+</html>
