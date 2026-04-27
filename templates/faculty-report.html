@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Faculty Performance Report – PMC Tech</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #d1d5db; }
+
+    /* ── Action Bar (screen only) ─────────────────────────────────── */
+    .action-bar {
+      background: #6a2c91;
+      color: #fff;
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 8px rgba(0,0,0,.3);
+    }
+    .action-bar .bar-left { display: flex; align-items: center; gap: 12px; }
+    .action-bar .bar-left img { height: 42px; border-radius: 6px; background: #fff; padding: 3px; }
+    .action-bar .bar-title { font-size: 1.1rem; font-weight: 700; letter-spacing: .3px; }
+    .action-bar .bar-right { display: flex; gap: 10px; }
+    .btn-bar {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 18px; border-radius: 7px;
+      font-size: .85rem; font-weight: 600; border: none; cursor: pointer; transition: .15s;
+    }
+    .btn-print  { background: #fff; color: #6a2c91; }
+    .btn-print:hover  { background: #f0e6f8; }
+    .btn-download { background: #10b981; color: #ffffff; }
+    .btn-download:hover { background: #059669; }
+
+    /* ── Reports wrapper ─────────────────────────────────────────── */
+    .reports-wrapper { padding: 28px 16px 40px; }
+    #loadingMsg {
+      text-align: center; padding: 80px 20px;
+      font-size: 1.05rem; color: #374151;
+    }
+    .spinner {
+      width: 44px; height: 44px; border: 4px solid #d8b4fe;
+      border-top-color: #6a2c91; border-radius: 50%;
+      animation: spin .8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── A4 Page ─────────────────────────────────────────────────── */
+    .a4-page {
+      width: 210mm;
+      height: 297mm;
+      background: #fff;
+      margin: 0 auto 28px;
+      box-shadow: 0 6px 32px rgba(0,0,0,.22);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── Report Header ───────────────────────────────────────────── */
+    .rpt-header {
+      background: transparent;
+      padding: 10px 18px 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid rgba(15,23,42,0.06);
+    }
+    .rpt-header .logo { height: 78px; padding: 0; box-shadow: none; }
+
+    /* ── Faculty Info ────────────────────────────────────────────── */
+    .fac-info {
+      display: flex;
+      gap: 14px;
+      padding: 10px 18px 12px;
+      background: linear-gradient(135deg, #f9f5ff 0%, #ede9f6 60%, #f6f4f8 100%);
+      border-top: 3px solid #a855f7;
+      border-bottom: 3px solid #6a2c91;
+    }
+    .fac-photo {
+      width: 88px; height: 88px;
+      border-radius: 12px; object-fit: cover;
+      border: 3px solid #6a2c91; flex-shrink: 0;
+      box-shadow: 0 4px 14px rgba(106,44,145,.35);
+    }
+    .fac-details { flex: 1; }
+    .fac-name { font-size: .95rem; font-weight: 800; color: #501e73; margin-bottom: 5px; letter-spacing: .2px; }
+    .details-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px 8px;
+    }
+    .detail-item { background: rgba(255,255,255,.72); border-radius: 4px; padding: 2px 5px; border-left: 2px solid #c084fc; }
+    .detail-item label { font-size: .55rem; color: #7c3aed; text-transform: uppercase; font-weight: 700; letter-spacing: .4px; }
+    .detail-item span  { display: block; font-size: .68rem; color: #1f2937; font-weight: 600; }
+
+    /* ── Section Headers ─────────────────────────────────────────── */
+    .sec-title {
+      font-size: .63rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: .9px; padding: 4px 18px; color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,.2);
+    }
+    .sec-title.purple { background: #6a2c91; }
+    .sec-title.blue   { background: #1d4ed8; }
+    .sec-title.green  { background: #15803d; }
+    .sec-title.indigo { background: #4f46e5; }
+
+    /* ── Timetable ───────────────────────────────────────────────── */
+    .tt-wrap { padding: 3px 6px 4px; overflow: hidden; }
+    .tt-tbl {
+      width: 100%; border-collapse: collapse;
+      font-size: .52rem; table-layout: fixed; line-height: 1.3;
+    }
+    .tt-tbl th {
+      padding: 2.5px 2px; background: #4f46e5; color: #fff;
+      border: .5px solid #6366f1; text-align: center; font-weight: 700;
+      white-space: nowrap; font-size: .51rem;
+    }
+    .tt-tbl td {
+      padding: 2.5px 2px; border: .5px solid #e5e7eb;
+      text-align: center; vertical-align: middle; font-size: .5rem; line-height: 1.25;
+    }
+    .tt-tbl td:first-child {
+      background: #f0f4ff; color: #4f46e5; font-weight: 600;
+      text-align: center; width: 36px; font-size: .51rem;
+    }
+    .tt-tbl td .sc { font-weight: 700; color: #4f46e5; font-size: .51rem; display: block; }
+    .tt-tbl td .cl { color: #6b7280; font-size: .47rem; display: block; }
+
+    /* ── Score Tables ────────────────────────────────────────────── */
+    .tbl-wrap { padding: 0 10px 4px; overflow: hidden; }
+    .score-tbl {
+      width: 100%; border-collapse: collapse;
+      font-size: .58rem; table-layout: fixed;
+    }
+    .score-tbl col.sno-col  { width: 36px; }
+    .score-tbl col.row-col  { width: 110px; }
+    .score-tbl col.mon-col  { width: auto; }
+    .score-tbl tbody td.sno { text-align: center; font-weight: 700; color: #374151; }
+
+    .score-tbl thead tr th {
+      padding: 2px 2px; text-align: center;
+      border: 1px solid #d8b4fe;
+      font-size: .54rem; font-weight: 700; white-space: nowrap;
+    }
+    .score-tbl.purple-theme thead tr th { background: #f3e8ff; color: #6a2c91; border-color: #d8b4fe; }
+    .score-tbl.blue-theme   thead tr th { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+    .score-tbl.green-theme  thead tr th { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+
+    /* S.No = first col, label = second col */
+    .score-tbl thead tr th:first-child { text-align: center; padding-left: 2px; }
+    .score-tbl thead tr th:nth-child(2) { text-align: left; padding-left: 8px; }
+
+    .score-tbl tbody td {
+      padding: 2px 2px; text-align: center;
+      border: 1px solid #e5e7eb; font-size: .54rem;
+    }
+    .score-tbl tbody td:first-child  { text-align: center; padding-left: 2px; color: #6b7280; font-weight: 700; }
+    .score-tbl tbody td:nth-child(2) { text-align: left; padding-left: 8px; color: #374151; font-weight: 500; }
+    .score-tbl tbody tr:nth-child(even) td { background: #fafafa; }
+
+    .sc-ex { color: #15803d; font-weight: 700; }  /* ≥80% */
+    .sc-gd { color: #1d4ed8; font-weight: 600; }  /* 60-79% */
+    .sc-av { color: #d97706; font-weight: 600; }  /* 40-59% */
+    .sc-pr { color: #dc2626; font-weight: 600; }  /* <40% */
+    .sc-na { color: #9ca3af; font-size: .56rem; } /* no data */
+
+    .no-data {
+      text-align: center; color: #9ca3af; font-size: .65rem;
+      padding: 6px 18px; font-style: italic;
+    }
+
+    /* ── Timetable Summary ───────────────────────────────────── */
+    .tt-sum-wrap { padding: 2px 6px 4px; overflow: hidden; }
+    .tt-sum-tbl { width: 100%; border-collapse: collapse; font-size: .5rem; }
+    .tt-sum-tbl th {
+      background: #1d4ed8; color: #fff;
+      padding: 2.5px 4px; border: .5px solid #3b82f6;
+      text-align: center; font-weight: 700; font-size: .5rem;
+    }
+    .tt-sum-tbl td {
+      padding: 2px 4px; border: .5px solid #e5e7eb;
+      text-align: center; font-size: .5rem;
+    }
+    .tt-sum-tbl td.sub-name { text-align: left; }
+    .tt-sum-tbl tbody tr:nth-child(even) td { background: #eff6ff; }
+    .tt-sum-tbl tfoot td { background: #dbeafe; font-weight: 700; color: #1d4ed8; }
+
+    /* Yearly table (2-col) */
+    .yearly-tbl { width: calc(100% - 20px); margin: 0 10px 6px; border-collapse: collapse; font-size: .6rem; }
+    .yearly-tbl th { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; padding: 4px 8px; font-weight: 700; text-align: left; }
+    .yearly-tbl td { border: 1px solid #e5e7eb; padding: 3px 8px; }
+    .yearly-tbl td:last-child { text-align: center; }
+
+    /* ── Footer ─────────────────────────────────────────────────── */
+    .rpt-footer {
+      margin-top: auto;
+      background: #f9f6fb;
+      border-top: 2px solid #6a2c91;
+      padding: 7px 18px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .rpt-footer .auth-text { font-size: .6rem; color: #6b7280; line-height: 1.5; }
+    .rpt-footer .auth-text .auth-title { font-weight: 700; color: #6a2c91; font-size: .65rem; text-transform: uppercase; letter-spacing: .5px; }
+    .rpt-footer .zeony-wrap { display: flex; align-items: center; gap: 6px; }
+    .rpt-footer .zeony-wrap span { font-size: .55rem; color: #9ca3af; }
+    .rpt-footer img.zeony { height: 26px; object-fit: contain; }
+
+    /* ── Print styles ────────────────────────────────────────────── */
+    @page {
+      size: A4 portrait;
+      margin: 0;
+      /* suppress browser-added URL / page-number headers & footers */
+    }
+    @media print {
+      html, body { background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .action-bar { display: none !important; }
+      .reports-wrapper { padding: 0 !important; background: #fff !important; }
+      .a4-page {
+        box-shadow: none !important;
+        margin: 0 !important;
+        page-break-after: always;
+        break-after: page;
+        width: 210mm !important;
+        height: 297mm !important;
+        overflow: hidden !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Action Bar ───────────────────────────────────────────────── -->
+<div class="action-bar" id="actionBar">
+  <div class="bar-left">
+    <img src="/static/img/pmc a logo.jpg" alt="PMC Logo" onerror="this.style.display='none'" />
+    <span class="bar-title">Faculty Performance Report</span>
+  </div>
+  <div class="bar-right">
+    <button class="btn-bar btn-print" onclick="window.print()">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+      </svg>
+      Print
+    </button>
+    <button class="btn-bar btn-download" id="downloadBtn" onclick="downloadPDF()">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+      </svg>
+      Download PDF
+    </button>
+  </div>
+</div>
+
+<!-- ── Reports Container ─────────────────────────────────────────── -->
+<div class="reports-wrapper" id="reportsWrapper">
+  <div id="loadingMsg">
+    <div class="spinner"></div>
+    Loading faculty reports, please wait…
+  </div>
+</div>
+
+<script>
+  /* ================================================================
+     Configuration
+  ================================================================ */
+  const SUPABASE_URL  = 'https://cbhodgwaazmjszkujrti.supabase.co';
+  const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const SH_DEPTS = ['S&H V1','S&H V2','S&H V3','S&H V4','S&H V5','S&H V6'];
+
+  // Academic year months (Jul–Jun)
+  const MONTHS = [
+    { name:'July',      label:"Jul'25" },
+    { name:'August',    label:"Aug'25" },
+    { name:'September', label:"Sep'25" },
+    { name:'October',   label:"Oct'25" },
+    { name:'November',  label:"Nov'25" },
+    { name:'December',  label:"Dec'25" },
+    { name:'January',   label:"Jan'26" },
+    { name:'February',  label:"Feb'26" },
+    { name:'March',     label:"Mar'26" },
+    { name:'April',     label:"Apr'26" },
+    { name:'May',       label:"May'26" },
+    { name:'June',      label:"Jun'26" },
+  ];
+
+  const DEPT_FORMS = [
+    { label:'Training & Placement',   table:'form1-monthly', key:'form1' },
+    { label:'Class Advisor',          table:'form2-monthly', key:'form2' },
+    { label:'Info & Contribution',    table:'form3-monthly', key:'form3' },
+    { label:'Outcome & Exam Cell',    table:'form4-monthly', key:'form4' },
+    { label:'Continuous Improvement', table:'form5-monthly', key:'form5' },
+    { label:'T&L Process (IQAC)',     table:'form6_monthly', key:'form6' },
+    { label:'Student Support',        table:'form7-monthly', key:'form7' },
+    { label:'Facilities & Lab',       table:'form8-monthly', key:'form8' },
+  ];
+
+  const INST_FORMS = [
+    { label:'Dir – Students Welfare & Admission', table:'Institution-form1-monthly',  monthly:true  },
+    { label:'Head - HR',                          table:'Institution-form2',           monthly:false },
+    { label:'Principal',                          table:'Institution-form3-monthly',   monthly:true  },
+    { label:'Dean - IQAC',                        table:'Institution-form4-monthly',   monthly:true  },
+    { label:'Director - Academics',               table:'Institution-form5',           monthly:false },
+    { label:'Controller of Examinations',         table:'Institution-form6-monthly',   monthly:true  },
+    { label:'Exec Dean – International Affairs',  table:'Institution-form7-monthly',   monthly:true  },
+    { label:'Head - Placements',                  table:'Institution-form8',           monthly:false },
+    { label:'Placement Officer',                  table:'Institution-form9',           monthly:false },
+    { label:'Head – Training',                    table:'Institution-form10',          monthly:false },
+    { label:'Training Officer',                   table:'Institution-form11',          monthly:false },
+    { label:'Head - RISE',                        table:'Institution-form12',          monthly:false },
+    { label:'IT Infra – Coordinator',             table:'Institution-form13-monthly',  monthly:true  },
+    { label:'Website – Coordinator',             table:'Institution-form14-monthly',  monthly:true  },
+    { label:'ERP Coordinator',                    table:'Institution-form15',          monthly:false },
+    { label:'Public Relations Officer',           table:'Institution-form16',          monthly:false },
+    { label:'Logistics Coordinator',              table:'Institution-form17',          monthly:false },
+  ];
+
+  /* ================================================================
+     Helpers
+  ================================================================ */
+  function normName(s) {
+    return (s||'').toString().trim().replace(/\s+/g,' ').toLowerCase();
+  }
+  function matchName(a, b) { return normName(a) === normName(b); }
+
+  /* ---- Flexible column finders (handles inconsistent table schemas) ---- */
+  function findNameInRow(r) {
+    const known = [
+      'Portfolio Member Name','Portfolio Member Name:','Portfolio Memeber Name',
+      'faculty_name','Faculty Name','Faculty name','Member Name','Staff Name',
+      'Employee Name','Name','name',
+    ];
+    for (const k of known) { if (r[k] && typeof r[k]==='string' && r[k].trim()) return r[k]; }
+    // Fallback: any key whose name contains 'name'
+    for (const k of Object.keys(r)) {
+      if (/name/i.test(k) && r[k] && typeof r[k]==='string' && r[k].trim()) return r[k];
+    }
+    return '';
+  }
+  function findMonthInRow(r) {
+    const v = r['Month'] || r['Month:'] || r['month'] || r['MONTH'] || r['month_name'] || '';
+    return (v||'').toString().trim();
+  }
+  function findDeptInRow(r) {
+    const v = r['Department'] || r['Department:'] || r['Dept'] || r['dept'] || r['department'] || '';
+    return (v||'').toString().toLowerCase().trim();
+  }
+  // Tolerant month match: 'Jul' matches 'July', 'july' etc.
+  function matchMonth(rowMonth, monthName) {
+    const rm = (rowMonth||'').toLowerCase().trim();
+    const mn = (monthName||'').toLowerCase().trim();
+    if (!rm || !mn) return false;
+    return rm === mn || mn.startsWith(rm) || rm.startsWith(mn.substring(0, 3));
+  }
+
+  function calcPct(row, total) {
+    if (!row) return null;
+    let done = 0;
+    for (let i = 1; i <= total; i++) {
+      // Support both Status_N (underscore) and Status-N (hyphen) column naming
+      const s = (row[`Status_${i}`] || row[`Status-${i}`] || '').toLowerCase();
+      if (s === 'completed' || s === 'completed and updated') done++;
+    }
+    return Math.round((done / total) * 100);
+  }
+  // Detect what kind of scoring fields exist in a row
+  function detectScoreFields(row) {
+    // Check for Status_ OR Status- fields (both naming conventions used in DB)
+    const statusKeys = Object.keys(row).filter(k => /^Status[_-]\d+$/i.test(k));
+    if (statusKeys.length > 0) return { type: 'status', keys: statusKeys, count: statusKeys.length };
+    
+    // Check for Score/score fields (some forms might use this)
+    const scoreKeys = Object.keys(row).filter(k => /^score/i.test(k) && typeof row[k] === 'number');
+    if (scoreKeys.length > 0) return { type: 'score', keys: scoreKeys, count: scoreKeys.length };
+    
+    // Check for numeric fields (last resort)
+    const numKeys = Object.keys(row).filter(k => !/id|name|month|dept|date|input/i.test(k) && typeof row[k] === 'number');
+    if (numKeys.length > 0) return { type: 'numeric', keys: numKeys, count: numKeys.length };
+    
+    return { type: 'none', keys: [], count: 0 };
+  }
+
+  // Score calculation with dynamic field detection
+  function calcPctAdvanced(row) {
+    if (!row) return null;
+    
+    const fields = detectScoreFields(row);
+    
+    if (fields.type === 'status') {
+      // Standard Status_ scoring
+      let done = 0;
+      for (const k of fields.keys) {
+        const s = (row[k]||'').toString().toLowerCase();
+        if (s === 'completed' || s === 'completed and updated') done++;
+      }
+      return fields.count > 0 ? Math.round((done / fields.count) * 100) : null;
+    } else if (fields.type === 'score') {
+      // Numeric score fields - average them
+      const total = fields.keys.reduce((sum, k) => sum + (row[k]||0), 0);
+      const avg = total / fields.count;
+      return Math.round(avg);
+    } else if (fields.type === 'numeric') {
+      // Generic numeric fields
+      const total = fields.keys.reduce((sum, k) => sum + (row[k]||0), 0);
+      const avg = total / fields.count;
+      return Math.round(Math.min(100, avg));
+    }
+    
+    return null;
+  }
+
+  // Keep old function but improve it — handles both Status_N and Status-N
+  function calcPctDynamic(row) {
+    if (!row) return null;
+    // Match both underscore and hyphen variants: Status_1, Status-1, status_1 etc.
+    const keys = Object.keys(row).filter(k => /^Status[_-]\d+$/i.test(k));
+    if (!keys.length) {
+      return calcPctAdvanced(row);
+    }
+    let done = 0;
+    for (const k of keys) {
+      const s = (row[k]||'').toLowerCase();
+      if (s === 'completed' || s === 'completed and updated') done++;
+    }
+    return Math.round((done / keys.length) * 100);
+  }
+
+  function scoreSpan(pct) {
+    if (pct === null || pct === undefined) return '<span class="sc-na">—</span>';
+    const cls = pct >= 80 ? 'sc-ex' : pct >= 60 ? 'sc-gd' : pct >= 40 ? 'sc-av' : 'sc-pr';
+    return `<span class="${cls}">${pct}%</span>`;
+  }
+
+  function monthTH() {
+    return MONTHS.map(m => `<th>${m.label}</th>`).join('');
+  }
+
+  /* ================================================================
+     Score-table builder (monthly)
+  ================================================================ */
+  function buildMonthlyTable(rows, theme) {
+    // rows: [{label, scores:[null|number × 12]}]
+    const colgroup = `<colgroup><col class="sno-col"><col class="row-col">${MONTHS.map(()=>'<col class="mon-col">').join('')}</colgroup>`;
+    const thead = `<thead><tr><th>S.No</th><th>Portfolio / Scope</th>${monthTH()}</tr></thead>`;
+    const tbody = '<tbody>' + rows.map((r, idx) =>
+      `<tr><td class="sno">${idx+1}</td><td>${r.label}</td>${(r.scores||[]).map(s => `<td>${scoreSpan(s)}</td>`).join('')}</tr>`
+    ).join('') + '</tbody>';
+    return `<table class="score-tbl ${theme}">${colgroup}${thead}${tbody}</table>`;
+  }
+
+  /* ================================================================
+     Build one faculty report page
+  ================================================================ */
+  function buildPage(fac, coreAll, coreSHAll, deptAll, instAll) {
+    const isSH    = SH_DEPTS.includes(fac.department||'');
+    const name    = fac['Name'] || '';
+    const desigRaw = (fac['Designation']||'').toUpperCase();
+    let desig = '';
+    if (desigRaw==='AP'||desigRaw==='ASSISTANT PROFESSOR') desig='AP';
+    else if (desigRaw==='ASP'||desigRaw==='ASSOCIATE PROFESSOR') desig='ASP';
+    else if (desigRaw==='PROF'||desigRaw==='PROFESSOR') desig='Prof';
+
+    const photo   = fac['Upload Image'] || '/static/img/person-circle.svg';
+    const dept    = fac['department'] || '—';
+    const today   = new Date();
+
+    /* ---- Timetable ---- */
+    const DEFAULT_TIMES = {1:'9-10',2:'10-11',3:'11-12',4:'12-1',5:'2-3',6:'3-4',7:'4-5',8:'5-6'};
+    let ttData = { periods: [] };
+    try {
+      if (fac.timetable) {
+        ttData = typeof fac.timetable === 'string' ? JSON.parse(fac.timetable) : fac.timetable;
+      }
+    } catch(e) {}
+    const ttPeriods = ttData.periods || [];
+
+    /* ---- Timetable Grid ---- */
+    const ttDays = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+    const ttPeriodMap = {};
+    ttPeriods.forEach(p => {
+      if (!ttPeriodMap[p.day]) ttPeriodMap[p.day] = {};
+      ttPeriodMap[p.day][p.period] = p;
+    });
+    let ttGridHtml = '<table class="tt-tbl"><thead><tr><th style="width:38px">Day</th>';
+    for (let i = 1; i <= 8; i++) {
+      const timeLabel = (ttPeriods.find(p => p.period === i)||{}).time || DEFAULT_TIMES[i];
+      ttGridHtml += `<th>${i}<br><span style="font-weight:400;font-size:.42rem">${timeLabel}</span></th>`;
+    }
+    ttGridHtml += '</tr></thead><tbody>';
+    ttDays.forEach(day => {
+      ttGridHtml += `<tr><td>${day.substring(0,3)}</td>`;
+      for (let p = 1; p <= 8; p++) {
+        const cell = (ttPeriodMap[day] || {})[p];
+        if (cell && cell.subjectCode) {
+          const yr = cell.year ? `${cell.year}${cell.section||''}` : (cell.section||'');
+          const cls = [cell.department, yr].filter(v=>v).join(' ');
+          ttGridHtml += `<td><span class="sc">${cell.subjectCode}</span><span class="cl">${cls}</span></td>`;
+        } else {
+          ttGridHtml += '<td style="color:#d1d5db">—</td>';
+        }
+      }
+      ttGridHtml += '</tr>';
+    });
+    ttGridHtml += '</tbody></table>';
+
+    /* ---- Timetable Summary ---- */
+    let ttSummaryHtml = '';
+    if (ttPeriods.length > 0) {
+      const summaryMap = {};
+      ttPeriods.forEach(p => {
+        if (!p.subjectCode) return;
+        const k = `${p.department||''}|${p.year||''}|${p.section||''}|${p.subjectCode}|${p.subjectName||''}`;
+        if (!summaryMap[k]) summaryMap[k] = { department:p.department||'', year:p.year||'', section:p.section||'', subjectCode:p.subjectCode, subjectName:p.subjectName||'', hours:0 };
+        summaryMap[k].hours++;
+      });
+      const summaryArr = Object.values(summaryMap).sort((a,b) =>
+        `${a.department}${a.year}${a.section}`.localeCompare(`${b.department}${b.year}${b.section}`)
+      );
+      if (summaryArr.length > 0) {
+        const totalHrs = summaryArr.reduce((s,i) => s+i.hours, 0);
+        ttSummaryHtml = `<div class="sec-title blue">Timetable Summary</div>
+<div class="tt-sum-wrap"><table class="tt-sum-tbl">
+<thead><tr><th>S.No</th><th>Dept</th><th>Year</th><th>Sec</th><th>Sub Code</th><th>Subject Name</th><th>Hrs/Wk</th></tr></thead>
+<tbody>${summaryArr.map((item,idx) =>
+  `<tr><td>${idx+1}</td><td>${item.department||'—'}</td><td>${item.year||'—'}</td><td>${item.section||'—'}</td><td style="font-weight:700;color:#4f46e5">${item.subjectCode}</td><td class="sub-name">${item.subjectName||'—'}</td><td style="font-weight:700;color:#1d4ed8">${item.hours}</td></tr>`
+).join('')}</tbody>
+<tfoot><tr><td colspan="6" style="text-align:right;font-weight:700;padding-right:8px;">Total Hrs/Week:</td><td style="font-weight:700;color:#1d4ed8;font-size:.54rem">${totalHrs}</td></tr></tfoot>
+</table></div>`;
+      }
+    }
+
+    const timetableSection = `<div>
+      <div class="sec-title indigo">Timetable</div>
+      <div class="tt-wrap">${ttGridHtml}</div>
+      ${ttSummaryHtml}
+    </div>`;
+
+    /* ---- Core Scope Monthly ---- */
+    const corePool  = isSH ? coreSHAll : coreAll;
+    const coreTotal = isSH ? 13 : 15;
+    const coreScores = MONTHS.map(m => {
+      const row = corePool.find(r => {
+        const rName  = findNameInRow(r);
+        const rMonth = findMonthInRow(r);
+        const rDept  = findDeptInRow(r);
+        const facDept = (fac.department||'').toLowerCase().trim();
+        return matchName(rName, name) &&
+               matchMonth(rMonth, m.name) &&
+               (!rDept || !facDept || rDept === facDept);
+      });
+      return calcPct(row, coreTotal);
+    });
+
+    /* ---- Department Portfolio ---- */
+    const deptRows = [];
+    DEPT_FORMS.forEach((f, idx) => {
+      const assigned = (fac[f.key]||'').toString().trim().toLowerCase() === 'yes';
+      if (!assigned) return;
+      const data = deptAll[idx] || [];
+      const scores = MONTHS.map(m => {
+        const row = data.find(r => {
+          const rName  = findNameInRow(r);
+          const rMonth = findMonthInRow(r);
+          const rDept  = findDeptInRow(r);
+          const facDept = (fac.department||'').toLowerCase().trim();
+          return matchName(rName, name) &&
+                 matchMonth(rMonth, m.name) &&
+                 (!rDept || !facDept || rDept === facDept);
+        });
+        return calcPctDynamic(row);
+      });
+      deptRows.push({ label: f.label, scores });
+    });
+
+    /* ---- Institution Portfolio (monthly forms) ---- */
+    const instMonthlyRows = [];
+    const instYearlyRows  = [];
+    INST_FORMS.forEach((f, idx) => {
+      const data = instAll[idx] || [];
+      const matching = data.filter(r => matchName(findNameInRow(r), name));
+      if (!matching.length) return;
+
+      if (f.monthly) {
+        const scores = MONTHS.map(m => {
+          const row = matching.find(r => matchMonth(findMonthInRow(r), m.name));
+          return calcPctDynamic(row);
+        });
+        if (scores.some(s => s !== null)) {
+          instMonthlyRows.push({ label: f.label, scores });
+        }
+      } else {
+        // Yearly – take the row with the highest input_id (latest)
+        const row = matching.reduce((best, cur) =>
+          ((cur.input_id||0) > (best.input_id||0)) ? cur : best
+        );
+        const pct = calcPctDynamic(row);
+        if (pct !== null) instYearlyRows.push({ label: f.label, score: pct });
+      }
+    });
+
+    /* ---- Render HTML ---- */
+    // Dept portfolio section
+    let deptSection = '';
+    if (deptRows.length) {
+      deptSection = `
+        <div>
+          <div class="sec-title purple">Department Portfolio (Academic Year 2025–2026)</div>
+          <div class="tbl-wrap">${buildMonthlyTable(deptRows, 'purple-theme')}</div>
+        </div>`;
+    }
+
+    // Core scope section
+    const coreSection = `
+      <div>
+        <div class="sec-title blue">Faculty Core Scope – Monthly</div>
+        <div class="tbl-wrap">${buildMonthlyTable([{ label: 'Core Scope Score', scores: coreScores }], 'blue-theme')}</div>
+      </div>`;
+
+    // Institution portfolio section
+    let instSection = '';
+    if (instMonthlyRows.length || instYearlyRows.length) {
+      let instInner = '';
+      if (instMonthlyRows.length) {
+        instInner += buildMonthlyTable(instMonthlyRows, 'green-theme');
+      }
+      if (instYearlyRows.length) {
+        const yRows = instYearlyRows.map(r => {
+          const cls = r.score >= 80 ? 'sc-ex' : r.score >= 60 ? 'sc-gd' : r.score >= 40 ? 'sc-av' : 'sc-pr';
+          return `<tr><td>${r.label}</td><td><span class="${cls}">${r.score}%</span></td></tr>`;
+        }).join('');
+        instInner += `
+          <div style="margin-top:4px;font-size:.57rem;color:#555;padding-left:10px;font-style:italic;margin-bottom:2px;">Yearly / Non-monthly roles:</div>
+          <table class="yearly-tbl"><thead><tr><th>Role</th><th>Score</th></tr></thead><tbody>${yRows}</tbody></table>`;
+      }
+      instSection = `
+        <div>
+          <div class="sec-title green">Institution Portfolio</div>
+          <div class="tbl-wrap">${instInner}</div>
+        </div>`;
+    }
+
+    return `
+    <div class="a4-page">
+      <!-- Header: logo only -->
+      <div class="rpt-header">
+        <img class="logo" src="/static/img/pmc a logo.jpg" alt="PMC Logo" onerror="this.style.display='none'" />
+      </div>
+
+      <!-- Faculty Info -->
+      <div class="fac-info">
+        <img class="fac-photo"
+             src="${photo}"
+             alt="${name}"
+             onerror="this.src='/static/img/person-circle.svg'" />
+        <div class="fac-details">
+          <div class="fac-name">${name}</div>
+          <div class="details-grid">
+            <div class="detail-item">
+              <label>Employee ID</label>
+              <span>${fac['EmployeeID']||'—'}</span>
+            </div>
+            <div class="detail-item">
+              <label>Department</label>
+              <span>${dept}</span>
+            </div>
+            <div class="detail-item">
+              <label>Designation</label>
+              <span>${fac['Designation']||'—'}</span>
+            </div>
+            <div class="detail-item">
+              <label>Email</label>
+              <span style="font-size:.62rem;">${fac['email']||'—'}</span>
+            </div>
+            <div class="detail-item">
+              <label>Mobile</label>
+              <span>${fac['Number']||'—'}</span>
+            </div>
+            <div class="detail-item">
+              <label>Experience</label>
+              <span>${fac['Experience']||'—'}</span>
+            </div>
+            <div class="detail-item" style="grid-column:span 2;">
+              <label>Qualification</label>
+              <span>${fac['Qualification']||'—'}</span>
+            </div>
+            <div class="detail-item">
+              <label>Username</label>
+              <span>${fac['Username']||'—'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timetable -->
+      ${timetableSection}
+
+      <!-- Portfolio Sections -->
+      ${deptSection}
+      ${coreSection}
+      ${instSection}
+
+      <!-- Spacer -->
+      <div style="flex:1;min-height:6px;"></div>
+
+      <!-- Footer -->
+      <div class="rpt-footer">
+        <div class="auth-text">
+          <div class="auth-title">Authorized Report</div>
+          <div>Generated by <strong>Zeonytechnologies</strong> &nbsp;|&nbsp;${today.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</div>
+          <div>PMC Tech &nbsp;©&nbsp; ${today.getFullYear()} All Rights Reserved</div>
+        </div>
+        <div class="zeony-wrap">
+          <span>Powered by</span>
+          <img class="zeony"
+               src="/static/img/zeony logo.png"
+               alt="Zeony Technologies"
+               onerror="this.style.display='none'" />
+        </div>
+      </div>
+    </div>`;
+  }
+
+  /* ================================================================
+     Main: load and render
+  ================================================================ */
+  async function loadReports() {
+    const params  = new URLSearchParams(window.location.search);
+    const idsStr  = params.get('ids');
+    if (!idsStr) {
+      document.getElementById('loadingMsg').innerHTML =
+        '<div style="color:#dc2626;padding:40px">No faculty IDs specified in the URL.</div>';
+      return;
+    }
+    const ids = idsStr.split(',').map(s => s.trim()).filter(Boolean);
+    if (!ids.length) {
+      document.getElementById('loadingMsg').innerHTML =
+        '<div style="color:#dc2626;padding:40px">No valid IDs found.</div>';
+      return;
+    }
+
+    try {
+      // Parallel fetch: faculty + all portfolio tables
+      const [
+        { data: facultyList, error: facErr },
+        { data: coreAll    },
+        { data: coreSHAll  },
+        ...deptResults
+      ] = await Promise.all([
+        sb.from('Faculty').select('*').in('input_id', ids),
+        sb.from('Core_scope').select('*'),
+        sb.from('Core_scope_SH').select('*'),
+        ...DEPT_FORMS.map(f => sb.from(f.table).select('*')),
+      ]);
+
+      if (facErr || !facultyList) throw new Error(facErr?.message || 'Failed to load faculty');
+
+      // Fetch institution forms separately (17 tables)
+      const instResults = await Promise.all(
+        INST_FORMS.map(f => sb.from(f.table).select('*'))
+      );
+      const instAll = instResults.map(r => r.data || []);
+      const deptAll = deptResults.map(r => r.data || []);
+
+      // Render
+      const wrapper = document.getElementById('reportsWrapper');
+      wrapper.innerHTML = '';
+
+      if (!facultyList.length) {
+        wrapper.innerHTML = '<div style="text-align:center;padding:60px;color:#6b7280;">No faculty records found for the given IDs.</div>';
+        return;
+      }
+
+      for (const fac of facultyList) {
+        const html = buildPage(fac, coreAll||[], coreSHAll||[], deptAll, instAll);
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        wrapper.appendChild(tmp.firstElementChild);
+      }
+
+    } catch (err) {
+      document.getElementById('reportsWrapper').innerHTML =
+        `<div style="text-align:center;padding:60px;color:#dc2626;">
+          <strong>Error loading reports:</strong><br>${err.message}
+        </div>`;
+    }
+  }
+
+  /* ================================================================
+     PDF Download – render each .a4-page individually then combine
+  ================================================================ */
+  async function downloadPDF() {
+    const btn = document.getElementById('downloadBtn');
+    btn.innerHTML = '&#8987; Generating PDF…';
+    btn.disabled = true;
+
+    try {
+      const pages = Array.from(document.querySelectorAll('.a4-page'));
+      if (!pages.length) throw new Error('No pages found to export.');
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        // Temporarily fix exact pixel size so canvas matches A4 proportions
+        const origW = page.style.width, origH = page.style.height, origOF = page.style.overflow;
+        page.style.width  = '794px';
+        page.style.height = '1123px';
+        page.style.overflow = 'hidden';
+
+        const canvas = await html2canvas(page, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          width: 794,
+          height: 1123,
+        });
+
+        // Restore styles
+        page.style.width   = origW;
+        page.style.height  = origH;
+        page.style.overflow = origOF;
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.96);
+        if (i > 0) pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, '', 'FAST');
+      }
+
+      pdf.save('faculty-performance-report.pdf');
+    } catch (e) {
+      alert('PDF generation failed. Please use Print instead.\n' + e.message);
+    }
+
+    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Download PDF`;
+    btn.disabled = false;
+  }
+
+  // Start
+  loadReports();
+</script>
+</body>
+</html>
