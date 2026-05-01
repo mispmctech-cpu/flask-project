@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Verification - PMC Tech</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pmcPurple: "#6a2c91",
+                        pmcPurpleDark: "#501e73",
+                    },
+                },
+            },
+        };
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-pmcPurple text-white w-full">
+        <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+            <div class="flex items-center">
+                <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 rounded shadow bg-white p-1" />
+            </div>
+            <div class="text-xl font-semibold">Report Verification Dashboard</div>
+            <button onclick="window.history.back()" class="hover:bg-white hover:text-pmcPurple px-4 py-2 rounded transition">
+                ← Back
+            </button>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto py-8 px-4">
+        <!-- Filter Section -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div class="flex gap-4 flex-wrap items-center">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Filter by Status</label>
+                    <select id="statusFilter" onchange="filterReports()" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-pmcPurple">
+                        <option value="">All Reports</option>
+                        <option value="pending">Pending Review</option>
+                        <option value="verified">Verified</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Department</label>
+                    <input type="text" id="deptFilter" placeholder="Enter department" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-pmcPurple" readonly />
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Report Date</label>
+                    <input type="date" id="dateFilter" onchange="filterReports()" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-pmcPurple" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Table -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <table class="w-full border-collapse">
+                <thead class="bg-pmcPurple text-white">
+                    <tr>
+                        <th class="px-6 py-4 text-left font-semibold">Date</th>
+                        <th class="px-6 py-4 text-left font-semibold">Department</th>
+                        <th class="px-6 py-4 text-left font-semibold">HOD Name</th>
+                        <th class="px-6 py-4 text-left font-semibold">Type</th>
+                        <th class="px-6 py-4 text-left font-semibold">Status</th>
+                        <th class="px-6 py-4 text-left font-semibold">Verified By</th>
+                        <th class="px-6 py-4 text-left font-semibold">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="reportsTableBody" class="divide-y divide-gray-200">
+                    <tr class="text-center py-8">
+                        <td colspan="6" class="py-8 text-gray-500">Loading reports...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Report Details Modal -->
+    <div id="reportModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <!-- Modal Header -->
+            <div class="sticky top-0 bg-pmcPurple text-white px-6 py-4 flex justify-between items-center">
+                <h2 class="text-2xl font-bold">Report Details</h2>
+                <button onclick="closeReportModal()" class="text-white hover:bg-white hover:text-pmcPurple px-3 py-1 rounded transition text-2xl">
+                    ×
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6">
+                <!-- Report Info -->
+                <div class="grid grid-cols-2 gap-4 mb-6 pb-6 border-b">
+                    <div>
+                        <p class="text-sm text-gray-600">Department</p>
+                        <p id="modalDept" class="text-lg font-semibold text-pmcPurple"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Report Date</p>
+                        <p id="modalDate" class="text-lg font-semibold"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">HOD Name</p>
+                        <p id="modalHodName" class="text-lg font-semibold"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Report Type</p>
+                        <p id="modalType" class="text-lg font-semibold"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Current Status</p>
+                        <p id="modalStatus" class="text-lg font-semibold"></p>
+                    </div>
+                </div>
+
+                <!-- Report Content -->
+                <div id="reportTypeDetails" class="mb-6"></div>
+
+                <div id="facultySection" class="mb-6">
+                    <h3 class="font-bold text-lg text-gray-800 mb-4">Faculty Details</h3>
+                    <div class="grid grid-cols-1 gap-4 bg-gray-50 p-4 rounded">
+                        <div>
+                            <p class="text-sm text-gray-600">Faculty on OD</p>
+                            <p id="modalFacultyOd" class="text-gray-800 whitespace-pre-wrap"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Faculty on Leave</p>
+                            <p id="modalFacultyLeave" class="text-gray-800 whitespace-pre-wrap"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Faculty Absent</p>
+                            <p id="modalFacultyAbsent" class="text-gray-800 whitespace-pre-wrap"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Attendance -->
+                <div id="attendanceSection" class="mb-6">
+                    <h3 class="font-bold text-lg text-gray-800 mb-4">Student Attendance Summary</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm border border-gray-300">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="border px-3 py-2">Class/Section</th>
+                                    <th class="border px-3 py-2">Total</th>
+                                    <th class="border px-3 py-2">Present</th>
+                                    <th class="border px-3 py-2">OD</th>
+                                    <th class="border px-3 py-2">Leave</th>
+                                    <th class="border px-3 py-2">Absent</th>
+                                    <th class="border px-3 py-2">Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Verification Section -->
+                <div id="verificationSection" class="mb-6 pb-6 border-t pt-6">
+                    <h3 class="font-bold text-lg text-gray-800 mb-4">Verification</h3>
+                    <div class="mb-4">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Comments/Feedback</label>
+                        <textarea id="verificationComments" placeholder="Enter your comments (optional)" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-pmcPurple" rows="4"></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <button id="editReportBtn" onclick="enterEditMode()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-3 rounded-lg transition">
+                            <i class="fas fa-edit mr-2"></i>Edit Report
+                        </button>
+                    </div>
+                    <div id="editSection" class="hidden mb-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <p class="text-sm text-gray-600 mb-2">Edit the report details below and save.</p>
+                        <div id="editFormContainer" class="space-y-4"></div>
+                        <div class="flex gap-3 mt-3">
+                            <button onclick="saveEditChanges()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-3 rounded-lg transition">
+                                <i class="fas fa-save mr-2"></i>Save Changes
+                            </button>
+                            <button onclick="cancelEditMode()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold px-4 py-3 rounded-lg transition">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex gap-3" id="actionButtons">
+                        <button onclick="approveReport()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-3 rounded-lg transition">
+                            <i class="fas fa-check mr-2"></i>Approve & Verify
+                        </button>
+                        <button onclick="rejectReport()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-3 rounded-lg transition">
+                            <i class="fas fa-times mr-2"></i>Reject
+                        </button>
+                    </div>
+                    <div id="verificationStatus" class="mt-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script>
+        // Supabase client
+        const supabaseUrl = "https://cbhodgwaazmjszkujrti.supabase.co";
+        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU";
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        let currentDepartment = '';
+        let allReports = [];
+        let selectedReport = null;
+
+        // Helper function to get query parameters
+        function getQueryParam(name) {
+            const url = new URL(window.location.href);
+            return url.searchParams.get(name);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check query parameter first, then localStorage
+            const deptParam = getQueryParam('department');
+            currentDepartment = deptParam || localStorage.getItem('department') || '';
+            
+            // Save to localStorage for future use
+            if (currentDepartment) {
+                localStorage.setItem('department', currentDepartment);
+            }
+            
+            console.log('Current Department:', currentDepartment);
+            console.log('Query param:', deptParam);
+            console.log('localStorage:', localStorage.getItem('department'));
+            
+            document.getElementById('deptFilter').value = currentDepartment;
+            await loadReports();
+        });
+
+        // Load reports from database
+        async function loadReports() {
+            try {
+                console.log('Loading reports for department:', currentDepartment);
+                
+                // Array of all report table names
+                const reportTables = ['daily_reports', 'academic_reports', 'activity_reports', 'achievement_reports', 'disciplinary_reports'];
+                
+                let allData = [];
+                let hasError = false;
+                
+                // Fetch from all report tables
+                for (const table of reportTables) {
+                    try {
+                        let query = supabase.from(table).select('*');
+                        
+                        // Only show pending reports by default
+                        query = query.eq('verification_status', 'pending');
+                        
+                        if (currentDepartment) {
+                            query = query.eq('department', currentDepartment);
+                        }
+
+                        const { data, error } = await query.order('report_date', { ascending: false });
+                        
+                        console.log(`${table} query result - Data:`, data, 'Error:', error);
+                        
+                        if (error && error.code !== 'PGRST116') {  // PGRST116 is table not found
+                            throw error;
+                        }
+                        
+                        if (data) {
+                            const reportType = table === 'daily_reports'
+                                ? 'GENERAL'
+                                : table.replace('_reports', '').toUpperCase();
+                            const dataWithType = data.map(item => ({
+                                ...item,
+                                report_type: reportType
+                            }));
+                            allData.push(...dataWithType);
+                        }
+                    } catch (err) {
+                        console.warn(`Error loading from ${table}:`, err);
+                        // Continue with other tables even if one fails
+                    }
+                }
+                
+                // Sort all reports by date
+                allData.sort((a, b) => new Date(b.report_date) - new Date(a.report_date));
+                
+                allReports = allData;
+                console.log('All reports loaded:', allReports.length, 'reports');
+                displayReports(allReports);
+            } catch (err) {
+                console.error('Error loading reports:', err);
+                alert('Failed to load reports: ' + err.message);
+            }
+        }
+
+        // Filter reports
+        function filterReports() {
+            let filtered = allReports;
+            
+            // By default, always filter for pending status
+            filtered = filtered.filter(r => r.verification_status === 'pending');
+            
+            const status = document.getElementById('statusFilter').value;
+            if (status && status !== 'all') {
+                filtered = filtered.filter(r => r.verification_status === status);
+            }
+            
+            const date = document.getElementById('dateFilter').value;
+            if (date) {
+                filtered = filtered.filter(r => r.report_date === date);
+            }
+            
+            displayReports(filtered);
+        }
+
+        // Display reports in table
+        function displayReports(reports) {
+            const tbody = document.getElementById('reportsTableBody');
+            
+            if (reports.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">No reports found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = reports.map(report => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4">${new Date(report.report_date).toLocaleDateString()}</td>
+                    <td class="px-6 py-4 font-semibold">${report.department}</td>
+                    <td class="px-6 py-4">${report.hod_name}</td>
+                    <td class="px-6 py-4"><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">${report.report_type || 'GENERAL'}</span></td>
+                    <td class="px-6 py-4">
+                        ${getStatusBadge(report.verification_status)}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600">${report.verified_by || '-'}</td>
+                    <td class="px-6 py-4">
+                        <button onclick="viewReportDetails(${report.id})" class="text-pmcPurple hover:text-pmcPurpleDark font-semibold">
+                            <i class="fas fa-eye mr-1"></i>View
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Get status badge
+        function getStatusBadge(status) {
+            const badges = {
+                'pending': '<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">⏳ Pending</span>',
+                'verified': '<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">✓ Verified</span>',
+                'rejected': '<span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-semibold">✕ Rejected</span>'
+            };
+            return badges[status] || '<span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">Unknown</span>';
+        }
+
+        // View report details
+        async function viewReportDetails(reportId) {
+            const report = allReports.find(r => r.id === reportId);
+            if (!report) return;
+
+            selectedReport = report;
+
+            // Populate modal
+            document.getElementById('modalDept').textContent = report.department;
+            document.getElementById('modalDate').textContent = new Date(report.report_date).toLocaleDateString();
+            document.getElementById('modalHodName').textContent = report.hod_name;
+            document.getElementById('modalStatus').textContent = report.verification_status.toUpperCase();
+            document.getElementById('modalStatus').className = `text-lg font-semibold ${getStatusColor(report.verification_status)}`;
+            document.getElementById('modalType').textContent = report.report_type || 'GENERAL';
+            
+            renderReportDetails(report);
+
+            // Handle verification section
+            const actionButtons = document.getElementById('actionButtons');
+            const verificationComments = document.getElementById('verificationComments');
+            const editReportBtn = document.getElementById('editReportBtn');
+            const editSection = document.getElementById('editSection');
+            
+            if (report.verification_status === 'pending') {
+                actionButtons.style.display = 'flex';
+                verificationComments.disabled = false;
+                verificationComments.value = '';
+                editReportBtn.style.display = 'block';
+            } else {
+                actionButtons.style.display = 'none';
+                verificationComments.disabled = true;
+                verificationComments.value = report.verification_comments || 'No comments';
+                editReportBtn.style.display = 'none';
+            }
+
+            editSection.classList.add('hidden');
+
+            document.getElementById('reportModal').classList.remove('hidden');
+        }
+
+        // Get status color
+        function getStatusColor(status) {
+            const colors = {
+                'pending': 'text-yellow-600',
+                'verified': 'text-green-600',
+                'rejected': 'text-red-600'
+            };
+            return colors[status] || 'text-gray-600';
+        }
+
+        function renderReportDetails(report) {
+            const reportTypeDetails = document.getElementById('reportTypeDetails');
+            const facultySection = document.getElementById('facultySection');
+            const attendanceSection = document.getElementById('attendanceSection');
+            const attendanceBody = document.getElementById('attendanceTableBody');
+            const editFormContainer = document.getElementById('editFormContainer');
+
+            const type = (report.report_type || 'GENERAL').toUpperCase();
+
+            reportTypeDetails.innerHTML = '';
+            editFormContainer.innerHTML = '';
+
+            if (type === 'GENERAL') {
+                facultySection.style.display = '';
+                attendanceSection.style.display = '';
+
+                document.getElementById('modalFacultyOd').textContent = report.faculty_od || 'None';
+                document.getElementById('modalFacultyLeave').textContent = report.faculty_leave || 'None';
+                document.getElementById('modalFacultyAbsent').textContent = report.faculty_absent || 'None';
+
+                const attendance = report.student_attendance || [];
+                attendanceBody.innerHTML = attendance.map(row => `
+                    <tr>
+                        <td class="border px-3 py-2">${row.class_section || row.class_name || '-'}</td>
+                        <td class="border px-3 py-2 text-center">${row.total_students ?? '-'}</td>
+                        <td class="border px-3 py-2 text-center">${row.students_present ?? '-'}</td>
+                        <td class="border px-3 py-2 text-center">${row.students_od ?? '-'}</td>
+                        <td class="border px-3 py-2 text-center">${row.students_leave ?? '-'}</td>
+                        <td class="border px-3 py-2 text-center">${row.students_absent ?? '-'}</td>
+                        <td class="border px-3 py-2 text-center">${row.attendance_percent || '-'}</td>
+                    </tr>
+                `).join('');
+                buildEditForm(report);
+                return;
+            }
+
+            facultySection.style.display = 'none';
+            attendanceSection.style.display = 'none';
+            attendanceBody.innerHTML = '';
+
+            if (type === 'ACADEMIC') {
+                const academics = report.academics || [];
+                reportTypeDetails.innerHTML = academics.length === 0
+                    ? '<p class="text-gray-600">No academic details found.</p>'
+                    : academics.map(entry => `
+                        <div class="mb-6 border rounded-lg p-4 bg-gray-50">
+                            <div class="font-semibold text-gray-800 mb-2">${entry.class_section || `${entry.year || ''} / ${entry.class_name || ''} / ${entry.section || ''}`}</div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm border border-gray-300">
+                                    <thead class="bg-gray-200">
+                                        <tr>
+                                            <th class="border px-3 py-2">Hour</th>
+                                            <th class="border px-3 py-2">Subject</th>
+                                            <th class="border px-3 py-2">Faculty</th>
+                                            <th class="border px-3 py-2">Topics Covered</th>
+                                            <th class="border px-3 py-2">Teaching Aid</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${(entry.timetable || []).map(row => `
+                                            <tr>
+                                                <td class="border px-3 py-2 text-center">${row.hour ?? '-'}</td>
+                                                <td class="border px-3 py-2">${row.subject || '-'}</td>
+                                                <td class="border px-3 py-2">${row.faculty_name || '-'}</td>
+                                                <td class="border px-3 py-2">${row.topics_covered || '-'}</td>
+                                                <td class="border px-3 py-2">${row.teaching_aid || '-'}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `).join('');
+                buildEditForm(report);
+                return;
+            }
+
+            if (type === 'ACTIVITY') {
+                const activities = report.activities || [];
+                reportTypeDetails.innerHTML = activities.length === 0
+                    ? '<p class="text-gray-600">No activity details found.</p>'
+                    : `
+                        <h3 class="font-bold text-lg text-gray-800 mb-4">Activities</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm border border-gray-300">
+                                <thead class="bg-gray-200">
+                                    <tr>
+                                        <th class="border px-3 py-2">S.No</th>
+                                        <th class="border px-3 py-2">Details</th>
+                                        <th class="border px-3 py-2">Outcome</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${activities.map(row => `
+                                        <tr>
+                                            <td class="border px-3 py-2 text-center">${row.sno ?? '-'}</td>
+                                            <td class="border px-3 py-2">${row.details || '-'}</td>
+                                            <td class="border px-3 py-2">${row.outcome || '-'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                buildEditForm(report);
+                return;
+            }
+
+            if (type === 'ACHIEVEMENT') {
+                const achievements = report.achievements || [];
+                reportTypeDetails.innerHTML = achievements.length === 0
+                    ? '<p class="text-gray-600">No achievement details found.</p>'
+                    : `
+                        <h3 class="font-bold text-lg text-gray-800 mb-4">Achievements</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm border border-gray-300">
+                                <thead class="bg-gray-200">
+                                    <tr>
+                                        <th class="border px-3 py-2">S.No</th>
+                                        <th class="border px-3 py-2">Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${achievements.map(row => `
+                                        <tr>
+                                            <td class="border px-3 py-2 text-center">${row.sno ?? '-'}</td>
+                                            <td class="border px-3 py-2">${row.details || '-'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                buildEditForm(report);
+                return;
+            }
+
+            if (type === 'DISCIPLINARY') {
+                if (report.no_disciplinary) {
+                    reportTypeDetails.innerHTML = '<p class="text-gray-600">No disciplinary actions reported.</p>';
+                    buildEditForm(report);
+                    return;
+                }
+
+                const disciplinaryActions = report.disciplinary_actions || [];
+                reportTypeDetails.innerHTML = disciplinaryActions.length === 0
+                    ? '<p class="text-gray-600">No disciplinary details found.</p>'
+                    : `
+                        <h3 class="font-bold text-lg text-gray-800 mb-4">Disciplinary Actions</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm border border-gray-300">
+                                <thead class="bg-gray-200">
+                                    <tr>
+                                        <th class="border px-3 py-2">S.No</th>
+                                        <th class="border px-3 py-2">Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${disciplinaryActions.map(row => `
+                                        <tr>
+                                            <td class="border px-3 py-2 text-center">${row.sno ?? '-'}</td>
+                                            <td class="border px-3 py-2">${row.details || '-'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                buildEditForm(report);
+                return;
+            }
+
+            reportTypeDetails.innerHTML = '<p class="text-gray-600">No details available for this report type.</p>';
+            buildEditForm(report);
+        }
+
+        function enterEditMode() {
+            const editSection = document.getElementById('editSection');
+            editSection.classList.remove('hidden');
+        }
+
+        function cancelEditMode() {
+            const editSection = document.getElementById('editSection');
+            editSection.classList.add('hidden');
+        }
+
+        async function saveEditChanges() {
+            if (!selectedReport) return;
+
+            const saveBtns = document.querySelectorAll('#editSection .flex button:first-child');
+            const saveBtn = saveBtns[0];
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+            }
+
+            const type = (selectedReport.report_type || 'GENERAL').toUpperCase();
+            const tableMap = {
+                'GENERAL': 'daily_reports',
+                'ACADEMIC': 'academic_reports',
+                'ACTIVITY': 'activity_reports',
+                'ACHIEVEMENT': 'achievement_reports',
+                'DISCIPLINARY': 'disciplinary_reports'
+            };
+            const tableName = tableMap[type] || 'daily_reports';
+
+            const updatePayload = collectEditData(type, selectedReport);
+
+            try {
+                const { error } = await supabase
+                    .from(tableName)
+                    .update(updatePayload)
+                    .eq('id', selectedReport.id);
+
+                if (error) throw error;
+
+                // Update local selectedReport object with new data
+                Object.assign(selectedReport, updatePayload);
+
+                // Update the data in allReports array
+                const reportIndex = allReports.findIndex(r => r.id === selectedReport.id);
+                if (reportIndex !== -1) {
+                    Object.assign(allReports[reportIndex], updatePayload);
+                }
+
+                // Re-render the details view with updated data
+                renderReportDetails(selectedReport);
+
+                cancelEditMode();
+
+                if (saveBtn) {
+                    saveBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Saved!';
+                    setTimeout(() => {
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Changes';
+                    }, 800);
+                }
+            } catch (err) {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Changes';
+                }
+                alert('Failed to update report: ' + err.message);
+            }
+        }
+
+        function buildEditForm(report) {
+            const container = document.getElementById('editFormContainer');
+            const type = (report.report_type || 'GENERAL').toUpperCase();
+            container.innerHTML = '';
+
+            if (type === 'GENERAL') {
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Faculty on OD</label>
+                        <textarea id="editFacultyOd" class="w-full border border-gray-300 rounded-lg px-3 py-2" rows="2">${report.faculty_od || ''}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Faculty on Leave</label>
+                        <textarea id="editFacultyLeave" class="w-full border border-gray-300 rounded-lg px-3 py-2" rows="2">${report.faculty_leave || ''}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Faculty Absent</label>
+                        <textarea id="editFacultyAbsent" class="w-full border border-gray-300 rounded-lg px-3 py-2" rows="2">${report.faculty_absent || ''}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Student Attendance</label>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm border border-gray-300">
+                                <thead class="bg-gray-200">
+                                    <tr>
+                                        <th class="border px-2 py-2">Class/Section</th>
+                                        <th class="border px-2 py-2">Total</th>
+                                        <th class="border px-2 py-2">Present</th>
+                                        <th class="border px-2 py-2">OD</th>
+                                        <th class="border px-2 py-2">Leave</th>
+                                        <th class="border px-2 py-2">Absent</th>
+                                        <th class="border px-2 py-2">Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(report.student_attendance || []).map((row, idx) => `
+                                        <tr>
+                                            <td class="border px-2 py-1"><input data-idx="${idx}" data-field="class_section" class="w-full border rounded px-2 py-1" value="${row.class_section || row.class_name || ''}" /></td>
+                                            <td class="border px-2 py-1"><input data-idx="${idx}" data-field="total_students" type="number" class="w-full border rounded px-2 py-1" value="${row.total_students ?? ''}" /></td>
+                                            <td class="border px-2 py-1"><input data-idx="${idx}" data-field="students_present" type="number" class="w-full border rounded px-2 py-1" value="${row.students_present ?? ''}" /></td>
+                                            <td class="border px-2 py-1"><input data-idx="${idx}" data-field="students_od" type="number" class="w-full border rounded px-2 py-1" value="${row.students_od ?? ''}" /></td>
+                                            <td class="border px-2 py-1"><input data-idx="${idx}" data-field="students_leave" type="number" class="w-full border rounded px-2 py-1" value="${row.students_leave ?? ''}" /></td>
+                                            <td class="border px-2 py-1"><input data-idx="${idx}" data-field="students_absent" type="number" class="w-full border rounded px-2 py-1" value="${row.students_absent ?? ''}" /></td>
+                                            <td class="border px-2 py-1"><input data-idx="${idx}" data-field="attendance_percent" class="w-full border rounded px-2 py-1" value="${row.attendance_percent || ''}" /></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            if (type === 'ACADEMIC') {
+                const academics = report.academics || [];
+                container.innerHTML = academics.length === 0 ? '<p class="text-gray-600">No academic entries.</p>' : academics.map((entry, entryIdx) => `
+                    <div class="border rounded-lg p-4 bg-white mb-4">
+                        <div class="font-semibold text-gray-800 mb-2">${entry.class_section || `${entry.year || ''} / ${entry.class_name || ''} / ${entry.section || ''}`}</div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm border border-gray-300">
+                                <thead class="bg-gray-200">
+                                    <tr>
+                                        <th class="border px-2 py-2 w-12">Hour</th>
+                                        <th class="border px-2 py-2">Subject</th>
+                                        <th class="border px-2 py-2">Faculty</th>
+                                        <th class="border px-2 py-2">Topics Covered</th>
+                                        <th class="border px-2 py-2">Teaching Aid</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(entry.timetable || []).map((row, rowIdx) => `
+                                        <tr>
+                                            <td class="border px-2 py-1 text-center font-semibold">${row.hour ?? rowIdx + 1}</td>
+                                            <td class="border px-2 py-1"><input type="text" data-entry="${entryIdx}" data-row="${rowIdx}" data-field="subject" class="w-full border rounded px-2 py-1 edit-input" value="${row.subject || ''}" /></td>
+                                            <td class="border px-2 py-1"><input type="text" data-entry="${entryIdx}" data-row="${rowIdx}" data-field="faculty_name" class="w-full border rounded px-2 py-1 edit-input" value="${row.faculty_name || ''}" /></td>
+                                            <td class="border px-2 py-1"><input type="text" data-entry="${entryIdx}" data-row="${rowIdx}" data-field="topics_covered" class="w-full border rounded px-2 py-1 edit-input" value="${row.topics_covered || ''}" /></td>
+                                            <td class="border px-2 py-1"><input type="text" data-entry="${entryIdx}" data-row="${rowIdx}" data-field="teaching_aid" class="w-full border rounded px-2 py-1 edit-input" value="${row.teaching_aid || ''}" /></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `).join('');
+                return;
+            }
+
+            if (type === 'ACTIVITY') {
+                const activities = report.activities || [];
+                container.innerHTML = `
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm border border-gray-300">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="border px-2 py-2">S.No</th>
+                                    <th class="border px-2 py-2">Details</th>
+                                    <th class="border px-2 py-2">Outcome</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${activities.map((row, idx) => `
+                                    <tr>
+                                        <td class="border px-2 py-1 text-center">${row.sno ?? idx + 1}</td>
+                                        <td class="border px-2 py-1"><textarea data-idx="${idx}" data-field="details" class="w-full border rounded px-2 py-1" rows="2">${row.details || ''}</textarea></td>
+                                        <td class="border px-2 py-1"><textarea data-idx="${idx}" data-field="outcome" class="w-full border rounded px-2 py-1" rows="2">${row.outcome || ''}</textarea></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                return;
+            }
+
+            if (type === 'ACHIEVEMENT') {
+                const achievements = report.achievements || [];
+                container.innerHTML = `
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm border border-gray-300">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="border px-2 py-2">S.No</th>
+                                    <th class="border px-2 py-2">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${achievements.map((row, idx) => `
+                                    <tr>
+                                        <td class="border px-2 py-1 text-center">${row.sno ?? idx + 1}</td>
+                                        <td class="border px-2 py-1"><textarea data-idx="${idx}" data-field="details" class="w-full border rounded px-2 py-1" rows="2">${row.details || ''}</textarea></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                return;
+            }
+
+            if (type === 'DISCIPLINARY') {
+                const disciplinaryActions = report.disciplinary_actions || [];
+                const checked = report.no_disciplinary ? 'checked' : '';
+                container.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="editNoDisciplinary" ${checked} />
+                        <label for="editNoDisciplinary" class="text-sm font-semibold text-gray-700">No disciplinary actions</label>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm border border-gray-300">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="border px-2 py-2">S.No</th>
+                                    <th class="border px-2 py-2">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${disciplinaryActions.map((row, idx) => `
+                                    <tr>
+                                        <td class="border px-2 py-1 text-center">${row.sno ?? idx + 1}</td>
+                                        <td class="border px-2 py-1"><textarea data-idx="${idx}" data-field="details" class="w-full border rounded px-2 py-1" rows="2">${row.details || ''}</textarea></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '<p class="text-gray-600">No editable fields for this report type.</p>';
+        }
+
+        function collectEditData(type, report) {
+            if (type === 'GENERAL') {
+                const attendanceInputs = Array.from(document.querySelectorAll('#editFormContainer [data-idx]'));
+                const attendanceMap = {};
+                attendanceInputs.forEach(input => {
+                    const idx = Number(input.getAttribute('data-idx'));
+                    const field = input.getAttribute('data-field');
+                    if (!attendanceMap[idx]) attendanceMap[idx] = {};
+                    attendanceMap[idx][field] = input.value;
+                });
+                const attendance = Object.keys(attendanceMap).map(idx => attendanceMap[idx]);
+                return {
+                    faculty_od: document.getElementById('editFacultyOd').value,
+                    faculty_leave: document.getElementById('editFacultyLeave').value,
+                    faculty_absent: document.getElementById('editFacultyAbsent').value,
+                    student_attendance: attendance
+                };
+            }
+
+            if (type === 'ACADEMIC') {
+                const inputs = Array.from(document.querySelectorAll('#editFormContainer .edit-input[data-entry]'));
+                const academics = (report.academics || []).map((entry, idx) => {
+                    const copy = { ...entry, timetable: (entry.timetable || []).map(row => ({ ...row })) };
+                    
+                    // Update only fields that were edited
+                    inputs.filter(input => Number(input.getAttribute('data-entry')) === idx).forEach(input => {
+                        const rowIdx = Number(input.getAttribute('data-row'));
+                        const field = input.getAttribute('data-field');
+                        if (copy.timetable[rowIdx]) {
+                            copy.timetable[rowIdx][field] = input.value;
+                        }
+                    });
+                    return copy;
+                });
+                return { academics };
+            }
+
+            if (type === 'ACTIVITY') {
+                const inputs = Array.from(document.querySelectorAll('#editFormContainer [data-idx]'));
+                const activities = (report.activities || []).map(row => ({ ...row }));
+                inputs.forEach(input => {
+                    const idx = Number(input.getAttribute('data-idx'));
+                    const field = input.getAttribute('data-field');
+                    if (activities[idx]) activities[idx][field] = input.value;
+                });
+                return { activities };
+            }
+
+            if (type === 'ACHIEVEMENT') {
+                const inputs = Array.from(document.querySelectorAll('#editFormContainer [data-idx]'));
+                const achievements = (report.achievements || []).map(row => ({ ...row }));
+                inputs.forEach(input => {
+                    const idx = Number(input.getAttribute('data-idx'));
+                    const field = input.getAttribute('data-field');
+                    if (achievements[idx]) achievements[idx][field] = input.value;
+                });
+                return { achievements };
+            }
+
+            if (type === 'DISCIPLINARY') {
+                const inputs = Array.from(document.querySelectorAll('#editFormContainer [data-idx]'));
+                const disciplinary_actions = (report.disciplinary_actions || []).map(row => ({ ...row }));
+                inputs.forEach(input => {
+                    const idx = Number(input.getAttribute('data-idx'));
+                    const field = input.getAttribute('data-field');
+                    if (disciplinary_actions[idx]) disciplinary_actions[idx][field] = input.value;
+                });
+                const noDisciplinary = document.getElementById('editNoDisciplinary')?.checked || false;
+                return { no_disciplinary: noDisciplinary, disciplinary_actions };
+            }
+
+            return {};
+        }
+
+        // Approve report
+        async function approveReport() {
+            if (!selectedReport) return;
+
+            const hodName = localStorage.getItem('selectedMemberName') || localStorage.getItem('hodUsername') || 'Unknown';
+            const comments = document.getElementById('verificationComments').value;
+
+            try {
+                // Determine which table to update based on report type
+                const tableMap = {
+                    'GENERAL': 'daily_reports',
+                    'ACADEMIC': 'academic_reports',
+                    'ACTIVITY': 'activity_reports',
+                    'ACHIEVEMENT': 'achievement_reports',
+                    'DISCIPLINARY': 'disciplinary_reports'
+                };
+                
+                const tableName = tableMap[selectedReport.report_type] || 'daily_reports';
+                
+                const { error } = await supabase.from(tableName).update({
+                    verification_status: 'verified',
+                    verified_by: hodName,
+                    verification_date: new Date().toISOString(),
+                    verification_comments: comments
+                }).eq('id', selectedReport.id);
+
+                if (error) throw error;
+
+                alert('Report verified successfully!');
+                closeReportModal();
+                await loadReports();
+            } catch (err) {
+                alert('Failed to verify report: ' + err.message);
+            }
+        }
+
+        // Reject report
+        async function rejectReport() {
+            if (!selectedReport) return;
+
+            const comments = document.getElementById('verificationComments').value;
+            if (!comments.trim()) {
+                alert('Please provide a reason for rejection');
+                return;
+            }
+
+            const hodName = localStorage.getItem('selectedMemberName') || localStorage.getItem('hodUsername') || 'Unknown';
+
+            try {
+                // Determine which table to update based on report type
+                const tableMap = {
+                    'GENERAL': 'daily_reports',
+                    'ACADEMIC': 'academic_reports',
+                    'ACTIVITY': 'activity_reports',
+                    'ACHIEVEMENT': 'achievement_reports',
+                    'DISCIPLINARY': 'disciplinary_reports'
+                };
+                
+                const tableName = tableMap[selectedReport.report_type] || 'daily_reports';
+                
+                const { error } = await supabase.from(tableName).update({
+                    verification_status: 'rejected',
+                    verified_by: hodName,
+                    verification_date: new Date().toISOString(),
+                    verification_comments: comments
+                }).eq('id', selectedReport.id);
+
+                if (error) throw error;
+
+                alert('Report rejected. The faculty will be notified to resubmit.');
+                closeReportModal();
+                await loadReports();
+            } catch (err) {
+                alert('Failed to reject report: ' + err.message);
+            }
+        }
+
+        // Close modal
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.add('hidden');
+            selectedReport = null;
+        }
+    </script>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 mt-8">
+        <p class="text-sm">
+            &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline">PMC TECH</a><br>
+            <span class="text-xs opacity-80">A Student driven Software!</span>
+        </p>
+    </footer>
+</body>
+</html>

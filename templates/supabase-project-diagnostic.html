@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Project Diagnostic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-6xl mx-auto">
+        <div class="bg-white p-6 rounded-lg shadow mb-6">
+            <h1 class="text-3xl font-bold mb-4 text-red-600">🚨 PROBLEM IDENTIFIED</h1>
+            <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-red-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-lg font-medium text-red-800">Multiple Supabase Projects Detected</h3>
+                        <p class="text-red-700 mt-2">
+                            Your code is trying to connect to TWO different Supabase projects:
+                        </p>
+                        <ul class="list-disc list-inside mt-2 text-red-700">
+                            <li><strong>Project 1:</strong> pdaoeuflyflbzgaqdclr.supabase.co (Flask backend)</li>
+                            <li><strong>Project 2:</strong> cbhodgwaazmjszkujrti.supabase.co (HTML forms)</li>
+                        </ul>
+                        <p class="text-red-700 mt-2">
+                            You likely created the FormStatus table in one project, but your forms are trying to access the other.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Project 1 -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-bold mb-4 text-blue-600">
+                    <i class="fas fa-database mr-2"></i>Project 1 (Flask Backend)
+                </h2>
+                <p class="text-sm text-gray-600 mb-4">pdaoeuflyflbzgaqdclr.supabase.co</p>
+                <div id="status1" class="mb-4">
+                    <i class="fas fa-spinner fa-spin"></i> Checking...
+                </div>
+                <button onclick="checkProject1()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    <i class="fas fa-sync-alt mr-2"></i>Recheck
+                </button>
+            </div>
+
+            <!-- Project 2 -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-bold mb-4 text-green-600">
+                    <i class="fas fa-database mr-2"></i>Project 2 (HTML Forms)
+                </h2>
+                <p class="text-sm text-gray-600 mb-4">cbhodgwaazmjszkujrti.supabase.co</p>
+                <div id="status2" class="mb-4">
+                    <i class="fas fa-spinner fa-spin"></i> Checking...
+                </div>
+                <button onclick="checkProject2()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                    <i class="fas fa-sync-alt mr-2"></i>Recheck
+                </button>
+            </div>
+        </div>
+
+        <!-- Solution -->
+        <div class="bg-white p-6 rounded-lg shadow mt-6">
+            <h2 class="text-2xl font-bold mb-4 text-purple-600">💡 Solution Options</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Option 1 -->
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-blue-800 mb-3">Option 1: Use Flask Project (Recommended)</h3>
+                    <p class="text-blue-700 text-sm mb-3">
+                        Update all your HTML forms to use the same project as your Flask backend.
+                    </p>
+                    <button onclick="generateOption1Fix()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
+                        Generate Fix Files
+                    </button>
+                </div>
+
+                <!-- Option 2 -->
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-green-800 mb-3">Option 2: Use Forms Project</h3>
+                    <p class="text-green-700 text-sm mb-3">
+                        Update your Flask backend to use the same project as your forms.
+                    </p>
+                    <button onclick="generateOption2Fix()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">
+                        Generate Fix Files
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="fixInstructions" class="hidden bg-white p-6 rounded-lg shadow mt-6">
+            <h2 class="text-xl font-bold mb-4">🔧 Fix Instructions</h2>
+            <div id="fixContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Project 1 (Flask backend)
+        const client1 = window.supabase.createClient(
+            "https://pdaoeuflyflbzgaqdclr.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkYW9ldWZseWZsYnpnYXFkY2xyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY3MzAwNzMsImV4cCI6MjA0MjMwNjA3M30.zr8_eeO0LH-wPxMXY7pJmZ4bk-uRF5aXr-bWfj8_o0s"
+        );
+
+        // Project 2 (HTML forms)
+        const client2 = window.supabase.createClient(
+            "https://cbhodgwaazmjszkujrti.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+        );
+
+        async function checkProject1() {
+            const statusDiv = document.getElementById('status1');
+            try {
+                const { data, error } = await client1.from('FormStatus').select('*').limit(1);
+                if (error) {
+                    if (error.message.includes('does not exist') || error.message.includes('relation') || error.message.includes('schema cache')) {
+                        statusDiv.innerHTML = `
+                            <div class="text-yellow-600">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                FormStatus table NOT FOUND
+                            </div>
+                        `;
+                    } else {
+                        statusDiv.innerHTML = `
+                            <div class="text-red-600">
+                                <i class="fas fa-times mr-2"></i>
+                                Error: ${error.message}
+                            </div>
+                        `;
+                    }
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="text-green-600">
+                            <i class="fas fa-check mr-2"></i>
+                            FormStatus table EXISTS! (${data.length} records)
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                statusDiv.innerHTML = `
+                    <div class="text-red-600">
+                        <i class="fas fa-times mr-2"></i>
+                        Connection failed: ${err.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function checkProject2() {
+            const statusDiv = document.getElementById('status2');
+            try {
+                const { data, error } = await client2.from('FormStatus').select('*').limit(1);
+                if (error) {
+                    if (error.message.includes('does not exist') || error.message.includes('relation') || error.message.includes('schema cache')) {
+                        statusDiv.innerHTML = `
+                            <div class="text-yellow-600">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                FormStatus table NOT FOUND
+                            </div>
+                        `;
+                    } else {
+                        statusDiv.innerHTML = `
+                            <div class="text-red-600">
+                                <i class="fas fa-times mr-2"></i>
+                                Error: ${error.message}
+                            </div>
+                        `;
+                    }
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="text-green-600">
+                            <i class="fas fa-check mr-2"></i>
+                            FormStatus table EXISTS! (${data.length} records)
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                statusDiv.innerHTML = `
+                    <div class="text-red-600">
+                        <i class="fas fa-times mr-2"></i>
+                        Connection failed: ${err.message}
+                    </div>
+                `;
+            }
+        }
+
+        function generateOption1Fix() {
+            const fixDiv = document.getElementById('fixInstructions');
+            const contentDiv = document.getElementById('fixContent');
+            
+            contentDiv.innerHTML = `
+                <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                    <h3 class="font-bold text-blue-800 mb-3">Option 1: Standardize on Flask Project</h3>
+                    <p class="text-blue-700 mb-3">This will update all HTML forms to use the same Supabase project as your Flask backend.</p>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <h4 class="font-semibold text-blue-800">Step 1: Create FormStatus table in Flask project</h4>
+                            <p class="text-sm text-blue-700">Go to https://supabase.com/dashboard, select project "pdaoeuflyflbzgaqdclr", and execute:</p>
+                            <div class="bg-gray-100 p-2 rounded mt-2 text-xs">
+                                <pre>CREATE TABLE FormStatus (
+    id SERIAL PRIMARY KEY,
+    form_name VARCHAR(100) UNIQUE NOT NULL,
+    form_title VARCHAR(200),
+    is_open BOOLEAN DEFAULT true,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(100) DEFAULT 'Admin'
+);
+
+-- Grant permissions
+GRANT ALL ON FormStatus TO authenticated;
+GRANT ALL ON FormStatus TO anon;
+GRANT USAGE ON SEQUENCE formstatus_id_seq TO authenticated;
+GRANT USAGE ON SEQUENCE formstatus_id_seq TO anon;
+ALTER TABLE FormStatus DISABLE ROW LEVEL SECURITY;</pre>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-semibold text-blue-800">Step 2: Update HTML files</h4>
+                            <p class="text-sm text-blue-700">Replace the Supabase URL in all HTML files from cbhodgwaazmjszkujrti to pdaoeuflyflbzgaqdclr</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            fixDiv.classList.remove('hidden');
+        }
+
+        function generateOption2Fix() {
+            const fixDiv = document.getElementById('fixInstructions');
+            const contentDiv = document.getElementById('fixContent');
+            
+            contentDiv.innerHTML = `
+                <div class="bg-green-50 p-4 rounded-lg mb-4">
+                    <h3 class="font-bold text-green-800 mb-3">Option 2: Standardize on Forms Project</h3>
+                    <p class="text-green-700 mb-3">This will update your Flask backend to use the same Supabase project as your forms.</p>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <h4 class="font-semibold text-green-800">Step 1: Create FormStatus table in Forms project (if not already done)</h4>
+                            <p class="text-sm text-green-700">Go to https://supabase.com/dashboard, select project "cbhodgwaazmjszkujrti", and execute the FormStatus SQL if needed.</p>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-semibold text-green-800">Step 2: Update Flask app.py</h4>
+                            <p class="text-sm text-green-700">Change the Supabase URL in app.py from pdaoeuflyflbzgaqdclr to cbhodgwaazmjszkujrti</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            fixDiv.classList.remove('hidden');
+        }
+
+        // Auto-check both projects on load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkProject1();
+            checkProject2();
+        });
+    </script>
+</body>
+</html>

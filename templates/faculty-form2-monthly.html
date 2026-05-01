@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Faculty Level File Upload - Form 2 Monthly</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<!-- Font Awesome for icons -->
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+	<!-- Prevent Double Submit Protection -->
+	<script src="../static/javascript/prevent-double-submit.js"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+	<style>
+		th, td {
+			font-size: 1rem;
+		}
+		input:focus, select:focus {
+			outline: none;
+			box-shadow: 0 0 0 2px #a78bfa33;
+			border-color: #a78bfa;
+		}
+		.bg-orange-400 {
+			background: linear-gradient(90deg, #f59e42 0%, #fbbf24 100%);
+		}
+		.bg-purple-800 {
+			background: linear-gradient(90deg, #6d28d9 0%, #7c3aed 100%);
+		}
+		input[type="file"]::-webkit-file-upload-button {
+			background: #ede9fe;
+			color: #6d28d9;
+			border: 1px solid #a78bfa;
+			border-radius: 0.5rem;
+			padding: 0.25rem 1rem;
+			font-weight: 500;
+			transition: background 0.2s;
+		}
+		input[type="file"]::-webkit-file-upload-button:hover {
+			background: #c4b5fd;
+			color: #fff;
+		}
+		input[type="file"]::file-selector-button {
+			background: #ede9fe;
+			color: #6d28d9;
+			border: 1px solid #a78bfa;
+			border-radius: 0.5rem;
+			padding: 0.25rem 1rem;
+			font-weight: 500;
+			transition: background 0.2s;
+		}
+		input[type="file"]::file-selector-button:hover {
+			background: #c4b5fd;
+			color: #fff;
+		}
+		select {
+			background: #f3f4f6;
+		}
+		label {
+			letter-spacing: 0.01em;
+		}
+		.table-section-title {
+			font-size: 1.1rem;
+			font-weight: 700;
+			letter-spacing: 0.04em;
+			color: #fff;
+			background: linear-gradient(90deg, #f59e42 0%, #fbbf24 100%);
+			padding-left: 1rem;
+		}
+		@media (max-width: 900px) {
+			th, td { font-size: 0.95rem; }
+		}
+		@media (max-width: 600px) {
+			th, td { font-size: 0.9rem; }
+		}
+	</style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+	<!-- DAILY SECTION -->
+	<section style="margin: 2rem 0;">
+		<h2 class="text-2xl font-bold text-center text-purple-800 tracking-wide mb-6">2. Class Advisor Form: DAILY</h2>
+		<form id="directDbForm" class="bg-white shadow-lg rounded-xl max-w-5xl mx-auto px-6 py-8 mb-10 border border-purple-200">
+			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+				<div class="flex flex-col">
+					<label for="db-dept" class="font-semibold text-gray-700 mb-1">Department:</label>
+					<select id="db-dept" name="Department:" required class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2">
+						<option value="" disabled selected>Select Department</option>
+						<option value="AERO">AERO</option>
+						<option value="AIDS">AIDS</option>
+						<option value="AIML">AIML</option>
+						<option value="CHEM">CHEM</option>
+						<option value="CIVIL">CIVIL</option>
+						<option value="CSBS">CSBS</option>
+						<option value="CSE">CSE</option>
+						<option value="ECE">ECE</option>
+						<option value="EEE">EEE</option>
+						<option value="IT">IT</option>
+						<option value="MBA">MBA</option>
+						<option value="MCA">MCA</option>
+						<option value="MCO">MCO</option>
+						<option value="MECH">MECH</option>
+						<option value="S&H V1">S&H V1</option>
+						<option value="S&H V2">S&H V2</option>
+						<option value="S&H V3">S&H V3</option>
+						<option value="S&H V4">S&H V4</option>
+						<option value="S&H V5">S&H V5</option>
+						<option value="S&H V6">S&H V6</option>
+					</select>
+				</div>
+				<div class="flex flex-col">
+					<label for="db-portfolio" class="font-semibold text-gray-700 mb-1">Portfolio Name:</label>
+					<input id="db-portfolio" name="Portfolio Name:" required class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2" />
+				</div>
+				<div class="flex flex-col">
+					<label for="db-member" class="font-semibold text-gray-700 mb-1">Portfolio Member Name:</label>
+					<input id="db-member" name="Portfolio Member Name" class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2" />
+				</div>
+				<div class="flex flex-col">
+					<label for="db-month" class="font-semibold text-gray-700 mb-1">Month:</label>
+					<select id="db-month" name="Month:" required class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2">
+						<option value="" disabled selected>Select</option>
+						<option value="January">January</option>
+						<option value="February">February</option>
+						<option value="March">March</option>
+						<option value="April">April</option>
+						<option value="May">May</option>
+						<option value="June">June</option>
+						<option value="July">July</option>
+						<option value="August">August</option>
+						<option value="September">September</option>
+						<option value="October">October</option>
+						<option value="November">November</option>
+						<option value="December">December</option>
+					</select>
+				</div>
+				<div class="flex flex-col">
+					<label for="db-weekno" class="font-semibold text-gray-700 mb-1">Week no:</label>
+					<input id="db-weekno" name="Week no" type="number" class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2" />
+				</div>
+				<div class="flex flex-col">
+					<label for="db-weekstart" class="font-semibold text-gray-700 mb-1">Week Starting Date:</label>
+					<input id="db-weekstart" name="Week Starting Date" type="date" class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2" />
+				</div>
+				<div class="flex flex-col">
+					<label for="db-weekend" class="font-semibold text-gray-700 mb-1">Week Ending Date:</label>
+					<input id="db-weekend" name="Week Ending Date" type="date" class="rounded-lg border border-gray-300 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-3 py-2" />
+				</div>
+			</div>
+			<div class="w-full border-t border-gray-200 my-6"></div>
+			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+				<div class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+					1. Action Taken report for Absentees</div>
+				<div class="flex flex-col">
+					<label for="db-status1" class="font-semibold text-gray-700 mb-1">Status_1:</label>
+					<select id="db-status1" name="Status_1" class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+						<option value="" disabled selected>Select</option>
+						<option>Completed and Updated</option>
+						<option>Yet to be Completed</option>
+						<option>Under Process</option>
+						<option>Not Applicable</option>
+					</select>
+				</div>
+				<div class="flex flex-col">
+					<label for="db-desc1" class="font-semibold text-gray-700 mb-1">Description_1:</label>
+					<input id="db-desc1" name="Description_1" class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+				</div>
+				<div class="flex flex-col">
+					<label for="db-upload1" class="font-semibold text-gray-700 mb-1">Upload the scanned file:</label>
+					<input id="db-upload1" name="Upload the scanned file" type="file" class="rounded-lg border border-gray-300 px-3 py-2" />
+				</div>
+			</div>
+			<div class="w-full border-t border-gray-200 my-6"></div>
+			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+				<div class="col-span-1 sm:col-span-2 lg:col-span-4 bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-2 mb-2 shadow flex items-center">
+					2. Master Logbook</div>
+				<div class="flex flex-col">
+					<label for="db-status2" class="font-semibold text-gray-700 mb-1">Status_2:</label>
+					<select id="db-status2" name="Status_2" class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2">
+						<option value="" disabled selected>Select</option>
+						<option>Completed and Updated</option>
+						<option>Yet to be Completed</option>
+						<option>Under Process</option>
+						<option>Not Applicable</option>
+					</select>
+				</div>
+				<div class="flex flex-col">
+					<label for="db-desc2" class="font-semibold text-gray-700 mb-1">Description_2:</label>
+					<input id="db-desc2" name="Description_2" placeholder="0-200" class="rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-3 py-2" />
+				</div>
+				<div class="flex flex-col">
+					<label for="db-upload2" class="font-semibold text-gray-700 mb-1">Upload the scanned file_2:</label>
+					<input id="db-upload2" name="Upload the scanned file_2" type="file" class="rounded-lg border border-gray-300 px-3 py-2" />
+				</div>
+			</div>
+			<button type="submit" class="mt-8 bg-purple-800 hover:from-purple-400 hover:to-orange-500 text-white font-bold py-3 px-10 rounded-xl shadow-lg text-lg tracking-wide transition-all duration-200 mx-auto block">Submit</button>
+		</form>
+	</section>
+	
+	<!-- MONTHLY SECTION -->
+	<div class="flex-1 flex items-center justify-center py-8 px-2">
+		<div class="w-full max-w-6xl mx-auto bg-white rounded-2xl card-shadow border border-purple-300 overflow-x-auto p-0">
+			<div class="bg-purple-800 py-8 px-6 text-white text-center w-full rounded-t-2xl">
+				<h1 class="text-3xl md:text-4xl font-black tracking-wider">Class Advisor Form (Monthly)</h1>
+				<p class="text-sm md:text-base mt-2 tracking-wide opacity-90">Portfolio: Class Advisor</p>
+			</div>
+			<form id="facultyForm2" class="p-6 md:p-10 space-y-10 w-full">
+				<div class="grid grid-cols-1 md:grid-cols-4 gap-8 bg-purple-50 rounded-xl p-8 card-shadow mb-8">
+					<div class="flex flex-col">
+						<label for="department" class="font-semibold text-gray-700 mb-2 tracking-wide">Department</label>
+						<input type="text" id="department" name="Department" required
+							class="rounded-lg border-2 border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-4 py-3 transition" />
+					</div>
+					<div class="flex flex-col">
+						<label for="portfolio" class="font-semibold text-gray-700 mb-2 tracking-wide">Portfolio Name</label>
+						<input type="text" id="portfolio" name="Portfolio Name" required
+							class="rounded-lg border-2 border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-4 py-3 transition" />
+					</div>
+					<div class="flex flex-col">
+						<label for="member" class="font-semibold text-gray-700 mb-2 tracking-wide">Portfolio Member Name</label>
+						<input type="text" id="member" name="Portfolio Member Name" required
+							class="rounded-lg border-2 border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-4 py-3 transition" />
+					</div>
+					<div class="flex flex-col">
+						<label for="month" class="font-semibold text-gray-700 mb-2 tracking-wide">Month</label>
+						<select id="month" name="Month" required
+							class="rounded-lg border-2 border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-4 py-3 transition">
+							<option value="" disabled selected>Select Month</option>
+							<option value="January">January</option>
+							<option value="February">February</option>
+							<option value="March">March</option>
+							<option value="April">April</option>
+							<option value="May">May</option>
+							<option value="June">June</option>
+							<option value="July">July</option>
+							<option value="August">August</option>
+							<option value="September">September</option>
+							<option value="October">October</option>
+							<option value="November">November</option>
+							<option value="December">December</option>
+						</select>
+					</div>
+					<div class="flex flex-col">
+						<label for="weekno" class="font-semibold text-gray-700 mb-2 tracking-wide">Week no</label>
+						<input type="number" id="weekno" name="Week no" required
+							class="rounded-lg border-2 border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-4 py-3 transition" />
+					</div>
+					<div class="flex flex-col">
+						<label for="weekstart" class="font-semibold text-gray-700 mb-2 tracking-wide">Week Starting Date</label>
+						<input type="date" id="weekstart" name="Week Starting Date" required
+							class="rounded-lg border-2 border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-4 py-3 transition" />
+					</div>
+					<div class="flex flex-col">
+						<label for="weekend" class="font-semibold text-gray-700 mb-2 tracking-wide">Week Ending Date</label>
+						<input type="date" id="weekend" name="Week Ending Date" required
+							class="rounded-lg border-2 border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-4 py-3 transition" />
+					</div>
+				</div>
+				<div class="overflow-x-auto rounded-xl card-shadow border border-purple-100 bg-white w-full p-4">
+					<table class="min-w-full border-collapse border border-purple-200 text-left">
+						<thead>
+							<tr class="bg-orange-400 text-white">
+								<th class="border border-purple-200 px-3 py-3 text-center font-bold tracking-wide">S.No</th>
+								<th class="border border-purple-200 px-3 py-3 font-bold tracking-wide">Name of File</th>
+								<th class="border border-purple-200 px-3 py-3 font-bold tracking-wide">TAT</th>
+								<th class="border border-purple-200 px-3 py-3 font-bold tracking-wide">Status</th>
+								<th class="border border-purple-200 px-3 py-3 font-bold tracking-wide">Upload</th>
+								<th class="border border-purple-200 px-3 py-3 font-bold tracking-wide">Description</th>
+							</tr>
+						</thead>
+						<tbody id="faculty-table-body">
+							<!-- Rows will be generated by JavaScript -->
+						</tbody>
+					</table>
+				</div>
+				<div class="flex justify-center mt-10">
+					<button type="submit" class="bg-purple-800 hover:bg-purple-600 text-white font-bold py-4 px-16 rounded-xl shadow-xl text-xl tracking-widest transition-all duration-300 transform hover:scale-105">
+						SUBMIT
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+	<script src="https://unpkg.com/@supabase/supabase-js"></script>
+	<script>
+	// Supabase setup
+	const supabase = window.supabase.createClient(
+		"https://cbhodgwaazmjszkujrti.supabase.co",
+		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+	);
+
+	// Autofetch using localStorage for both forms
+	document.addEventListener('DOMContentLoaded', function() {
+		var dept = localStorage.getItem('department') || '';
+		var portfolio = localStorage.getItem('selectedPortfolio') || '';
+		var member = localStorage.getItem('selectedMemberName') || '';
+		var month = localStorage.getItem('selectedMonth') || '';
+		
+		// Autofetch for DAILY form
+		const dailyForm = document.getElementById('directDbForm');
+		if (dailyForm) {
+			const deptSelect = dailyForm.querySelector('select[name="Department:"]');
+			if (deptSelect && dept) {
+				for (let i = 0; i < deptSelect.options.length; i++) {
+					if (deptSelect.options[i].value === dept) {
+						deptSelect.selectedIndex = i;
+						break;
+					}
+				}
+			}
+			const portfolioField = dailyForm.querySelector('input[name="Portfolio Name:"]');
+			if (portfolioField && portfolio) {
+				portfolioField.value = portfolio;
+			}
+			const memberField = dailyForm.querySelector('input[name="Portfolio Member Name"]');
+			if (memberField && member) {
+				memberField.value = member;
+			}
+			const monthSelect = dailyForm.querySelector('select[name="Month:"]');
+			if (monthSelect && month) {
+				for (let i = 0; i < monthSelect.options.length; i++) {
+					if (monthSelect.options[i].value === month) {
+						monthSelect.selectedIndex = i;
+						break;
+					}
+				}
+			}
+		}
+		
+		// Autofetch for MONTHLY form
+		const form = document.getElementById('facultyForm2');
+		if (form) {
+			const deptField = form.querySelector('input[name="Department"]');
+			if (deptField && dept) {
+				deptField.value = dept;
+			}
+			const portfolioField = form.querySelector('input[name="Portfolio Name"]');
+			if (portfolioField && portfolio) {
+				portfolioField.value = portfolio;
+			}
+			const memberField = form.querySelector('input[name="Portfolio Member Name"]');
+			if (memberField && member) {
+				memberField.value = member;
+			}
+			const monthField = form.querySelector('select[name="Month"]');
+			if (monthField && month) {
+				for (let i = 0; i < monthField.options.length; i++) {
+					if (monthField.options[i].value === month) {
+						monthField.selectedIndex = i;
+						break;
+					}
+				}
+			}
+		}
+	});
+
+	// DAILY FORM SUBMISSION
+	const directDbForm = document.getElementById('directDbForm');
+	if (directDbForm) {
+		directDbForm.addEventListener('submit', async function (e) {
+			e.preventDefault();
+			const form = e.target;
+			
+			// Upload files to Supabase Storage
+			async function uploadFileToStorage(file, path) {
+				if (!file) return null;
+				const bucket = 'form2-files';
+				const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+				if (error) {
+					alert('File upload failed: ' + error.message);
+					throw error;
+				}
+				const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(path);
+				return publicUrlData.publicUrl;
+			}
+
+			try {
+				// Get files from form
+				const file1 = form['Upload the scanned file'].files[0];
+				const file2 = form['Upload the scanned file_2'].files[0];
+				const ts = Date.now();
+				const file1Path = file1 ? `file1/${ts}_${file1.name}` : null;
+				const file2Path = file2 ? `file2/${ts}_${file2.name}` : null;
+
+				let file1Url = null;
+				let file2Url = null;
+				if (file1) file1Url = await uploadFileToStorage(file1, file1Path);
+				if (file2) file2Url = await uploadFileToStorage(file2, file2Path);
+
+				// Prepare row object
+				const row = {
+					"Department:": form["Department:"].value,
+					"Portfolio Name:": form["Portfolio Name:"].value,
+					"Portfolio Member Name": form["Portfolio Member Name"].value,
+					"Month:": form["Month:"].value || null,
+					"Week no": form["Week no"].value ? parseInt(form["Week no"].value) : null,
+					"Week Starting Date": form["Week Starting Date"].value || null,
+					"Week Ending Date": form["Week Ending Date"].value || null,
+					"Status_1": form["Status_1"].value,
+					"Description_1": form["Description_1"].value,
+					"Upload the scanned file": file1Url,
+					"Status_2": form["Status_2"].value,
+					"Description_2": form["Description_2"].value,
+					"Upload the scanned file_2": file2Url
+				};
+
+				// Ensure month is not empty
+				if (!row["Month:"] || row["Month:"] === "") {
+					alert('Please select a month before submitting the form.');
+					return;
+				}
+
+				// Save to localStorage for next time
+				try {
+					localStorage.setItem('department', form["Department:"].value);
+					localStorage.setItem('selectedPortfolio', form["Portfolio Name:"].value);
+					localStorage.setItem('selectedMemberName', form["Portfolio Member Name"].value);
+					localStorage.setItem('selectedMonth', form["Month:"].value);
+				} catch (err) { /* ignore */ }
+
+				// Insert into Supabase
+				const { data, error } = await supabase.from('Form2-daily').insert([row]);
+				if (error) {
+					alert('Submission failed: ' + error.message);
+					console.error(error);
+					return;
+				}
+
+				window.location.href = 'notification.html?status=success';
+			} catch (error) {
+				console.error('Form submission error:', error);
+				alert('An error occurred while submitting the form. Please try again.');
+			}
+		});
+	}
+
+	// MONTHLY FORM - Table data from image (13 rows)
+	const tableData = [
+		{ name: 'Action Taken report for Absentees', tat: 'Daily', status: 'Daily action taken report submitted to Principal paper' },
+		{ name: 'Master Logbook', tat: 'Daily', status: 'Master Logbook Page' },
+		{ name: 'Students Achievements File', tat: 'Weekly', status: 'Index' },
+		{ name: 'Weekly Student Record', tat: 'Weekly', status: 'HOD copy of record of current semester' },
+		{ name: 'Master Attendance', tat: 'Once in a Month', status: 'Master attendance Book Copy' },
+		{ name: 'Attendance Report to Parents', tat: 'Once in a Month', status: 'Sample letter sent to parents' },
+		{ name: 'ERP Attendance Entry', tat: 'Once in a Month', status: 'Monthly attendance ERP Entry & Internal marks entered' },
+		{ name: 'Test Report to Parents', tat: 'Once in a Month', status: 'Sample IAT Test report sent to parents' },
+		{ name: 'Class Committee Meeting', tat: 'Once in a Month', status: 'Class committee minutes' },
+		{ name: 'Student Representative Meeting', tat: 'Once in a Month', status: 'List of Scholarship students and their attendance' },
+		{ name: 'Project File', tat: 'Once in a Month', status: 'Attendance Per Even semester' },
+		{ name: 'Student Publications File', tat: 'Once in a Month', status: 'Index of Publications' },
+		{ name: 'Semester Report to Parents', tat: 'Once in a Semester', status: 'Semester exam result copy to parents' }
+	];
+
+	// Render table rows
+	const tbody = document.getElementById('faculty-table-body');
+	tableData.forEach((row, i) => {
+		const idx = i + 1;
+		const tr = document.createElement('tr');
+		tr.innerHTML = `
+			<td class="border px-2 py-1 text-center">${idx}</td>
+			<td class="border px-2 py-1">${row.name}</td>
+			<td class="border px-2 py-1">${row.tat}</td>
+			<td class="border px-2 py-1">
+				<select name="Status_${idx}" class="w-full px-2 py-1 border rounded">
+					<option value="">Select</option>
+					<option value="Completed">Completed</option>
+					<option value="Under Process">Under Process</option>
+					<option value="Yet to be">Yet to be</option>
+				</select>
+			</td>
+			<td class="border px-2 py-1">
+				<button type="button" class="upload-btn bg-purple-100 text-purple-800 font-semibold px-3 py-1 rounded w-full hover:bg-purple-200 transition" data-row="${idx}">Upload</button>
+				<input type="file" class="file-input-row hidden" data-row="${idx}" name="Upload The Scanned File_${idx}" accept=".pdf,.jpg,.jpeg,.png" />
+				<span class="file-check hidden text-green-600 text-xl" data-row="${idx}">✓</span>
+			</td>
+			<td class="border px-2 py-1">
+				<input type="text" name="Description_${idx}" class="w-full px-2 py-1 border rounded" placeholder="${row.status}" />
+			</td>
+		`;
+		tbody.appendChild(tr);
+	});
+
+	// Upload helper function for monthly form (reuses supabase client from above)
+	async function uploadFileToStorage(file, path, bucket, uploadBtn) {
+		if (!file) return null;
+		const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+		if (error) throw error;
+		// Get public URL
+		const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
+		// Change the upload button to 'Uploaded' after successful upload
+		if (uploadBtn) {
+			const row = uploadBtn.getAttribute('data-row');
+			const checkMark = document.querySelector(`.file-check[data-row="${row}"]`);
+			
+			uploadBtn.textContent = 'Uploaded';
+			uploadBtn.className = 'bg-green-200 text-green-800 font-semibold px-3 py-1 rounded w-full';
+			uploadBtn.disabled = true;
+			
+			// Show checkmark
+			if (checkMark) {
+				checkMark.classList.remove('hidden');
+			}
+		}
+		return urlData.publicUrl;
+	}
+
+	// Handle upload button click
+	document.addEventListener('click', function(e) {
+		if (e.target && e.target.classList.contains('upload-btn')) {
+			const row = e.target.getAttribute('data-row');
+			const fileInput = document.querySelector(`input.file-input-row[data-row='${row}']`);
+			if (fileInput) fileInput.click();
+		}
+	});
+
+	// Handle file selection and upload
+	document.addEventListener('change', async function(e) {
+		if (e.target && e.target.classList.contains('file-input-row')) {
+			const row = e.target.getAttribute('data-row');
+			const file = e.target.files[0];
+			if (!file) return;
+			const uploadBtn = document.querySelector(`button.upload-btn[data-row='${row}']`);
+			const bucket = 'form5-files';
+			const path = `form2file${row}_${Date.now()}_${file.name}`;
+			try {
+				await uploadFileToStorage(file, path, bucket, uploadBtn);
+			} catch (err) {
+				alert('File upload failed: ' + err.message);
+			}
+		}
+	});
+
+	// Form submission
+	document.getElementById('facultyForm2').addEventListener('submit', async function(e) {
+		e.preventDefault();
+		
+		// Save autofetch values to localStorage for next time
+		try {
+			const dept = document.querySelector('input[name="Department"]').value;
+			const portfolio = document.querySelector('input[name="Portfolio Name"]').value;
+			const member = document.querySelector('input[name="Portfolio Member Name"]').value;
+			const month = document.querySelector('select[name="Month"]').value;
+			localStorage.setItem('department', dept);
+			localStorage.setItem('selectedPortfolio', portfolio);
+			localStorage.setItem('selectedMemberName', member);
+			localStorage.setItem('selectedMonth', month);
+		} catch (err) { /* ignore */ }
+
+		const form = e.target;
+		const formData = new FormData(form);
+		
+		// Build the data object matching the schema
+		const dataRow = {
+			'Department': formData.get('Department'),
+			'Portfolio Name': formData.get('Portfolio Name'),
+			'Portfolio Member Name': formData.get('Portfolio Member Name'),
+			'Month': formData.get('Month'),
+			'Week no': parseInt(formData.get('Week no')) || null,
+			'Week Starting Date': formData.get('Week Starting Date'),
+			'Week Ending Date': formData.get('Week Ending Date')
+		};
+
+		// Process all 13 rows
+		for (let i = 1; i <= 13; i++) {
+			const status = formData.get(`Status_${i}`);
+			const desc = formData.get(`Description_${i}`);
+			const fileInput = document.querySelector(`input.file-input-row[data-row='${i}']`);
+			const file = fileInput && fileInput.files[0];
+			
+			let fileUrl = '';
+			if (file && file.size > 0) {
+				const bucket = 'form5-files';
+				const path = `form2file${i}_${Date.now()}_${file.name}`;
+				const uploadBtn = document.querySelector(`button.upload-btn[data-row='${i}']`);
+				fileUrl = await uploadFileToStorage(file, path, bucket, uploadBtn);
+			}
+			
+			dataRow[`Status_${i}`] = status || '';
+			dataRow[`Description_${i}`] = desc || '';
+			dataRow[`Upload The Scanned File_${i}`] = fileUrl || '';
+		}
+
+		// Submit to Supabase
+		const { data, error } = await supabase.from('form2 - monthly').insert([dataRow]);
+		if (error) {
+			alert('Submission failed: ' + error.message);
+			return;
+		}
+
+		window.location.href = 'notification.html?status=success';
+	});
+	</script>
+	<!-- Footer -->
+	<footer class="text-center py-4 mt-8">
+		<p class="text-sm">
+			&copy; 2025 PMC Tech. All rights reserved.<br>
+			Designed by <a href="#" class="text-purple-600 hover:text-purple-800 font-semibold">PMC Tech IT Department</a>
+		</p>
+	</footer>
+    <!-- Form Access Control - checks if form is open/closed -->
+    <script src="../static/javascript/form-access-control.js"></script>
+</body>
+</html>

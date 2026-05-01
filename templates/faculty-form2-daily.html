@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Class Advisor Form - DAILY</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<!-- Font Awesome for icons -->
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+	<!-- Prevent Double Submit Protection -->
+	<script src="../static/javascript/prevent-double-submit.js"></script>
+	<!-- Supabase JS CDN (required for month-filter.js) -->
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+	<!-- Month Filter System -->
+	<script src="../static/javascript/month-filter.js"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+	<style>
+		th, td {
+			font-size: 1rem;
+		}
+		input:focus, select:focus {
+			outline: none;
+			box-shadow: 0 0 0 2px #a78bfa33;
+			border-color: #a78bfa;
+		}
+		.bg-orange-400 {
+			background: linear-gradient(90deg, #f59e42 0%, #fbbf24 100%);
+		}
+		.bg-purple-800 {
+			background: linear-gradient(90deg, #6d28d9 0%, #7c3aed 100%);
+		}
+		input[type="file"]::-webkit-file-upload-button {
+			background: #ede9fe;
+			color: #6d28d9;
+			border: 1px solid #a78bfa;
+			border-radius: 0.5rem;
+			padding: 0.25rem 1rem;
+			font-weight: 500;
+			transition: background 0.2s;
+		}
+		input[type="file"]::-webkit-file-upload-button:hover {
+			background: #c4b5fd;
+			color: #fff;
+		}
+		input[type="file"]::file-selector-button {
+			background: #ede9fe;
+			color: #6d28d9;
+			border: 1px solid #a78bfa;
+			border-radius: 0.5rem;
+			padding: 0.25rem 1rem;
+			font-weight: 500;
+			transition: background 0.2s;
+		}
+		input[type="file"]::file-selector-button:hover {
+			background: #c4b5fd;
+			color: #fff;
+		}
+		select {
+			background: #f3f4f6;
+		}
+		label {
+			letter-spacing: 0.01em;
+		}
+		@media (max-width: 900px) {
+			th, td { font-size: 0.95rem; }
+		}
+		@media (max-width: 600px) {
+			th, td { font-size: 0.9rem; }
+		}
+		/* File upload preview styles */
+		.file-upload-container {
+			position: relative;
+		}
+		.file-preview {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			margin-top: 8px;
+			padding: 8px 12px;
+			background: #f0fdf4;
+			border: 1px solid #86efac;
+			border-radius: 8px;
+			font-size: 0.9rem;
+		}
+		.file-preview a {
+			color: #15803d;
+			text-decoration: underline;
+			word-break: break-all;
+		}
+		.file-preview .file-actions {
+			display: flex;
+			gap: 8px;
+			margin-left: auto;
+		}
+		.file-preview .btn-view, .file-preview .btn-replace {
+			padding: 4px 10px;
+			border-radius: 6px;
+			font-size: 0.8rem;
+			cursor: pointer;
+			border: none;
+			transition: all 0.2s;
+		}
+		.file-preview .btn-view {
+			background: #3b82f6;
+			color: white;
+		}
+		.file-preview .btn-view:hover {
+			background: #2563eb;
+		}
+		.file-preview .btn-replace {
+			background: #f59e0b;
+			color: white;
+		}
+		.file-preview .btn-replace:hover {
+			background: #d97706;
+		}
+		.validation-error {
+			color: #dc2626;
+			font-size: 0.85rem;
+			margin-top: 4px;
+		}
+		.field-error {
+			border-color: #dc2626 !important;
+		}
+	</style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+	<!-- DAILY SECTION -->
+	<div class="flex-1 flex items-center justify-center py-8 px-2">
+		<div class="w-full max-w-5xl mx-auto bg-white rounded-2xl card-shadow border border-purple-300 overflow-x-auto p-0">
+			<div class="bg-purple-800 py-8 px-6 text-white text-center w-full rounded-t-2xl">
+				<h1 class="text-3xl md:text-4xl font-black tracking-wider">Class Advisor Form (DAILY)</h1>
+				<p class="text-sm md:text-base mt-2 tracking-wide opacity-90">Portfolio: Class Advisor</p>
+			</div>
+			<form id="directDbForm" class="p-6 md:p-10 space-y-8">
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 bg-purple-50 rounded-xl p-8 card-shadow">
+					<div class="flex flex-col">
+						<label for="db-dept" class="font-semibold text-gray-700 mb-2 tracking-wide">Department</label>
+						<select id="db-dept" name="Department:" required class="rounded-lg border-2 border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-4 py-3 transition">
+							<option value="" disabled selected>Select Department</option>
+							<option value="AERO">AERO</option>
+							<option value="AIDS">AIDS</option>
+							<option value="AIML">AIML</option>
+							<option value="CHEM">CHEM</option>
+							<option value="CIVIL">CIVIL</option>
+							<option value="CSBS">CSBS</option>
+							<option value="CSE">CSE</option>
+							<option value="ECE">ECE</option>
+							<option value="EEE">EEE</option>
+							<option value="IT">IT</option>
+							<option value="MBA">MBA</option>
+							<option value="MCA">MCA</option>
+							<option value="MCO">MCO</option>
+							<option value="MECH">MECH</option>
+							<option value="S&H V1">S&H V1</option>
+							<option value="S&H V2">S&H V2</option>
+							<option value="S&H V3">S&H V3</option>
+							<option value="S&H V4">S&H V4</option>
+							<option value="S&H V5">S&H V5</option>
+							<option value="S&H V6">S&H V6</option>
+						</select>
+					</div>
+					<div class="flex flex-col">
+						<label for="db-portfolio" class="font-semibold text-gray-700 mb-2 tracking-wide">Portfolio Name</label>
+						<input id="db-portfolio" name="Portfolio Name:" required class="rounded-lg border-2 border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-4 py-3 transition" />
+					</div>
+					<div class="flex flex-col">
+						<label for="db-member" class="font-semibold text-gray-700 mb-2 tracking-wide">Portfolio Member Name</label>
+						<input id="db-member" name="Portfolio Member Name" required class="rounded-lg border-2 border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-4 py-3 transition" />
+					</div>
+					<div class="flex flex-col">
+						<label for="db-month" class="font-semibold text-gray-700 mb-2 tracking-wide">Month</label>
+						<select id="db-month" name="Month:" required class="rounded-lg border-2 border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 px-4 py-3 transition">
+							<option value="" disabled selected>Select Month</option>
+							<option value="January">January</option>
+							<option value="February">February</option>
+							<option value="March">March</option>
+							<option value="April">April</option>
+							<option value="May">May</option>
+							<option value="June">June</option>
+							<option value="July">July</option>
+							<option value="August">August</option>
+							<option value="September">September</option>
+							<option value="October">October</option>
+							<option value="November">November</option>
+							<option value="December">December</option>
+						</select>
+					</div>
+				</div>
+				
+				<div class="space-y-6">
+					<!-- Task 1: Action Taken report for Absentees -->
+					<div class="bg-white border border-purple-100 rounded-xl p-6 card-shadow">
+						<div class="bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-3 mb-4 shadow flex items-center">
+							<i class="fas fa-clipboard-check mr-3"></i>
+							1. Action Taken report for Absentees
+						</div>
+						<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+							<div class="flex flex-col">
+								<label for="db-status1" class="font-semibold text-gray-700 mb-2">Status <span class="text-red-500">*</span></label>
+								<select id="db-status1" name="Status_1" required class="rounded-lg border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-4 py-3 transition">
+									<option value="" disabled selected>Select Status</option>
+									<option value="Completed">Completed</option>
+									<option value="Inprogress">Inprogress</option>
+									<option value="Yet to be Completed">Yet to be Completed</option>
+									<option value="Not Applicable">Not Applicable</option>
+								</select>
+							</div>
+							<div class="flex flex-col">
+								<label for="db-desc1" class="font-semibold text-gray-700 mb-2">Description</label>
+								<input id="db-desc1" name="Description_1" class="rounded-lg border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-4 py-3 transition" placeholder="Enter description" />
+							</div>
+							<div class="flex flex-col file-upload-container">
+								<label for="db-upload1" class="font-semibold text-gray-700 mb-2">Upload File</label>
+								<input id="db-upload1" name="Upload the scanned file" type="file" class="rounded-lg border-2 border-gray-300 px-4 py-2 transition" accept=".pdf,.jpg,.jpeg,.png" />
+								<div id="file-preview-1" class="file-preview" style="display: none;">
+									<i class="fas fa-file text-green-600"></i>
+									<span class="file-name"></span>
+									<div class="file-actions">
+										<button type="button" class="btn-view" onclick="viewFile(1)"><i class="fas fa-eye"></i> View</button>
+										<button type="button" class="btn-replace" onclick="replaceFile(1)"><i class="fas fa-sync-alt"></i> Replace</button>
+									</div>
+								</div>
+								<div id="validation-error-1" class="validation-error" style="display: none;"></div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Task 2: Master Logbook -->
+					<div class="bg-white border border-purple-100 rounded-xl p-6 card-shadow">
+						<div class="bg-orange-400 text-white font-bold text-lg rounded-lg px-6 py-3 mb-4 shadow flex items-center">
+							<i class="fas fa-book mr-3"></i>
+							2. Master Logbook
+						</div>
+						<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+							<div class="flex flex-col">
+								<label for="db-status2" class="font-semibold text-gray-700 mb-2">Status <span class="text-red-500">*</span></label>
+								<select id="db-status2" name="Status_2" required class="rounded-lg border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-4 py-3 transition">
+									<option value="" disabled selected>Select Status</option>
+									<option value="Completed">Completed</option>
+									<option value="Inprogress">Inprogress</option>
+									<option value="Yet to be Completed">Yet to be Completed</option>
+									<option value="Not Applicable">Not Applicable</option>
+								</select>
+							</div>
+							<div class="flex flex-col">
+								<label for="db-desc2" class="font-semibold text-gray-700 mb-2">Description</label>
+								<input id="db-desc2" name="Description_2" placeholder="0-200" class="rounded-lg border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 px-4 py-3 transition" />
+							</div>
+							<div class="flex flex-col file-upload-container">
+								<label for="db-upload2" class="font-semibold text-gray-700 mb-2">Upload File</label>
+								<input id="db-upload2" name="Upload the scanned file_2" type="file" class="rounded-lg border-2 border-gray-300 px-4 py-2 transition" accept=".pdf,.jpg,.jpeg,.png" />
+								<div id="file-preview-2" class="file-preview" style="display: none;">
+									<i class="fas fa-file text-green-600"></i>
+									<span class="file-name"></span>
+									<div class="file-actions">
+										<button type="button" class="btn-view" onclick="viewFile(2)"><i class="fas fa-eye"></i> View</button>
+										<button type="button" class="btn-replace" onclick="replaceFile(2)"><i class="fas fa-sync-alt"></i> Replace</button>
+									</div>
+								</div>
+								<div id="validation-error-2" class="validation-error" style="display: none;"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="flex justify-center mt-10">
+					<button type="submit" class="bg-purple-800 hover:bg-purple-600 text-white font-bold py-4 px-16 rounded-xl shadow-xl text-xl tracking-widest transition-all duration-300 transform hover:scale-105">
+						SUBMIT
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<script src="https://unpkg.com/@supabase/supabase-js"></script>
+	<script>
+	// Supabase setup
+	const supabase = window.supabase.createClient(
+		"https://cbhodgwaazmjszkujrti.supabase.co",
+		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+	);
+
+	// Store uploaded file URLs for preview
+	const uploadedFiles = {};
+
+	// File preview and replace functions
+	function viewFile(taskNum) {
+		const fileUrl = uploadedFiles[taskNum];
+		if (fileUrl) {
+			window.open(fileUrl, '_blank');
+		} else {
+			alert('No file uploaded yet.');
+		}
+	}
+
+	function replaceFile(taskNum) {
+		const fileInput = document.getElementById(`db-upload${taskNum}`);
+		if (fileInput) {
+			fileInput.value = ''; // Clear current file
+			fileInput.click(); // Trigger file selection
+			// Hide preview until new file is selected
+			const preview = document.getElementById(`file-preview-${taskNum}`);
+			if (preview) {
+				preview.style.display = 'none';
+			}
+			uploadedFiles[taskNum] = null;
+		}
+	}
+
+	// Show file preview when file is selected
+	function updateFilePreview(taskNum, fileName, fileUrl) {
+		const preview = document.getElementById(`file-preview-${taskNum}`);
+		if (preview) {
+			const nameSpan = preview.querySelector('.file-name');
+			if (nameSpan) {
+				nameSpan.textContent = fileName;
+			}
+			preview.style.display = 'flex';
+			uploadedFiles[taskNum] = fileUrl;
+		}
+	}
+
+	// Handle file selection for preview
+	document.addEventListener('change', function(e) {
+		if (e.target.type === 'file' && e.target.id.startsWith('db-upload')) {
+			const taskNum = e.target.id.replace('db-upload', '');
+			const file = e.target.files[0];
+			if (file) {
+				// Create temporary URL for preview
+				const tempUrl = URL.createObjectURL(file);
+				updateFilePreview(taskNum, file.name, tempUrl);
+				// Clear validation error when file is selected
+				clearValidationError(taskNum);
+			}
+		}
+	});
+
+	// Clear validation error
+	function clearValidationError(taskNum) {
+		const errorDiv = document.getElementById(`validation-error-${taskNum}`);
+		if (errorDiv) {
+			errorDiv.style.display = 'none';
+			errorDiv.textContent = '';
+		}
+		const statusSelect = document.getElementById(`db-status${taskNum}`);
+		const descInput = document.getElementById(`db-desc${taskNum}`);
+		const fileInput = document.getElementById(`db-upload${taskNum}`);
+		[statusSelect, descInput, fileInput].forEach(el => {
+			if (el) el.classList.remove('field-error');
+		});
+	}
+
+	// Validate completed status requires description or file
+	function validateCompletedStatus() {
+		let isValid = true;
+		const tasks = [1, 2];
+		
+		tasks.forEach(taskNum => {
+			const statusSelect = document.getElementById(`db-status${taskNum}`);
+			const descInput = document.getElementById(`db-desc${taskNum}`);
+			const fileInput = document.getElementById(`db-upload${taskNum}`);
+			const errorDiv = document.getElementById(`validation-error-${taskNum}`);
+			
+			const status = statusSelect ? statusSelect.value : '';
+			const description = descInput ? descInput.value.trim() : '';
+			const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+			
+			// Clear previous errors
+			clearValidationError(taskNum);
+			
+			// Check if status is Completed and neither description nor file is provided
+			if (status === 'Completed' && !description && !hasFile) {
+				isValid = false;
+				if (errorDiv) {
+					errorDiv.textContent = 'When status is "Completed", you must provide either a Description or upload a File.';
+					errorDiv.style.display = 'block';
+				}
+				if (descInput) descInput.classList.add('field-error');
+				if (fileInput) fileInput.classList.add('field-error');
+			}
+		});
+		
+		return isValid;
+	}
+
+	// Add event listeners to clear errors on input change
+	document.querySelectorAll('select[name^="Status_"], input[name^="Description_"]').forEach(el => {
+		el.addEventListener('change', function() {
+			const taskNum = this.name.split('_')[1];
+			clearValidationError(taskNum);
+		});
+		el.addEventListener('input', function() {
+			const taskNum = this.name.split('_')[1];
+			clearValidationError(taskNum);
+		});
+	});
+
+	// Autofetch using localStorage
+	document.addEventListener('DOMContentLoaded', function() {
+		var dept = localStorage.getItem('selectedDepartment') || '';
+		var portfolio = localStorage.getItem('selectedPortfolio') || '';
+		var member = localStorage.getItem('selectedMemberName') || '';
+		
+		// Get current month by default
+		const currentMonth = new Date().toLocaleString('en-US', { month: 'long' });
+		
+		const dailyForm = document.getElementById('directDbForm');
+		if (dailyForm) {
+			const deptSelect = dailyForm.querySelector('select[name="Department:"]');
+			if (deptSelect && dept) {
+				for (let i = 0; i < deptSelect.options.length; i++) {
+					if (deptSelect.options[i].value === dept) {
+						deptSelect.selectedIndex = i;
+						break;
+					}
+				}
+			}
+			const portfolioField = dailyForm.querySelector('input[name="Portfolio Name:"]');
+			if (portfolioField && portfolio) {
+				portfolioField.value = portfolio;
+			}
+			const memberField = dailyForm.querySelector('input[name="Portfolio Member Name"]');
+			if (memberField && member) {
+				memberField.value = member;
+			}
+			const monthSelect = dailyForm.querySelector('select[name="Month:"]');
+			if (monthSelect) {
+				// Set to current month
+				for (let i = 0; i < monthSelect.options.length; i++) {
+					if (monthSelect.options[i].value === currentMonth) {
+						monthSelect.selectedIndex = i;
+						break;
+					}
+				}
+			}
+		}
+	});
+
+	// DAILY FORM SUBMISSION
+	const directDbForm = document.getElementById('directDbForm');
+	if (directDbForm) {
+		directDbForm.addEventListener('submit', async function (e) {
+			e.preventDefault();
+			const form = e.target;
+			
+			// Validate completed status requires description or file
+			if (!validateCompletedStatus()) {
+				alert('Please fill in the required fields. When status is "Completed", you must provide either a Description or upload a File.');
+				return;
+			}
+			
+			// Upload files to Supabase Storage
+			async function uploadFileToStorage(file, path) {
+				if (!file) return null;
+				const bucket = 'form2-files';
+				
+				try {
+					const { data, error } = await supabase.storage
+						.from(bucket)
+						.upload(path, file, { 
+							cacheControl: '3600',
+							upsert: true 
+						});
+					
+					if (error) {
+						console.error('Upload error:', error);
+						if (error.message.includes('not found') || error.message.includes('does not exist')) {
+							alert('Storage bucket "form2-files" does not exist. Please create it in Supabase Dashboard.');
+						} else {
+							alert('File upload failed: ' + error.message);
+						}
+						throw error;
+					}
+					
+					// Get public URL
+					const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(path);
+					return publicUrlData.publicUrl;
+				} catch (err) {
+					console.error('File upload exception:', err);
+					throw err;
+				}
+			}
+
+			try {
+				// Show uploading indicator
+				const submitBtn = form.querySelector('button[type="submit"]');
+				const originalBtnText = submitBtn.textContent;
+				submitBtn.disabled = true;
+				submitBtn.textContent = 'Uploading files...';
+				
+				// Get files from form
+				const file1Input = form.querySelector('input[name="Upload the scanned file"]');
+				const file2Input = form.querySelector('input[name="Upload the scanned file_2"]');
+				const file1 = file1Input ? file1Input.files[0] : null;
+				const file2 = file2Input ? file2Input.files[0] : null;
+				const ts = Date.now();
+				const file1Path = file1 ? `file1/${ts}_${file1.name}` : null;
+				const file2Path = file2 ? `file2/${ts}_${file2.name}` : null;
+
+				let file1Url = null;
+				let file2Url = null;
+				
+				// Upload files if present
+				if (file1) {
+					console.log('Uploading file 1:', file1.name);
+					file1Url = await uploadFileToStorage(file1, file1Path);
+					// Update preview with actual uploaded URL
+					if (file1Url) {
+						uploadedFiles[1] = file1Url;
+					}
+				}
+				if (file2) {
+					console.log('Uploading file 2:', file2.name);
+					file2Url = await uploadFileToStorage(file2, file2Path);
+					// Update preview with actual uploaded URL
+					if (file2Url) {
+						uploadedFiles[2] = file2Url;
+					}
+				}
+				
+				submitBtn.textContent = 'Submitting form...';
+
+				// Prepare row object
+				const row = {
+					"Department:": form.querySelector('[name="Department:"]').value,
+					"Portfolio Name:": form.querySelector('[name="Portfolio Name:"]').value,
+					"Portfolio Member Name": form.querySelector('[name="Portfolio Member Name"]').value,
+					"Month:": form.querySelector('[name="Month:"]').value || null,
+					"Status_1": form.querySelector('[name="Status_1"]').value,
+					"Description_1": form.querySelector('[name="Description_1"]').value,
+					"Upload the scanned file": file1Url,
+					"Status_2": form.querySelector('[name="Status_2"]').value,
+					"Description_2": form.querySelector('[name="Description_2"]').value,
+					"Upload the scanned file_2": file2Url
+				};
+
+				// Ensure month is not empty
+				if (!row["Month:"] || row["Month:"] === "") {
+					alert('Please select a month before submitting the form.');
+					submitBtn.disabled = false;
+					submitBtn.textContent = originalBtnText;
+					return;
+				}
+
+				// Insert into Supabase
+				const { data, error } = await supabase.from('Form2-daily').insert([row]);
+				if (error) {
+					alert('Submission failed: ' + error.message);
+					console.error(error);
+					submitBtn.disabled = false;
+					submitBtn.textContent = originalBtnText;
+					return;
+				}
+
+				window.location.href = 'notification.html?status=success';
+			} catch (error) {
+				console.error('Form submission error:', error);
+				
+				// Re-enable submit button
+				const submitBtn = form.querySelector('button[type="submit"]');
+				if (submitBtn) {
+					submitBtn.disabled = false;
+					submitBtn.textContent = 'SUBMIT';
+				}
+				
+				// Show specific error message
+				if (error.message && error.message.includes('Failed to fetch')) {
+					alert('Network error: Please check your internet connection and try again.\n\nIf the problem persists, ensure the "form2-files" bucket exists in Supabase Storage and has proper permissions.');
+				} else {
+					alert('An error occurred while submitting the form: ' + (error.message || 'Please try again.'));
+				}
+			}
+		});
+	}
+	</script>
+	
+	<!-- Footer -->
+	<footer class="text-center py-4 mt-8">
+		<p class="text-sm">
+			&copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline">PMC TECH</a><br>
+			<p class="text-xs opacity-80 flex items-center justify-center gap-2">
+				Powered by 
+				<a href="https://zeonytechnologies.com" target="_blank" rel="noopener noreferrer" class="inline-block hover:opacity-100 transition-all duration-300 hover:scale-105">
+					<img src="../static/img/zeony logo.png" alt="Zeony Technologies" class="h-12 w-22 py-2 object-contain"/>
+				</a>
+			</p>
+			<p class="text-xs opacity-80">A Student driven Software!</p>
+		</p>
+	</footer>
+	<!-- Form Access Control - checks if form is open/closed -->
+	<script src="../static/javascript/form-access-control.js"></script>
+</body>
+</html>

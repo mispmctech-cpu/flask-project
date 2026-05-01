@@ -1,0 +1,16 @@
+VERIFICATION CODE: 185243
+Generated: 2026-03-06 12:03:36
+USE THIS CODE TO TEST THE PASSWORD RESET SYSTEM
+
+
+
+in this loginn page i neeed an option forget password and the user should enter their valid mail id from the faculty table which presents to updata password using email smtp 
+
+so i nee the code to reset the password and i need the good looking bforget page ok
+
+
+and i need the code to reset the password not link ok the verification code should send to the entred and exist email id and they should enter the code and reset the password ok 
+
+this the smpt sendingb mail and the password
+email : mis.pmctech@gmail.com
+password: zuyr aofpkddqwsmq

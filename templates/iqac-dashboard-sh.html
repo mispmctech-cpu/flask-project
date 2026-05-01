@@ -1,0 +1,3587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- No page-break CSS needed for PDF export -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - S&H Faculty Core Scope Compliance</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script src="/static/javascript/form-modal-mapper.js"></script>
+  <!-- SheetJS (xlsx-js-style) for Excel export with cell colour support -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx-js-style.min.js"></script>
+  <script>
+    // Fallback: if jsdelivr was blocked, try unpkg then local vendor copy
+    if (!window.XLSX || !window.XLSX.utils) {
+      (function(){
+        var fallbacks = [
+          'https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx-js-style.min.js',
+          '/static/vendor/xlsx-js-style.min.js'
+        ];
+        function tryNext(i){
+          if(i >= fallbacks.length) return;
+          var s = document.createElement('script');
+          s.src = fallbacks[i];
+          s.onerror = function(){ tryNext(i+1); };
+          document.head.appendChild(s);
+        }
+        tryNext(0);
+      })();
+    }
+  </script>
+  <!-- html2pdf for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+  <style>
+    .star-rating {
+      font-size: 18px;
+      color: #FFD700;
+      white-space: nowrap;
+    }
+    .star-rating .shining {
+      animation: shine 1.5s infinite;
+      font-size: 20px;
+      display: inline-block;
+    }
+    @keyframes shine {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.2); }
+    }
+    .rating-excellent { color: #10b981; font-weight: 600; }
+    .rating-good { color: #3b82f6; font-weight: 600; }
+    .rating-average { color: #f59e0b; font-weight: 600; }
+    .rating-poor { color: #ef4444; font-weight: 600; }
+    .overall-rating { color: #000 !important; }
+  </style>
+</head>
+<body class="bg-pmcBg min-h-screen">
+  <header class="bg-purple-700 text-white w-full">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+      <div class="flex items-center">
+        <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 rounded shadow bg-white p-1" />
+        <span class="ml-4 text-xl font-bold">Dashboard - S&H Faculty Core Scope Compliance</span>
+      </div>
+    </div>
+  </header>
+  <main class="max-w-7xl mx-auto px-4 py-8">
+  <script>
+    // Ensure attachExportButtons exists (safe global fallback)
+    if (typeof window.attachExportButtons !== 'function') {
+      window.attachExportButtons = function() {
+        setTimeout(() => {
+          try {
+            const dashboardTable = document.querySelector('#dashboardTableContainer table');
+            if (dashboardTable) {
+              const exportBtn = document.getElementById('exportDashboardTableBtn');
+              if (exportBtn) exportBtn.onclick = function() {
+                const modal = document.getElementById('exportScopeModal');
+                if (modal) { modal.classList.remove('hidden'); return; }
+                // retry until modal element is available (max attempts)
+                let tries = 0;
+                const ti = setInterval(() => {
+                  const m = document.getElementById('exportScopeModal');
+                  if (m) { m.classList.remove('hidden'); clearInterval(ti); }
+                  if (++tries > 10) clearInterval(ti);
+                }, 300);
+              };
+
+              setTimeout(() => {
+                const currentBtn = document.getElementById('exportCurrentDeptBtn');
+                const allBtn = document.getElementById('exportAllDeptBtn');
+                if (currentBtn) currentBtn.onclick = function() {
+                  if (typeof exportYearlyCurrentDepartment === 'function') return exportYearlyCurrentDepartment();
+                  let tries = 0;
+                  const ti = setInterval(() => {
+                    if (typeof exportYearlyCurrentDepartment === 'function') { exportYearlyCurrentDepartment(); clearInterval(ti); }
+                    if (++tries > 10) clearInterval(ti);
+                  }, 300);
+                };
+                if (allBtn) allBtn.onclick = function() {
+                  if (typeof exportYearlyAllDepartments === 'function') return exportYearlyAllDepartments();
+                  let tries = 0;
+                  const ti = setInterval(() => {
+                    if (typeof exportYearlyAllDepartments === 'function') { exportYearlyAllDepartments(); clearInterval(ti); }
+                    if (++tries > 10) clearInterval(ti);
+                  }, 300);
+                };
+              }, 400);
+            }
+          } catch (e) {
+            console.warn('attachExportButtons fallback failed', e);
+          }
+        }, 300);
+      };
+    }
+  </script>
+  <script>
+    // Helper: call a function by name on window with error handling
+    function safeCallByName(name) {
+      return function(...args) {
+        try {
+          const fn = window[name];
+          if (typeof fn === 'function') return fn(...args);
+          console.error('Missing handler:', name);
+          alert('Handler not ready: ' + name);
+        } catch (e) {
+          console.error('Handler error:', name, e);
+          alert('Error invoking ' + name + ': ' + (e && e.message));
+        }
+      };
+    }
+  </script>
+  <!-- Export Scope Modal -->
+    <div id="exportScopeModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-sm w-full p-6 relative">
+        <button onclick="(function(){const m=document.getElementById('exportScopeModal'); if(m) m.classList.add('hidden');})()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <h3 class="text-lg font-bold mb-4 text-purple-700">Export Dashboard Table</h3>
+        <p class="mb-4 text-gray-700">Select export scope:</p>
+        <div class="flex flex-col gap-3">
+          <button id="exportCurrentDeptBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow">Current Department</button>
+          <button id="exportAllDeptBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">All Departments</button>
+        </div>
+      </div>
+    </div>
+    <h2 class="text-2xl font-bold text-purple-700 mb-6">Faculty Mandatory Scope - Yearly</h2>
+    <div class="mb-6 flex flex-wrap gap-4 items-center">
+      <label for="departmentFilter" class="font-medium text-purple-700 mr-2">Filter by Department:</label>
+      <select id="departmentFilter" class="p-2 border rounded"></select>
+      <label for="designationFilter" class="font-medium text-purple-700 mr-2">Filter by Designation:</label>
+      <select id="designationFilter" class="p-2 border rounded">
+        <option value="All">All</option>
+        <option value="AP">Assistant Professor (AP)</option>
+        <option value="ASP">Associate Professor (ASP)</option>
+        <option value="Prof">Professor (Prof)</option>
+      </select>
+      <label for="yearlyMonthFilter" class="font-medium text-purple-700 mr-2">Month:</label>
+      <select id="yearlyMonthFilter" class="p-2 border rounded">
+        <option value="January">January 2026</option>
+        <option value="February">February 2026</option>
+        <option value="March">March 2026</option>
+        <option value="April">April 2026</option>
+        <option value="May">May 2026</option>
+        <option value="June">June 2026</option>
+        <option value="July">July 2025</option>
+        <option value="August">August 2025</option>
+        <option value="September">September 2025</option>
+        <option value="October">October 2025</option>
+        <option value="November">November 2025</option>
+        <option value="December">December 2025</option>
+      </select>
+      <button id="exportDashboardTableBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export dashboard table to Excel">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+        Export Dashboard Table
+      </button>
+    </div>
+    <div id="dashboardTableContainer" class="overflow-x-auto"></div>
+
+    <!-- NEW: Faculty Core Scope - Monthly Table -->
+    <h2 class="text-2xl font-bold text-green-700 mt-12 mb-6">Faculty Core Scope - Monthly</h2>
+    <div class="mb-6 flex flex-wrap gap-4 items-center">
+      <label for="coreScopeDepartmentFilter" class="font-medium text-green-700 mr-2">Filter by Department:</label>
+      <select id="coreScopeDepartmentFilter" class="p-2 border rounded"></select>
+      <label for="coreScopeDesignationFilter" class="font-medium text-green-700 mr-2">Filter by Designation:</label>
+      <select id="coreScopeDesignationFilter" class="p-2 border rounded">
+        <option value="All">All</option>
+        <option value="AP">AP</option>
+        <option value="ASP">ASP</option>
+        <option value="Prof">Prof</option>
+      </select>
+      <label for="coreScopeMonthFilter" class="font-medium text-green-700 mr-2">Month:</label>
+      <select id="coreScopeMonthFilter" class="p-2 border rounded">
+        <option value="January">January 2026</option>
+        <option value="February">February 2026</option>
+        <option value="March">March 2026</option>
+        <option value="April">April 2026</option>
+        <option value="May">May 2026</option>
+        <option value="June">June 2026</option>
+        <option value="July">July 2025</option>
+        <option value="August">August 2025</option>
+        <option value="September">September 2025</option>
+        <option value="October">October 2025</option>
+        <option value="November">November 2025</option>
+        <option value="December">December 2025</option>
+      </select>
+      <!-- Percentage filter -->
+      <label for="coreScopePercentageFilter" class="font-medium text-green-700 mr-2">Percentage:</label>
+      <select id="coreScopePercentageFilter" class="p-2 border rounded">
+        <option value="All">All</option>
+        <option value="80plus">80% and above</option>
+        <option value="60to79">60% &ndash; 79%</option>
+        <option value="40to59">40% &ndash; 59%</option>
+        <option value="below40">Below 40%</option>
+        <option value="notsubmitted">Not Submitted</option>
+        <option value="custom">Custom Range&hellip;</option>
+      </select>
+      <!-- Custom percentage range inputs (shown only when custom is selected) -->
+      <div id="coreScopeCustomRangeWrap" class="hidden flex items-center gap-1">
+        <input type="number" id="coreScopeMinPct" min="0" max="100" placeholder="Min %" class="p-2 border rounded w-20 text-sm" />
+        <span class="text-green-700 font-bold">&ndash;</span>
+        <input type="number" id="coreScopeMaxPct" min="0" max="100" placeholder="Max %" class="p-2 border rounded w-20 text-sm" />
+      </div>
+      <!-- Sort control -->
+      <label for="coreScopeSortOrder" class="font-medium text-green-700 mr-2">Sort:</label>
+      <select id="coreScopeSortOrder" class="p-2 border rounded">
+        <option value="none">Default</option>
+        <option value="hightolow">High → Low</option>
+        <option value="lowtohigh">Low → High</option>
+      </select>
+
+      <!-- Search bar with autocomplete -->
+      <div class="relative">
+        <input type="text" id="coreScopeSearchInput" placeholder="Search faculty name&hellip;" autocomplete="off"
+          class="p-2 border rounded w-52 pr-8" />
+        <div id="coreScopeSearchSuggestions"
+          class="absolute z-50 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto w-full hidden left-0 top-full mt-1"></div>
+      </div>
+      <button id="exportCoreScopeTableBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export core scope table to Excel">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Export to Excel
+      </button>
+    </div>
+    <!-- Export Modal for Core Scope Table -->
+    <div id="exportCoreScopeModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-sm w-full p-6 relative">
+        <h3 class="text-lg font-bold text-green-700 mb-4">Export Core Scope Table</h3>
+        <button id="exportCoreScopeCurrentDeptBtn" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded mb-3">Current Department</button>
+        <button id="exportCoreScopeAllDeptBtn" class="w-full bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded mb-3">All Departments</button>
+        <button onclick="closeExportCoreScopeModal()" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded">Cancel</button>
+      </div>
+    </div>
+    <div id="coreScopeTableContainer" class="overflow-x-auto"></div>
+
+    <!-- Department Portfolios Table - REMOVED FOR S&H DASHBOARD -->
+
+    <!-- NEW: Consolidated Summary Table -->
+    <h2 class="text-2xl font-bold text-blue-700 mt-12 mb-6">Consolidated Faculty Performance Summary</h2>
+    <div class="mb-6 flex flex-wrap gap-4 items-center">
+      <label for="summaryDepartmentFilter" class="font-medium text-blue-700 mr-2">Filter by Department:</label>
+      <select id="summaryDepartmentFilter" class="p-2 border rounded"></select>
+      <label for="summaryMonthFilter" class="font-medium text-blue-700 mr-2">Month:</label>
+      <select id="summaryMonthFilter" class="p-2 border rounded">
+        <option value="January">January 2026</option>
+        <option value="February">February 2026</option>
+        <option value="March">March 2026</option>
+        <option value="April">April 2026</option>
+        <option value="May">May 2026</option>
+        <option value="June">June 2026</option>
+        <option value="July">July 2025</option>
+        <option value="August">August 2025</option>
+        <option value="September">September 2025</option>
+        <option value="October">October 2025</option>
+        <option value="November">November 2025</option>
+        <option value="December">December 2025</option>
+      </select>
+      <label for="summaryPercentageFilter" class="font-medium text-blue-700 mr-2">Overall Rating (%):</label>
+      <select id="summaryPercentageFilter" class="p-2 border rounded">
+        <option value="All">All</option>
+        <option value="80plus">80% and above</option>
+        <option value="60to79">60% – 79%</option>
+        <option value="40to59">40% – 59%</option>
+        <option value="below40">Below 40%</option>
+        <option value="notsubmitted">Not Submitted</option>
+        <option value="custom">Custom Range…</option>
+      </select>
+      <div id="summaryCustomRangeWrap" class="hidden flex items-center gap-1">
+        <input type="number" id="summaryMinPct" min="0" max="100" placeholder="Min %" class="p-2 border rounded w-20 text-sm" />
+        <span class="text-blue-700 font-bold">–</span>
+        <input type="number" id="summaryMaxPct" min="0" max="100" placeholder="Max %" class="p-2 border rounded w-20 text-sm" />
+      </div>
+      <label for="summarySortOrder" class="font-medium text-blue-700 mr-2">Sort by Overall Rating:</label>
+      <select id="summarySortOrder" class="p-2 border rounded">
+        <option value="none">Default</option>
+        <option value="hightolow">High → Low</option>
+        <option value="lowtohigh">Low → High</option>
+      </select>
+      <button id="exportSummaryTableBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export summary table to Excel">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+        Export Summary Table
+      </button>
+      <button id="exportSummaryTablePdfBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export summary table to PDF">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 15.5h2.5v1H8zm0-2h7v1H8zm0-2h7v1H8z"/></svg>
+        Export Summary PDF
+      </button>
+    </div>
+    <div id="summaryTableContainer" class="overflow-x-auto"></div>
+      
+    </div>
+
+    <!-- Modal for viewing Yearly form details from dashboard table -->
+    <div id="viewFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+        <button onclick="closeViewFormModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <h3 id="viewFormModalTitle" class="text-xl font-bold mb-4 text-purple-700">Faculty Form Details</h3>
+        <div id="viewFormModalContent"></div>
+      </div>
+    </div>
+
+    <!-- Modal for selecting faculty for PDF export -->
+    <div id="facultySelectionModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+      <div class="bg-white rounded-lg shadow-lg max-w-3xl w-full p-6 relative max-h-[90vh] overflow-y-auto">
+        <button onclick="closeFacultySelectionModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-600 text-2xl font-bold">&times;</button>
+        <h3 class="text-xl font-bold mb-4 text-blue-700">Select Faculty for PDF Export</h3>
+        <input id="facultySearchInput" placeholder="Search faculty or department..." class="w-full p-2 border rounded mb-3" />
+        <div id="facultySelectionList" class="flex flex-col gap-2 mb-4"></div>
+        <div class="flex gap-3 justify-end mt-4">
+          <button type="button" onclick="selectAllFacultyInModal()" class="px-3 py-2 bg-gray-200 rounded">Select All</button>
+          <button type="button" onclick="deselectAllFacultyInModal()" class="px-3 py-2 bg-gray-200 rounded">Deselect All</button>
+          <button type="button" onclick="confirmFacultySelectionAndExport()" class="px-3 py-2 bg-blue-600 text-white rounded">Export Selected</button>
+          <button type="button" onclick="closeFacultySelectionModal()" class="px-3 py-2 bg-gray-300 rounded">Cancel</button>
+        </div>
+
+      <script>
+        // Replaced export module: single clean exporter and button attachments
+        (function(){
+          function getValue(id, fallback=''){
+            return document.getElementById(id)?.value || fallback;
+          }
+
+          function exportTables(containerSelector, baseName){
+            try{
+              const container = document.querySelector(containerSelector);
+              const tables = container ? Array.from(container.querySelectorAll('table')) : [];
+              if (!tables.length) return false;
+              const wb = XLSX.utils.book_new();
+              tables.forEach((t,i)=>{
+                try{ const ws = XLSX.utils.table_to_sheet(t); XLSX.utils.book_append_sheet(wb, ws, (t.getAttribute('data-sheet-name')||`${baseName}_${i+1}`).substring(0,31)); }catch(e){console.warn('sheet convert',e)}
+              });
+              const filename = `${baseName}.xlsx`;
+              XLSX.writeFile(wb, filename);
+              return true;
+            }catch(e){console.error('exportTables error',e); alert('Export failed: '+(e&&e.message)); return false}
+          }
+
+          async function fetchAndExportCoreScope(month, dept, filename){
+            try{
+              let q = supabaseClient.from('Core_scope_SH').select('*').eq('Month', month);
+              if (dept && dept !== 'All') q = q.eq('Department', dept);
+              const { data, error } = await q;
+              if (error) throw error;
+              if (!data || !data.length) { alert('No Core Scope data'); return; }
+              const hdrs = Object.keys(data[0]).filter(k=>k!=='id');
+              const rows = [hdrs]; data.forEach(r=>rows.push(hdrs.map(h=>r[h]??'')));
+              const ws = XLSX.utils.aoa_to_sheet(rows); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'CoreScope'); XLSX.writeFile(wb, filename+'.xlsx');
+            }catch(e){console.error('fetchAndExportCoreScope',e); alert('Export failed');}
+          }
+
+          window.exportYearlyCurrentDepartment = function(){ const month=getValue('yearlyMonthFilter','January'); const dept=getValue('departmentFilter','All'); const name=`Yearly_Dashboard_${month}_${dept}`.replace(/\s+/g,'_'); if(!exportTables('#dashboardTableContainer',name)) alert('No dashboard table found for export'); };
+          window.exportYearlyAllDepartments = function(){ const month=getValue('yearlyMonthFilter','January'); const name=`Yearly_Dashboard_All_${month}`.replace(/\s+/g,'_'); if(!exportTables('#dashboardTableContainer',name)) alert('No dashboard table found for export'); };
+
+          window.exportCoreScopeTableToExcel = async function(mode){ const month=getValue('coreScopeMonthFilter','January'); const dept=getValue('coreScopeDepartmentFilter','All'); const base=`CoreScope_${mode||'current'}_${month}${dept&&dept!=='All'? '_'+dept.replace(/\s+/g,'_'):''}`; if(!exportTables('#coreScopeTableContainer',base)) await fetchAndExportCoreScope(month, mode==='current'?dept:null, base); };
+
+          window.openExportScopeModal = function(){ const m=document.getElementById('exportScopeModal'); if(m) m.classList.remove('hidden'); };
+          window.closeExportScopeModal = function(){ const m=document.getElementById('exportScopeModal'); if(m) m.classList.add('hidden'); };
+
+          window.openExportCoreScopeModal = function(){ const m=document.getElementById('exportCoreScopeModal'); if(m) m.classList.remove('hidden'); };
+          window.closeExportCoreScopeModal = function(){ const m=document.getElementById('exportCoreScopeModal'); if(m) m.classList.add('hidden'); };
+
+          function attach(){
+            const dbBtn=document.getElementById('exportDashboardTableBtn'); if(dbBtn) dbBtn.onclick=()=>{ const m=document.getElementById('exportScopeModal'); if(m) m.classList.remove('hidden'); };
+            const cur=document.getElementById('exportCurrentDeptBtn'); if(cur) cur.onclick=()=>window.exportYearlyCurrentDepartment();
+            const all=document.getElementById('exportAllDeptBtn'); if(all) all.onclick=()=>window.exportYearlyAllDepartments();
+            const core=document.getElementById('exportCoreScopeTableBtn'); if(core) core.onclick=()=>{ const m=document.getElementById('exportCoreScopeModal'); if(m) m.classList.remove('hidden'); };
+            const coreCur=document.getElementById('exportCoreScopeCurrentDeptBtn'); if(coreCur) coreCur.onclick=()=>window.exportCoreScopeTableToExcel('current');
+            const coreAll=document.getElementById('exportCoreScopeAllDeptBtn'); if(coreAll) coreAll.onclick=()=>window.exportCoreScopeTableToExcel('all');
+          }
+          setTimeout(attach, 400);
+          window.attachExportButtons = attach;
+          console.log('IQAC Export Diagnostics - clean exporter attached');
+        })();
+      </script>
+<script>
+// Export Scope Modal logic
+function openExportScopeModal() {
+  document.getElementById('exportScopeModal').classList.remove('hidden');
+}
+function closeExportScopeModal() {
+  document.getElementById('exportScopeModal').classList.add('hidden');
+}
+// Export Yearly Dashboard to Excel - Current Department
+async function exportYearlyCurrentDepartment() {
+  closeExportScopeModal();
+  
+  // Show loading overlay
+  let loadingDiv = document.createElement('div');
+  loadingDiv.id = 'exportLoadingOverlay';
+  loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+  loadingDiv.innerHTML = `<div style="background:white;padding:32px 48px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;align-items:center;gap:16px;">
+    <svg class='animate-spin' style='height:48px;width:48px;color:#7c3aed;' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+      <circle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'></circle>
+      <path class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'></path>
+    </svg>
+    <div style='font-size:18px;color:#7c3aed;font-weight:600;'>Exporting current department, please wait...</div>
+  </div>`;
+  document.body.appendChild(loadingDiv);
+  
+  try {
+    // Get selected month
+    let monthFilter = document.getElementById('yearlyMonthFilter');
+    let selectedMonth = monthFilter ? monthFilter.value : 'January';
+    
+    // Fetch faculty for current department AND their form submissions filtered by month
+    const [facultyRes, apRes, aspRes, profRes] = await Promise.all([
+      supabaseClient.from('Faculty').select('*').eq('department', selectedDepartment),
+      supabaseClient.from('AP_SH_Yearly').select('*').eq('Department', selectedDepartment).eq('Month', selectedMonth),
+      supabaseClient.from('ASP_SH_Yearly').select('*').eq('Department', selectedDepartment).eq('Month', selectedMonth),
+      supabaseClient.from('Prof_SH_Yearly').select('*').eq('Department', selectedDepartment).eq('Month', selectedMonth)
+    ]);
+    
+    const deptFaculty = facultyRes.data || [];
+    
+    // Particulars for each designation (S&H yearly): AP=5 items, ASP/Prof=6 items
+    const particularsMap = {
+      AP: [
+        'Present at Conferences.',
+        'Attend FDPs / workshop/Seminars',
+        'Engage in extension activities, and social outreach programs.',
+        'Membership in professional body',
+        'No of Proposals submitted in Manthan Portal'
+      ],
+      ASP: [
+        'Present at Conferences.',
+        'Attend FDPs / workshop/Seminars',
+        'Engage in extension activities, and social outreach programs.',
+        'Membership in professional body',
+        'No of Proposals submitted in Manthan Portal'
+      ],
+      Prof: [
+        'Present at Conferences.',
+        'Attend FDPs / workshop/Seminars',
+        'Engage in extension activities, and social outreach programs.',
+        'Membership in professional body',
+        'No of Proposals submitted in Manthan Portal'
+      ]
+    };
+    
+    // Fetch both Hod-workdone and hod-workdone_reject data
+    const [verifyRes2, rejectRes2] = await Promise.all([
+      supabaseClient.from('Hod-workdone').select('*'),
+      supabaseClient.from('hod-workdone_reject').select('*')
+    ]);
+    const verifyDataMap = verifyRes2.data || [];
+    const rejectDataMap = rejectRes2.data || [];
+    
+    // Create lookup maps for form submissions
+    const formDataMaps = {
+      AP: {},
+      ASP: {},
+      Prof: {}
+    };
+    
+    // Build lookup maps: key = facultyName (lowercase), value = latest row
+    [
+      { designation: 'AP', data: apRes.data || [] },
+      { designation: 'ASP', data: aspRes.data || [] },
+      { designation: 'Prof', data: profRes.data || [] }
+    ].forEach(({ designation, data }) => {
+      const grouped = {};
+      data.forEach(row => {
+        const facultyName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+        if (!facultyName) return;
+        if (!grouped[facultyName]) grouped[facultyName] = [];
+        grouped[facultyName].push(row);
+      });
+      
+      // Get latest row for each faculty
+      Object.keys(grouped).forEach(facultyName => {
+        const rows = grouped[facultyName];
+        formDataMaps[designation][facultyName] = chooseLatestRow(rows);
+      });
+    });
+    
+    // Process all faculty from current department
+    deptFaculty.forEach(fac => {
+      const dept = fac.department || selectedDepartment;
+      const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+      // Build per-designation sheets (AP=5, ASP=6, Prof=6)
+      const wb = XLSX.utils.book_new();
+
+      ['AP','ASP','Prof'].forEach(desigKey => {
+        const statusCount = desigKey === 'AP' ? 5 : 6;
+        const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', 'Verification Status', ...particularsMap[desigKey]];
+        const rows = [headers];
+
+        deptFaculty.forEach(fac => {
+          const designation = (fac.Designation || '').toUpperCase();
+          let desig = '';
+          if (designation === 'AP' || designation === 'ASSISTANT PROFESSOR') desig = 'AP';
+          else if (designation === 'ASP' || designation === 'ASSOCIATE PROFESSOR') desig = 'ASP';
+          else if (designation === 'PROF' || designation === 'PROFESSOR') desig = 'Prof';
+          else return;
+
+          if (desig !== desigKey) return;
+
+          const dept = fac.department || selectedDepartment;
+          const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+          const key = facultyName.trim().toLowerCase();
+          const formRow = formDataMaps[desig][key];
+
+          let percentage = 0;
+          const rowData = [dept, desig, facultyName];
+
+          if (formRow) {
+            let completedCount = 0;
+            for (let i = 1; i <= statusCount; i++) {
+              const status = (formRow[`Status_${i}`] || '').toString().toLowerCase();
+              if (status === 'completed' || status === 'completed and updated') {
+                completedCount++;
+              }
+            }
+            percentage = Math.round((completedCount / statusCount) * 100);
+            rowData.push(percentage + '%');
+            async function exportYearlyAllDepartments() {
+              closeExportScopeModal();
+
+              const loadingDiv = document.createElement('div');
+              loadingDiv.id = 'exportLoadingOverlay';
+              loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+              loadingDiv.innerHTML = `<div style="background:white;padding:32px 48px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;align-items:center;gap:16px;">
+                <svg class='animate-spin' style='height:48px;width:48px;color:#7c3aed;' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+                  <circle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'></circle>
+                  <path class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'></path>
+                </svg>
+                <div style='font-size:18px;color:#7c3aed;font-weight:600;'>Exporting all departments, please wait...</div>
+              </div>`;
+              document.body.appendChild(loadingDiv);
+
+              try {
+                const monthFilter = document.getElementById('yearlyMonthFilter');
+                const selectedMonth = monthFilter ? monthFilter.value : 'January';
+
+                const [facultyRes, apRes, aspRes, profRes] = await Promise.all([
+                  supabaseClient.from('Faculty').select('*'),
+                  supabaseClient.from('AP_SH_Yearly').select('*').eq('Month', selectedMonth),
+                  supabaseClient.from('ASP_SH_Yearly').select('*').eq('Month', selectedMonth),
+                  supabaseClient.from('Prof_SH_Yearly').select('*').eq('Month', selectedMonth)
+                ]);
+
+                const allFaculty = facultyRes.data || [];
+
+                const particularsMap = {
+                  AP: [
+                    'Present at Conferences.',
+                    'Attend FDPs / workshop/Seminars',
+                    'Engage in extension activities, and social outreach programs.',
+                    'Membership in professional body',
+                    'No of Proposals submitted in Manthan Portal'
+                  ],
+                  ASP: [
+                    'Present at Conferences.',
+                    'Attend FDPs / workshop/Seminars',
+                    'Engage in extension activities, and social outreach programs.',
+                    'Membership in professional body',
+                    'No of Proposals submitted in Manthan Portal'
+                  ],
+                  Prof: [
+                    'Present at Conferences.',
+                    'Attend FDPs / workshop/Seminars',
+                    'Engage in extension activities, and social outreach programs.',
+                    'Membership in professional body',
+                    'No of Proposals submitted in Manthan Portal'
+                  ]
+                };
+
+                const formDataMaps = { AP: {}, ASP: {}, Prof: {} };
+                [
+                  { designation: 'AP', data: apRes.data || [] },
+                  { designation: 'ASP', data: aspRes.data || [] },
+                  { designation: 'Prof', data: profRes.data || [] }
+                ].forEach(({ designation, data }) => {
+                  const grouped = {};
+                  data.forEach(row => {
+                    const dept = (row['Department'] || '').toString().trim();
+                    const facultyName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+                    if (!dept || !facultyName) return;
+                    const key = `${dept}|${facultyName}`;
+                    if (!grouped[key]) grouped[key] = [];
+                    grouped[key].push(row);
+                  });
+                  Object.keys(grouped).forEach(key => {
+                    const rows = grouped[key].sort((a, b) => (b.input_id || b.id || 0) - (a.input_id || a.id || 0));
+                    formDataMaps[designation][key] = rows[0];
+                  });
+                });
+
+                const wb = XLSX.utils.book_new();
+                ['AP','ASP','Prof'].forEach(desigKey => {
+                  const statusCount = desigKey === 'AP' ? 5 : 6;
+                  const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', 'Verification Status', ...particularsMap[desigKey]];
+                  const rows = [headers];
+
+                  allFaculty.forEach(fac => {
+                    const designation = (fac.Designation || '').toUpperCase();
+                    let desig = '';
+                    if (designation === 'AP' || designation === 'ASSISTANT PROFESSOR') desig = 'AP';
+                    else if (designation === 'ASP' || designation === 'ASSOCIATE PROFESSOR') desig = 'ASP';
+                    else if (designation === 'PROF' || designation === 'PROFESSOR') desig = 'Prof';
+                    else return;
+                    if (desig !== desigKey) return;
+
+                    const dept = fac.department || 'Unknown';
+                    const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+                    const key = `${dept}|${facultyName.trim().toLowerCase()}`;
+                    const formRow = formDataMaps[desig][key];
+
+                    let percentage = 0;
+                    let verificationStatus = 'Not Submitted';
+
+                    if (formRow) {
+                      let completedCount = 0;
+                      for (let i = 1; i <= statusCount; i++) {
+                        const status = (formRow[`Status_${i}`] || '').toString().toLowerCase();
+                        if (status === 'completed' || status === 'completed and updated') {
+                          completedCount++;
+                        }
+                      }
+                      percentage = Math.round((completedCount / statusCount) * 100);
+                      verificationStatus = 'Submitted';
+                    }
+
+                    const rowData = [dept, desig, facultyName, `${percentage}%`, verificationStatus];
+                    for (let i = 1; i <= statusCount; i++) {
+                      rowData.push(formRow ? (formRow[`Status_${i}`] || '-') : '-');
+                    }
+                    rows.push(rowData);
+                  });
+
+                  if (rows.length > 1) {
+                    const ws = XLSX.utils.aoa_to_sheet(rows);
+                    XLSX.utils.book_append_sheet(wb, ws, `${desigKey}_All`);
+                  }
+                });
+
+                let filename = 'Yearly_Mandatory_Scope_AllDepts';
+                if (selectedMonth) filename += `_${selectedMonth}`;
+                filename += '.xlsx';
+                XLSX.writeFile(wb, filename);
+
+              } catch (error) {
+                console.error('Export error:', error);
+                alert('Failed to export data. Please try again.');
+              } finally {
+                const overlay = document.getElementById('exportLoadingOverlay');
+                if (overlay) overlay.remove();
+              }
+            }
+
+            // Attach export button listeners after tables are rendered
+            function attachExportButtons() {
+              setTimeout(() => {
+                const dashboardTable = document.querySelector('#dashboardTableContainer table');
+                if (dashboardTable) {
+                  const exportBtn = document.getElementById('exportDashboardTableBtn');
+                  if (exportBtn) exportBtn.onclick = () => {
+                    const modal = document.getElementById('exportScopeModal');
+                    if (modal) return modal.classList.remove('hidden');
+                    let tries = 0;
+                    const ti = setInterval(() => {
+                      const m = document.getElementById('exportScopeModal');
+                      if (m) { m.classList.remove('hidden'); clearInterval(ti); }
+                      if (++tries > 10) clearInterval(ti);
+                    }, 300);
+                  };
+
+                  setTimeout(() => {
+                    const currentBtn = document.getElementById('exportCurrentDeptBtn');
+                    const allBtn = document.getElementById('exportAllDeptBtn');
+                    if (currentBtn) currentBtn.onclick = exportYearlyCurrentDepartment;
+                    if (allBtn) allBtn.onclick = exportYearlyAllDepartments;
+                  }, 400);
+                }
+              }, 300);
+            }
+
+            if (false) {
+              let matchingReject = rejectDataMap.find(v => v.input_id === formRow.input_id);
+              if (!matchingReject) {
+                matchingReject = rejectDataMap.find(v => {
+                  if (v.table_name && v.department === dept) {
+                    const tableNameLower = v.table_name.toLowerCase();
+                    const expectedLower = expectedTableName.toLowerCase();
+                    const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
+                    return (tableNameLower === expectedLower || 
+                            (tableNameLower.includes(desig.toLowerCase() + '_sh') && tableNameLower.includes('yearly'))) && 
+                           nameMatch;
+                  }
+                  return false;
+                });
+              }
+
+              if (matchingReject) {
+                verificationStatus = 'Rejected';
+              } else {
+                let matchingVerify = verifyDataMap.find(v => {
+                  if (v.input_id === formRow.input_id) {
+                    if (v.table_name) {
+                      const tableNameLower = v.table_name.toLowerCase();
+                      const expectedLower = expectedTableName.toLowerCase();
+                      return tableNameLower === expectedLower || 
+                             (tableNameLower.includes(desig.toLowerCase() + '_sh') && tableNameLower.includes('yearly'));
+                    }
+                    return true;
+                  }
+                  return false;
+                });
+
+                if (!matchingVerify) {
+                  matchingVerify = verifyDataMap.find(v => {
+                    if (v.table_name && v.department === dept) {
+                      const tableNameLower = v.table_name.toLowerCase();
+                      const expectedLower = expectedTableName.toLowerCase();
+                      const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
+                      return (tableNameLower === expectedLower || 
+                              (tableNameLower.includes(desig.toLowerCase() + '_sh') && tableNameLower.includes('yearly'))) && 
+                             nameMatch;
+                    }
+                    return false;
+                  });
+                }
+
+                verificationStatus = matchingVerify ? 'Verified' : 'Not Verified';
+              }
+            } else {
+              verificationStatus = 'Not Submitted';
+            }
+            rowData.push(verificationStatus);
+          } else {
+            rowData.push('0%');
+            rowData.push('Not Submitted');
+          }
+
+          for (let i = 1; i <= statusCount; i++) {
+            rowData.push(formRow ? (formRow[`Status_${i}`] || '-') : '-');
+          }
+
+          rows.push(rowData);
+            }
+        });
+
+        if (rows.length > 1) {
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          XLSX.utils.book_append_sheet(wb, ws, `${desigKey}_All`);
+        }
+      });
+    });
+      // Build filename
+      let filename = 'Yearly_Mandatory_Scope_AllDepts';
+      if (selectedMonth) filename += `_${selectedMonth}`;
+      filename += '.xlsx';
+        XLSX.writeFile(wb, filename);
+      } catch (error) {
+    console.error('Export error:', error);
+    alert('Failed to export data. Please try again.');
+  } finally {
+    // Remove loading overlay
+    const overlay = document.getElementById('exportLoadingOverlay');
+    if (overlay) overlay.remove();
+  }
+
+
+// Attach export button listeners after tables are rendered
+function attachExportButtons() {
+  setTimeout(() => {
+    const dashboardTable = document.querySelector('#dashboardTableContainer table');
+    if (dashboardTable) {
+      document.getElementById('exportDashboardTableBtn').onclick = () => {
+        const modal = document.getElementById('exportScopeModal');
+        if (modal) { modal.classList.remove('hidden'); return; }
+        let tries = 0;
+        const ti = setInterval(() => {
+          const m = document.getElementById('exportScopeModal');
+          if (m) { m.classList.remove('hidden'); clearInterval(ti); }
+          if (++tries > 10) clearInterval(ti);
+        }, 300);
+      };
+      
+      // Attach modal button logic
+      setTimeout(() => {
+        const currentBtn = document.getElementById('exportCurrentDeptBtn');
+        const allBtn = document.getElementById('exportAllDeptBtn');
+        if (currentBtn && allBtn) {
+            currentBtn.onclick = safeCallByName('exportYearlyCurrentDepartment');
+            allBtn.onclick = safeCallByName('exportYearlyAllDepartments');
+          }
+      }, 600);
+    }
+    
+      // Department portfolios export removed for S&H dashboard
+      if (false && document.getElementById('exportDepartmentPortfoliosBtn')) {
+        document.getElementById('exportDepartmentPortfoliosBtn').onclick = async () => {
+      // Export based on current filter (only monthly tables now)
+      const statusFilter = document.getElementById('portfolioStatusFilter');
+      const selectedStatus = statusFilter ? statusFilter.value : 'All';
+      const deptFilter = document.getElementById('portfolioDepartmentFilter');
+      const selectedDept = deptFilter ? deptFilter.value : 'All';
+      
+      // Get month filter value
+      const monthFilter = document.getElementById('portfolioMonthFilter');
+      let selectedMonth = monthFilter ? monthFilter.value : 'January';
+      
+      // Fetch all faculty data
+      const { data, error } = await supabaseClient
+        .from('Faculty')
+        .select('*');
+      if (error || !data || data.length === 0) {
+        alert('Failed to load department portfolios for export.');
+        return;
+      }
+      // Get all unique departments
+      let departments = Array.from(new Set(data.map(row => row.department).filter(Boolean)));
+      if (selectedDept !== 'All') departments = [selectedDept];
+      // Portfolio headers (only 8 monthly forms)
+      const portfolioHeaders = [
+        { label: "1. Training & Placement", table: 'form1-monthly' },
+        { label: "2. Class Advisor", table: 'form2-monthly' },
+        { label: "3. Info & Contribution", table: 'form3-monthly' },
+        { label: "4. Outcome & Exam Cell", table: 'form4-monthly' },
+        { label: "5. Continuous Improvement", table: 'form5-monthly' },
+        { label: "6. T&L Process (IQAC)", table: 'form6_monthly' },
+        { label: "7. Student Support", table: 'form7-monthly' },
+        { label: "8. Facilities & Lab", table: 'form8-monthly' }
+      ];
+      const headers = ["Department", "Designation", "Faculty Name", "Portfolio Name", "Percentage", "Verification Status"];
+      
+      // Fetch all relevant form data for each portfolio column
+      const formTableNames = portfolioHeaders.map(h => h.table);
+      const formTableData = {};
+      for (const tableName of formTableNames) {
+        let query = supabaseClient.from(tableName).select('*');
+        const { data: tdata } = await query;
+        formTableData[tableName] = tdata || [];
+      }
+      
+      // Fetch both Hod-workdone and hod-workdone_reject data
+      const [verifyRes, rejectRes] = await Promise.all([
+        supabaseClient.from('Hod-workdone').select('*'),
+        supabaseClient.from('hod-workdone_reject').select('*')
+      ]);
+      const verifyDataMap = verifyRes.data || [];
+      const rejectDataMap = rejectRes.data || [];
+      const exportRows = [];
+      for (const dept of departments) {
+        const facultyList = data.filter(fac => (fac.department || 'Unknown') === dept);
+        
+        // Create one row per faculty per portfolio assignment
+        for (const fac of facultyList) {
+          const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+          const designation = fac.Designation || fac.designation || 'N/A';
+          
+          // Check which portfolios this faculty is assigned to
+          for (const h of portfolioHeaders) {
+            const formKey = h.label.match(/\d+/) ? `form${h.label.match(/\d+/)[0]}` : '';
+            const isAssigned = fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes';
+            
+            if (isAssigned) {
+              const tableName = h.table;
+              // Robust percentage calculation (same as UI)
+              let percentage = 0;
+              let filled = false;
+              const tdata = formTableData[tableName];
+              let bestRow = null;
+              if (tdata && tdata.length > 0) {
+                // Robust faculty name matching with month filtering
+                const filteredRows = tdata.filter(row => {
+                  const rowName = row['Portfolio Member Name:'] || row['Portfolio Member Name'] || row['Portfolio Memeber Name'] || row['faculty_name'] || row['Faculty Name'] || row['Name'] || '';
+                  const rowMonth = row['Month'] || row['month'] || row['Month:'] || '';
+                  const nameMatches = rowName.toString().trim().toLowerCase() === facultyName.toString().trim().toLowerCase();
+                  const deptMatches = (row['Department'] || row['Department:'] || '').toString().trim().toLowerCase() === dept.toString().trim().toLowerCase();
+                  const monthMatches = rowMonth.toString().trim().toLowerCase() === selectedMonth.toLowerCase();
+                  return nameMatches && deptMatches && monthMatches;
+                });
+                if (filteredRows.length > 0) {
+                  filled = true;
+                  bestRow = chooseLatestRow(filteredRows);
+                }
+              }
+              if (bestRow) {
+                let completedCount = 0;
+                const totalCount = 8;
+                for (let i = 1; i <= 8; i++) {
+                  const val = (bestRow[`Status_${i}`] || '').toString().trim().toLowerCase();
+                  if (val === 'completed' || val === 'completed and updated') {
+                    completedCount++;
+                  }
+                  // All statuses (including 'Not Applicable') are included in denominator
+                }
+                percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+              } else {
+                percentage = 0;
+              }
+              
+              // Filter by status
+              if (selectedStatus === 'Completed' && !filled) continue;
+              if (selectedStatus === 'Pending' && filled) continue;
+              
+              // Check verification status
+              let verificationStatus = 'Not Submitted';
+              if (bestRow && bestRow.input_id) {
+                const formNumber = tableName.match(/form\d+/)?.[0] || tableName;
+                
+                // Check if rejected first
+                const matchingReject = rejectDataMap.find(v => 
+                  v.department === dept &&
+                  v.portfolio_member_name?.toLowerCase() === facultyName.toLowerCase() &&
+                  ((v.table_name && v.table_name.toLowerCase().includes(formNumber.toLowerCase())) || 
+                   v.input_id === bestRow.input_id)
+                );
+                
+                if (matchingReject) {
+                  const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
+                  const reason = matchingReject.Commands || 'No reason';
+                  verificationStatus = `Rejected (${rejectDate}) - ${reason}`;
+                } else {
+                  // Check if verified
+                  const matchingVerify = verifyDataMap.find(v => 
+                    v.department === dept &&
+                    v.portfolio_member_name?.toLowerCase() === facultyName.toLowerCase() &&
+                    ((v.table_name && v.table_name.toLowerCase().includes(formNumber.toLowerCase())) || 
+                     v.input_id === bestRow.input_id)
+                  );
+                  
+                  if (matchingVerify) {
+                    const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
+                    verificationStatus = `Verified (${verifyDate})`;
+                  } else {
+                    verificationStatus = 'Pending Verification';
+                  }
+                }
+              }
+              
+              // Create row: Department, Designation, Faculty Name, Portfolio Name, Percentage, Verification
+              const percentageDisplay = filled ? `${percentage}%` : `0% (Not Submitted)`;
+              exportRows.push([dept, designation, facultyName, h.label, percentageDisplay, verificationStatus]);
+            }
+          }
+        }
+      }
+      
+      // Sort export rows: first by department, then by portfolio number (1-8)
+      exportRows.sort((a, b) => {
+        // First sort by department (index 0)
+        if (a[0] !== b[0]) {
+          return a[0].localeCompare(b[0]);
+        }
+        // Then sort by portfolio number (extract from index 3 - Portfolio Name)
+        const aNum = parseInt(a[3].match(/^\d+/)?.[0] || '99');
+        const bNum = parseInt(b[3].match(/^\d+/)?.[0] || '99');
+        return aNum - bNum;
+      });
+      
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...exportRows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Portfolios');
+      XLSX.writeFile(wb, `IQAC_Portfolios_${selectedMonth}_${selectedDept}.xlsx`);
+        };
+      }
+  }, 500);
+}
+  // Department portfolios table removed for S&H dashboard
+    async function loadDepartmentPortfoliosIQAC_DISABLED() {
+      // Fetch all faculty
+      const { data, error } = await supabaseClient
+        .from('Faculty')
+        .select('*');
+      if (error || !data || data.length === 0) {
+        document.getElementById('departmentPortfoliosContainer').innerHTML = '<div class="text-red-500">Failed to load department portfolios.</div>';
+        return;
+      }
+      // Get all unique departments
+      const departments = Array.from(new Set(data.map(row => row.department).filter(Boolean)));
+      // Setup department filter dropdown
+      const deptFilter = document.getElementById('portfolioDepartmentFilter');
+      if (!deptFilter.dataset.initialized) {
+        deptFilter.innerHTML = '<option value="All">All Departments</option>' + departments.map(d => `<option value="${d}">${d}</option>`).join('');
+        deptFilter.dataset.initialized = 'true';
+      }
+      // Setup status filter dropdown
+      const statusFilter = document.getElementById('portfolioStatusFilter');
+      // Get selected filter values (re-read each time for correct filtering)
+      const selectedDept = deptFilter.options[deptFilter.selectedIndex]?.value || 'All';
+      const selectedStatus = statusFilter.options[statusFilter.selectedIndex]?.value || 'All';
+      
+      // Get month filter value
+      const monthFilter = document.getElementById('portfolioMonthFilter');
+      let selectedMonth = monthFilter.options[monthFilter.selectedIndex]?.value || 'January';
+
+  // Portfolio headers and their corresponding monthly tables (only 8 monthly forms)
+  const portfolioHeaders = [
+    { label: "1. Training & Placement", table: 'form1-monthly' },
+    { label: "2. Class Advisor", table: 'form2-monthly' },
+    { label: "3. Info & Contribution", table: 'form3-monthly' },
+    { label: "4. Outcome & Exam Cell", table: 'form4-monthly' },
+    { label: "5. Continuous Improvement", table: 'form5-monthly' },
+    { label: "6. T&L Process (IQAC)", table: 'form6_monthly' },
+    { label: "7. Student Support", table: 'form7-monthly' },
+    { label: "8. Facilities & Lab", table: 'form8-monthly' }
+  ];
+  let html = '';
+  html += '<h3 class="text-xl font-bold text-orange-500 mb-2">Department Portfolios</h3>';
+  html += '<div style="overflow-x:auto; max-height:600px; overflow-y:auto; border:1px solid #9ca3af; border-radius:8px;">';
+  html += '<table class="w-full text-sm bg-white" style="border-collapse:collapse;">';
+  html += '<thead class="bg-orange-100 text-orange-700" style="position:sticky; top:0; z-index:10;">';
+  html += '<tr>';
+  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:120px;">Department</th>';
+  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:100px;">Designation</th>';
+  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:180px;">Faculty Name</th>';
+  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:200px;">Portfolio Name</th>';
+  html += '<th class="px-3 py-2 border border-gray-400 text-left" style="background:#FEF3C7; min-width:150px;">Percentage</th>';
+  html += '<th class="px-3 py-2 border border-gray-400 text-center" style="background:#FEF3C7; min-width:100px;">Verification</th>';
+  html += '</tr></thead>';
+  html += '<tbody>';
+  
+  // Build rows: one row per faculty per portfolio
+  const tableRows = [];
+  for (const dept of departments) {
+    if (selectedDept !== 'All' && dept !== selectedDept) continue;
+    const facultyList = data.filter(fac => (fac.department || 'Unknown') === dept);
+    
+    for (const fac of facultyList) {
+      const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+      const designation = fac.Designation || fac.designation || 'N/A';
+      
+      // Check which portfolios this faculty is assigned to
+      for (const h of portfolioHeaders) {
+        const formKey = h.label.match(/\d+/) ? `form${h.label.match(/\d+/)[0]}` : '';
+        const isAssigned = fac[formKey] && fac[formKey].trim().toLowerCase() === 'yes';
+        
+        if (isAssigned) {
+          const rowId = `${dept.replace(/[^a-zA-Z0-9]/g, '')}-${formKey}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
+          tableRows.push({
+            dept,
+            designation,
+            facultyName,
+            portfolioName: h.label,
+            tableName: h.table,
+            formKey,
+            rowId
+          });
+        }
+      }
+    }
+  }
+  
+  // Sort rows: first by department, then by portfolio number (1-8)
+  tableRows.sort((a, b) => {
+    // First sort by department
+    if (a.dept !== b.dept) {
+      return a.dept.localeCompare(b.dept);
+    }
+    // Then sort by portfolio number (extract number from portfolioName like "1. Training & Placement")
+    const aNum = parseInt(a.portfolioName.match(/^\d+/)?.[0] || '99');
+    const bNum = parseInt(b.portfolioName.match(/^\d+/)?.[0] || '99');
+    return aNum - bNum;
+  });
+  
+  // Render rows
+  for (const row of tableRows) {
+    html += `<tr class="hover:bg-gray-50">`;
+    html += `<td class="px-3 py-2 border border-gray-400" style="min-width:120px;">${row.dept}</td>`;
+    html += `<td class="px-3 py-2 border border-gray-400" style="min-width:100px;">${row.designation}</td>`;
+    html += `<td class="px-3 py-2 border border-gray-400" style="min-width:180px;">${row.facultyName}</td>`;
+    html += `<td class="px-3 py-2 border border-gray-400" style="min-width:200px;">${row.portfolioName}</td>`;
+    html += `<td class="px-3 py-2 border border-gray-400" style="min-width:150px;" id="percent-${row.rowId}">Loading...</td>`;
+    html += `<td class="px-3 py-2 border border-gray-400 text-center" style="min-width:100px;" id="verify-${row.rowId}">-</td>`;
+    html += `</tr>`;
+  }
+  
+  html += '</tbody></table></div>';
+  document.getElementById('departmentPortfoliosContainer').innerHTML = html;
+
+      // Async percentage calculation for each faculty-portfolio combination
+      for (const row of tableRows) {
+        (async () => {
+          let filled = false;
+          let percentage = 0;
+          let query = supabaseClient.from(row.tableName).select('*').eq('Department', row.dept);
+          const { data: formData, error } = await query;
+          let bestRow = null;
+          if (!error && formData && formData.length > 0) {
+            // Robust faculty name matching with month filtering
+            const filteredRows = formData.filter(dataRow => {
+              const rowName = dataRow['Portfolio Member Name:'] || dataRow['Portfolio Member Name'] || dataRow['Portfolio Memeber Name'] || dataRow['faculty_name'] || dataRow['Faculty Name'] || dataRow['Name'] || '';
+              // Check month field (Month, month, or Month:)
+              const rowMonth = dataRow['Month'] || dataRow['month'] || dataRow['Month:'] || '';
+              const nameMatches = rowName.toString().trim().toLowerCase() === row.facultyName.toString().trim().toLowerCase();
+              const monthMatches = rowMonth.toString().trim().toLowerCase() === selectedMonth.toLowerCase();
+              return nameMatches && monthMatches;
+            });
+            if (filteredRows.length > 0) {
+              filled = true;
+              // Use the latest row (prefer updated_at, then input_id/id)
+              bestRow = chooseLatestRow(filteredRows);
+            }
+          }
+          // Calculate percentage if bestRow exists (fixed denominator: 8)
+          if (bestRow) {
+            let completedCount = 0;
+            const totalCount = 8;
+            for (let i = 1; i <= 8; i++) {
+              // Try both Status_i (underscore) and Status-i (hyphen) formats
+              const val = (bestRow[`Status_${i}`] || bestRow[`Status-${i}`] || '').toString().trim().toLowerCase();
+              
+              if (val === 'completed' || val === 'completed and updated') {
+                completedCount++;
+              }
+              // All statuses (including 'Not Applicable') are included in denominator
+            }
+            percentage = Math.round((completedCount / totalCount) * 100);
+          } else {
+            percentage = 0;
+          }
+          
+          // Update the percentage cell
+          let percentCell = document.getElementById(`percent-${row.rowId}`);
+          if (percentCell) {
+            // Apply status filter
+            if (selectedStatus === 'Completed' && !filled) {
+              percentCell.parentElement.style.display = 'none';
+              return;
+            }
+            if (selectedStatus === 'Pending' && filled) {
+              percentCell.parentElement.style.display = 'none';
+              return;
+            }
+            
+            // Display percentage with color coding (this will be overwritten if verified)
+            if (filled) {
+              percentCell.innerHTML = `<span class="font-semibold ${percentage >= 70 ? 'text-green-600' : percentage >= 50 ? 'text-yellow-600' : 'text-red-600'}">${percentage}%</span>`;
+            } else {
+              percentCell.innerHTML = `<span class="text-red-600 font-semibold">0% (Not Submitted)</span>`;
+            }
+          }
+          
+          // Check verification status AFTER setting initial percentage
+          // This allows the validation score to override the calculated percentage
+          const verifyCell = document.getElementById(`verify-${row.rowId}`);
+          if (verifyCell && bestRow) {
+            // Extract form number from table name (e.g., "form2-monthly" -> "form2")
+            const formNumber = row.tableName.match(/form\d+/)?.[0] || row.tableName;
+            
+            // Check if verified
+            const { data: verifyData } = await supabaseClient
+              .from('Hod-workdone')
+              .select('*')
+              .eq('department', row.dept)
+              .ilike('portfolio_member_name', row.facultyName);
+            
+            // First, try to find exact match by input_id AND table_name
+            let matchingVerify = verifyData?.find(v => {
+              const inputIdMatch = v.input_id === bestRow.input_id;
+              const tableNameMatch = v.table_name && v.table_name.toLowerCase() === row.tableName.toLowerCase();
+              return inputIdMatch && tableNameMatch;
+            });
+            
+            // If no exact match, try partial matching
+            if (!matchingVerify) {
+              matchingVerify = verifyData?.find(v => {
+                // Match by table_name (form6_monthly should match form6)
+                const tableNameMatch = v.table_name && v.table_name.toLowerCase() === row.tableName.toLowerCase();
+                // Also try partial match for the form number
+                const formNumberMatch = v.table_name && v.table_name.toLowerCase().includes(formNumber.toLowerCase());
+                const inputIdMatch = v.input_id === bestRow.input_id;
+                return tableNameMatch || formNumberMatch || inputIdMatch;
+              });
+            }
+            
+            if (matchingVerify) {
+              const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
+              verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
+              
+              // Update percentage with validation score from Hod-workdone if verified
+              const currentPercentCell = document.getElementById(`percent-${row.rowId}`);
+              if (currentPercentCell) {
+                // Check if validation_score exists and is not null/undefined
+                const rawScore = matchingVerify.validation_score;
+                if (rawScore != null && rawScore !== '') {
+                  const validationScore = parseFloat(rawScore);
+                  if (!isNaN(validationScore)) {
+                    const percentageClass = validationScore >= 70 ? 'text-green-600' : validationScore >= 50 ? 'text-yellow-600' : 'text-red-600';
+                    currentPercentCell.innerHTML = `<span class="font-semibold ${percentageClass}">${Math.round(validationScore)}%</span>`;
+                  }
+                }
+              }
+            } else {
+              verifyCell.innerHTML = '<span class="text-red-600 font-bold text-lg" title="Not verified">✗</span>';
+            }
+          } else if (verifyCell) {
+            verifyCell.innerHTML = '<span class="text-gray-400" title="No data submitted">-</span>';
+          }
+        })();
+      }
+
+      // Add filter event listeners (department, month, and status filters)
+  monthFilter.onchange = deptFilter.onchange = statusFilter.onchange = () => loadDepartmentPortfoliosIQAC();
+  
+  // Setup date filter event listeners
+  if (!document.getElementById('applyWeekFilter').dataset.listenerAdded) {
+    document.getElementById('applyWeekFilter').addEventListener('click', () => {
+      loadDepartmentPortfoliosIQAC();
+    });
+    
+    document.getElementById('resetToCurrentWeek').addEventListener('click', () => {
+      setCurrentWeekDates();
+      loadDepartmentPortfoliosIQAC();
+    });
+    
+    document.getElementById('weekStartDate').addEventListener('change', () => {
+      loadDepartmentPortfoliosIQAC();
+    });
+    
+    document.getElementById('weekEndDate').addEventListener('change', () => {
+      loadDepartmentPortfoliosIQAC();
+    });
+    
+    document.getElementById('applyWeekFilter').dataset.listenerAdded = 'true';
+  }
+    }
+    
+    // Helper function to set current week dates
+    function setCurrentWeekDates() {
+      const now = new Date();
+      const currentDay = now.getDay();
+      const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + mondayOffset);
+      
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      
+      document.getElementById('weekStartDate').value = monday.toISOString().split('T')[0];
+      document.getElementById('weekEndDate').value = sunday.toISOString().split('T')[0];
+    }
+  </script>
+  <script>
+    // Core Scope modal handlers and Excel exporter
+    function openExportCoreScopeModal() {
+      const m = document.getElementById('exportCoreScopeModal');
+      if (m) m.classList.remove('hidden');
+    }
+    function closeExportCoreScopeModal() {
+      const m = document.getElementById('exportCoreScopeModal');
+      if (m) m.classList.add('hidden');
+    }
+    // Expose on window for safeCallByName usage
+    window.openExportCoreScopeModal = openExportCoreScopeModal;
+    window.closeExportCoreScopeModal = closeExportCoreScopeModal;
+
+    // Helper: apply the active UI filters to a coreScopeAllRowsData array
+    function applyCoreScopeUIFilters(rows) {
+      const percentFilter = (document.getElementById('coreScopePercentageFilter') || {}).value || 'All';
+      const searchQuery   = ((document.getElementById('coreScopeSearchInput')      || {}).value || '').trim().toLowerCase();
+      const minPct = parseFloat((document.getElementById('coreScopeMinPct') || {}).value);
+      const maxPct = parseFloat((document.getElementById('coreScopeMaxPct') || {}).value);
+      return rows.filter(r => {
+        if (percentFilter !== 'All') {
+          if (percentFilter === 'notsubmitted') { if (r.percentage !== null) return false; }
+          else if (percentFilter === '80plus')  { if (r.percentage === null || r.percentage < 80) return false; }
+          else if (percentFilter === '60to79')  { if (r.percentage === null || r.percentage < 60 || r.percentage > 79) return false; }
+          else if (percentFilter === '40to59')  { if (r.percentage === null || r.percentage < 40 || r.percentage > 59) return false; }
+          else if (percentFilter === 'below40') { if (r.percentage === null || r.percentage >= 40) return false; }
+          else if (percentFilter === 'custom')  {
+            if (r.percentage === null) return false;
+            if (!isNaN(minPct) && r.percentage < minPct) return false;
+            if (!isNaN(maxPct) && r.percentage > maxPct) return false;
+          }
+        }
+        if (searchQuery && !r.facultyName.toLowerCase().includes(searchQuery)) return false;
+        return true;
+      });
+    }
+
+    // Wait until window.XLSX is ready (CDN or fallback may still be loading)
+    function waitForXLSX(ms) {
+      return new Promise(function(resolve, reject) {
+        if (window.XLSX && window.XLSX.utils) return resolve();
+        var waited = 0;
+        var interval = setInterval(function() {
+          waited += 50;
+          if (window.XLSX && window.XLSX.utils) { clearInterval(interval); return resolve(); }
+          if (waited >= (ms || 10000)) { clearInterval(interval); reject(new Error('XLSX library did not load in time. Please refresh the page and try again.')); }
+        }, 50);
+      });
+    }
+
+    async function exportCoreScopeTableToExcel(scope) {
+      closeExportCoreScopeModal();
+      const loadingDiv = document.createElement('div');
+      loadingDiv.id = 'exportLoadingOverlay';
+      loadingDiv.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+      loadingDiv.innerHTML = `<div style="background:white;padding:32px 48px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <svg class='animate-spin' style='height:48px;width:48px;color:#16a34a;' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+          <circle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'></circle>
+          <path class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z'></path>
+        </svg>
+        <div style='font-size:18px;color:#16a34a;font-weight:600;'>Exporting Core Scope data, please wait...</div>
+      </div>`;
+      document.body.appendChild(loadingDiv);
+
+      try {
+        await waitForXLSX();
+        const selectedDept  = window.selectedCoreScopeDepartment || 'All';
+        const selectedDesig = window.selectedCoreScopeDesignation || 'All';
+        const selectedMonth = window.selectedCoreScopeMonth || document.getElementById('coreScopeMonthFilter')?.value || 'January';
+
+        const exportFieldLabels = [
+          'Teaching & Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+          'Teaching & Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+          'Teaching & Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+          'Teaching & Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+          'Student Mentorship & Support: Act as academic mentor and guide 30 students on coursework, projects, and career planning.',
+          'Student Mentorship & Support: Monitor student attendance, performance, and well-being.',
+          'Student Mentorship & Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+          'Student Mentorship & Support: Maintain the Mentor book for assigned mentee.',
+          'Student Mentorship & Support: Consolidate innovative course material, Lab manuals',
+          'Contribute to accreditation processes (NBA),(NAAC) and quality Assurance initiatives.',
+          'Serve on academic and administrative committees.',
+          'ADMINISTRATIVE DUTIES: MAINTAIN ACADEMIC RECORDS, COURSE FILES, LOG BOOK AND STUDENT EVALUATIONS',
+          'Library Utilization'
+        ];
+
+        const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+        let sourceRows = [];
+
+        if (scope === 'current') {
+          sourceRows = window.coreScopeAllRowsData || [];
+        } else {
+          // scope === 'all': fetch fresh data for all S&H departments
+          const [facRes, csRes] = await Promise.all([
+            supabaseClient.from('Faculty').select('*').in('department', shDepartments),
+            supabaseClient.from('Core_scope_SH').select('*').eq('Month', selectedMonth)
+          ]);
+          if (facRes.error) throw facRes.error;
+
+          const allFaculty = facRes.data || [];
+          const allCS      = csRes.data  || [];
+
+          for (const fac of allFaculty) {
+            const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+            const dept        = fac.department || 'Unknown';
+            const designation = fac.Designation || 'N/A';
+            const desigUpper  = designation.toUpperCase();
+
+            let desigDisplay = designation;
+            if (desigUpper === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
+            else if (desigUpper === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
+            else if (desigUpper === 'PROFESSOR') desigDisplay = 'Prof';
+
+            let facNamesToTry = [];
+            if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
+            if (fac.Name) facNamesToTry.push(fac.Name);
+            if (fac.email) facNamesToTry.push(fac.email);
+            facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n||'').toString().trim().toLowerCase()).filter(Boolean)));
+
+            const matches = allCS
+              .filter(r => facNamesToTry.includes((r['Portfolio Member Name']||'').toString().trim().toLowerCase()))
+              .sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
+            const row = matches[0] || null;
+
+            let completedCount = 0;
+            if (row) { for (let i = 1; i <= 13; i++) { const v = (row[`Status_${i}`]||'').toLowerCase(); if (v === 'completed' || v === 'completed and updated') completedCount++; } }
+            const percentage = row ? Math.round((completedCount / 13) * 100) : null;
+
+            const fieldStatuses = [];
+            for (let i = 1; i <= 13; i++) fieldStatuses.push(row ? (row[`Status_${i}`] || '-') : '-');
+
+            sourceRows.push({ dept, designation, desigDisplay, facultyName, percentage, row, fieldStatuses });
+          }
+        }
+
+        const filtered = applyCoreScopeUIFilters(sourceRows);
+        // Apply current sort order so exported rows match the table
+        const sortVal = (document.getElementById('coreScopeSortOrder') || {}).value || 'none';
+        if (sortVal === 'hightolow') {
+          filtered.sort((a, b) => (b.percentage ?? -1) - (a.percentage ?? -1));
+        } else if (sortVal === 'lowtohigh') {
+          filtered.sort((a, b) => (a.percentage ?? 101) - (b.percentage ?? 101));
+        }
+
+        if (filtered.length === 0) {
+          alert('No records match the current filters. Adjust filters and try again.');
+          return;
+        }
+
+        const headers = ['Department', 'Designation', 'Faculty Name', 'Percentage', ...exportFieldLabels];
+        const xlsRows = filtered.map(r => [
+          r.dept,
+          r.desigDisplay,
+          r.facultyName,
+          r.percentage !== null ? `${r.percentage}%` : '0% (Not Submitted)',
+          ...r.fieldStatuses
+        ]);
+
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...xlsRows]);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Core Scope');
+
+        // Apply percentage-based fill colors to the Percentage column (D)
+        // 0-25: red, 26-50: orange, 51-75: yellow, 76-100: green
+        try {
+          for (let i = 0; i < filtered.length; i++) {
+            const pct = filtered[i].percentage;
+            const rowNum = i + 2;
+            const cellAddr = 'D' + rowNum;
+            const cell = ws[cellAddr];
+            if (!cell) continue;
+            if (pct === null || pct === undefined || isNaN(pct)) continue;
+            let color = '';
+            if (pct <= 25) color = 'FF0000';
+            else if (pct <= 50) color = 'FFA500';
+            else if (pct <= 75) color = 'FFFF00';
+            else color = '16A34A';
+            cell.s = { fill: { patternType: 'solid', fgColor: { rgb: color } } };
+          }
+        } catch (e) {
+          console.warn('Could not apply cell styles to Core Scope SH export:', e);
+        }
+
+        let filename = `CoreScope_SH_${selectedMonth}`;
+        if (scope === 'current') {
+          if (selectedDept  !== 'All') filename += `_${selectedDept.replace(/\s+/g,'_')}`;
+          if (selectedDesig !== 'All') filename += `_${selectedDesig}`;
+        } else {
+          filename += '_All_SH_Departments';
+        }
+        const pf = (document.getElementById('coreScopePercentageFilter')||{}).value;
+        const sf = (document.getElementById('coreScopeSortOrder')||{}).value || 'none';
+        if (pf && pf !== 'All') filename += `_${pf}`;
+        if (sf && sf !== 'none') filename += `_${sf}`;
+        filename += '.xlsx';
+
+        XLSX.writeFile(wb, filename);
+      } catch (err) {
+        console.error('CoreScope SH export failed', err);
+        alert('Failed to export Core Scope table. See console for details.');
+      } finally {
+        const overlay = document.getElementById('exportLoadingOverlay');
+        if (overlay) overlay.remove();
+      }
+    }
+    window.exportCoreScopeTableToExcel = exportCoreScopeTableToExcel;
+
+    // Diagnostic: confirm button exists and log handler status
+    setTimeout(() => {
+      try {
+        const btn = document.getElementById('exportCoreScopeTableBtn');
+        console.log('DIAG: exportCoreScopeTableBtn found:', !!btn);
+        console.log('DIAG: openExportCoreScopeModal typeof:', typeof window.openExportCoreScopeModal);
+        console.log('DIAG: exportCoreScopeTableToExcel typeof:', typeof window.exportCoreScopeTableToExcel);
+        if (btn) {
+          console.log('DIAG: current onclick property:', btn.onclick);
+          btn.addEventListener('click', e => {
+            console.log('DIAG: exportCoreScopeTableBtn click event reached listener', e);
+          });
+        }
+      } catch (e) { console.error('DIAG error', e); }
+    }, 500);
+
+      const supabaseClient = window.supabase.createClient(
+      "https://cbhodgwaazmjszkujrti.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+
+    // Helper: choose the latest row from an array of rows.
+    // Preference order: `input_id`, then `id`, then `updated_at`, then `created_at`.
+    function chooseLatestRow(rows) {
+      if (!rows || rows.length === 0) return null;
+      return rows.reduce((latest, current) => {
+        if (!latest) return current;
+        const latestInput = latest.input_id || latest.id || 0;
+        const currentInput = current.input_id || current.id || 0;
+        if (currentInput > latestInput) return current;
+        const latestTime = latest.updated_at ? new Date(latest.updated_at).getTime() : 0;
+        const currentTime = current.updated_at ? new Date(current.updated_at).getTime() : 0;
+        if (currentTime && currentTime > latestTime) return current;
+        const latestCreated = latest.created_at ? new Date(latest.created_at).getTime() : 0;
+        const currentCreated = current.created_at ? new Date(current.created_at).getTime() : 0;
+        if (currentCreated && currentCreated > latestCreated) return current;
+        return latest;
+      }, null);
+    }
+
+    function viewMappedDashboardForm(cacheKey, modalTitle = 'Faculty Form Details') {
+      document.getElementById('viewFormModal').classList.remove('hidden');
+      document.getElementById('viewFormModalTitle').textContent = modalTitle;
+      document.getElementById('viewFormModalContent').innerHTML = '<div class="text-center text-gray-500">Loading form data...</div>';
+
+      const cache = window.dashboardMappedFormCache || {};
+      const cached = cache[cacheKey];
+      if (!cached || !cached.rowContext || !cached.details) {
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Submitted form data not found.</div>';
+        return;
+      }
+
+      if (typeof getFormModalContent !== 'function') {
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Form modal mapper not loaded.</div>';
+        return;
+      }
+
+      try {
+        const html = getFormModalContent(cached.rowContext, cached.details);
+        document.getElementById('viewFormModalContent').innerHTML = html;
+      } catch (error) {
+        console.error('Mapper render error:', error);
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Failed to render form details.</div>';
+      }
+    }
+
+    // --- NEW: Faculty Core Scope - Monthly Table from Core_scope table ---
+    let allCoreScopeDepartments = [];
+    let selectedCoreScopeDepartment = '';
+    let selectedCoreScopeDesignation = 'All';
+    
+    // Make variables globally accessible
+    window.selectedCoreScopeDepartment = selectedCoreScopeDepartment;
+    window.selectedCoreScopeDesignation = selectedCoreScopeDesignation;
+    
+    async function loadCoreScopeDepartments() {
+      const { data, error } = await supabaseClient
+        .from('Faculty')
+        .select('department');
+      if (error || !data) return;
+      // Filter to only S&H departments: S&H V1, S&H V2, S&H V3, S&H V4, S&H V5, S&H V6
+      const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+      const allDepts = Array.from(new Set(data.map(row => row.department).filter(Boolean)));
+      const depts = allDepts.filter(d => shDepartments.includes(d));
+      allCoreScopeDepartments = depts;
+      const select = document.getElementById('coreScopeDepartmentFilter');
+      select.innerHTML = '<option value="All">All S&H Departments</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
+      selectedCoreScopeDepartment = 'All';
+      window.selectedCoreScopeDepartment = selectedCoreScopeDepartment;
+      select.value = selectedCoreScopeDepartment;
+      select.addEventListener('change', () => {
+        selectedCoreScopeDepartment = select.value;
+        window.selectedCoreScopeDepartment = selectedCoreScopeDepartment;
+        loadCoreScopeTable();
+      });
+    }
+    
+    document.getElementById('coreScopeDesignationFilter').addEventListener('change', () => {
+      selectedCoreScopeDesignation = document.getElementById('coreScopeDesignationFilter').value;
+      window.selectedCoreScopeDesignation = selectedCoreScopeDesignation;
+      loadCoreScopeTable();
+    });
+    
+    document.getElementById('coreScopeMonthFilter').addEventListener('change', () => {
+      selectedCoreScopeMonth = document.getElementById('coreScopeMonthFilter').value;
+      window.selectedCoreScopeMonth = selectedCoreScopeMonth;
+      loadCoreScopeTable();
+    });
+
+    // New filter event listeners – re-render client-side, no DB call
+    document.getElementById('coreScopePercentageFilter').addEventListener('change', function() {
+      const wrap = document.getElementById('coreScopeCustomRangeWrap');
+      if (this.value === 'custom') { wrap.classList.remove('hidden'); wrap.classList.add('flex'); }
+      else { wrap.classList.add('hidden'); wrap.classList.remove('flex'); }
+      renderCoreScopeFilteredTable();
+    });
+    document.getElementById('coreScopeMinPct').addEventListener('input', () => renderCoreScopeFilteredTable());
+    document.getElementById('coreScopeMaxPct').addEventListener('input', () => renderCoreScopeFilteredTable());
+    // Sort control listener
+    const sortEl = document.getElementById('coreScopeSortOrder');
+    if (sortEl && !sortEl.dataset.listenerAdded) {
+      sortEl.addEventListener('change', () => renderCoreScopeFilteredTable());
+      sortEl.dataset.listenerAdded = 'true';
+    }
+
+    // Search bar – filter on input + show autocomplete suggestions
+    const csSearchInput = document.getElementById('coreScopeSearchInput');
+    const csSuggestionsBox = document.getElementById('coreScopeSearchSuggestions');
+    csSearchInput.addEventListener('input', () => {
+      const q = csSearchInput.value.trim().toLowerCase();
+      renderCoreScopeFilteredTable();
+      if (q.length === 0) { csSuggestionsBox.classList.add('hidden'); return; }
+      const names = [...new Set((window.coreScopeAllRowsData || []).map(r => r.facultyName).filter(n => n.toLowerCase().includes(q)))].slice(0, 8);
+      if (names.length === 0) { csSuggestionsBox.classList.add('hidden'); return; }
+      csSuggestionsBox.innerHTML = names.map(n =>
+        `<div class="px-3 py-2 hover:bg-green-50 cursor-pointer text-sm" onclick="document.getElementById('coreScopeSearchInput').value='${n.replace(/'/g,"\\'")}';document.getElementById('coreScopeSearchSuggestions').classList.add('hidden');renderCoreScopeFilteredTable();">${n}</div>`
+      ).join('');
+      csSuggestionsBox.classList.remove('hidden');
+    });
+    document.addEventListener('click', (e) => {
+      if (csSearchInput && csSuggestionsBox && !csSearchInput.contains(e.target) && !csSuggestionsBox.contains(e.target)) {
+        csSuggestionsBox.classList.add('hidden');
+      }
+    });
+    
+    // Core Scope SH field labels (13 fields)
+    const coreScopeLabels = [
+      'Teaching & Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+      'Teaching & Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+      'Teaching & Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+      'Teaching & Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+      'Student Mentorship & Support: Act as academic mentor and guide 30 students on coursework, projects, and career planning.',
+      'Student Mentorship & Support: Monitor student attendance, performance, and well-being.',
+      'Student Mentorship & Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+      'Student Mentorship & Support: Maintain the Mentor book for assigned mentee.',
+      'Student Mentorship & Support: Consolidate innovative course material, Lab manuals',
+      'Contribute to accreditation processes (NBA),(NAAC) and quality Assurance initiatives.',
+      'Serve on academic and administrative committees.',
+      'ADMINISTRATIVE DUTIES: MAINTAIN ACADEMIC RECORDS, COURSE FILES, LOG BOOK AND STUDENT EVALUATIONS',
+      'Library Utilization'
+    ];
+    const coreScopeShortLabels = [
+      'Design and deliver lectures and lab sessions',
+      'Develop course materials, lesson plans and assessments',
+      'Incorporating innovative teaching methods including ICT tools',
+      'Prepare Product model and instructional Chart',
+      'Mentoring 30 students on coursework, projects and career planning.',
+      'Monitoring student attendance, performance, and well-being.',
+      'Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+      'Maintain the Mentor book for assigned mentee.',
+      'Consolidate innovative course material & Lab manuals',
+      'Contribute to accreditation processes (NBA, NAAC) and quality Assurance initiatives.',
+      'Serve on academic and administrative committees.',
+      'Maintain academic records, course files, Log Book and student evaluations',
+      'Library Utilization'
+    ];
+
+    // Global data store
+    window.coreScopeAllRowsData = [];
+
+    async function loadCoreScopeTable() {
+      if (!selectedCoreScopeDepartment) {
+        document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500">No department selected.</div>';
+        return;
+      }
+      document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-green-700 py-4">Loading\u2026</div>';
+
+      const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+      let facultyQuery = supabaseClient.from('Faculty').select('*').in('department', shDepartments);
+      if (selectedCoreScopeDepartment !== 'All') facultyQuery = facultyQuery.eq('department', selectedCoreScopeDepartment);
+
+      let coreScopeQuery = supabaseClient.from('Core_scope_SH').select('*').eq('Month', selectedCoreScopeMonth);
+      if (selectedCoreScopeDepartment !== 'All') coreScopeQuery = coreScopeQuery.eq('Department', selectedCoreScopeDepartment);
+
+      const [facRes, csRes] = await Promise.all([facultyQuery, coreScopeQuery]);
+
+      if (facRes.error || !facRes.data || facRes.data.length === 0) {
+        document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-red-500">Failed to load faculty data.</div>';
+        return;
+      }
+
+      const coreScopeData = csRes.data || [];
+
+      let filteredFacultyList = facRes.data;
+      if (selectedCoreScopeDesignation !== 'All') {
+        filteredFacultyList = filteredFacultyList.filter(fac => {
+          const desig = (fac.Designation || '').toUpperCase();
+          if (selectedCoreScopeDesignation === 'AP')   return desig === 'AP'  || desig === 'ASSISTANT PROFESSOR';
+          if (selectedCoreScopeDesignation === 'ASP')  return desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR';
+          if (selectedCoreScopeDesignation === 'Prof') return desig === 'PROF'|| desig === 'PROFESSOR';
+          return false;
+        });
+      }
+
+      if (filteredFacultyList.length === 0) {
+        document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500">No faculty data found.</div>';
+        window.coreScopeAllRowsData = [];
+        return;
+      }
+
+      // Build data store
+      const rowsData = [];
+      for (const fac of filteredFacultyList) {
+        const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || 'Unknown';
+        const dept        = fac.department || selectedCoreScopeDepartment;
+        const designation = fac.Designation || 'N/A';
+
+        let desigDisplay = designation;
+        const desigUpper = designation.toUpperCase();
+        if (desigUpper === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
+        else if (desigUpper === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
+        else if (desigUpper === 'PROFESSOR') desigDisplay = 'Prof';
+
+        let facNamesToTry = [];
+        if (fac['Portfolio Member Name']) facNamesToTry.push(fac['Portfolio Member Name']);
+        if (fac.Name) facNamesToTry.push(fac.Name);
+        if (fac.email) facNamesToTry.push(fac.email);
+        facNamesToTry = Array.from(new Set(facNamesToTry.map(n => (n||'').toString().trim().toLowerCase()).filter(Boolean)));
+
+        const matches = coreScopeData
+          .filter(r => facNamesToTry.includes((r['Portfolio Member Name']||'').toString().trim().toLowerCase()))
+          .sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
+        const row = matches[0] || null;
+
+        let completedCount = 0;
+        if (row) {
+          for (let i = 1; i <= 13; i++) {
+            const v = (row[`Status_${i}`] || '').toString().trim().toLowerCase();
+            if (v === 'completed' || v === 'completed and updated') completedCount++;
+          }
+        }
+        const percentage = row ? Math.round((completedCount / 13) * 100) : null;
+
+        const coreScopeRowId  = `corescope-${dept.replace(/[^a-zA-Z0-9]/g,'')}-${facultyName.replace(/[^a-zA-Z0-9]/g,'')}`;
+        const coreScopeCacheKey = `core-${coreScopeRowId}`;
+        if (row) {
+          window.dashboardMappedFormCache = window.dashboardMappedFormCache || {};
+          window.dashboardMappedFormCache[coreScopeCacheKey] = {
+            rowContext: { table: 'Core_scope_SH', portfolio: 'Faculty Core Scope - Monthly' },
+            details: row
+          };
+        }
+
+        const fieldStatuses = [];
+        for (let i = 1; i <= 13; i++) fieldStatuses.push(row ? (row[`Status_${i}`] || '-') : '-');
+
+        rowsData.push({ dept, designation, desigDisplay, facultyName, percentage, row, coreScopeCacheKey, fieldStatuses });
+      }
+
+      window.coreScopeAllRowsData = rowsData;
+      renderCoreScopeFilteredTable();
+    }
+
+    // Renders the table using current filter values against window.coreScopeAllRowsData
+    function renderCoreScopeFilteredTable() {
+      const filtered = applyCoreScopeUIFilters(window.coreScopeAllRowsData || []);
+      const total    = (window.coreScopeAllRowsData || []).length;
+
+      // Apply separate sort control if selected
+      const sortVal = (document.getElementById('coreScopeSortOrder') || {}).value || 'none';
+      if (sortVal === 'hightolow') {
+        filtered.sort((a, b) => (b.percentage ?? -1) - (a.percentage ?? -1));
+      } else if (sortVal === 'lowtohigh') {
+        filtered.sort((a, b) => (a.percentage ?? 101) - (b.percentage ?? 101));
+      }
+
+      if (filtered.length === 0) {
+        document.getElementById('coreScopeTableContainer').innerHTML = '<div class="text-gray-500 py-4">No records match the selected filters.</div>';
+        return;
+      }
+
+      let html = `<div class="text-xs text-gray-500 mb-2">Showing <strong>${filtered.length}</strong> of <strong>${total}</strong> records</div>`;
+      html += `<div class="overflow-auto mb-6 border rounded-lg shadow-sm" style="max-height:600px;">`;
+      html += `<table class="min-w-full text-xs bg-white" style="table-layout:auto;">`;
+      html += `<thead class="bg-green-700 text-white sticky top-0 z-20"><tr>`;
+      html += `<th class="px-3 py-2 sticky left-0 bg-green-700 z-30" style="min-width:150px;">Department</th>`;
+      html += `<th class="px-3 py-2 bg-green-700" style="min-width:120px;">Designation</th>`;
+      html += `<th class="px-3 py-2" style="min-width:180px;">Faculty Name</th>`;
+      html += `<th class="px-3 py-2" style="min-width:100px;">Percentage</th>`;
+      html += `<th class="px-3 py-2" style="min-width:80px;">View</th>`;
+      for (let i = 0; i < 13; i++) {
+        html += `<th class="px-2 py-2" style="min-width:120px;" title="${coreScopeLabels[i]}">${coreScopeShortLabels[i]}</th>`;
+      }
+      html += `</tr></thead><tbody>`;
+
+      for (const r of filtered) {
+        const pd = r.percentage !== null ? `${r.percentage}%` : '0% (Not Submitted)';
+        const pc = r.percentage === null ? 'text-red-600' :
+          r.percentage >= 80 ? 'text-green-600 font-semibold' :
+          r.percentage >= 60 ? 'text-blue-600 font-semibold' :
+          r.percentage >= 40 ? 'text-yellow-600 font-semibold' : 'text-red-600 font-semibold';
+
+        html += `<tr class="hover:bg-gray-50">`;
+        html += `<td class="px-3 py-2 border sticky left-0 bg-white z-10 font-medium">${r.dept}</td>`;
+        html += `<td class="px-3 py-2 border font-medium">${r.desigDisplay}</td>`;
+        html += `<td class="px-3 py-2 border font-medium text-green-700">${r.facultyName}</td>`;
+        html += `<td class="px-3 py-2 border ${pc}">${pd}</td>`;
+        html += `<td class="px-3 py-2 border text-center">${r.row ? `<button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold" onclick="viewMappedDashboardForm('${r.coreScopeCacheKey}', 'Faculty Core Scope - Monthly Form')">View</button>` : '<span class="text-gray-400">-</span>'}</td>`;
+
+        for (let i = 0; i < 13; i++) {
+          const statusVal = r.fieldStatuses[i];
+          let display = '-', statusClass = 'text-gray-500';
+          if (statusVal && statusVal !== '-') {
+            const val = statusVal.trim().toLowerCase();
+            if (val === 'completed' || val === 'completed and updated') { display = 'Completed'; statusClass = 'text-green-600 font-semibold'; }
+            else if (val === 'in progress' || val === 'inprogress') { display = 'In Progress'; statusClass = 'text-yellow-600 font-semibold'; }
+            else if (val === 'yet to be completed' || val === 'not started') { display = 'Yet to be Completed'; statusClass = 'text-red-600 font-semibold'; }
+            else if (val === 'not applicable' || val === 'na') { display = 'N/A'; statusClass = 'text-gray-400'; }
+            else { display = statusVal; statusClass = 'text-blue-600 font-semibold'; }
+          }
+          html += `<td class="px-2 py-2 border ${statusClass}">${display}</td>`;
+        }
+        html += `</tr>`;
+      }
+      html += `</tbody></table></div>`;
+      document.getElementById('coreScopeTableContainer').innerHTML = html;
+    }
+    // --- END NEW: Core Scope Table ---
+
+    let allDepartments = [];
+    let selectedDepartment = '';
+    let selectedYearlyMonth = 'January';
+    let selectedCoreScopeMonth = 'January';
+    
+    // Make month globally accessible
+    window.selectedCoreScopeMonth = selectedCoreScopeMonth;
+    async function loadDepartments() {
+      const { data, error } = await supabaseClient
+        .from('Faculty')
+        .select('department');
+      if (error || !data) return;
+      // Filter to only S&H departments: S&H V1, S&H V2, S&H V3, S&H V4, S&H V5, S&H V6
+      const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+      const allDepts = Array.from(new Set(data.map(row => row.department).filter(Boolean)));
+      const depts = allDepts.filter(d => shDepartments.includes(d));
+      allDepartments = depts;
+      const select = document.getElementById('departmentFilter');
+      select.innerHTML = '<option value="All">All S&H Departments</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
+      selectedDepartment = 'All';
+      select.value = selectedDepartment;
+      select.addEventListener('change', () => {
+        selectedDepartment = select.value;
+        loadDashboardTable();
+      });
+    }
+    // --- END NEW ---
+    async function loadDashboardTable() {
+      if (!selectedDepartment) {
+        document.getElementById('dashboardTableContainer').innerHTML = '<div class="text-gray-500">No department selected.</div>';
+        return;
+      }
+      
+        // Fetch faculty - filter by department if not "All", and filter to only S&H departments
+        const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+        let facultyQuery = supabaseClient.from('Faculty').select('*').in('department', shDepartments);
+        if (selectedDepartment !== 'All') {
+          facultyQuery = facultyQuery.eq('department', selectedDepartment);
+        }
+      
+      const { data, error } = await facultyQuery;
+      if (error || !data || data.length === 0) {
+        document.getElementById('dashboardTableContainer').innerHTML = '<div class="text-red-500">Failed to load faculty data.</div>';
+        return;
+      }
+      renderDashboardTable(data);
+    }
+    function renderDashboardTable(facultyList) {
+      const designationFilter = document.getElementById('designationFilter').value;
+      const groups = { AP: [], ASP: [], Prof: [] };
+      facultyList.forEach(fac => {
+        const desig = (fac.Designation || '').toUpperCase();
+        if (desig === 'AP' || desig === 'ASSISTANT PROFESSOR') groups.AP.push(fac);
+        else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') groups.ASP.push(fac);
+        else if (desig === 'PROF' || desig === 'PROFESSOR') groups.Prof.push(fac);
+      });
+      let html = '';
+      // Particulars for each designation (S&H Forms - reduced rows)
+      const particularsMap = {
+        AP: [
+          'Present at Conferences.',
+          'Attend FDPs / workshop/Seminars',
+          'Engage in extension activities, and social outreach programs.',
+          'Membership in professional body',
+          'No of Proposals submitted in Manthan Portal'
+        ],
+        ASP: [
+          'Publish in peer-reviewed journals',
+          'Apply for research grants',
+          'Organize FDPs / workshop/Seminars',
+          'Engage in Consultancy.',
+          'Membership in professional body',
+          'No of Proposals submitted in Manthan Portal'
+        ],
+        Prof: [
+          'Publish in peer-reviewed journals',
+          'Apply for research grants',
+          'Organize FDPs / workshop/Seminars',
+          'Engage in Consultancy.',
+          'Membership in professional body',
+          'No of Proposals submitted in Manthan Portal'
+        ]
+      };
+      (async function renderDashboardAsync() {
+        // Fetch yearly data - filter by department if not "All" (S&H tables only)
+        let apQuery = supabaseClient.from('AP_SH_Yearly').select('*').eq('Month', selectedYearlyMonth);
+        let aspQuery = supabaseClient.from('ASP_SH_Yearly').select('*').eq('Month', selectedYearlyMonth);
+        let profQuery = supabaseClient.from('Prof_SH_Yearly').select('*').eq('Month', selectedYearlyMonth);
+        
+        if (selectedDepartment !== 'All') {
+          apQuery = apQuery.eq('Department', selectedDepartment);
+          aspQuery = aspQuery.eq('Department', selectedDepartment);
+          profQuery = profQuery.eq('Department', selectedDepartment);
+        }
+        
+        const [apRes, aspRes, profRes] = await Promise.all([apQuery, aspQuery, profQuery]);
+        function getBestYearlyRows(data) {
+          const facultyData = {};
+          
+          // Group all rows by faculty name
+          data.forEach(row => {
+            const facultyName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+            if (!facultyName) return;
+            if (!facultyData[facultyName]) facultyData[facultyName] = [];
+            facultyData[facultyName].push(row);
+          });
+          
+          // For each faculty, get the latest row by input_id or id
+          const result = [];
+          Object.keys(facultyData).forEach(facultyName => {
+            const rows = facultyData[facultyName];
+            result.push(chooseLatestRow(rows));
+          });
+          
+          return result;
+        }
+        const apDataLatest = getBestYearlyRows(apRes.data || []);
+        const aspDataLatest = getBestYearlyRows(aspRes.data || []);
+        const profDataLatest = getBestYearlyRows(profRes.data || []);
+        for (const key of ['AP', 'ASP', 'Prof']) {
+          if (designationFilter !== 'All' && designationFilter !== key) continue;
+          const group = groups[key];
+          if (group.length === 0) continue;
+          html += `<h3 class="text-xl font-semibold text-purple-700 mt-8 mb-2">${key === 'AP' ? 'Assistant Professor (AP)' : key === 'ASP' ? 'Associate Professor (ASP)' : 'Professor (Prof)'}</h3>`;
+          const particulars = particularsMap[key];
+          html += `<div class="overflow-auto mb-6 border rounded-lg shadow-sm" style="max-height: 600px;"><table class="min-w-full text-sm bg-white"><thead class="bg-purple-700 text-white sticky top-0 z-20"><tr><th class="px-4 py-2 sticky left-0 bg-purple-700 z-30">Department</th><th class="px-4 py-2 bg-purple-700">Designation</th><th class="px-4 py-2 bg-purple-700">Faculty Name</th><th class="px-4 py-2 bg-purple-700">Percentage</th><th class="px-4 py-2 bg-purple-700 text-center">Verification</th>`;
+          particulars.forEach(particular => {
+            html += `<th class="px-4 py-2 bg-purple-700">${particular}</th>`;
+          });
+          html += `</tr></thead><tbody>`;
+          for (const fac of group) {
+            const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || '';
+            const nameTrimmed = facultyName.toString().trim().toLowerCase();
+            const dept = fac.department || selectedDepartment;
+            const designation = fac.Designation || key;
+            // Normalize designation for display
+            let desigDisplay = designation;
+            const desigUpper = designation.toUpperCase();
+            if (desigUpper === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
+            else if (desigUpper === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
+            else if (desigUpper === 'PROFESSOR') desigDisplay = 'Prof';
+            else desigDisplay = key; // fallback to key if not recognized
+            // Find matching yearly data for this faculty
+            let yearlyData = null;
+            if (key === 'AP') yearlyData = apDataLatest;
+            else if (key === 'ASP') yearlyData = aspDataLatest;
+            else if (key === 'Prof') yearlyData = profDataLatest;
+            const row = yearlyData ? yearlyData.find(r => 
+              (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
+            ) : null;
+            // Calculate percentage based on Status fields (fixed denominator: 5 for AP, 6 for ASP/Prof - S&H forms)
+            let completedCount = 0;
+            const totalCount = key === 'AP' ? 5 : 6;
+            if (row) {
+              for (let i = 1; i <= totalCount; i++) {
+                const status = (row[`Status_${i}`] || '').toString().toLowerCase();
+                if (status === 'completed' || status === 'completed and updated') {
+                  completedCount++;
+                }
+                // All statuses (including 'Not Applicable') are included in denominator
+              }
+            }
+            const percentage = Math.round((completedCount / totalCount) * 100);
+            // Check verification in Hod-workdone table
+            const yearlyTableName = key === 'Prof' ? 'Prof_SH_Yearly' : `${key}_SH_Yearly`;
+            const rowId = `yearly-${key}-${dept.replace(/[^a-zA-Z0-9]/g, '')}-${facultyName.replace(/[^a-zA-Z0-9]/g, '')}`;
+            const percentageId = `percentage-${rowId}`;
+            let verificationMark = '<span class="text-gray-400">-</span>';
+            if (row && row.input_id) {
+              verificationMark = `<span id="verify-${rowId}" class="text-gray-400">...</span>`;
+              
+              // Async verification check
+              setTimeout(async () => {
+                // Check both verified and rejected records
+                const [verifyRes, rejectRes] = await Promise.all([
+                  supabaseClient
+                    .from('Hod-workdone')
+                    .select('*')
+                    .eq('department', dept)
+                    .ilike('portfolio_member_name', facultyName),
+                  supabaseClient
+                    .from('hod-workdone_reject')
+                    .select('*')
+                    .eq('department', dept)
+                    .ilike('portfolio_member_name', facultyName)
+                ]);
+                
+                const verifyData = verifyRes.data || [];
+                const rejectData = rejectRes.data || [];
+                
+                const verifyCell = document.getElementById(`verify-${rowId}`);
+                const percentageCell = document.getElementById(`${percentageId}`);
+                if (verifyCell) {
+                  const expectedTableName = key === 'Prof' ? 'Prof_SH_Yearly' : `${key}_SH_Yearly`;
+                  
+                  // First check if rejected
+                  let matchingReject = rejectData.find(v => v.input_id === row.input_id);
+                  if (!matchingReject) {
+                    matchingReject = rejectData.find(v => {
+                      if (v.table_name && v.department === dept) {
+                        const tableNameLower = v.table_name.toLowerCase();
+                        const expectedLower = expectedTableName.toLowerCase();
+                        const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
+                        return (tableNameLower === expectedLower || 
+                                (tableNameLower.includes(key.toLowerCase() + '_sh') && tableNameLower.includes('yearly'))) && 
+                               nameMatch;
+                      }
+                      return false;
+                    });
+                  }
+                  
+                  if (matchingReject) {
+                    const rejectDate = new Date(matchingReject.rejected_at).toLocaleDateString();
+                    const reason = matchingReject.Commands || 'No reason';
+                    verifyCell.innerHTML = `<span class="text-red-600 font-bold text-lg" title="Rejected on ${rejectDate}: ${reason}">✗</span>`;
+                  } else {
+                    // Check if verified - match by input_id first (most reliable), then verify table_name
+                    let matchingVerify = verifyData.find(v => {
+                      if (v.input_id === row.input_id) {
+                        // If table_name exists, check if it matches expected table (case-insensitive)
+                        if (v.table_name) {
+                          const tableNameLower = v.table_name.toLowerCase();
+                          const expectedLower = expectedTableName.toLowerCase();
+                          return tableNameLower === expectedLower || 
+                                 (tableNameLower.includes(key.toLowerCase() + '_sh') && tableNameLower.includes('yearly')) ||
+                                 (tableNameLower.includes(key.toLowerCase()) && tableNameLower.includes('yearly'));
+                        }
+                        // If no table_name, match by input_id only
+                        return true;
+                      }
+                      return false;
+                    });
+                    
+                    // If no match by input_id, try matching by table_name and name
+                    if (!matchingVerify) {
+                      matchingVerify = verifyData.find(v => {
+                        if (v.table_name) {
+                          const tableNameLower = v.table_name.toLowerCase();
+                          const expectedLower = expectedTableName.toLowerCase();
+                          const nameMatch = (v.portfolio_member_name || '').toLowerCase() === facultyName.toLowerCase();
+                          return (tableNameLower === expectedLower || 
+                                  (tableNameLower.includes(key.toLowerCase() + '_sh') && tableNameLower.includes('yearly'))) && 
+                                 nameMatch;
+                        }
+                        return false;
+                      });
+                    }
+                    
+                    if (matchingVerify) {
+                      const verifyDate = new Date(matchingVerify.verified_at).toLocaleDateString();
+                      verifyCell.innerHTML = `<span class="text-green-600 font-bold text-lg" title="Verified by HOD on ${verifyDate}">✓</span>`;
+                      
+                      // Update percentage with validation score from Hod-workdone if verified
+                      if (percentageCell && matchingVerify.validation_score != null && matchingVerify.validation_score !== '') {
+                        const validationScore = parseFloat(matchingVerify.validation_score);
+                        if (!isNaN(validationScore)) {
+                          const bgClass = validationScore >= 70 ? 'bg-green-100 text-green-700' : validationScore >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700';
+                          percentageCell.className = `px-2 py-2 border text-center font-bold ${bgClass}`;
+                          percentageCell.textContent = `${Math.round(validationScore)}%`;
+                        }
+                      }
+                    } else {
+                      verifyCell.innerHTML = '<span class="text-red-600 font-bold text-lg" title="Not verified">✗</span>';
+                    }
+                  }
+                }
+              }, 100);
+            }
+            
+            html += `<tr class="hover:bg-gray-50"><td class="px-2 py-2 border font-medium sticky left-0 bg-white z-10">${dept}</td>`;
+            html += `<td class="px-2 py-2 border font-medium">${desigDisplay}</td>`;
+            html += `<td class="px-2 py-2 border font-medium text-purple-700 cursor-pointer underline" onclick="viewYearlyFacultyForm('${key}','${facultyName.replace(/'/g, "\\'")}', '${selectedDepartment.replace(/'/g, "\\'")}')">
+                ${facultyName}
+            </td>`;
+            // Percentage column with color coding and ID for later update
+            html += `<td id="${percentageId}" class="px-2 py-2 border text-center font-bold ${percentage >= 70 ? 'bg-green-100 text-green-700' : percentage >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}">${percentage}%</td>`;
+            // Verification column
+            html += `<td class="px-2 py-2 border text-center">${verificationMark}</td>`;
+            // Display each particular's value in order, matching the header
+            particulars.forEach((particular, idx) => {
+              let value = '-';
+              let bgColor = 'bg-gray-100';
+              let textColor = 'text-gray-600';
+              if (particular === 'No of Proposals submitted in Manthan Portal') {
+                // For S&H forms: AP: Status_5, ASP/Prof: Status_6
+                if (row) {
+                  if (key === 'AP') {
+                    value = row['Status_5'] || '-';
+                  } else if (key === 'ASP' || key === 'Prof') {
+                    value = row['Status_6'] || '-';
+                  }
+                }
+                const statusLower = value.toString().toLowerCase();
+                if (statusLower === 'completed' || statusLower === 'completed and updated') {
+                  bgColor = 'bg-green-100';
+                  textColor = 'text-green-700';
+                } else if (statusLower === 'in progress') {
+                  bgColor = 'bg-yellow-100';
+                  textColor = 'text-yellow-700';
+                } else if (statusLower === 'not applicable' || statusLower === 'na' || statusLower === 'n/a') {
+                  bgColor = 'bg-gray-100';
+                  textColor = 'text-gray-500';
+                } else if (statusLower !== '-') {
+                  bgColor = 'bg-red-100';
+                  textColor = 'text-red-700';
+                }
+                html += `<td class=\"px-2 py-2 ${bgColor} ${textColor} text-center font-medium\">${value}</td>`;
+              } else {
+                // Status columns
+                const statusIdx = idx + 1; // Status_1 ... Status_N
+                value = row ? (row[`Status_${statusIdx}`] || '-') : '-';
+                const statusLower = value.toString().toLowerCase();
+                if (statusLower === 'completed' || statusLower === 'completed and updated') {
+                  bgColor = 'bg-green-100';
+                  textColor = 'text-green-700';
+                } else if (statusLower === 'in progress') {
+                  bgColor = 'bg-yellow-100';
+                  textColor = 'text-yellow-700';
+                } else if (statusLower === 'not applicable' || statusLower === 'na' || statusLower === 'n/a') {
+                  bgColor = 'bg-gray-100';
+                  textColor = 'text-gray-500';
+                } else if (statusLower !== '-') {
+                  bgColor = 'bg-red-100';
+                  textColor = 'text-red-700';
+                }
+                html += `<td class="px-2 py-2 ${bgColor} ${textColor} text-center font-medium">${value}</td>`;
+              }
+            });
+            html += `</tr>`;
+          }
+          html += `</tbody></table></div>`;
+        }
+        document.getElementById('dashboardTableContainer').innerHTML = html || '<div class="text-gray-500">No yearly data found.</div>';
+        
+        // Attach export buttons after table is rendered
+        attachExportButtons();
+        
+        // Department portfolios table removed for S&H dashboard
+      })();
+    }
+    document.getElementById('designationFilter').addEventListener('change', () => {
+      loadDashboardTable();
+    });
+    
+    document.getElementById('yearlyMonthFilter').addEventListener('change', () => {
+      selectedYearlyMonth = document.getElementById('yearlyMonthFilter').value;
+      loadDashboardTable();
+    });
+    
+    // Modal function for viewing yearly form details
+    async function viewYearlyFacultyForm(designation, facultyName, department) {
+      document.getElementById('viewFormModal').classList.remove('hidden');
+      document.getElementById('viewFormModalContent').innerHTML = '<div class="text-center text-gray-500">Loading form data...</div>';
+      
+      let tableName = '';
+      if (designation === 'AP') tableName = 'AP_SH_Yearly';
+      else if (designation === 'ASP') tableName = 'ASP_SH_Yearly';
+      else if (designation === 'Prof') tableName = 'Prof_SH_Yearly';
+      else {
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Unknown designation.</div>';
+        return;
+      }
+      
+      const { data, error } = await supabaseClient
+        .from(tableName)
+        .select('*')
+        .eq('Department', department)
+        .order('input_id', { ascending: false });
+      
+      if (error || !data || data.length === 0) {
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">Form data not found.</div>';
+        return;
+      }
+      
+      const nameTrimmed = (facultyName || '').toString().trim().toLowerCase();
+      let filtered = data.filter(row => {
+        let rowName = (row['Portfolio Member Name'] || '').toString().trim().toLowerCase();
+        return rowName === nameTrimmed;
+      });
+      
+      if (filtered.length === 0) {
+        document.getElementById('viewFormModalContent').innerHTML = '<div class="text-red-500">No form data found for this faculty name.</div>';
+        return;
+      }
+      
+      const row = filtered[0];
+      let html = '';
+      html += `<div class="mb-4">
+        <div class="font-semibold text-purple-700">Department:</div>
+        <div class="mb-2">${row['Department'] || ''}</div>
+        <div class="font-semibold text-purple-700">Portfolio Name:</div>
+        <div class="mb-2">${row['Portfolio Name'] || ''}</div>
+        <div class="font-semibold text-purple-700">Portfolio Member Name:</div>
+        <div class="mb-2">${row['Portfolio Member Name'] || ''}</div>
+        <div class="font-semibold text-purple-700">Month:</div>
+        <div class="mb-2">${row['Month'] || ''}</div>
+      </div>`;
+      
+      // Item descriptions for each designation (S&H Forms)
+      let items = [];
+      if (designation === 'AP') {
+        items = [
+          'Present at Conferences.',
+          'Attend FDPs / workshop/Seminars',
+          'Engage in extension activities, and social outreach programs.',
+          'Membership in professional body',
+          'No of Proposals submitted in Manthan Portal'
+        ];
+      } else if (designation === 'ASP') {
+        items = [
+          'Publish in peer-reviewed journals',
+          'Apply for research grants',
+          'Organize FDPs / workshop/Seminars',
+          'Engage in Consultancy.',
+          'Membership in professional body',
+          'No of Proposals submitted in Manthan Portal'
+        ];
+      } else if (designation === 'Prof') {
+        items = [
+          'Publish in peer-reviewed journals',
+          'Apply for research grants',
+          'Organize FDPs / workshop/Seminars',
+          'Engage in Consultancy.',
+          'Membership in professional body',
+          'No of Proposals submitted in Manthan Portal'
+        ];
+      }
+      
+      html += `<div class="space-y-4">`;
+      for (let i = 1; i <= items.length; i++) {
+        const statusVal = row[`Status_${i}`] || '-';
+        const descVal = row[`Description_${i}`] || '-';
+        let uploadVal = row[`Upload The Scanned File_${i}`] || '-';
+        let uploadHtml = '-';
+        if (uploadVal && uploadVal !== '-' && typeof uploadVal === 'string') {
+          if (uploadVal.startsWith('http')) {
+            uploadHtml = `<a href="${uploadVal}" target="_blank" class="text-blue-600 underline">View File</a>`;
+          } else {
+            uploadHtml = uploadVal;
+          }
+        }
+        html += `<div class="border-b pb-2 mb-2">
+          <div class="font-semibold text-purple-700">${i}. ${items[i-1]}</div>
+          <div class="grid grid-cols-3 gap-2 mt-1 text-sm">
+            <div><span class="font-medium">Status:</span> ${statusVal}</div>
+            <div><span class="font-medium">Description:</span> ${descVal}</div>
+            <div><span class="font-medium">File:</span> ${uploadHtml}</div>
+          </div>
+        </div>`;
+      }
+      html += `</div>`;
+      document.getElementById('viewFormModalContent').innerHTML = html;
+      document.getElementById('viewFormModalTitle').textContent = `${designation} Yearly Form Details`;
+    }
+    
+    function closeViewFormModal() {
+      document.getElementById('viewFormModal').classList.add('hidden');
+      document.getElementById('viewFormModalContent').innerHTML = '';
+      document.getElementById('viewFormModalTitle').textContent = 'Faculty Form Details';
+    }
+
+    // NEW: Modal for AP/ASP/Prof status table
+    function closeViewStatusFormModal() {
+      document.getElementById('viewStatusFormModal').classList.add('hidden');
+      document.getElementById('viewStatusFormModalContent').innerHTML = '';
+      document.getElementById('viewStatusFormModalTitle').textContent = 'Faculty Portfolio Form Details';
+    }
+
+    async function viewStatusFacultyForm(designation, facultyName, department) {
+      document.getElementById('viewStatusFormModal').classList.remove('hidden');
+      document.getElementById('viewStatusFormModalContent').innerHTML = '<div class="text-center text-gray-500">Loading form data...</div>';
+      let tableName = '';
+      let nameField = '';
+      let deptField = '';
+      if (designation === 'AP') { tableName = 'AP'; nameField = 'Portfolio Member Name'; deptField = 'Department'; }
+      else if (designation === 'ASP') { tableName = 'ASP'; nameField = 'Portfolio Member Name'; deptField = 'Department:'; }
+      else if (designation === 'Prof') { tableName = 'Prof'; nameField = 'Portfolio Member Name'; deptField = 'Department:'; }
+      else {
+        document.getElementById('viewStatusFormModalContent').innerHTML = '<div class="text-red-500">Unknown designation.</div>';
+        return;
+      }
+      const { data, error } = await supabaseClient
+        .from(tableName)
+        .select('*')
+        .eq(deptField, department)
+        .eq(nameField, facultyName)
+        .order('input_id', { ascending: false });
+      if (error || !data || data.length === 0) {
+        document.getElementById('viewStatusFormModalContent').innerHTML = '<div class="text-red-500">Form data not found.</div>';
+        return;
+      }
+      const row = data[0];
+      let html = '';
+      html += `<div class="mb-4">
+        <div class="font-semibold text-blue-700">Department:</div>
+        <div class="mb-2">${row[deptField] || row['Department:'] || row['Department'] || ''}</div>
+        <div class="font-semibold text-blue-700">Portfolio Name:</div>
+        <div class="mb-2">${row['Portfolio Name'] || row['Portfolio Name:'] || ''}</div>
+        <div class="font-semibold text-blue-700">Portfolio Member Name:</div>
+        <div class="mb-2">${row['Portfolio Member Name'] || ''}</div>
+      </div>`;
+      // Use the same section titles as the first table
+      let sections = [];
+      if (designation === 'AP') {
+        sections = [
+          'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+          'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+          'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+          'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+          'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
+          'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
+          'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+          'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
+          'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
+          'Research and Development: Present at conferences.',
+          'Research and Development: Guide student research and final-year projects',
+          'Institutional Development: Participate in curriculum development and revision through Board of Studies.',
+          'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
+          'Institutional Development: Serve on academic and administrative committees.',
+          'Professional Development: Attend FDP/ workshops/ seminar.',
+          'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.',
+          'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
+          'Community and Industry Engagement: Engage in extension activities, and social outreach Programs.',
+          'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
+          'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
+          'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.'
+        ];
+      } else if (designation === 'ASP' || designation === 'Prof') {
+        sections = [
+          'Teaching and Curriculum Delivery: Design and deliver lectures, tutorials, and lab sessions as per the academic calendar and subjects assigned.',
+          'Teaching and Curriculum Delivery: Develop course materials, lesson plans, and assessments aligned with OBE for the subjects assigned.',
+          'Teaching and Curriculum Delivery: Incorporate innovative teaching methods, including ICT tools and experiential learning.',
+          'Teaching and Curriculum Delivery: Prepare Product model and instructional Chart for the assigned subject.',
+          'Student Mentorship and Support: Act as academic mentors and guide 30 students on coursework, projects, and career planning.',
+          'Student Mentorship and Support: Monitor student attendance, performance, and well-being.',
+          'Student Mentorship and Support: Provide remedial support and encourage participation in co-curricular and extra-curricular activities.',
+          'Student Mentorship and Support: Maintain the Mentor book for assigned mentee.',
+          'Student Mentorship and Support: Consolidate innovative course material, Lab manuals',
+          'Research and Development: Present at conferences.',
+          'Research and Development: Guide student research and final-year projects',
+          'Institutional Development: Participate in curriculum development and revision through Board of Studies.',
+          'Institutional Development: Contribute to accreditation processes (NBA, NAAC) and quality assurance initiatives.',
+          'Institutional Development: Serve on academic and administrative committees.',
+          'Professional Development: Attend FDP/ workshops/ seminar.',
+          'Professional Development: Pursue higher qualifications, NPTEL/MOOC and certifications, and memberships in professional bodies.',
+          'Community and Industry Engagement: Facilitate industry-institute interaction through guest lectures, Internships.',
+          'Community and Industry Engagement: Engage in extension activities, and social outreach Programs.',
+          'Administrative Duties: Maintain academic records, course files, Log Book and student evaluations.',
+          'Administrative Duties: Assist in examination duties, including question paper setting, invigilation, and evaluation.',
+          'Administrative Duties: Submit the FPBA (Faculty performance Based Appraisal) along with the support documents on time.'
+        ];
+      }
+      html += `<div class="space-y-4">`;
+      for (let i = 1; i <= sections.length; i++) {
+        const statusVal = row[`Status_${i}`] || '-';
+        const descVal = row[`Description_${i}`] || '-';
+        let uploadVal = row[`Upload The Scanned File_${i}`] || row[`Upload the scanned file_${i}`] || '-';
+        let uploadHtml = '-';
+        if (uploadVal && uploadVal !== '-' && typeof uploadVal === 'string') {
+          const isUrl = uploadVal.startsWith('http://') || uploadVal.startsWith('https://');
+          const isFile = uploadVal.match(/\.(pdf|docx?|xlsx?|jpg|jpeg|png)$/i);
+          if (isUrl || isFile) {
+            uploadHtml = `<a href="${uploadVal}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow text-sm font-semibold inline-block">View</a>`;
+          } else {
+            uploadHtml = uploadVal;
+          }
+        }
+        html += `<div class="border-b pb-2 mb-2">
+          <div class="font-semibold text-orange-500 mb-1">${i}. ${sections[i-1]}</div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div><span class="font-medium text-blue-700">Status:</span> ${statusVal}</div>
+            <div><span class="font-medium text-blue-700">Description:</span> ${descVal}</div>
+            <div><span class="font-medium text-blue-700">Upload:</span> ${uploadHtml}</div>
+          </div>
+        </div>`;
+      }
+      html += `</div>`;
+      document.getElementById('viewStatusFormModalContent').innerHTML = html;
+      document.getElementById('viewStatusFormModalTitle').textContent = `${designation} Portfolio Form Details`;
+    }
+    
+  // Consolidated Summary Table Logic
+    let selectedSummaryDepartment = '';
+    let selectedSummaryMonth = 'January';
+
+    // Function to calculate faculty rating (S&H - excludes department portfolios)
+    function calculateFacultyRating(coreScopePercent, instPortfolio1, instPortfolio2) {
+      let validScores = [];
+      
+      // Helper function to parse percentage
+      const parsePercent = (val, isMandatory = false) => {
+        // If mandatory and not filled, treat as 0
+        if (isMandatory && (!val || val === '-' || val === 'N/A')) return 0;
+        // If not allocated (shown as '-'), return null to skip
+        if (!val || val === '-' || val === 'N/A') return null;
+        const num = parseFloat(val.toString().replace('%', ''));
+        return isNaN(num) ? (isMandatory ? 0 : null) : num;
+      };
+      
+      // Mandatory scopes - core scope always included (0 if not filled)
+      validScores.push(parsePercent(coreScopePercent, true));
+      
+      // Optional institution portfolios - only include if allocated (0 if allocated but not filled)
+      [instPortfolio1, instPortfolio2].forEach(score => {
+        const parsed = parsePercent(score, false);
+        if (parsed !== null) validScores.push(parsed);
+      });
+      
+      // Calculate average
+      let average = validScores.length > 0 
+        ? validScores.reduce((a, b) => a + b, 0) / validScores.length 
+        : 0;
+      
+      // Determine stars and color
+      let stars = '';
+      let starCount = 0;
+      let colorClass = '';
+      
+      if (average >= 91) {
+        starCount = 5;
+        stars = '★★★★★';
+        colorClass = 'rating-excellent';
+      } else if (average >= 81) {
+        starCount = 5;
+        stars = '★★★★★';
+        colorClass = 'rating-excellent';
+      } else if (average >= 61) {
+        starCount = 4;
+        stars = '★★★★☆';
+        colorClass = 'rating-good';
+      } else if (average >= 41) {
+        starCount = 3;
+        stars = '★★★☆☆';
+        colorClass = 'rating-average';
+      } else if (average >= 21) {
+        starCount = 2;
+        stars = '★★☆☆☆';
+        colorClass = 'rating-average';
+      } else if (average >= 1) {
+        starCount = 1;
+        stars = '★☆☆☆☆';
+        colorClass = 'rating-poor';
+      } else {
+        starCount = 0;
+        stars = '☆☆☆☆☆';
+        colorClass = 'rating-poor';
+      }
+      
+      return {
+        average: average.toFixed(1),
+        stars: stars,
+        starCount: starCount,
+        colorClass: colorClass
+      };
+    }
+
+    // Institution portfolio form mappings
+    const institutionFormTableMap = [
+      { name: "Director – Students welfare & Admission", table: "Institution-form1-monthly" },
+      { name: "Head - HR", table: "Institution-form2" },
+      { name: "Principal", table: "Institution-form3-monthly" },
+      { name: "Dean - IQAC", table: "Institution-form4-monthly" },
+      { name: "Director - Academics", table: "Institution-form5" },
+      { name: "Controller of Examinations", table: "Institution-form6-monthly" },
+      { name: "Executive Dean – International Affairs", table: "Institution-form7-monthly" },
+      { name: "Head - Placements", table: "Institution-form8" },
+      { name: "Placement Officer", table: "Institution-form9" },
+      { name: "Head – Training", table: "Institution-form10" },
+      { name: "Training Officer", table: "Institution-form11" },
+      { name: "Head - RISE", table: "Institution-form12" },
+      { name: "IT Infra – Coordinator", table: "Institution-form13-monthly" },
+      { name: "Website – Coordinator", table: "Institution-form14-monthly" },
+      { name: "ERP Coordinator", table: "Institution-form15" },
+      { name: "Public Relations Officer", table: "Institution-form16" },
+      { name: "Logistics Coordinator", table: "Institution-form17" }
+    ];
+
+    // Department portfolio form mappings (8 forms)
+    const deptPortfolioFormMap = [
+      { label: "1. Training & Placement", table: 'form1-monthly', formKey: 'form1' },
+      { label: "2. Class Advisor", table: 'form2-monthly', formKey: 'form2' },
+      { label: "3. Info & Contribution", table: 'form3-monthly', formKey: 'form3' },
+      { label: "4. Outcome & Exam Cell", table: 'form4-monthly', formKey: 'form4' },
+      { label: "5. Continuous Improvement", table: 'form5-monthly', formKey: 'form5' },
+      { label: "6. T&L Process (IQAC)", table: 'form6_monthly', formKey: 'form6' },
+      { label: "7. Student Support", table: 'form7-monthly', formKey: 'form7' },
+      { label: "8. Facilities & Lab", table: 'form8-monthly', formKey: 'form8' }
+    ];
+
+    async function loadConsolidatedSummaryTable() {
+      // Setup department filter
+      const deptFilter = document.getElementById('summaryDepartmentFilter');
+      if (!deptFilter) return;
+      
+        // Fetch departments - filter to only S&H departments
+        const { data: depts, error: deptErr } = await supabaseClient
+          .from('Faculty')
+          .select('department');
+        if (deptErr) {
+          console.error('Error fetching departments:', deptErr);
+          return;
+        }
+        const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+        const allDepts = [...new Set(depts.map(d => d.department).filter(Boolean))];
+        const uniqueDepts = allDepts.filter(d => shDepartments.includes(d)).sort();
+      
+      // Populate department dropdown
+      deptFilter.innerHTML = '<option value="All">All</option>' + 
+        uniqueDepts.map(d => `<option value="${d}">${d}</option>`).join('');
+      selectedSummaryDepartment = 'All';
+      deptFilter.value = selectedSummaryDepartment;
+      
+      deptFilter.addEventListener('change', () => {
+        selectedSummaryDepartment = deptFilter.value;
+        renderConsolidatedSummaryTable();
+      });
+      
+      document.getElementById('summaryMonthFilter').addEventListener('change', () => {
+        selectedSummaryMonth = document.getElementById('summaryMonthFilter').value;
+        renderConsolidatedSummaryTable();
+      });
+
+      // Overall Rating filter + sort listeners
+      const summaryPctEl = document.getElementById('summaryPercentageFilter');
+      if (summaryPctEl) {
+        summaryPctEl.addEventListener('change', function() {
+          const wrap = document.getElementById('summaryCustomRangeWrap');
+          if (this.value === 'custom') { wrap.classList.remove('hidden'); wrap.classList.add('flex'); }
+          else { wrap.classList.add('hidden'); wrap.classList.remove('flex'); }
+          renderConsolidatedSummaryTable();
+        });
+      }
+      const sMin = document.getElementById('summaryMinPct'); if (sMin) sMin.addEventListener('input', () => renderConsolidatedSummaryTable());
+      const sMax = document.getElementById('summaryMaxPct'); if (sMax) sMax.addEventListener('input', () => renderConsolidatedSummaryTable());
+      const sSort = document.getElementById('summarySortOrder'); if (sSort && !sSort.dataset.listenerAdded) { sSort.addEventListener('change', () => renderConsolidatedSummaryTable()); sSort.dataset.listenerAdded = 'true'; }
+
+      // Export buttons
+      document.getElementById('exportSummaryTableBtn').onclick = exportSummaryTableToExcel;
+      const pdfBtn = document.getElementById('exportSummaryTablePdfBtn');
+      if (pdfBtn) pdfBtn.onclick = showFacultySelectionModal;
+      
+      await renderConsolidatedSummaryTable();
+    }
+
+    async function renderConsolidatedSummaryTable() {
+      const container = document.getElementById('summaryTableContainer');
+      container.innerHTML = '<div class="text-center text-gray-500 py-4">Loading summary data...</div>';
+      
+      try {
+        // Fetch all faculty
+        // Filter to only S&H departments
+        const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+        let facultyQuery = supabaseClient.from('Faculty').select('*').in('department', shDepartments);
+        if (selectedSummaryDepartment !== 'All') {
+          facultyQuery = facultyQuery.eq('department', selectedSummaryDepartment);
+        }
+        const { data: allFaculty, error: facErr } = await facultyQuery;
+        if (facErr) throw facErr;
+        
+        // Fetch Core Scope Monthly data (S&H)
+        let coreScopeQuery = supabaseClient.from('Core_scope_SH').select('*').eq('Month', selectedSummaryMonth);
+        if (selectedSummaryDepartment !== 'All') {
+          coreScopeQuery = coreScopeQuery.eq('Department', selectedSummaryDepartment);
+        }
+        const { data: coreScopeData } = await coreScopeQuery;
+        
+        // Fetch department portfolio data for all 8 forms
+        const deptPortfolioPromises = deptPortfolioFormMap.map(form => 
+          supabaseClient.from(form.table).select('*').eq('Month', selectedSummaryMonth)
+        );
+        const deptPortfolioResults = await Promise.all(deptPortfolioPromises);
+        
+        // Fetch institution portfolio data for all 17 forms
+        const instPortfolioPromises = institutionFormTableMap.map(form => 
+          supabaseClient.from(form.table).select('*')
+        );
+        const instPortfolioResults = await Promise.all(instPortfolioPromises);
+        
+        // Build summary data
+        const summaryRows = [];
+        
+        for (const fac of allFaculty) {
+          const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || '';
+          const nameTrimmed = facultyName.toString().trim().toLowerCase();
+          const dept = fac.department || 'Unknown';
+          const designation = fac.Designation || 'N/A';
+          
+          // Normalize designation - trim to remove whitespace and special characters like \r\n
+          const desig = designation.toString().trim().toUpperCase();
+          if (desig !== 'AP' && desig !== 'ASSISTANT PROFESSOR' && 
+              desig !== 'ASP' && desig !== 'ASSOCIATE PROFESSOR' && 
+              desig !== 'PROF' && desig !== 'PROFESSOR') {
+            continue; // Skip non-teaching staff
+          }
+          
+          let desigDisplay = '';
+          if (desig === 'AP' || desig === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
+          else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
+          else if (desig === 'PROF' || desig === 'PROFESSOR') desigDisplay = 'Prof';
+          
+          // Calculate Core Scope Monthly %
+          let coreScopePercent = '-';
+          if (coreScopeData && coreScopeData.length > 0) {
+            const matchingRows = coreScopeData.filter(r => 
+              (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
+            );
+            if (matchingRows.length > 0) {
+              // Get the latest row (prefer updated_at, then input_id/id)
+              const coreScopeRow = chooseLatestRow(matchingRows);
+              
+              let completedCount = 0;
+              const totalCount = 13; // Fixed denominator for S&H Core Scope
+              for (let i = 1; i <= 13; i++) {
+                const status = (coreScopeRow[`Status_${i}`] || '').toString().trim().toLowerCase();
+                if (status === 'completed' || status === 'completed and updated') {
+                  completedCount += 1;
+                }
+                // All statuses (including 'Not Applicable', null, empty) are included in denominator
+              }
+              coreScopePercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
+            }
+          }
+          
+          // Calculate Institution Portfolio percentages
+          let instPortfolio1Percent = '-';
+          let instPortfolio2Percent = '-';
+          let instPortfolioCount = 0;
+          
+          for (let i = 0; i < institutionFormTableMap.length; i++) {
+            const formMapping = institutionFormTableMap[i];
+            const formData = instPortfolioResults[i].data || [];
+            const isMonthlyForm = formMapping.table.includes('-monthly');
+            
+            // Search for faculty in this form's data - get all matching rows
+            const matchingRows = formData.filter(r => {
+              const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || '';
+              const rowMonth = r['Month:'] || r['Month'] || r['month'] || '';
+              // Normalize both names by removing extra spaces
+              const normalizedRowName = rowName.toString().trim().replace(/\s+/g, ' ').toLowerCase();
+              const normalizedFacultyName = nameTrimmed.replace(/\s+/g, ' ');
+              const nameMatches = normalizedRowName === normalizedFacultyName;
+              const monthMatches = !isMonthlyForm || rowMonth.toString().trim().toLowerCase() === selectedSummaryMonth.toLowerCase();
+              return nameMatches && monthMatches;
+            });
+            
+            // Get the row with the highest input_id (most recent submission)
+            const formRow = matchingRows.length > 0 
+              ? matchingRows.reduce((latest, current) => 
+                  (current.input_id || 0) > (latest.input_id || 0) ? current : latest
+                )
+              : null;
+            
+            // If faculty found, calculate percentage
+            if (formRow) {
+              let percent = '0%';
+              let completedCount = 0;
+              // Dynamically count actual Status fields (Institution forms have varying counts)
+              const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status_'));
+              const totalCount = statusKeys.length;
+              
+              for (const key of statusKeys) {
+                const value = (formRow[key] || '').toString().trim().toLowerCase();
+                if (value === 'completed' || value === 'completed and updated') {
+                  completedCount++;
+                }
+                // All statuses (including 'Not Applicable', null, empty) are included in denominator
+              }
+              
+              percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
+              
+              // Assign percent
+              if (instPortfolioCount === 0) {
+                instPortfolio1Percent = percent;
+              } else if (instPortfolioCount === 1) {
+                instPortfolio2Percent = percent;
+              }
+              instPortfolioCount++;
+            }
+          }
+          
+          summaryRows.push({
+            dept,
+            designation: desigDisplay,
+            facultyName,
+            coreScopePercent,
+            instPortfolio1Percent,
+            instPortfolio2Percent
+          });
+        }
+        
+        // Apply Overall Rating filter and sort
+        (function applySummaryFiltersAndSort() {
+          const percentFilter = (document.getElementById('summaryPercentageFilter') || {}).value || 'All';
+          const minPct = parseFloat((document.getElementById('summaryMinPct') || {}).value);
+          const maxPct = parseFloat((document.getElementById('summaryMaxPct') || {}).value);
+          const sortVal = (document.getElementById('summarySortOrder') || {}).value || 'none';
+
+          function computeOverallPercent(row) {
+            if (row._overallPercent !== undefined) return row._overallPercent;
+            const rating = calculateFacultyRating(
+              row.coreScopePercent,
+              row.instPortfolio1Percent,
+              row.instPortfolio2Percent
+            );
+            const avg = rating ? parseFloat(rating.average) : NaN;
+            const val = !isNaN(avg) ? Math.round(avg) : null;
+            row._overallPercent = val;
+            return val;
+          }
+
+          let filtered = summaryRows.filter(r => {
+            const pct = computeOverallPercent(r);
+            if (percentFilter !== 'All') {
+              if (percentFilter === 'notsubmitted') { if (pct !== null) return false; }
+              else if (percentFilter === '80plus')  { if (pct === null || pct < 80) return false; }
+              else if (percentFilter === '60to79')  { if (pct === null || pct < 60 || pct > 79) return false; }
+              else if (percentFilter === '40to59')  { if (pct === null || pct < 40 || pct > 59) return false; }
+              else if (percentFilter === 'below40') { if (pct === null || pct >= 40) return false; }
+              else if (percentFilter === 'custom')  {
+                if (pct === null) return false;
+                if (!isNaN(minPct) && pct < minPct) return false;
+                if (!isNaN(maxPct) && pct > maxPct) return false;
+              }
+            }
+            return true;
+          });
+
+          if (sortVal === 'hightolow') {
+            filtered.sort((a, b) => {
+              const pa = computeOverallPercent(a);
+              const pb = computeOverallPercent(b);
+              return (pb === null ? -1 : pb) - (pa === null ? -1 : pa);
+            });
+          } else if (sortVal === 'lowtohigh') {
+            filtered.sort((a, b) => {
+              const pa = computeOverallPercent(a);
+              const pb = computeOverallPercent(b);
+              return (pa === null ? 101 : pa) - (pb === null ? 101 : pb);
+            });
+          } else {
+            filtered.sort((a, b) => a.dept.localeCompare(b.dept));
+          }
+
+          summaryRows.length = 0;
+          Array.prototype.push.apply(summaryRows, filtered);
+        })();
+
+        // Render table
+        let html = '<div class="overflow-auto border rounded-lg shadow-sm" style="max-height: 600px;">';
+        html += '<table class="min-w-full text-sm bg-white"><thead class="bg-yellow-200 text-black sticky top-0 z-20"><tr>';
+        html += '<th class="px-3 py-2 sticky left-0 bg-yellow-200 z-30">Dept</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Desig</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Faculty Name</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Faculty Core Scope Monthly</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Institution Portfolio-1</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Institution Portfolio-2</th>';
+        html += '<th class="px-3 py-2 bg-yellow-200 text-black">Overall Rating</th>';
+        html += '</tr></thead><tbody>';
+        
+        // Render rows with unique IDs for async validation score updates
+        let rowIndex = 0;
+        for (const row of summaryRows) {
+          // Calculate faculty rating (without department portfolios)
+          const rating = calculateFacultyRating(
+            row.coreScopePercent,
+            row.instPortfolio1Percent,
+            row.instPortfolio2Percent
+          );
+          
+          const summaryRowId = `summary-row-${rowIndex}`;
+          html += '<tr class="hover:bg-gray-50" data-faculty-name="' + row.facultyName + '" data-dept="' + row.dept + '" data-designation="' + row.designation + '">';
+          html += `<td class="px-2 py-2 border sticky left-0 bg-white z-10">${row.dept}</td>`;
+          html += `<td class="px-2 py-2 border text-center">${row.designation}</td>`;
+          html += `<td class="px-2 py-2 border">${row.facultyName}</td>`;
+          html += `<td id="summary-core-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.coreScopePercent}</td>`;
+          html += `<td id="summary-inst1-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.instPortfolio1Percent}</td>`;
+          html += `<td id="summary-inst2-${summaryRowId}" class="px-2 py-2 border text-center font-semibold">${row.instPortfolio2Percent}</td>`;
+          html += `<td id="summary-rating-${summaryRowId}" class="px-2 py-2 border text-center">`;
+          html += `<div class="star-rating overall-rating ${rating.colorClass}" style="color:#000 !important;">${rating.stars}</div>`;
+          html += `<div class="text-xs mt-1 overall-rating" style="color:#000 !important;">${Math.round(rating.average)}%</div>`;
+          html += `</td>`;
+          html += '</tr>';
+          
+          // Store row data for async validation score updates
+          row.summaryRowId = summaryRowId;
+          row.rowIndex = rowIndex;
+          rowIndex++;
+        }
+        
+        html += '</tbody></table></div>';
+        container.innerHTML = html || '<div class="text-gray-500 text-center py-4">No summary data found.</div>';
+        
+        // HOD validation override removed: show original computed percentages only
+        
+      } catch (error) {
+        console.error('Summary table error:', error);
+        container.innerHTML = '<div class="text-red-500 text-center py-4">Failed to load summary data.</div>';
+      }
+    }
+
+    async function exportSummaryTableToExcel() {
+      try {
+        // Fetch all faculty
+        // Filter to only S&H departments
+        const shDepartments = ['S&H V1', 'S&H V2', 'S&H V3', 'S&H V4', 'S&H V5', 'S&H V6'];
+        let facultyQuery = supabaseClient.from('Faculty').select('*').in('department', shDepartments);
+        if (selectedSummaryDepartment !== 'All') {
+          facultyQuery = facultyQuery.eq('department', selectedSummaryDepartment);
+        }
+        const { data: allFaculty, error: facErr } = await facultyQuery;
+        if (facErr) throw facErr;
+        
+        // Fetch Core Scope Monthly data (S&H)
+        let coreScopeQuery = supabaseClient.from('Core_scope_SH').select('*').eq('Month', selectedSummaryMonth);
+        if (selectedSummaryDepartment !== 'All') {
+          coreScopeQuery = coreScopeQuery.eq('Department', selectedSummaryDepartment);
+        }
+        const { data: coreScopeData } = await coreScopeQuery;
+        
+        // Department portfolios removed for S&H dashboard
+        
+        // Fetch institution portfolio data for all 17 forms
+        const instPortfolioPromises = institutionFormTableMap.map(form => 
+          supabaseClient.from(form.table).select('*')
+        );
+        const instPortfolioResults = await Promise.all(instPortfolioPromises);
+        
+        // Build summary data for Excel
+        const excelData = [];
+        
+        for (const fac of allFaculty) {
+          const facultyName = fac.Name || fac['Portfolio Member Name'] || fac.email || '';
+          const nameTrimmed = facultyName.toString().trim().toLowerCase();
+          const dept = fac.department || 'Unknown';
+          const designation = fac.Designation || 'N/A';
+          
+          // Normalize designation
+          const desig = designation.toUpperCase();
+          if (desig !== 'AP' && desig !== 'ASSISTANT PROFESSOR' && 
+              desig !== 'ASP' && desig !== 'ASSOCIATE PROFESSOR' && 
+              desig !== 'PROF' && desig !== 'PROFESSOR') {
+            continue; // Skip non-teaching staff
+          }
+          
+          let desigDisplay = '';
+          if (desig === 'AP' || desig === 'ASSISTANT PROFESSOR') desigDisplay = 'AP';
+          else if (desig === 'ASP' || desig === 'ASSOCIATE PROFESSOR') desigDisplay = 'ASP';
+          else if (desig === 'PROF' || desig === 'PROFESSOR') desigDisplay = 'Prof';
+          
+          // Calculate Core Scope Monthly %
+          let coreScopePercent = '-';
+          if (coreScopeData && coreScopeData.length > 0) {
+            const matchingRows = coreScopeData.filter(r => 
+              (r['Portfolio Member Name'] || '').toString().trim().toLowerCase() === nameTrimmed
+            );
+            if (matchingRows.length > 0) {
+              // Get the latest row by input_id
+              matchingRows.sort((a, b) => (b.input_id || 0) - (a.input_id || 0));
+              const coreScopeRow = matchingRows[0];
+              
+              let completedCount = 0;
+              const totalCount = 13; // Fixed denominator for S&H Core Scope
+              for (let i = 1; i <= 13; i++) {
+                const status = (coreScopeRow[`Status_${i}`] || '').toString().trim().toLowerCase();
+                if (status === 'completed' || status === 'completed and updated') {
+                  completedCount += 1;
+                }
+                // All statuses (including 'Not Applicable', null, empty) are included in denominator
+              }
+              coreScopePercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
+            }
+          }
+          
+          // Calculate Institution Portfolio percentages
+          let instPortfolio1Percent = '-';
+          let instPortfolio2Percent = '-';
+          let instPortfolioCount = 0;
+          
+          for (let i = 0; i < institutionFormTableMap.length; i++) {
+            const formMapping = institutionFormTableMap[i];
+            const formData = instPortfolioResults[i].data || [];
+            const isMonthlyForm = formMapping.table.includes('-monthly');
+            
+            // Search for faculty in this form's data - get all matching rows
+            const matchingRows = formData.filter(r => {
+              const rowName = r['Portfolio Member Name:'] || r['Portfolio Member Name'] || '';
+              const rowMonth = r['Month:'] || r['Month'] || r['month'] || '';
+              // Normalize both names by removing extra spaces
+              const normalizedRowName = rowName.toString().trim().replace(/\s+/g, ' ').toLowerCase();
+              const normalizedFacultyName = nameTrimmed.replace(/\s+/g, ' ');
+              const nameMatches = normalizedRowName === normalizedFacultyName;
+              const monthMatches = !isMonthlyForm || rowMonth.toString().trim().toLowerCase() === selectedSummaryMonth.toLowerCase();
+              return nameMatches && monthMatches;
+            });
+            
+            // Get the row with the highest input_id (most recent submission)
+            const formRow = matchingRows.length > 0 
+              ? matchingRows.reduce((latest, current) => 
+                  (current.input_id || 0) > (latest.input_id || 0) ? current : latest
+                )
+              : null;
+            
+            // If faculty found, calculate percentage
+            if (formRow) {
+              let completedCount = 0;
+              // Dynamically count actual Status fields (Institution forms have varying counts)
+              const statusKeys = Object.keys(formRow).filter(k => k.startsWith('Status_'));
+              const totalCount = statusKeys.length;
+              for (const key of statusKeys) {
+                const value = (formRow[key] || '').toString().trim().toLowerCase();
+                // Count as completed if status is "completed" or "completed and updated"
+                if (value === 'completed' || value === 'completed and updated') {
+                  completedCount++;
+                }
+                // All statuses (including 'Not Applicable', null, empty) are included in denominator
+              }
+              const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) + '%' : '0%';
+              
+              // Assign percent
+              if (instPortfolioCount === 0) {
+                instPortfolio1Percent = percent;
+              } else if (instPortfolioCount === 1) {
+                instPortfolio2Percent = percent;
+              }
+              instPortfolioCount++;
+            }
+          }
+          
+          // Calculate rating (without department portfolios)
+          const rating = calculateFacultyRating(
+            coreScopePercent,
+            instPortfolio1Percent,
+            instPortfolio2Percent
+          );
+          
+          excelData.push({
+            'Department': dept,
+            'Designation': desigDisplay,
+            'Faculty Name': facultyName,
+            'Faculty Email': fac.email || '',
+            'Faculty Core Scope Monthly': coreScopePercent,
+            'Institution Portfolio-1': instPortfolio1Percent,
+            'Institution Portfolio-2': instPortfolio2Percent,
+            'Overall Rating (%)': Math.round(rating.average) + '%',
+            'Stars': rating.starCount + ' stars'
+          });
+        }
+        
+        // Apply Overall Rating UI filter + sort to exported rows
+        (function applyExportSummaryFilters() {
+          const percentFilter = (document.getElementById('summaryPercentageFilter') || {}).value || 'All';
+          const minPct = parseFloat((document.getElementById('summaryMinPct') || {}).value);
+          const maxPct = parseFloat((document.getElementById('summaryMaxPct') || {}).value);
+          const sortVal = (document.getElementById('summarySortOrder') || {}).value || 'none';
+          function parsePct(s) { if (!s || s === '-') return null; const n = parseInt(String(s).replace(/[^0-9\-]/g,''),10); return Number.isFinite(n)?n:null; }
+
+          let filtered = excelData.filter(r => {
+            const pct = parsePct(r['Overall Rating (%)']);
+            if (percentFilter !== 'All') {
+              if (percentFilter === 'notsubmitted') { if (pct !== null) return false; }
+              else if (percentFilter === '80plus')  { if (pct === null || pct < 80) return false; }
+              else if (percentFilter === '60to79')  { if (pct === null || pct < 60 || pct > 79) return false; }
+              else if (percentFilter === '40to59')  { if (pct === null || pct < 40 || pct > 59) return false; }
+              else if (percentFilter === 'below40') { if (pct === null || pct >= 40) return false; }
+              else if (percentFilter === 'custom')  {
+                if (pct === null) return false;
+                if (!isNaN(minPct) && pct < minPct) return false;
+                if (!isNaN(maxPct) && pct > maxPct) return false;
+              }
+            }
+            return true;
+          });
+          if (sortVal === 'hightolow') {
+            filtered.sort((a,b) => { const pa=parsePct(a['Overall Rating (%)']); const pb=parsePct(b['Overall Rating (%)']); return (pb===null?-1:pb)-(pa===null?-1:pa); });
+          } else if (sortVal === 'lowtohigh') {
+            filtered.sort((a,b) => { const pa=parsePct(a['Overall Rating (%)']); const pb=parsePct(b['Overall Rating (%)']); return (pa===null?101:pa)-(pb===null?101:pb); });
+          } else {
+            filtered.sort((a,b) => (a['Department']||'').localeCompare(b['Department']||''));
+          }
+          excelData.length = 0;
+          Array.prototype.push.apply(excelData, filtered);
+        })();
+
+        // Ensure XLSX is loaded
+        await waitForXLSX();
+
+        // Build AOA from rendered table (preserves UI order) with fallback to excelData
+        const container = document.getElementById('summaryTableContainer');
+        const headers = ['Department','Designation','Faculty Name','Faculty Email','Faculty Core Scope Monthly','Institution Portfolio-1','Institution Portfolio-2','Overall Rating (%)','Stars'];
+        let aoa = [];
+        if (container) {
+          const table = container.querySelector('table');
+          if (table) {
+            aoa.push(headers);
+            Array.from(table.querySelectorAll('tbody tr')).forEach(tr => {
+              const tds = Array.from(tr.querySelectorAll('td'));
+              const dept = (tds[0]&&tds[0].innerText.trim())||'';
+              const designation = (tds[1]&&tds[1].innerText.trim())||'';
+              const facultyName = (tds[2]&&tds[2].innerText.trim())||'';
+              const coreScope = (tds[3]&&tds[3].innerText.trim())||'';
+              const inst1 = (tds[4]&&tds[4].innerText.trim())||'';
+              const inst2 = (tds[5]&&tds[5].innerText.trim())||'';
+              const overallText = (tds[6]&&tds[6].innerText.trim())||'';
+              const overallMatch = overallText.match(/(\d+)%/);
+              const overall = overallMatch ? (overallMatch[1]+'%') : overallText;
+              aoa.push([dept,designation,facultyName,'',coreScope,inst1,inst2,overall,'']);
+            });
+          }
+        }
+        if (aoa.length <= 1) {
+          aoa = [headers];
+          excelData.forEach(r => aoa.push([r['Department']||'',r['Designation']||'',r['Faculty Name']||'',r['Faculty Email']||'',r['Faculty Core Scope Monthly']||'',r['Institution Portfolio-1']||'',r['Institution Portfolio-2']||'',r['Overall Rating (%)']||'',r['Stars']||'']));
+        }
+
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Consolidated Summary');
+
+        // Auto-size columns
+        const maxWidth = 50;
+        const colWidths = aoa[0].map((h, ci) => {
+          const maxLen = Math.max(h.length, ...aoa.slice(1).map(r => (r[ci]||'').toString().length));
+          return { wch: Math.min(maxLen + 2, maxWidth) };
+        });
+        ws['!cols'] = colWidths;
+
+        // Apply percentage-based cell fill colors to Overall Rating (%) column
+        const overallColIndex = headers.indexOf('Overall Rating (%)');
+        function colIdxToLetter(idx) { let s=''; while(idx>=0){s=String.fromCharCode(65+(idx%26))+s;idx=Math.floor(idx/26)-1;} return s; }
+        for (let r = 1; r < aoa.length; r++) {
+          const m = (aoa[r][overallColIndex]||'').toString().match(/(\d+)%/);
+          const pct = m ? parseInt(m[1],10) : null;
+          let color = null;
+          if (pct !== null) { if (pct<=25) color='FF0000'; else if (pct<=50) color='FFA500'; else if (pct<=75) color='FFFF00'; else color='16A34A'; }
+          if (color) {
+            const cellRef = colIdxToLetter(overallColIndex)+(r+1);
+            if (!ws[cellRef]) ws[cellRef] = { t:'s', v:aoa[r][overallColIndex] };
+            ws[cellRef].s = { fill:{ patternType:'solid', fgColor:{ rgb:color } } };
+          }
+        }
+
+        const fileName = `Consolidated_Summary_SH_${selectedSummaryDepartment}_${selectedSummaryMonth}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        
+      } catch (error) {
+        console.error('Export error:', error);
+        alert('Failed to export data to Excel. Please try again.');
+      }
+    }
+
+    // Export summary table to PDF (landscape, 10 rows per page)
+    // Modal functions for faculty selection
+    function showFacultySelectionModal() {
+      const container = document.getElementById('summaryTableContainer');
+      if (!container) { alert('No summary table found to export.'); return; }
+      const table = container.querySelector('table');
+      if (!table) { alert('No summary table found to export.'); return; }
+      
+      const rows = Array.from(table.querySelectorAll('tbody tr'));
+      if (rows.length === 0) {
+        alert('No faculty data to export.');
+        return;
+      }
+      
+      // Group faculty by department
+      const departmentGroups = {};
+      rows.forEach((row, idx) => {
+        const facultyName = row.dataset.facultyName || '';
+        const dept = row.dataset.dept || '';
+        const designation = row.dataset.designation || '';
+        
+        if (!departmentGroups[dept]) {
+          departmentGroups[dept] = [];
+        }
+        departmentGroups[dept].push({ facultyName, dept, designation, idx });
+      });
+      
+      // Build expandable list grouped by department
+      let listHTML = '<div class="space-y-3">';
+      const sortedDepartments = Object.keys(departmentGroups).sort();
+
+      // Department selection with checkboxes for order
+      listHTML += `<div class="mb-3 p-3 border border-gray-200 rounded"><div class="font-semibold mb-2">Select Departments for Export Order (check in desired number-wise order)</div><div id="departmentCheckboxes" class="grid grid-cols-2 gap-2"></div></div>`;
+
+      // Initialize selected departments
+      window.selectedDepartments = window.selectedDepartments || [];
+
+      sortedDepartments.forEach(dept => {
+        const facultyList = departmentGroups[dept];
+        const groupId = `group-${dept.replace(/\s+/g, '-')}`;
+        
+        listHTML += `<div class="border border-gray-300 rounded-lg overflow-hidden">`;
+        
+        // Department header with expand/collapse
+        listHTML += `<div class="bg-purple-50 p-3 flex items-center gap-3 cursor-pointer hover:bg-purple-100" onclick="toggleDepartmentGroup('${groupId}')">`;
+        listHTML += `<svg class="w-5 h-5 text-gray-600 expand-icon" id="icon-${groupId}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
+        listHTML += `<span class="font-bold text-purple-900">${dept} (${facultyList.length} faculty)</span>`;
+        listHTML += `</div>`;
+        
+        // Faculty list (initially visible)
+        listHTML += `<div id="${groupId}" class="department-group">`;
+        facultyList.forEach(({ facultyName, dept, designation, idx }) => {
+          listHTML += `<div class="flex items-center gap-3 p-3 hover:bg-gray-50 border-t border-gray-200 modal-faculty-row">`;
+          listHTML += `<div class="w-5"></div>`; // Indent
+          listHTML += `<input type="checkbox" checked class="modal-faculty-checkbox w-5 h-5 cursor-pointer" data-row-index="${idx}" data-department="${dept}" id="faculty-cb-${idx}">`;
+          listHTML += `<label for="faculty-cb-${idx}" class="cursor-pointer flex-1">`;
+          listHTML += `<span class="font-semibold text-gray-800">${facultyName}</span>`;
+          listHTML += `<span class="text-sm text-gray-600 ml-2">(${designation} - ${dept})</span>`;
+          listHTML += `</label>`;
+          listHTML += `</div>`;
+        });
+        listHTML += `</div>`;
+        
+        listHTML += `</div>`;
+      });
+      
+      listHTML += '</div>';
+
+      // Populate department checkboxes after modal is rendered
+      setTimeout(() => {
+        const container = document.getElementById('departmentCheckboxes');
+        sortedDepartments.forEach(dept => {
+          const label = document.createElement('label');
+          label.className = 'flex items-center gap-2 p-2 bg-white border rounded cursor-pointer hover:bg-gray-50';
+          label.innerHTML = `<input type="checkbox" class="dept-order-checkbox" data-dept="${dept}" onchange="toggleDeptSelection('${dept.replace(/'/g, "\\'")}')"> <span class="dept-number" data-dept="${dept}"></span> ${dept}`;
+          container.appendChild(label);
+        });
+        renderSelectedOrder(); // Initial render
+        // Attach search handler
+        const searchInput = document.getElementById('facultySearchInput');
+        if (searchInput) {
+          searchInput.oninput = function() {
+            const q = this.value.trim().toLowerCase();
+            document.querySelectorAll('.modal-faculty-row').forEach(row => {
+              const text = row.innerText.toLowerCase();
+              row.style.display = text.includes(q) ? '' : 'none';
+            });
+            document.querySelectorAll('.department-group').forEach(group => {
+              const header = group.previousElementSibling;
+              const anyVisible = Array.from(group.querySelectorAll('.modal-faculty-row')).some(r => r.style.display !== 'none');
+              group.style.display = anyVisible ? '' : 'none';
+              if (header) header.style.display = anyVisible ? '' : 'none';
+            });
+          };
+        }
+      }, 10);
+
+      document.getElementById('facultySelectionList').innerHTML = listHTML;
+      document.getElementById('facultySelectionModal').classList.remove('hidden');
+    }
+
+    // Department selection functions for SH modal
+    window.toggleDeptSelection = function(dept) {
+      const checkbox = document.querySelector(`.dept-order-checkbox[data-dept="${dept}"]`);
+      if (checkbox && checkbox.checked) {
+        if (!window.selectedDepartments.includes(dept)) {
+          window.selectedDepartments.push(dept);
+        }
+      } else {
+        window.selectedDepartments = window.selectedDepartments.filter(d => d !== dept);
+      }
+      renderSelectedOrder();
+    };
+
+    function renderSelectedOrder() {
+      document.querySelectorAll('.dept-number').forEach(span => {
+        const dept = span.dataset.dept;
+        const idx = window.selectedDepartments.indexOf(dept);
+        span.textContent = idx >= 0 ? `${idx + 1}. ` : '';
+      });
+    }
+    
+    function toggleDepartmentGroup(groupId) {
+      const group = document.getElementById(groupId);
+      const icon = document.getElementById(`icon-${groupId}`);
+      if (group.style.display === 'none') {
+        group.style.display = 'block';
+        icon.style.transform = 'rotate(0deg)';
+      } else {
+        group.style.display = 'none';
+        icon.style.transform = 'rotate(-90deg)';
+      }
+    }
+    
+    function toggleDepartment(checkbox, department) {
+      // removed department header checkboxes — no-op kept for compatibility
+      return;
+    }
+    
+    function closeFacultySelectionModal() {
+      document.getElementById('facultySelectionModal').classList.add('hidden');
+    }
+    
+    function selectAllFacultyInModal() {
+      const checkboxes = document.querySelectorAll('.modal-faculty-checkbox');
+      checkboxes.forEach(cb => cb.checked = true);
+    }
+    
+    function deselectAllFacultyInModal() {
+      const checkboxes = document.querySelectorAll('.modal-faculty-checkbox');
+      checkboxes.forEach(cb => cb.checked = false);
+    }
+    
+    function confirmFacultySelectionAndExport() {
+      const checkboxes = document.querySelectorAll('.modal-faculty-checkbox');
+      const selectedIndices = [];
+      checkboxes.forEach(cb => {
+        if (cb.checked) {
+          selectedIndices.push(parseInt(cb.dataset.rowIndex));
+        }
+      });
+      
+      // Use selectedDepartments for ordered department output
+      const deptOrder = window.selectedDepartments && window.selectedDepartments.length ? window.selectedDepartments : [];
+
+      if (selectedIndices.length === 0) {
+        alert('Please select at least one faculty member to export.');
+        return;
+      }
+      
+      closeFacultySelectionModal();
+      exportSummaryTableToPDF(selectedIndices, deptOrder);
+    }
+    
+    // Export summary table to PDF (landscape format with logo and signatures)
+    async function exportSummaryTableToPDF(selectedIndices, deptOrder = []) {
+      try {
+        const container = document.getElementById('summaryTableContainer');
+        if (!container) { alert('No summary table found to export.'); return; }
+        const table = container.querySelector('table');
+        if (!table) { alert('No summary table found to export.'); return; }
+
+        const deptLabel = selectedSummaryDepartment || 'All';
+        const monthLabel = selectedSummaryMonth || '';
+        const currentYear = new Date().getFullYear();
+        const nextYear = currentYear + 1;
+        
+        // Format current date as DD/MM/YYYY
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+        const formattedDate = `${day}/${month}/${year}`;
+
+        const allRows = Array.from(table.querySelectorAll('tbody tr'));
+
+        // Build ordered selected rows based on optional deptOrder
+        let selectedRows = [];
+        if (deptOrder && deptOrder.length > 0) {
+          // For each department in order, append rows that match and are selected
+          deptOrder.forEach(dept => {
+            allRows.forEach((row, idx) => {
+              if (selectedIndices.includes(idx) && (row.dataset.dept || '') === dept) {
+                selectedRows.push(row);
+              }
+            });
+          });
+          // Finally, include any selected rows whose department wasn't in deptOrder
+          allRows.forEach((row, idx) => {
+            if (selectedIndices.includes(idx) && !deptOrder.includes(row.dataset.dept || '')) {
+              selectedRows.push(row);
+            }
+          });
+        } else {
+          // Fallback: preserve original selected order
+          selectedRows = allRows.filter((row, idx) => selectedIndices.includes(idx));
+        }
+
+        // Create wrapper
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'width:297mm;padding:8mm;background:#fff;font-family:Arial,sans-serif;';
+
+        let html = '';
+
+        // Build table header template
+        const colWidths = ['3%', '5%', '8%', '12%', '7%', '10%', '10%', '12%', '12%', '5%'];
+        let theadHTML = '<tr style="background:#FEF3C7;color:#000;">';
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[0]};">SNO</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[1]};">DEPT</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[2]};">DESIG</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[3]};">FACULTY NAME</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[4]};">FACULTY CORE SCOPE MONTHLY</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[5]};">INSTITUTION PORTFOLIO-1</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:8px;font-weight:600;text-align:center;width:${colWidths[6]};">INSTITUTION PORTFOLIO-2</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[7]};">OVERALL RATING</th>`;
+        theadHTML += `<th style="border:1px solid #999;padding:4px;font-size:9px;font-weight:600;text-align:center;width:${colWidths[8]};">FACULTY SIGNATURE</th>`;
+        theadHTML += '</tr>';
+
+        // Group selectedRows by department (preserve order)
+        const rowsByDept = {};
+        selectedRows.forEach((r) => {
+          const dept = r.dataset.dept || 'Unknown';
+          if (!rowsByDept[dept]) rowsByDept[dept] = [];
+          rowsByDept[dept].push(r);
+        });
+
+        // Determine department order for output
+        const outputDeptOrder = (deptOrder && deptOrder.length > 0) ? deptOrder : Object.keys(rowsByDept);
+
+        // For each department, render its own header + table and paginate within department
+        for (let di = 0; di < outputDeptOrder.length; di++) {
+          const dept = outputDeptOrder[di];
+          const deptRows = rowsByDept[dept] || [];
+          if (deptRows.length === 0) continue;
+
+          // Header for this department
+          html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;border-bottom:1px solid #ccc;padding-bottom:8px;">`;
+          html += `<div style="width:80px;"><img src="/static/img/pmc.jpg" style="width:80px;height:auto;" /></div>`;
+          html += `<div style="flex:1;text-align:center;">`;
+          html += `<h1 style="margin:0;color:#1e40af;font-size:18px;font-weight:700;text-transform:uppercase;">CONSOLIDATED PERFORMANCE SUMMARY</h1>`;
+          html += `<div style="margin-top:4px;font-size:13px;font-weight:600;color:#374151;">DEPARTMENT: ${dept} | ${currentYear}-${nextYear} | MONTH: ${monthLabel.toUpperCase()} ${currentYear}</div>`;
+          html += `</div></div>`;
+          html += `<div style="margin-bottom:6px;font-size:11px;font-weight:600;">DATE: ${formattedDate}</div>`;
+
+          // Start table for this department
+          html += `<table style="width:100%;border-collapse:collapse;font-size:9px;margin-bottom:10px;">`;
+          html += `<thead>${theadHTML}</thead>`;
+          html += '<tbody>';
+
+          // Render rows for this department with local numbering
+          deptRows.forEach((r, idx) => {
+            const cells = Array.from(r.children);
+            html += '<tr>';
+            html += `<td style="border:1px solid #999;padding:3px;text-align:center;width:${colWidths[0]};">${idx + 1}.</td>`;
+            for (let i = 0; i < cells.length; i++) {
+              html += `<td style="border:1px solid #999;padding:3px;text-align:center;width:${colWidths[i + 1]};">${cells[i].innerHTML}</td>`;
+            }
+            html += `<td style="border:1px solid #999;padding:8px 3px;text-align:center;width:${colWidths[8]};height:30px;"></td>`;
+            html += '</tr>';
+
+            // Page break after every 8 rows within this department
+            if ((idx + 1) % 8 === 0 && idx < deptRows.length - 1) {
+              html += `</tbody></table>`;
+              html += `<div style="page-break-after:always;"></div>`;
+              // Repeat header for next page of same department
+              html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;border-bottom:1px solid #ccc;padding-bottom:8px;">`;
+              html += `<div style="width:80px;"><img src="/static/img/pmc.jpg" style="width:80px;height:auto;" /></div>`;
+              html += `<div style="flex:1;text-align:center;">`;
+              html += `<h1 style="margin:0;color:#1e40af;font-size:18px;font-weight:700;text-transform:uppercase;">CONSOLIDATED PERFORMANCE SUMMARY</h1>`;
+              html += `<div style="margin-top:4px;font-size:13px;font-weight:600;color:#374151;">DEPARTMENT: ${dept} | ${currentYear}-${nextYear} | MONTH: ${monthLabel.toUpperCase()} ${currentYear}</div>`;
+              html += `</div></div>`;
+              html += `<div style="margin-bottom:6px;font-size:11px;font-weight:600;">DATE: ${formattedDate}</div>`;
+              html += `<table style="width:100%;border-collapse:collapse;font-size:9px;margin-bottom:10px;">`;
+              html += `<thead>${theadHTML}</thead>`;
+              html += '<tbody>';
+            }
+          });
+
+          html += '</tbody></table>';
+
+          // Do not pad departments with empty rows — keep only actual rows
+
+          // Add a page break between departments except after the last one
+          if (di < outputDeptOrder.length - 1) {
+            html += `<div style="page-break-after:always;"></div>`;
+          }
+        }
+        
+        // Signature section at the bottom with IQAC SIGN instead of HOD SIGN
+        html += `<div style="margin-top:40px;display:flex;justify-content:space-around;align-items:flex-end;">`;
+        html += `<div style="text-align:center;"><div style="font-size:14px;font-weight:700;padding-top:5px;width:180px;">IQAC</div></div>`;
+        html += `<div style="text-align:center;"><div style="font-size:14px;font-weight:700;padding-top:5px;width:180px;">PRINCIPAL</div></div>`;
+        html += `</div>`;
+
+        wrapper.innerHTML = html;
+        document.body.appendChild(wrapper);
+
+        const opt = {
+          margin: [8, 5, 8, 5],
+          filename: `Consolidated_Summary_SH_${deptLabel}_${monthLabel}_${formattedDate.replace(/\//g, '-')}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+
+        await html2pdf().set(opt).from(wrapper).save();
+        wrapper.remove();
+      } catch (err) {
+        console.error('PDF export error:', err);
+        alert('Failed to export PDF.');
+      }
+    }
+
+  loadDepartments().then(loadDashboardTable);
+  // NEW: Load core scope table departments and table
+  loadCoreScopeDepartments().then(loadCoreScopeTable);
+  // Department portfolios table removed for S&H dashboard
+  // Load consolidated summary table
+  loadConsolidatedSummaryTable();
+  </script>
+  <script>
+    // Diagnostic helpers to surface why exports may not run in the browser
+    (function(){
+      const report = () => {
+        console.group('IQAC Export Diagnostics');
+        console.log('openExportScopeModal:', typeof window.openExportScopeModal);
+        console.log('closeExportScopeModal:', typeof window.closeExportScopeModal);
+        console.log('exportYearlyCurrentDepartment:', typeof window.exportYearlyCurrentDepartment);
+        console.log('exportYearlyAllDepartments:', typeof window.exportYearlyAllDepartments);
+        console.log('attachExportButtons:', typeof window.attachExportButtons);
+        console.groupEnd();
+      };
+
+      // Run after small delay so other scripts load
+      setTimeout(() => {
+        try { report(); } catch(e) { console.error('Diagnostic report failed', e); }
+
+        // Ensure attachExportButtons is invoked to wire handlers
+        try { if (typeof window.attachExportButtons === 'function') window.attachExportButtons(); } catch(e){ console.error('attachExportButtons() threw', e); }
+
+        // Add safe click wrappers to log runtime errors
+        const safeInvoke = (name, args) => {
+          try {
+            const fn = window[name];
+            if (typeof fn === 'function') return fn.apply(window, args || []);
+            console.error('Missing function:', name);
+            alert('Missing handler: ' + name);
+          } catch (err) {
+            console.error('Error invoking', name, err);
+            alert('Error invoking ' + name + ': ' + (err && err.message));
+          }
+        };
+
+        const cur = document.getElementById('exportCurrentDeptBtn');
+        const all = document.getElementById('exportAllDeptBtn');
+        if (cur) cur.addEventListener('click', () => { console.log('Clicked exportCurrentDeptBtn'); safeInvoke('exportYearlyCurrentDepartment'); });
+        if (all) all.addEventListener('click', () => { console.log('Clicked exportAllDeptBtn'); safeInvoke('exportYearlyAllDepartments'); });
+
+        const dashboardBtn = document.getElementById('exportDashboardTableBtn');
+        if (dashboardBtn) dashboardBtn.addEventListener('click', () => console.log('Clicked exportDashboardTableBtn'));
+      }, 800);
+    })();
+  </script>
+  <script>
+    // Ensure global modal open/close functions exist (safe, idempotent)
+    window.openExportScopeModal = window.openExportScopeModal || function() {
+      const m = document.getElementById('exportScopeModal');
+      if (m) m.classList.remove('hidden');
+    };
+    window.closeExportScopeModal = window.closeExportScopeModal || function() {
+      const m = document.getElementById('exportScopeModal');
+      if (m) m.classList.add('hidden');
+    };
+
+    // Simple table-based exporter that reads the rendered table and writes XLSX.
+    window.exportYearlyCurrentDepartment = window.exportYearlyCurrentDepartment || function() {
+      try {
+        const tables = Array.from(document.querySelectorAll('#dashboardTableContainer table'));
+        if (!tables || tables.length === 0) { alert('No dashboard table found to export'); console.error('No dashboard table'); return; }
+        const selectedDept = (document.getElementById('departmentFilter')?.value || 'All').trim();
+        const month = document.getElementById('yearlyMonthFilter')?.value || '';
+
+        // Collect headers from the first table (they are identical across tables)
+        const headers = Array.from(tables[0].querySelectorAll('thead th')).map(t => t.innerText.trim());
+        // Collect all data rows from all tables
+        const dataRows = [];
+        tables.forEach(tbl => {
+          Array.from(tbl.querySelectorAll('tbody tr')).forEach(tr => {
+            const cells = Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim());
+            if (!cells || cells.length === 0) return;
+            if (selectedDept !== 'All' && cells[0] !== selectedDept) return;
+            dataRows.push(cells);
+          });
+        });
+
+        const wb = XLSX.utils.book_new();
+        ['Prof','ASP','AP'].forEach(desig => {
+          const filtered = dataRows.filter(cells => {
+            if (!cells || cells.length === 0) return false;
+            if (selectedDept !== 'All' && cells[0] !== selectedDept) return false;
+            const d = (cells[1] || '').toString().trim().toUpperCase();
+            if (desig === 'Prof') return d.includes('PROF');
+            if (desig === 'ASP') return d === 'ASP' || d.includes('ASSOCIATE');
+            if (desig === 'AP') return d === 'AP' || d.includes('ASSISTANT');
+            return false;
+          });
+          if (filtered.length) {
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...filtered]);
+            XLSX.utils.book_append_sheet(wb, ws, desig);
+          }
+        });
+
+        if (!wb.SheetNames || wb.SheetNames.length === 0) { alert('No rows found for selected department'); return; }
+        const filename = `Yearly_Mandatory_Scope_${selectedDept}${month ? '_' + month : ''}.xlsx`;
+        XLSX.writeFile(wb, filename);
+        window.closeExportScopeModal();
+      } catch (e) { console.error('exportYearlyCurrentDepartment failed', e); alert('Export failed: ' + (e && e.message)); }
+    };
+
+    window.exportYearlyAllDepartments = window.exportYearlyAllDepartments || function() {
+      try {
+        const tbl = document.querySelector('#dashboardTableContainer table');
+        if (!tbl) { alert('No dashboard table found to export'); console.error('No dashboard table'); return; }
+        const month = document.getElementById('yearlyMonthFilter')?.value || '';
+
+        const tables = Array.from(document.querySelectorAll('#dashboardTableContainer table'));
+        if (!tables || tables.length === 0) { alert('No dashboard table found to export'); console.error('No dashboard table'); return; }
+        // headers from first table
+        const headers = Array.from(tables[0].querySelectorAll('thead th')).map(t => t.innerText.trim());
+        const dataRows = [];
+        tables.forEach(tbl => {
+          Array.from(tbl.querySelectorAll('tbody tr')).forEach(tr => {
+            const cells = Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim());
+            if (!cells || cells.length === 0) return;
+            dataRows.push(cells);
+          });
+        });
+
+        const wb = XLSX.utils.book_new();
+        ['Prof','ASP','AP'].forEach(desig => {
+          const filtered = dataRows.filter(cells => {
+            if (!cells || cells.length === 0) return false;
+            const d = (cells[1] || '').toString().trim().toUpperCase();
+            if (desig === 'Prof') return d.includes('PROF');
+            if (desig === 'ASP') return d === 'ASP' || d.includes('ASSOCIATE');
+            if (desig === 'AP') return d === 'AP' || d.includes('ASSISTANT');
+            return false;
+          });
+          if (filtered.length) {
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...filtered]);
+            XLSX.utils.book_append_sheet(wb, ws, desig);
+          }
+        });
+
+        if (!wb.SheetNames || wb.SheetNames.length === 0) { alert('No rows found to export'); return; }
+        const filename = `Yearly_Mandatory_Scope_All${month ? '_' + month : ''}.xlsx`;
+        XLSX.writeFile(wb, filename);
+        window.closeExportScopeModal();
+      } catch (e) { console.error('exportYearlyAllDepartments failed', e); alert('Export failed: ' + (e && e.message)); }
+    };
+    // Core Scope modal open/close and exporter
+    window.openExportCoreScopeModal = window.openExportCoreScopeModal || function() {
+      const m = document.getElementById('exportCoreScopeModal'); if (m) m.classList.remove('hidden');
+    };
+    window.closeExportCoreScopeModal = window.closeExportCoreScopeModal || function() {
+      const m = document.getElementById('exportCoreScopeModal'); if (m) m.classList.add('hidden');
+    };
+
+    window.exportCoreScopeTableToExcel = window.exportCoreScopeTableToExcel || function(mode) {
+      try {
+        const tables = Array.from(document.querySelectorAll('#coreScopeTableContainer table'));
+        if (!tables || tables.length === 0) { alert('No core scope table found to export'); console.error('No core scope table'); return; }
+        const month = document.getElementById('coreScopeMonthFilter')?.value || '';
+        const dept = document.getElementById('coreScopeDepartmentFilter')?.value || 'All';
+        const headers = Array.from(tables[0].querySelectorAll('thead th')).map(t => t.innerText.trim());
+        const dataRows = [];
+        tables.forEach(tbl => Array.from(tbl.querySelectorAll('tbody tr')).forEach(tr => dataRows.push(Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim()))));
+
+        const wb = XLSX.utils.book_new();
+        ['Prof','ASP','AP'].forEach(desig => {
+          const filtered = dataRows.filter(cells => {
+            if (!cells || cells.length === 0) return false;
+            if (dept !== 'All' && cells[0] !== dept) return false;
+            const d = (cells[1] || '').toString().trim().toUpperCase();
+            if (desig === 'Prof') return d.includes('PROF');
+            if (desig === 'ASP') return d === 'ASP' || d.includes('ASSOCIATE');
+            if (desig === 'AP') return d === 'AP' || d.includes('ASSISTANT');
+            return false;
+          });
+          if (filtered.length) {
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...filtered]);
+            XLSX.utils.book_append_sheet(wb, ws, desig);
+          }
+        });
+
+        if (!wb.SheetNames || wb.SheetNames.length === 0) { alert('No rows found for export'); return; }
+        const filename = `CoreScope_${mode || 'current'}_${dept}${month ? '_' + month : ''}.xlsx`;
+        XLSX.writeFile(wb, filename);
+        window.closeExportCoreScopeModal();
+      } catch (e) { console.error('exportCoreScopeTableToExcel failed', e); alert('Export failed: ' + (e && e.message)); }
+    };
+  </script>
+  <footer class="text-center py-4 mt-8">
+    <p class="text-sm">
+      &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" rel="noopener noreferrer" class="underline">PMC TECH</a><br>
+      <p class="text-xs opacity-80 flex items-center justify-center gap-2">
+                        Powered by 
+                        <a href="https://zeonytechnologies.com" target="_blank" rel="noopener noreferrer" class="inline-block hover:opacity-100 transition-all duration-300 hover:scale-105">
+                            <img src="../static/img/zeony logo.png" alt="Zeony Technologies" class="h-12 w-22 py-2 object-contain"/>
+                        </a><p class="text-xs opacity-80">A Student driven Software!</p>
+    </p>
+  </footer>
+</body>
+</html>
+
+
+
+
+

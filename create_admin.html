@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Admin Account</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      max-width: 600px; 
+      margin: 50px auto; 
+      padding: 20px; 
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 { color: #333; text-align: center; }
+    .form-group { margin: 15px 0; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    input { 
+      width: 100%; 
+      padding: 10px; 
+      border: 1px solid #ddd; 
+      border-radius: 5px; 
+      box-sizing: border-box;
+    }
+    button { 
+      width: 100%;
+      padding: 12px; 
+      background: #007bff; 
+      color: white; 
+      border: none; 
+      border-radius: 5px; 
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 0;
+    }
+    button:hover { background: #0056b3; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .result { 
+      margin: 15px 0; 
+      padding: 10px; 
+      border-radius: 5px;
+    }
+    .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Create Admin Account</h1>
+    
+    <form id="admin-form">
+      <div class="form-group">
+        <label for="name">Full Name:</label>
+        <input type="text" id="name" placeholder="Enter admin full name" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" placeholder="Enter admin email" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" placeholder="Enter password" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="department">Department:</label>
+        <input type="text" id="department" value="ADMINISTRATION" placeholder="Department">
+      </div>
+      
+      <button type="submit" id="create-btn">Create Admin Account</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <hr style="margin: 30px 0;">
+    
+    <h2>Test Login</h2>
+    <div class="form-group">
+      <label for="test-email">Email:</label>
+      <input type="email" id="test-email" placeholder="Enter email to test">
+    </div>
+    
+    <div class="form-group">
+      <label for="test-password">Password:</label>
+      <input type="password" id="test-password" placeholder="Enter password to test">
+    </div>
+    
+    <button onclick="testLogin()" id="test-btn">Test Login</button>
+    
+    <div id="test-result"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://cbhodgwaazmjszkujrti.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU";
+    
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    document.getElementById('admin-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const department = document.getElementById('department').value.trim() || 'ADMINISTRATION';
+      const resultDiv = document.getElementById('result');
+      const createBtn = document.getElementById('create-btn');
+      
+      createBtn.disabled = true;
+      createBtn.textContent = 'Creating...';
+      resultDiv.innerHTML = '';
+      
+      try {
+        // First check if admin already exists
+        const { data: existing, error: checkError } = await supabaseClient
+          .from('"Admin"')
+          .select('email')
+          .eq('email', email)
+          .maybeSingle();
+        
+        if (checkError) {
+          throw new Error(`Error checking existing admin: ${checkError.message}`);
+        }
+        
+        if (existing) {
+          resultDiv.innerHTML = '<div class="error">An admin with this email already exists!</div>';
+          return;
+        }
+        
+        // Create new admin
+        const { data, error } = await supabaseClient
+          .from('"Admin"')
+          .insert([
+            {
+              name: name,
+              email: email,
+              password: password,
+              role: 'SUPER_ADMIN',
+              department: department,
+              is_active: true
+            }
+          ])
+          .select();
+        
+        if (error) {
+          throw new Error(`Error creating admin: ${error.message}`);
+        }
+        
+        resultDiv.innerHTML = `
+          <div class="success">
+            <h3>Admin Account Created Successfully!</h3>
+            <p><strong>Name:</strong> ${data[0].name}</p>
+            <p><strong>Email:</strong> ${data[0].email}</p>
+            <p><strong>Role:</strong> ${data[0].role}</p>
+            <p><strong>Department:</strong> ${data[0].department}</p>
+            <p><strong>Status:</strong> ${data[0].is_active ? 'Active' : 'Inactive'}</p>
+          </div>
+        `;
+        
+        // Clear form
+        document.getElementById('admin-form').reset();
+        document.getElementById('department').value = 'ADMINISTRATION';
+        
+      } catch (err) {
+        resultDiv.innerHTML = `<div class="error">Error: ${err.message}</div>`;
+      } finally {
+        createBtn.disabled = false;
+        createBtn.textContent = 'Create Admin Account';
+      }
+    });
+
+    async function testLogin() {
+      const email = document.getElementById('test-email').value.trim();
+      const password = document.getElementById('test-password').value.trim();
+      const resultDiv = document.getElementById('test-result');
+      const testBtn = document.getElementById('test-btn');
+      
+      if (!email || !password) {
+        resultDiv.innerHTML = '<div class="error">Please enter both email and password</div>';
+        return;
+      }
+      
+      testBtn.disabled = true;
+      testBtn.textContent = 'Testing...';
+      resultDiv.innerHTML = '';
+      
+      try {
+        const { data, error } = await supabaseClient
+          .from('"Admin"')
+          .select('*')
+          .eq('email', email)
+          .eq('password', password)
+          .eq('is_active', true)
+          .maybeSingle();
+        
+        if (error) {
+          throw new Error(`Database error: ${error.message}`);
+        }
+        
+        if (!data) {
+          // Check if email exists but with wrong password or inactive
+          const { data: emailCheck } = await supabaseClient
+            .from('"Admin"')
+            .select('*')
+            .eq('email', email)
+            .maybeSingle();
+          
+          if (!emailCheck) {
+            resultDiv.innerHTML = '<div class="error">No admin found with this email</div>';
+          } else {
+            let issues = [];
+            if (emailCheck.password !== password) issues.push('Wrong password');
+            if (!emailCheck.is_active) issues.push('Account is inactive');
+            
+            resultDiv.innerHTML = `<div class="error">Login failed: ${issues.join(', ')}</div>`;
+          }
+        } else {
+          resultDiv.innerHTML = `
+            <div class="success">
+              <h3>Login Test Successful!</h3>
+              <p>Admin: ${data.name}</p>
+              <p>Email: ${data.email}</p>
+              <p>Role: ${data.role}</p>
+              <p>Department: ${data.department}</p>
+            </div>
+          `;
+        }
+        
+      } catch (err) {
+        resultDiv.innerHTML = `<div class="error">Error: ${err.message}</div>`;
+      } finally {
+        testBtn.disabled = false;
+        testBtn.textContent = 'Test Login';
+      }
+    }
+  </script>
+</body>
+</html>

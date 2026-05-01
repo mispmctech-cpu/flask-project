@@ -1,0 +1,55 @@
+<!-- Form Status Integration Template -->
+<!-- Add this to ALL form HTML files in the <head> section after supabase script -->
+
+<!-- STEP 1: Add to <head> section after supabase script -->
+<script src="../static/javascript/form-status-controller.js"></script>
+<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+
+<!-- STEP 2: Add to the beginning of your main <script> section -->
+<script>
+// Initialize form status checking - REPLACE 'your-form-name' with actual form name
+const supabase = window.supabase.createClient(
+    "https://cbhodgwaazmjszkujrti.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+);
+
+// Initialize form status controller with the correct form name
+const formStatusController = initializeFormStatusCheck(supabase, 'FORM_NAME_HERE');
+
+// ... rest of your existing JavaScript code ...
+</script>
+
+<!-- Form Names to Use: -->
+<!-- 
+Faculty Forms:
+- 'faculty-form1' for faculty-form1.html
+- 'faculty-form2' for faculty-form2.html
+- 'faculty-form3' for faculty-form3.html
+- 'faculty-form4' for faculty-form4.html
+- 'faculty-form5' for faculty-form5.html
+- 'faculty-form6' for faculty-form6.html
+- 'faculty-form7' for faculty-form7.html
+- 'faculty-form8' for faculty-form8.html
+- 'form-ap' for form-ap.html
+- 'form-asp' for form-asp.html
+- 'form-prof' for form-prof.html
+
+Institution Forms:
+- 'institution-form1' for institution-form1.html
+- 'institution-form2' for institution-form2.html
+- ... and so on up to institution-form17
+-->
+
+<!-- Example for faculty-form1.html: -->
+<!-- 
+<script>
+const supabase = window.supabase.createClient(
+    "https://cbhodgwaazmjszkujrti.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+);
+
+const formStatusController = initializeFormStatusCheck(supabase, 'faculty-form1');
+
+// ... rest of your form's JavaScript ...
+</script>
+-->

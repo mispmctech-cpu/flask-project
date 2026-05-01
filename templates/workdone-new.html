@@ -1,0 +1,282 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workdone Overview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script src="../static/javascript/form-modal-mapper.js"></script>
+  <script src="../static/javascript/workdone-table.js"></script>
+</head>
+<body class="bg-pmcBg min-h-screen">
+  <header class="bg-purple-700  text-white shadow-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+      <a href="hod.html" class="flex items-center">
+        <img src="https://tse1.mm.bing.net/th/id/OIP.paY-ha-IpNQJrH2Lz_JZEgHaDG?w=2560&h=1070&rs=1&pid=ImgDetMain&o=7&rm=3" alt="PMC Logo" class="h-12 mr-4 rounded shadow" />
+      </a>
+      <h1 class="text-2xl font-bold">Workdone Overview</h1>
+      <button onclick="window.location.href='/logout'" aria-label="Logout" class="focus:outline-none">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white hover:text-red-400 transition">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m-6-3h12m0 0l-3-3m3 3l-3 3" />
+        </svg>
+      </button>
+    </div>
+  </header>
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <label class="font-semibold text-black">Department:</label>
+        <span id="deptDisplay" class="ml-2"></span>
+      </div>
+      <div class="flex flex-col md:flex-row gap-2 md:gap-4 items-center">
+        <input id="workdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-purple-700" placeholder="Search by Portfolio or Member" />
+        <button onclick="exportWorkdoneToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2" title="Export table to Excel">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+          Export to Excel
+        </button>
+      </div>
+    </div>
+
+    <!-- Error and Loading Messages -->
+    <div id="errorBox" class="hidden mb-4 p-3 rounded bg-red-100 text-red-700 font-semibold"></div>
+    <div id="loadingBox" class="mb-4 p-3 rounded bg-blue-100 text-blue-800 font-semibold" style="display: none;">Loading data, please wait...</div>
+
+    <!-- Main Workdone Table -->
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white shadow-lg text-sm border border-gray-300">
+        <thead class="bg-gradient-to-r from-purple-700 to-purple-500 text-white">
+          <tr>
+            <th class="p-3 border-b border-gray-300">Department</th>
+            <th class="p-3 border-b border-gray-300">Portfolio Name</th>
+            <th class="p-3 border-b border-gray-300">Portfolio Member Name</th>
+            <th class="p-3 border-b border-gray-300">Status</th>
+            <th class="p-3 border-b border-gray-300">Verify</th>
+            <th class="p-3 border-b border-gray-300">View</th>
+          </tr>
+        </thead>
+        <tbody id="workdoneTable" class="divide-y divide-gray-200"></tbody>
+      </table>
+      <div class="flex justify-center items-center mt-4" id="workdonePagination"></div>
+    </div>
+
+    <!-- Verified Workdone Section -->
+    <div class="mt-10">
+      <h2 class="text-lg font-bold mb-2 text-purple-700">Verified Workdone</h2>
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
+        <input id="verifiedWorkdoneSearch" type="text" class="p-2 border border-gray-300 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-green-700" placeholder="Search by Portfolio or Member" oninput="filterTable('verifiedWorkdoneTable', 'verifiedWorkdoneSearch')" />
+        <button onclick="exportTableToExcel('verifiedWorkdoneTable', 'Verified_Workdone')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow flex items-center gap-2 mb-2" title="Export table to Excel">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+          Export to Excel
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white shadow-lg text-sm border border-gray-300">
+          <thead class="bg-gradient-to-r from-green-700 to-green-500 text-white">
+            <tr>
+              <th class="p-3 border-b border-gray-300">Department</th>
+              <th class="p-3 border-b border-gray-300">Portfolio Name</th>
+              <th class="p-3 border-b border-gray-300">Member Name</th>
+              <th class="p-3 border-b border-gray-300">Status</th>
+              <th class="p-3 border-b border-gray-300">Verified By</th>
+              <th class="p-3 border-b border-gray-300">Verified At</th>
+              <th class="p-3 border-b border-gray-300">View</th>
+            </tr>
+          </thead>
+          <tbody id="verifiedWorkdoneTable" class="divide-y divide-gray-200"></tbody>
+        </table>
+        <div class="flex justify-center items-center mt-4" id="verifiedWorkdonePagination"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    // Export to Excel for any table by id
+    function exportTableToExcel(tbodyId, filenamePrefix) {
+      const tbody = document.getElementById(tbodyId);
+      if (!tbody) return;
+      const table = tbody.closest('table');
+      const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => row.style.display !== 'none');
+      if (rows.length === 0) {
+        alert('No data to export!');
+        return;
+      }
+      // Get headers, but skip Verify and View columns (last 2 columns)
+      let headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
+      if (headers.length > 2) {
+        headers = headers.slice(0, -2); // Remove last 2 columns (Verify/View)
+      }
+      const data = [headers];
+      rows.forEach(row => {
+        // Only take the first N-2 cells (ignore Verify/View buttons)
+        const tds = Array.from(row.querySelectorAll('td'));
+        let cells = tds.slice(0, tds.length - 2).map(td => td.innerText.trim());
+        data.push(cells);
+      });
+      // Create worksheet and workbook
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, filenamePrefix);
+      XLSX.writeFile(wb, `${filenamePrefix}.xlsx`);
+    }
+
+    // Generic table filter function for search bars
+    function filterTable(tbodyId, searchInputId) {
+      const search = document.getElementById(searchInputId).value.toLowerCase();
+      const rows = Array.from(document.getElementById(tbodyId).querySelectorAll('tr'));
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(search) ? '' : 'none';
+      });
+    }
+
+    // Supabase client
+    const supabaseClient = window.supabase.createClient(
+      "https://cbhodgwaazmjszkujrti.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU"
+    );
+
+    // Get department from localStorage (HOD) or query param
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+
+    let role = getQueryParam('role') || localStorage.getItem('role') || '';
+    let department = getQueryParam('department');
+    if (department) {
+      localStorage.setItem('department', department);
+    } else {
+      department = localStorage.getItem('department') || '';
+    }
+
+    document.getElementById('deptDisplay').textContent = department || '(None)';
+
+    // Initialize WorkdoneTable with supabase client
+    const workdoneTable = new WorkdoneTable(supabaseClient);
+
+    // Load workdone data for the department using new WorkdoneTable
+    async function loadWorkdone() {
+      try {
+        const rows = await workdoneTable.initHodWorkdoneSection(department);
+        console.log(`Loaded ${rows.length} workdone records for department: ${department}`);
+      } catch (error) {
+        console.error('Error loading workdone:', error);
+      }
+    }
+
+    // Enhanced filter function that works with the new table structure
+    function filterWorkdoneTable() {
+      const search = document.getElementById('workdoneSearch').value.toLowerCase();
+      const rows = Array.from(document.querySelectorAll('#workdoneTable tr'));
+      
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length === 0) return; // Skip header or empty rows
+        
+        // Search in department, portfolio, and member name columns
+        const department = cells[0]?.textContent?.toLowerCase() || '';
+        const portfolio = cells[1]?.textContent?.toLowerCase() || '';
+        const member = cells[2]?.textContent?.toLowerCase() || '';
+        
+        const shouldShow = department.includes(search) || portfolio.includes(search) || member.includes(search);
+        row.style.display = shouldShow ? '' : 'none';
+      });
+    }
+
+    // Export function for workdone table
+    function exportWorkdoneToExcel() {
+      exportTableToExcel('workdoneTable', 'Workdone_Overview');
+    }
+
+    // Render verified workdone table (keeping existing functionality)
+    function renderVerifiedWorkdoneTable(rows) {
+      const tbody = document.getElementById('verifiedWorkdoneTable');
+      if (!tbody) return;
+
+      if (!rows || rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan='7' class='text-center text-gray-400 p-4'>No verified records found.</td></tr>`;
+        return;
+      }
+
+      let html = "";
+      rows.forEach((r, idx) => {
+        let statusText = (r.status || '').toUpperCase();
+        let statusClass = '';
+        if (statusText === 'PENDING') {
+          statusClass = 'text-red-600 font-bold';
+        } else if (statusText === 'COMPLETED') {
+          statusClass = 'text-green-600 font-bold';
+        } else {
+          statusClass = 'font-bold';
+        }
+        
+        const verifiedAt = new Date(r.verified_at || r.created_at).toLocaleDateString();
+        
+        html += `
+        <tr class="hover:bg-green-50 transition border-b border-gray-200" data-verified-idx="${idx}">
+          <td class='p-3 border-r border-gray-200'>${r.department}</td>
+          <td class='p-3 border-r border-gray-200'>${r.portfolio_name}</td>
+          <td class='p-3 border-r border-gray-200'>${r.portfolio_member_name}</td>
+          <td class='p-3 border-r border-gray-200'><span class='${statusClass}'>${statusText}</span></td>
+          <td class='p-3 border-r border-gray-200'>${r.verified_by}</td>
+          <td class='p-3 border-r border-gray-200'>${verifiedAt}</td>
+          <td class='p-3 text-center'><button class="bg-blue-500 hover:bg-blue-700 text-white px-3 py-1 rounded" onclick="viewVerifiedRowDetails(${idx})">View</button></td>
+        </tr>`;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    // Fetch verified workdone from hod-workdone table
+    async function loadVerifiedWorkdone() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('hod-workdone')
+          .select('*')
+          .eq('department', department)
+          .order('verified_at', { ascending: false });
+
+        if (error) {
+          console.error('Error loading verified workdone:', error);
+          document.getElementById('verifiedWorkdoneTable').innerHTML = `<tr><td colspan='7' class='text-center text-red-500 p-4'>Failed to load verified workdone: ${error.message}</td></tr>`;
+          return;
+        }
+
+        renderVerifiedWorkdoneTable(data || []);
+      } catch (err) {
+        console.error('Exception loading verified workdone:', err);
+        document.getElementById('verifiedWorkdoneTable').innerHTML = `<tr><td colspan='7' class='text-center text-red-500 p-4'>Error loading verified workdone: ${err.message}</td></tr>`;
+      }
+    }
+
+    // Modal logic for viewing verified row details (placeholder)
+    function viewVerifiedRowDetails(idx) {
+      alert('Verified row details view - to be implemented');
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadWorkdone();
+      loadVerifiedWorkdone();
+    });
+
+    // Load workdone immediately
+    loadWorkdone();
+    loadVerifiedWorkdone();
+  </script>  <!-- Footer -->
+  <footer class="text-center py-4 mt-8">
+    <div class="flex flex-col items-center gap-1">
+      <span class="text-gray-400 text-sm">&copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline">PMC TECH</a><br></span>
+      <span class="text-gray-400 text-xs">Powered by 
+        <a href="https://zeonytechnologies.com" target="_blank" rel="noopener noreferrer" class="inline-block hover:opacity-100 transition-all duration-300 hover:scale-105">
+          <img src="static/img/zeony logo.png" alt="Zeony Technologies" class="h-12 w-22 py-2 object-contain"/>
+        </a>
+      </span>
+    </div>
+  </footer>
+
+</body>
+</html>

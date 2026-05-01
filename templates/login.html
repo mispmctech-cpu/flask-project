@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FWAPMS - PMC Tech Login</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    // Auto-redirect if already logged in as HR (check with server)
+    document.addEventListener('DOMContentLoaded', async function() {
+      const role = localStorage.getItem('role');
+      if (role === 'HR') {
+        // Check with server if session is valid for HR
+        try {
+          const resp = await fetch('/session-check', { credentials: 'include' });
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data && data.authenticated && data.role === 'HR') {
+              window.location.href = 'hr.html';
+              return;
+            }
+          }
+        } catch (e) {}
+        // If not authenticated, clear localStorage and stay on login
+        localStorage.removeItem('role');
+        localStorage.removeItem('email');
+      }
+    });
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            pmcPurple: '#6a2c91', // main accent
+            pmcPurpleDark: '#501e73',
+            pmcCream: '#f8f6f2', // creamy background
+            pmcGreen: '#3bb273', // accent green
+            pmcCard: '#fffdfa', // card background
+            pmcText: '#2d2a32', // main text
+            pmcMuted: '#bdbdbd', // muted gray
+            pmcBtn: '#6a2c91',
+            pmcBtnHover: '#501e73',
+            pmcDanger: '#c0392b',
+            pmcDangerHover: '#922b21',
+          },
+        },
+      },
+    }
+  </script>
+
+  <!-- Supabase JS SDK -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  
+  <style>
+    
+    .glass-effect {
+      background: rgba(255, 253, 250, 0.85); /* pmcCard with opacity */
+      backdrop-filter: blur(10px);
+      border: 1px solid #e5e5e5;
+      box-shadow: 0 8px 32px 0 rgba(106, 44, 145, 0.10);
+    }
+    .role-btn {
+      transition: all 0.3s ease;
+    }
+    .role-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+    .responsive-logo {
+      max-width: 100%;
+      height: auto;
+      width: clamp(150px, 40vw, 300px);
+    }
+    @media (max-width: 768px) {
+      .responsive-logo {
+        width: clamp(120px, 50vw, 200px);
+      }
+    }
+    .compact-form {
+      max-width: 350px;
+    }
+    @media (max-width: 640px) {
+      .compact-form {
+        max-width: 300px;
+      }
+    }
+    /* Floating support button on right side with blinking background */
+    .support-btn-fixed { width: 48px; height: 48px; border-radius: 9999px; background: linear-gradient(135deg,#6a2c91 0%,#501e73 100%); display:inline-flex; align-items:center; justify-content:center; box-shadow: 0 10px 30px rgba(80,30,115,0.12); border: none; cursor: pointer; transition: transform 160ms ease, box-shadow 160ms ease; position: relative; overflow: hidden; z-index: 999; }
+    .support-floating { position: fixed; right: 1rem; top: 1.25rem; display: block; z-index: 110; }
+    .support-floating .support-badge { position: absolute; right: calc(48px + 12px); top: 50%; transform: translateY(-50%) scale(1); background: linear-gradient(135deg,#6a2c91 0%,#501e73 100%); color: #fff; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; box-shadow: 0 8px 24px rgba(80,30,115,0.10); white-space: nowrap; transition: right 300ms cubic-bezier(.2,.9,.2,1), opacity 220ms ease, transform 300ms cubic-bezier(.2,.9,.2,1); z-index: 100; }
+    /* when sliding under, move to the right (so it's behind button) */
+    .support-floating .support-badge.badge-slide { right: 8px; }
+    /* immediately hide/scale when coming in so text never overlaps icon */
+    .support-floating .support-badge.badge-hide-immediate { opacity: 0 !important; transform: translateY(-50%) scale(0) !important; display: none !important; }
+    .support-btn-fixed:hover { transform: translateY(-4px); box-shadow: 0 14px 36px rgba(0,116,232,0.22); }
+    .support-btn-fixed:focus { outline: 3px solid rgba(30,144,255,0.16); }
+    .support-btn-fixed .icon { width:28px; height:28px; display:block; position: relative; z-index: 30; }
+    @keyframes support-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(30,144,255,0.35); }
+      70% { box-shadow: 0 0 0 14px rgba(30,144,255,0); }
+      100% { box-shadow: 0 0 0 0 rgba(30,144,255,0); }
+    }
+    .support-btn-fixed.pulse { animation: support-pulse 2s infinite; }
+    /* subtle color blink/glow animation */
+    @keyframes blink-bg {
+      0% { box-shadow: 0 10px 30px rgba(80,30,115,0.12); transform: scale(1); }
+      50% { box-shadow: 0 10px 40px rgba(80,140,255,0.22); transform: scale(1.03); }
+      100% { box-shadow: 0 10px 30px rgba(80,30,115,0.12); transform: scale(1); }
+    }
+    .support-btn-fixed.blink { animation: blink-bg 2s infinite; }
+    /* pulsing radial rings behind the button: outer and inner for stronger effect */
+    .support-btn-fixed::before,
+    .support-btn-fixed::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      border-radius: 50%;
+      pointer-events: none;
+      mix-blend-mode: screen;
+      z-index: 8;
+    }
+    /* outer subtle ring */
+    .support-btn-fixed::before {
+      width: 220%;
+      height: 220%;
+      transform: translate(-50%, -50%) scale(0.85);
+      background: radial-gradient(circle, rgba(106,44,145,0.10) 0%, rgba(80,30,115,0.04) 40%, rgba(80,30,115,0) 70%);
+      opacity: 0.9;
+      animation: ring-blink-outer 2200ms ease-in-out infinite;
+      filter: blur(6px);
+    }
+    /* inner brighter ring */
+    .support-btn-fixed::after {
+      width: 140%;
+      height: 140%;
+      transform: translate(-50%, -50%) scale(0.95);
+      background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, rgba(99,102,241,0.06) 40%, rgba(99,102,241,0) 70%);
+      opacity: 0.95;
+      animation: ring-blink-inner 1600ms ease-in-out infinite;
+      filter: blur(3px);
+    }
+    @keyframes ring-blink-outer {
+      0% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.9; }
+      50% { transform: translate(-50%, -50%) scale(1.06); opacity: 0.22; }
+      100% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.9; }
+    }
+    @keyframes ring-blink-inner {
+      0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.95; }
+      50% { transform: translate(-50%, -50%) scale(1.18); opacity: 0.18; }
+      100% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.95; }
+    }
+    .support-btn-fixed .inner-text { position: absolute; inset: 0; display:flex; align-items:center; justify-content:center; padding:4px 6px; font-size:11px; font-weight:700; color:#fff; text-align:center; line-height:1.05; opacity:0; transform: translateY(6px) scale(0.95); transition: opacity 220ms ease, transform 220ms ease; pointer-events: none; z-index: 25; }
+    .support-btn-fixed.show-text .inner-text { opacity:1; transform: translateY(0) scale(1); }
+    /* keep icon visible when text is shown */
+    @media (max-width: 640px) {
+      .support-badge { display: none; }
+      .support-floating { right: 0.5rem; top: 0.9rem; }
+    }
+    .support-modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 120; }
+    .support-modal .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
+    .support-modal .panel { position: relative; background: #fff; border-radius: 0.5rem; padding: 1rem 1.25rem; width: 95%; max-width: 420px; box-shadow: 0 10px 40px rgba(0,0,0,0.12); }
+    .support-modal .panel h3 { margin: 0 0 0.5rem 0; font-weight: 700; color:#25303b; }
+    .support-modal .contact { display:flex; align-items:center; justify-content:space-between; padding:0.45rem 0; border-bottom:1px solid #f1f1f2; }
+    .support-modal .contact:last-child { border-bottom:0; }
+    .support-modal .tel { color:#087f5b; font-weight:600; text-decoration:none; }
+    .support-modal .close-x { position:absolute; right:0.5rem; top:0.5rem; background:transparent;border:0;font-size:1.1rem;color:#666;cursor:pointer; }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col bg-pmcCream" style="background: url('/static/img/pmcbg.png') no-repeat center center fixed; background-size: cover;">
+
+  <!-- Main Content -->
+  <div class="flex-1 flex items-center justify-center p-4">
+    <!-- Main Container -->
+    <div class="w-full max-w-6xl mx-auto px-2">
+      <!-- Logo Section - Centered at top on mobile, left side on desktop -->
+      <div class="logo-container lg:hidden mb-6">
+        <img src="/static/img/login logo1.png" alt="PMC Tech FWAPMS Logo" class="responsive-logo bg-white p-4 rounded-lg shadow-lg">
+      </div>
+      
+      <div class="grid lg:grid-cols-2 gap-6 lg:gap-8 items-center">
+        <!-- Left Side - Branding (Hidden on mobile, shown on desktop) -->
+        <div class="hidden lg:block text-white space-y-6">
+          <!-- Logo for Desktop -->
+          <div class="flex justify-center lg:justify-start ">
+            <img src="/static/img/login logo1.png" alt="PMC Tech FWAPMS Logo" class="glass-effect p-6 rounded-lg shadow-lg w-full max-w-md">
+          </div>
+        </div>
+
+        <!-- Right Side - Login Form -->
+  <div class="glass-effect bg-pmcCard shadow-lg rounded-xl p-4 sm:p-6 w-full compact-form mx-auto border border-pmcMuted/30">
+          {% if already_logged_in %}
+            <div class="text-center">
+              <h2 class="text-xl font-bold text-white mb-4">You are already logged in.</h2>
+              <a href="/logout" class="bg-red-500 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 shadow text-sm">Logout</a>
+            </div>
+          {% else %}
+            <h2 id="login-title" class="text-xl sm:text-2xl font-bold text-pmcPurple mb-4 sm:mb-6 text-center tracking-wide">LOGIN</h2>
+            
+            <!-- Role buttons in responsive grid -->
+            <div class="grid grid-cols-2 gap-1.5 sm:gap-2 mb-4 sm:mb-6">
+              <button type="button" data-role="ADMIN"
+                class="role-btn px-2 sm:px-3 py-1.5 sm:py-2 rounded-md font-semibold bg-pmcDanger text-white hover:bg-pmcDangerHover transition shadow border-2 border-pmcDangerHover text-xs">
+                <i class="fas fa-shield-alt mr-1"></i>Admin
+              </button>
+              <button type="button" data-role="MANAGEMENT"
+                class="role-btn px-2 sm:px-3 py-1.5 sm:py-2 rounded-md font-semibold bg-pmcPurple text-white hover:bg-pmcPurpleDark transition shadow text-xs">Management</button>
+              <button type="button" data-role="PRINCIPAL"
+                class="role-btn px-2 sm:px-3 py-1.5 sm:py-2 rounded-md font-semibold bg-pmcPurple text-white hover:bg-pmcPurpleDark transition shadow text-xs">Principal</button>
+              <button type="button" data-role="HR"
+                class="role-btn px-2 sm:px-3 py-1.5 sm:py-2 rounded-md font-semibold bg-pmcPurple text-white hover:bg-pmcPurpleDark transition shadow text-xs">HR</button>
+              <button type="button" data-role="IQAC"
+                class="role-btn px-2 sm:px-3 py-1.5 sm:py-2 rounded-md font-semibold bg-pmcGreen text-white hover:bg-pmcPurple transition shadow text-xs">IQAC</button>
+              <button type="button" data-role="HOD"
+                class="role-btn px-2 sm:px-3 py-1.5 sm:py-2 rounded-md font-semibold bg-pmcCream text-pmcPurple border border-pmcPurple hover:bg-pmcPurple hover:text-white transition shadow text-xs">HOD</button>
+              <button type="button" data-role="FACULTY"
+                class="role-btn px-2 sm:px-3 py-1.5 sm:py-2 rounded-md font-semibold bg-pmcCream text-pmcPurple border border-pmcPurple hover:bg-pmcPurple hover:text-white transition shadow text-xs col-span-2">Faculty</button>
+            </div>
+            
+            <!-- Login form -->
+            <form id="login-form" class="space-y-3">
+              <input
+                type="email"
+                id="email"
+                placeholder="Enter your email"
+                required
+                class="w-full p-2.5 sm:p-3 bg-pmcCream border border-pmcMuted rounded-md text-pmcText placeholder-pmcMuted focus:outline-none focus:ring-2 focus:ring-pmcPurple focus:border-transparent text-sm"
+              />
+              <div class="relative">
+                <input
+                  type="password"
+                  id="password"
+                  placeholder="Password"
+                  required
+                  class="w-full p-2.5 sm:p-3 bg-pmcCream border border-pmcMuted rounded-md text-pmcText placeholder-pmcMuted focus:outline-none focus:ring-2 focus:ring-pmcPurple focus:border-transparent pr-10 text-sm"
+                />
+                <span
+                  id="toggle-password"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-pmcMuted hover:text-pmcPurple text-base"
+                  title="Show/Hide Password"
+                >👁</span>
+              </div>
+              
+              <!-- Department select (only for HOD & FACULTY) -->
+              <div id="department-select-container" style="display:none;">
+                <select
+                  id="department-select"
+                  class="w-full p-2.5 sm:p-3 bg-pmcCream border border-pmcMuted rounded-md text-pmcText focus:outline-none focus:ring-2 focus:ring-pmcPurple focus:border-transparent text-sm"
+                >
+                  <option value="" disabled selected>Select Department</option>
+                  <option value="AERO">AERO</option>
+                  <option value="AIDS">AIDS</option>
+                  <option value="AIML">AIML</option>
+                  <option value="CHEM">CHEM</option>
+                  <option value="CIVIL">CIVIL</option>
+                  <option value="CSBS">CSBS</option>
+                  <option value="CSE">CSE</option>
+                  <option value="ECE">ECE</option>
+                  <option value="EEE">EEE</option>
+                  <option value="IT">IT</option>
+                  <option value="MBA">MBA</option>
+                  <option value="MCA">MCA</option>
+                  <option value="MCO">MCO</option>
+                  <option value="MECH">MECH</option>
+                  <option value="S&H V1">S&H V1</option>
+                  <option value="S&H V2">S&H V2</option>
+                  <option value="S&H V3">S&H V3</option>
+                  <option value="S&H V4">S&H V4</option>
+                  <option value="S&H V5">S&H V5</option>
+                  <option value="S&H V6">S&H V6</option>
+                </select>
+              </div>
+              
+              <button
+                type="submit"
+                id="login-btn"
+                class="w-full bg-pmcBtn hover:bg-pmcBtnHover text-white font-semibold py-2.5 sm:py-3 rounded-md transition-all duration-200 shadow-lg text-sm"
+              >Login</button>
+            </form>
+            
+            <!-- Forgot Password link -->
+            <div class="text-center mt-3 sm:mt-4">
+              <a href="forgot-password.html" class="text-pmcPurple hover:text-pmcGreen font-medium transition-colors text-xs underline">Forgot Password?</a>
+            </div>
+            
+            <!-- For queries link -->
+            <div class="text-center mt-2 sm:mt-3">
+              <a href="queries-form.html" target="_blank" class="text-pmcPurple hover:text-pmcGreen font-medium transition-colors text-xs">For any queries</a>
+            </div>
+             <div class="text-center mt-2 sm:mt-3">
+              <a href="suggestion.html" target="_blank" class="text-pmcPurple hover:text-pmcGreen font-medium transition-colors text-xs">Any Suggestions</a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+        <!-- Support modal -->
+        <div id="support-modal" class="support-modal" role="dialog" aria-modal="true" aria-hidden="true">
+          <div class="overlay" tabindex="-1"></div>
+          <div class="panel" role="document">
+            <button class="close-x" id="support-close" aria-label="Close">×</button>
+            <h3>Technical Support Contacts</h3>
+            <div class="contact"><div>Zeony Technologies</div><a class="tel" href="tel:6382654365">6382654365</a></div>
+            <div class="contact"><div>Rahul Ravindran</div><a class="tel" href="tel:9790256404">9790256404</a></div>
+            <div class="contact"><div>Vinod Kumar</div><a class="tel" href="tel:6369077291">6369077291</a></div>
+            <div class="contact"><div>Sanjay Kumar</div><a class="tel" href="tel:8946098018">8946098018</a></div>
+          </div>
+        </div>
+
+  </div>
+
+  <script>
+    // ====== CONFIG ======
+    const SUPABASE_URL = "https://cbhodgwaazmjszkujrti.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiaG9kZ3dhYXptanN6a3VqcnRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NzY4NzEsImV4cCI6MjA3MTI1Mjg3MX0.sBRdfiWJJmZtLWsHCcNyxm1VcwkGwZWsIeeMlS49XTU";
+
+    // IMPORTANT: If your tables were created with quoted, CamelCase names ("Faculty","HOD"),
+    // always reference them quoted in supabase-js: .from('"HOD"') / .from('"Faculty"')
+    const TABLE_FACULTY = 'Faculty';
+    const TABLE_HOD = 'HOD';
+    const TABLE_ADMIN = 'Admin';
+
+    // ====== STATE ======
+    let selectedRole = null;
+
+    // ====== INIT ======
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Role buttons
+    document.querySelectorAll(".role-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const role = btn.getAttribute("data-role");
+        setRole(role);
+      });
+    });
+
+    function setRole(role) {
+      selectedRole = role;
+  document.getElementById('login-title').textContent = `LOGIN - ${role}`;
+      const deptContainer = document.getElementById('department-select-container');
+      if (role === 'HOD' || role === 'FACULTY') {
+        deptContainer.style.display = '';
+      } else {
+        deptContainer.style.display = 'none';
+      }
+    }
+
+    // Toggle password
+    document.getElementById('toggle-password').addEventListener('click', () => {
+      const pwd = document.getElementById('password');
+      if (pwd) pwd.type = pwd.type === 'password' ? 'text' : 'password';
+    });
+
+    // ====== LOGIN HANDLER ======
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!selectedRole) {
+        alert('Please select a role before logging in.');
+        return;
+      }
+
+      const email = (document.getElementById('email').value || '').trim();
+      const password = (document.getElementById('password').value || '').trim();
+      const departmentSelect = document.getElementById('department-select');
+      const department = (departmentSelect && departmentSelect.value) ? departmentSelect.value : '';
+
+      // HOD / FACULTY require department
+      if ((selectedRole === 'HOD' || selectedRole === 'FACULTY') && !department) {
+        alert('Please select a department.');
+        return;
+      }
+
+      // Disable button during request
+      const loginBtn = document.getElementById('login-btn');
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Checking...';
+
+      try {
+        if (selectedRole === 'HOD' || selectedRole === 'FACULTY') {
+          const table = selectedRole === 'HOD' ? TABLE_HOD : TABLE_FACULTY;
+          // For S&H V1-V4, match department exactly
+          const { data, error } = await supabaseClient
+            .from(table)
+            .select('*')
+            .eq('department', department)
+            .eq('email', email)
+            .eq('password', password)
+            .maybeSingle();
+          if (error) {
+            alert('Login failed: ' + (error.message || 'Unknown error'));
+            return;
+          }
+          if (!data) {
+            alert('Invalid credentials or department.');
+            return;
+          }
+          await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              role: selectedRole,
+              department: department,
+              email: email
+            })
+          });
+          localStorage.setItem('role', selectedRole);
+          localStorage.setItem('department', department);
+          localStorage.setItem('email', email);
+          if (selectedRole === 'HOD') {
+            window.location.href = 'hod.html?as=hod';
+          } else {
+            window.location.href = 'faculty-profile.html?email=' + encodeURIComponent(email);
+          }
+          return;
+        }
+
+        // Management authentication
+        if (selectedRole === 'MANAGEMENT') {
+          const { data, error } = await supabaseClient
+            .from('Management')
+            .select('*')
+            .eq('email', email)
+            .eq('password', password)
+            .maybeSingle();
+          if (error) {
+            alert('Login failed: ' + (error.message || 'Unknown error'));
+            return;
+          }
+          if (!data) {
+            alert('Invalid credentials.');
+            return;
+          }
+          await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              role: selectedRole,
+              email: email
+            })
+          });
+          localStorage.setItem('role', selectedRole);
+          localStorage.setItem('email', email);
+          window.location.href = 'management.html';
+          return;
+        }
+
+        // Principal authentication
+        if (selectedRole === 'PRINCIPAL') {
+          const { data, error } = await supabaseClient
+            .from('Principal')
+            .select('*')
+            .eq('Email', email)
+            .eq('Password', password)
+            .maybeSingle();
+          if (error) {
+            alert('Login failed: ' + (error.message || 'Unknown error'));
+            return;
+          }
+          if (!data) {
+            alert('Invalid credentials.');
+            return;
+          }
+          await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              role: selectedRole,
+              email: email
+            })
+          });
+          localStorage.setItem('role', selectedRole);
+          localStorage.setItem('email', email);
+          window.location.href = 'principal.html';
+          return;
+        }
+
+        // HR authentication
+        if (selectedRole === 'HR') {
+          const { data, error } = await supabaseClient
+            .from('HR')
+            .select('*')
+            .eq('email', email)
+            .eq('password', password)
+            .maybeSingle();
+          if (error) {
+            alert('Login failed: ' + (error.message || 'Unknown error'));
+            return;
+          }
+          if (!data) {
+            alert('Invalid credentials.');
+            return;
+          }
+          // Ensure session/cookie is set by waiting for the fetch to complete
+          const resp = await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              role: selectedRole,
+              email: email
+            })
+          });
+          localStorage.setItem('role', selectedRole);
+          localStorage.setItem('email', email);
+          // If server responds with a redirect, follow it
+          if (resp.redirected) {
+            window.location.href = resp.url;
+          } else {
+            window.location.href = 'hr.html';
+          }
+          return;
+        }
+        
+        // IQAC authentication
+        if (selectedRole === 'IQAC') {
+          const { data, error } = await supabaseClient
+            .from('IQAC')
+            .select('*')
+            .eq('email', email)
+            .eq('password', password)
+            .maybeSingle();
+          if (error) {
+            alert('Login failed: ' + (error.message || 'Unknown error'));
+            return;
+          }
+          if (!data) {
+            alert('Invalid credentials.');
+            return;
+          }
+          await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              role: selectedRole,
+              email: email
+            })
+          });
+          localStorage.setItem('role', selectedRole);
+          localStorage.setItem('email', email);
+          window.location.href = 'iqac.html';
+          return;
+        }
+        // Admin authentication
+        if (selectedRole === 'ADMIN') {
+          const { data, error } = await supabaseClient
+            .from(TABLE_ADMIN)
+            .select('*')
+            .eq('email', email)
+            .eq('password', password)
+            .eq('is_active', true)
+            .maybeSingle();
+          if (error) {
+            alert('Login failed: ' + (error.message || 'Unknown error'));
+            return;
+          }
+          if (!data) {
+            alert('Invalid admin credentials or account is inactive.');
+            return;
+          }
+          // Update last_login timestamp
+          await supabaseClient
+            .from(TABLE_ADMIN)
+            .update({ last_login: new Date().toISOString() })
+            .eq('id', data.id);
+          await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              role: selectedRole,
+              email: email
+            })
+          });
+          localStorage.setItem('role', selectedRole);
+          localStorage.setItem('email', email);
+          localStorage.setItem('adminName', data.name || 'Administrator');
+          localStorage.setItem('adminDepartment', data.department || 'ADMINISTRATION');
+          // Check for ?next=admin-queries.html in URL
+          const params = new URLSearchParams(window.location.search);
+          if (params.get('next') === 'admin-queries.html') {
+            window.location.href = '/admin-queries.html';
+          } else {
+            window.location.href = 'admin-dashboard.html';
+          }
+          return;
+        }
+      } catch (err) {
+        console.error('[Login] Unexpected error:', err);
+        alert('Unexpected error. Check the console for details.');
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Login';
+      }
+    });
+
+      // Support modal behavior: initialize after DOM ready so elements exist
+      function initSupport() {
+        const supportModal = document.getElementById('support-modal');
+        const supportClose = document.getElementById('support-close');
+        const supportOverlay = supportModal ? supportModal.querySelector('.overlay') : null;
+        const supportBtnFixed = document.getElementById('support-btn-fixed');
+        const supportBadge = document.querySelector('.support-badge');
+        function openSupport() {
+          if (!supportModal) return;
+          supportModal.style.display = 'flex';
+          supportModal.setAttribute('aria-hidden','false');
+        }
+        function closeSupport() {
+          if (!supportModal) return;
+          supportModal.style.display = 'none';
+          supportModal.setAttribute('aria-hidden','true');
+        }
+        if (supportBtnFixed) supportBtnFixed.addEventListener('click', openSupport);
+        if (supportClose) supportClose.addEventListener('click', closeSupport);
+        if (supportOverlay) supportOverlay.addEventListener('click', closeSupport);
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSupport(); });
+        // Loop mode: hide badge (slide behind icon) for 2s, then show it for 2s, repeat
+        try {
+          if (supportBtnFixed && supportBadge) {
+            // small initial delay so page load feels natural
+            setTimeout(() => {
+              const hideDuration = 2000; // badge hidden under icon
+              const visibleDuration = 2000; // badge visible when coming out
+
+              const doCycle = () => {
+                // 1) Immediately hide the badge (use visibility to avoid layout flashes)
+                supportBadge.style.visibility = 'hidden';
+                supportBadge.classList.add('badge-hide-immediate');
+                // 2) move badge under the button (still hidden)
+                setTimeout(() => supportBadge.classList.add('badge-slide'), 20);
+                // (no inner text shown inside the icon)
+
+                // 3) after hidden duration, prepare to reveal while moving out
+                setTimeout(() => {
+                  // move badge outwards (remove slide)
+                  supportBadge.classList.remove('badge-slide');
+                  // ensure the badge is rendered before removing hide: set display block and visibility visible then remove hide class
+                  supportBadge.style.display = 'block';
+                  setTimeout(() => { supportBadge.style.visibility = 'visible'; supportBadge.classList.remove('badge-hide-immediate'); }, 25);
+                }, hideDuration);
+              };
+
+              // run first cycle immediately and then repeat (hidden + visible)
+              doCycle();
+              const intervalId = setInterval(doCycle, hideDuration + visibleDuration);
+              supportBtnFixed._supportIntervalId = intervalId;
+            }, 300);
+          }
+        } catch (e) { /* ignore */ }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSupport);
+      } else {
+        initSupport();
+      }
+  </script>
+
+  <!-- Footer -->
+  <footer class="bg-pmcCard border-t border-pmcMuted/30 py-2">
+    <!-- Floating support icon (right side) -->
+    <div class="support-floating">
+      <div class="support-badge">Contact For Technical Support</div>
+      <button id="support-btn-fixed" class="support-btn-fixed pulse blink" title="Contact Technical Support" aria-label="Contact Technical Support">
+        <!-- Inline phone handset icon (white) -->
+        <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.86 19.86 0 0 1 3.09 4.18 2 2 0 0 1 5 2h3a2 2 0 0 1 2 1.72c.12 1.21.4 2.39.84 3.5a2 2 0 0 1-.45 2.11L9.91 11.09a16 16 0 0 0 6 6l1.76-1.48a2 2 0 0 1 2.11-.45c1.11.44 2.29.72 3.5.84A2 2 0 0 1 22 16.92z" />
+        </svg>
+      </button>
+    </div>
+    <div class="text-center px-4">
+      <p class="text-xs text-pmcText">
+        &copy; All Rights Reserved <a href="https://pmctech.org" target="_blank" class="underline text-pmcPurple hover:text-pmcGreen">PMC TECH</a>
+      </p>
+      <div class="flex items-center justify-center gap-1 mt-1">
+        <span class="text-xs text-pmcMuted">Powered by</span>
+        <a href="https://zeonytechnologies.com" target="_blank" rel="noopener noreferrer" class="inline-block hover:opacity-100 transition-all duration-300 hover:scale-105">
+          <img src="/static/img/zeony logo.png" alt="Zeony Technologies" class="h-8 w-13 object-contain"/>
+        </a>
+      </div>
+      <span class="text-xs text-pmcMuted t">A Student driven Software!</span>
+    </div>
+  </footer>
+</body>
+</html>
