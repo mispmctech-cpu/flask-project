@@ -26,8 +26,8 @@ SMTP_PORT = int(os.environ.get('SMTP_PORT', 587))
 EMAIL_ADDRESS = os.environ.get('SMTP_EMAIL', "mis.pmctech@gmail.com")
 EMAIL_PASSWORD = os.environ.get('SMTP_PASSWORD', "unvidickusetxkun")
 
-# In-memory storage for verification codes (in production, use Redis or database)
-verification_codes = {}
+# Verification codes are now stored in database (password_reset_codes table)
+# This ensures codes persist across server restarts and requests
 
 # Supabase Configuration
 SUPABASE_URL = "https://cbhodgwaazmjszkujrti.supabase.co"
@@ -48,83 +48,81 @@ def generate_reset_token():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=32))
 
 def send_verification_email(email, code, name="User"):
-    """Send verification code email"""
-    def send_async_email():
-        try:
-            # Create message
-            msg = MIMEMultipart()
-            msg['From'] = EMAIL_ADDRESS
-            msg['To'] = email
-            msg['Subject'] = "FWAPMS - Password Reset Verification Code"
+    """Send verification code email - synchronous with proper error handling"""
+    try:
+        # Create message
+        msg = MIMEMultipart()
+        msg['From'] = EMAIL_ADDRESS
+        msg['To'] = email
+        msg['Subject'] = "FWAPMS - Password Reset Verification Code"
 
-            # Email body
-            body = f"""
-            <html>
-            <body style="font-family: Arial, sans-serif; background-color: #f8f6f2; margin: 0; padding: 20px;">
-                <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                    <div style="background: linear-gradient(135deg, #6a2c91 0%, #501e73 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
-                        <h1 style="margin: 0; font-size: 24px;">FWAPMS Password Reset</h1>
-                        <p style="margin: 5px 0 0 0; opacity: 0.9;">PMC Tech Faculty Work Allocation & Progress Monitoring System</p>
+        # Email body
+        body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; background-color: #f8f6f2; margin: 0; padding: 20px;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="background: linear-gradient(135deg, #6a2c91 0%, #501e73 100%); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                    <h1 style="margin: 0; font-size: 24px;">FWAPMS Password Reset</h1>
+                    <p style="margin: 5px 0 0 0; opacity: 0.9;">PMC Tech Faculty Work Allocation & Progress Monitoring System</p>
+                </div>
+                
+                <div style="padding: 30px;">
+                    <h2 style="color: #6a2c91; margin-top: 0;">Hello {name},</h2>
+                    
+                    <p style="color: #2d2a32; line-height: 1.6; margin: 20px 0;">
+                        We received a request to reset your password for your FWAPMS account. 
+                        Use the verification code below to proceed with resetting your password:
+                    </p>
+                    
+                    <div style="background-color: #f8f6f2; border: 2px dashed #6a2c91; border-radius: 8px; padding: 20px; text-align: center; margin: 25px 0;">
+                        <p style="margin: 0 0 10px 0; color: #6a2c91; font-weight: bold; font-size: 14px;">Your Verification Code:</p>
+                        <div style="font-size: 36px; font-weight: bold; color: #6a2c91; font-family: 'Courier New', monospace; letter-spacing: 5px;">
+                            {code}
+                        </div>
+                        <p style="margin: 10px 0 0 0; color: #666; font-size: 12px;">This code expires in 15 minutes</p>
                     </div>
                     
-                    <div style="padding: 30px;">
-                        <h2 style="color: #6a2c91; margin-top: 0;">Hello {name},</h2>
-                        
-                        <p style="color: #2d2a32; line-height: 1.6; margin: 20px 0;">
-                            We received a request to reset your password for your FWAPMS account. 
-                            Use the verification code below to proceed with resetting your password:
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin: 20px 0;">
+                        <p style="margin: 0; color: #856404; font-size: 14px;">
+                            <strong>Important:</strong> If you did not request this password reset, please ignore this email. 
+                            Your password will remain unchanged.
                         </p>
-                        
-                        <div style="background-color: #f8f6f2; border: 2px dashed #6a2c91; border-radius: 8px; padding: 20px; text-align: center; margin: 25px 0;">
-                            <p style="margin: 0 0 10px 0; color: #6a2c91; font-weight: bold; font-size: 14px;">Your Verification Code:</p>
-                            <div style="font-size: 36px; font-weight: bold; color: #6a2c91; font-family: 'Courier New', monospace; letter-spacing: 5px;">
-                                {code}
-                            </div>
-                            <p style="margin: 10px 0 0 0; color: #666; font-size: 12px;">This code expires in 15 minutes</p>
-                        </div>
-                        
-                        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin: 20px 0;">
-                            <p style="margin: 0; color: #856404; font-size: 14px;">
-                                <strong>Important:</strong> If you did not request this password reset, please ignore this email. 
-                                Your password will remain unchanged.
-                            </p>
-                        </div>
-                        
-                        <p style="color: #666; font-size: 14px; line-height: 1.5; margin-top: 30px;">
-                            For security reasons, this verification code will expire in 15 minutes. 
-                            If you need a new code, please return to the forgot password page and request a new one.
+                    </div>
+                    
+                    <p style="color: #666; font-size: 14px; line-height: 1.5; margin-top: 30px;">
+                        For security reasons, this verification code will expire in 15 minutes. 
+                        If you need a new code, please return to the forgot password page and request a new one.
+                    </p>
+                    
+                    <div style="border-top: 1px solid #eee; margin-top: 30px; padding-top: 20px;">
+                        <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
+                            This is an automated message from FWAPMS. Please do not reply to this email.<br>
+                            &copy; 2026 PMC Tech. All rights reserved.<br>
+                            <em>Powered by Zeony Technologies</em>
                         </p>
-                        
-                        <div style="border-top: 1px solid #eee; margin-top: 30px; padding-top: 20px;">
-                            <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
-                                This is an automated message from FWAPMS. Please do not reply to this email.<br>
-                                &copy; 2026 PMC Tech. All rights reserved.<br>
-                                <em>Powered by Zeony Technologies</em>
-                            </p>
-                        </div>
                     </div>
                 </div>
-            </body>
-            </html>
-            """
+            </div>
+        </body>
+        </html>
+        """
 
-            msg.attach(MIMEText(body, 'html'))
+        msg.attach(MIMEText(body, 'html'))
 
-            # Create secure connection and send email
-            context = ssl.create_default_context()
-            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-                server.starttls(context=context)
-                server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-                server.send_message(msg)
-            
-            print(f"Verification email sent successfully to {email}")
-        except Exception as e:
-            print(f"Failed to send email to {email}: {str(e)}")
-    
-    # Send email in a separate thread to avoid blocking
-    email_thread = threading.Thread(target=send_async_email)
-    email_thread.daemon = True
-    email_thread.start()
+        # Create secure connection and send email
+        context = ssl.create_default_context()
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10) as server:
+            server.starttls(context=context)
+            server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+            server.send_message(msg)
+        
+        print(f"[SUCCESS] Verification email sent to {email} with code {code}")
+        return True
+    except Exception as e:
+        print(f"[EMAIL ERROR] Failed to send email to {email}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 def check_smtp_credentials():
     """Attempt to connect and login to the SMTP server using configured creds.
@@ -140,15 +138,25 @@ def check_smtp_credentials():
         return False, str(e)
 
 def cleanup_expired_codes():
-    """Remove expired verification codes"""
-    current_time = datetime.now()
-    expired_keys = []
-    for key, data in verification_codes.items():
-        if current_time > data['expires']:
-            expired_keys.append(key)
-    
-    for key in expired_keys:
-        del verification_codes[key]
+    """Remove expired password reset codes from database"""
+    try:
+        import requests
+        headers = {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': f'Bearer {SUPABASE_ANON_KEY}',
+            'Content-Type': 'application/json'
+        }
+        
+        # Delete codes that have expired
+        url = f"{SUPABASE_URL}/rest/v1/password_reset_codes?expires_at=lt.now()&is_used=eq.false"
+        response = requests.delete(url, headers=headers)
+        
+        if response.status_code == 204:
+            print("[DEBUG] Cleaned up expired password reset codes")
+        else:
+            print(f"[WARNING] Failed to cleanup expired codes: {response.status_code}")
+    except Exception as e:
+        print(f"[ERROR] Cleanup expired codes failed: {str(e)}")
 
 @app.after_request
 def after_request(response):
@@ -504,6 +512,8 @@ def api_allocate_month():
 def forgot_password():
     """Handle forgot password request - send verification code"""
     try:
+        import requests
+        
         data = request.get_json()
         email = data.get('email', '').strip()  # Don't convert to lowercase yet
         role = data.get('role', '').upper()
@@ -613,26 +623,43 @@ def forgot_password():
         verification_code = generate_verification_code()
         reset_token = generate_reset_token()
         
-        expires = datetime.now() + timedelta(minutes=15)  # Code expires in 15 minutes
+        expires_at = datetime.now() + timedelta(minutes=15)  # Code expires in 15 minutes
         
-        # Store verification code (use original email case)
-        code_key = f"{email.lower()}_{role}_{department}".lower()
-        verification_codes[code_key] = {
+        # DELETE any existing codes for this email/role/department combination (allow fresh requests)
+        delete_url = f"{SUPABASE_URL}/rest/v1/password_reset_codes?email=eq.{email.lower()}&role=eq.{role}&department=eq.{department or ''}&is_used=eq.false"
+        delete_response = requests.delete(delete_url, headers=headers)
+        print(f"[DEBUG] Deleted old codes: {delete_response.status_code}")
+        
+        # Store verification code in database
+        code_data = {
+            'email': email.lower(),
+            'role': role,
+            'department': department or None,
             'code': verification_code,
             'token': reset_token,
-            'email': email,  # Store original email case
-            'role': role,
-            'department': department,
-            'expires': expires,
-            'created': datetime.now()
+            'expires_at': expires_at.isoformat()
         }
+        
+        insert_url = f"{SUPABASE_URL}/rest/v1/password_reset_codes"
+        insert_response = requests.post(insert_url, json=code_data, headers=headers)
+        
+        print(f"[DEBUG] Stored verification code in database: {insert_response.status_code}")
+        if insert_response.status_code not in [200, 201]:
+            print(f"[ERROR] Failed to store code in database: {insert_response.text}")
+            return jsonify({'success': False, 'message': 'Failed to generate verification code. Please try again.'})
         
         print(f"[DEBUG] Sending verification code {verification_code} to {email}")
         
-        # Send verification email
-        send_verification_email(email, verification_code, user_name)
+        # Send verification email - NOW SYNCHRONOUS WITH RETURN STATUS
+        email_sent = send_verification_email(email, verification_code, user_name)
         
-        return jsonify({'success': True, 'message': 'Verification code sent to your email'})
+        if email_sent:
+            return jsonify({'success': True, 'message': 'Verification code sent to your email'})
+        else:
+            # Email failed, delete the code from database
+            delete_url = f"{SUPABASE_URL}/rest/v1/password_reset_codes?email=eq.{email.lower()}&code=eq.{verification_code}"
+            requests.delete(delete_url, headers=headers)
+            return jsonify({'success': False, 'message': 'Failed to send email. Please check your email address and try again.'})
         
     except Exception as e:
         print(f"[ERROR] Forgot password error: {str(e)}")
@@ -644,6 +671,8 @@ def forgot_password():
 def verify_reset_code():
     """Verify the reset code entered by user"""
     try:
+        import requests
+        
         data = request.get_json()
         email = data.get('email', '').strip().lower()
         code = data.get('code', '').strip()
@@ -655,31 +684,46 @@ def verify_reset_code():
         # Clean up expired codes first
         cleanup_expired_codes()
         
-        # Find the verification record
-        code_key = None
-        for key, record in verification_codes.items():
-            if (record['email'].lower() == email and 
-                record['role'].upper() == role and 
-                record['code'] == code):
-                code_key = key
-                break
+        headers = {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': f'Bearer {SUPABASE_ANON_KEY}',
+            'Content-Type': 'application/json'
+        }
         
-        if not code_key:
+        # Find the verification record from database
+        url = f"{SUPABASE_URL}/rest/v1/password_reset_codes?email=eq.{email}&code=eq.{code}&role=eq.{role}&is_used=eq.false"
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code != 200:
             return jsonify({'success': False, 'message': 'Invalid or expired verification code'})
         
-        # Return the reset token for the final step
-        reset_token = verification_codes[code_key]['token']
+        records = response.json()
+        if not records:
+            return jsonify({'success': False, 'message': 'Invalid or expired verification code'})
+        
+        record = records[0]
+        reset_token = record['token']
+        record_id = record['id']
+        
+        # Mark code as used
+        update_url = f"{SUPABASE_URL}/rest/v1/password_reset_codes?id=eq.{record_id}"
+        update_data = {'is_used': True, 'used_at': datetime.now().isoformat()}
+        requests.patch(update_url, json=update_data, headers=headers)
         
         return jsonify({'success': True, 'token': reset_token, 'message': 'Code verified successfully'})
         
     except Exception as e:
-        print(f"Verify reset code error: {str(e)}")
+        print(f"[ERROR] Verify reset code error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'message': 'An error occurred. Please try again later.'})
 
 @app.route('/reset-password', methods=['POST'])
 def reset_password():
     """Reset the password using verified token"""
     try:
+        import requests
+        
         data = request.get_json()
         email = data.get('email', '').strip().lower()
         role = data.get('role', '').upper()
@@ -695,31 +739,28 @@ def reset_password():
         # Clean up expired codes first
         cleanup_expired_codes()
         
-        # Find and verify the token
-        code_key = None
-        verification_record = None
-        for key, record in verification_codes.items():
-            if (record['email'].lower() == email and 
-                record['role'].upper() == role and 
-                record['token'] == token):
-                code_key = key
-                verification_record = record
-                break
-        
-        if not code_key or not verification_record:
-            return jsonify({'success': False, 'message': 'Invalid or expired reset token'})
-        
-        # Update password in database
-        import requests
-        
         headers = {
             'apikey': SUPABASE_ANON_KEY,
             'Authorization': f'Bearer {SUPABASE_ANON_KEY}',
             'Content-Type': 'application/json'
         }
         
+        # Find and verify the token in database
+        url = f"{SUPABASE_URL}/rest/v1/password_reset_codes?email=eq.{email}&token=eq.{token}&role=eq.{role}"
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code != 200:
+            return jsonify({'success': False, 'message': 'Invalid or expired reset token'})
+        
+        records = response.json()
+        if not records:
+            return jsonify({'success': False, 'message': 'Invalid or expired reset token'})
+        
+        verification_record = records[0]
+        record_id = verification_record['id']
         department = verification_record.get('department', '')
         
+        # Update password in database
         if role in ['HOD', 'FACULTY']:
             table_name = 'Faculty' if role == 'FACULTY' else 'HOD'
             url = f"{SUPABASE_URL}/rest/v1/{table_name}?email=eq.{email}&department=eq.{department}"
@@ -738,21 +779,29 @@ def reset_password():
             
         elif role == 'IQAC':
             url = f"{SUPABASE_URL}/rest/v1/IQAC?email=eq.{email}"
+        else:
+            return jsonify({'success': False, 'message': 'Invalid role'})
         
         # Update password
         update_data = {'password': new_password}
-            
         response = requests.patch(url, json=update_data, headers=headers)
         
         if response.status_code == 204:  # Supabase returns 204 for successful updates
-            # Remove the used verification code
-            del verification_codes[code_key]
+            # Mark the verification code as used
+            code_url = f"{SUPABASE_URL}/rest/v1/password_reset_codes?id=eq.{record_id}"
+            code_update = {'is_used': True, 'used_at': datetime.now().isoformat()}
+            requests.patch(code_url, json=code_update, headers=headers)
+            
+            print(f"[SUCCESS] Password reset for {email} ({role})")
             return jsonify({'success': True, 'message': 'Password reset successfully'})
         else:
+            print(f"[ERROR] Failed to update password: {response.status_code} - {response.text}")
             return jsonify({'success': False, 'message': 'Failed to update password. Please try again.'})
         
     except Exception as e:
-        print(f"Reset password error: {str(e)}")
+        print(f"[ERROR] Reset password error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'message': 'An error occurred. Please try again later.'})
 
 # --- Catch-all for other HTML pages: only allow if logged in, else redirect to login ---
