@@ -20,10 +20,11 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev-key-change-in-production-plea
 os.makedirs(os.path.join(app.root_path, app.config['UPLOAD_FOLDER']), exist_ok=True)
 
 # Email Configuration
-SMTP_SERVER = "smtp.gmail.com"  
-SMTP_PORT = 587
-EMAIL_ADDRESS = "mis.pmctech@gmail.com"
-EMAIL_PASSWORD = "unvidickusetxkun"
+SMTP_SERVER = os.environ.get('SMTP_SERVER', "smtp.gmail.com")
+SMTP_PORT = int(os.environ.get('SMTP_PORT', 587))
+# Prefer environment variables for credentials. Fallback kept for development only.
+EMAIL_ADDRESS = os.environ.get('SMTP_EMAIL', "mis.pmctech@gmail.com")
+EMAIL_PASSWORD = os.environ.get('SMTP_PASSWORD', "unvidickusetxkun")
 
 # In-memory storage for verification codes (in production, use Redis or database)
 verification_codes = {}
@@ -124,6 +125,19 @@ def send_verification_email(email, code, name="User"):
     email_thread = threading.Thread(target=send_async_email)
     email_thread.daemon = True
     email_thread.start()
+
+def check_smtp_credentials():
+    """Attempt to connect and login to the SMTP server using configured creds.
+    Returns (True, None) on success or (False, error_message) on failure.
+    """
+    try:
+        context = ssl.create_default_context()
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=10) as server:
+            server.starttls(context=context)
+            server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        return True, None
+    except Exception as e:
+        return False, str(e)
 
 def cleanup_expired_codes():
     """Remove expired verification codes"""
